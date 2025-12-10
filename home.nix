@@ -76,7 +76,7 @@
   };
 
   imports = [
-    ./hm
+    ./home
   ];
 
   programs.home-manager.enable = true;
