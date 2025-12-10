@@ -28,6 +28,9 @@
     interactiveShellInit = ''
       set -x TERM xterm-256color
     '';
+    functions = {
+      starship_transient_prompt_func = "starship module character";
+    };
     shellAliases = {
       cat = "bat";
       ll = "eza -l --icons";
