@@ -29,6 +29,7 @@
       go
       hyprpaper
       hyprcursor
+      jetbrains.idea-community-bin
       kdePackages.dolphin
       kitty
       libgcc
