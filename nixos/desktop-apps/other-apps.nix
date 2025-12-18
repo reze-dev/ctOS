@@ -50,6 +50,13 @@
       yazi
       zig
       zoxide
+      jdk17
+      clang
+      clang-tools
+      cmake
+      gnumake
+      shfmt
+      shellcheck
       #...
     ]
     ++ [
