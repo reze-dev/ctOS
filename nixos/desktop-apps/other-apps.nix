@@ -39,6 +39,7 @@
       nitch
       nixfmt-rfc-style
       nodejs
+      obsidian
       ripgrep
       rofi
       rustup
