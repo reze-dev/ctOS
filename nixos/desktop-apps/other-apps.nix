@@ -37,7 +37,7 @@
       mpv
       nil
       nitch
-      nixfmt-rfc-style
+      nixfmt
       nodejs
       obsidian
       ripgrep
