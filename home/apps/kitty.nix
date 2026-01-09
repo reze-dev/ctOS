@@ -16,7 +16,7 @@
     };
     themeFile = "rose-pine";
     settings = {
-      background_opacity = 0.75;
+      background_opacity = 0.85;
       confirm_os_window_close = 0;
       shell = "fish";
     };
