@@ -1,6 +1,8 @@
 {
   config,
   pkgs,
+  lib,
+  importers,
   ...
 }:
 
@@ -75,9 +77,7 @@
     # EDITOR = "emacs";
   };
 
-  imports = [
-    ./home
-  ];
+  imports = (importers.scanPaths ./home);
 
   programs.home-manager.enable = true;
 }

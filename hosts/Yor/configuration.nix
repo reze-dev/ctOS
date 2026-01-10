@@ -3,23 +3,22 @@
   lib,
   pkgs,
   inputs,
+  importers,
   ...
 }:
 
 {
   # Import the required config files here
   imports = [
-    ../../nixos
-
-    # Import Home Manager's NixOS module
     inputs.home-manager.nixosModules.home-manager
     inputs.nix-index-database.nixosModules.nix-index
     #{
     #  home-manager.useGlobalPkgs = true;
     #  home-manager.useUserPackages = true;
     #}
-  ];
+  ] ++ (importers.scanPaths ../../nixos);
 
+  home-manager.extraSpecialArgs = { inherit inputs importers; };
   home-manager.users.loid = {
     # Import your modular Home Manager configuration:
     imports = [ ../../home.nix ];

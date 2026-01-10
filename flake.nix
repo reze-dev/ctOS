@@ -28,11 +28,12 @@
       lib = nixpkgs.lib;
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      myLib = import ./lib/importers.nix { inherit lib; };
     in
     {
       nixosConfigurations = {
         Yor = lib.nixosSystem {
-          specialArgs = { inherit inputs; };
+          specialArgs = { inherit inputs; importers = myLib; };
           inherit system;
           modules = [
             ./hosts/Yor/configuration.nix
