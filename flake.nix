@@ -4,17 +4,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
-    home-manager = {
-      url = "github:nix-community/home-manager/master";
-      # Ensure Home Manager uses the same nixpkgs as your configuration
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     rose-pine-hyprcursor.url = "github:ndom91/rose-pine-hyprcursor";
-    nix-index-database = {
-      url = "github:nix-community/nix-index-database";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     awww.url = "git+https://codeberg.org/LGFae/awww";
+
+    home-manager.url = "github:nix-community/home-manager/master";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
+    nix-index-database.url = "github:nix-community/nix-index-database";
+    nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
