@@ -17,22 +17,11 @@
   #services.displayManager.sddm.enable = true;
   #services.desktopManager.plasma6.enable = true;
 
-  # services.greetd = {
-  #   enable = true;
-  #   settings = {
-  #     default_session = {
-  #       command = "${pkgs.tuigreet}/bin/tuigreet --cmd start-hyprland";
-  #       user = "loid";
-  #     };
-  #   };
-  # };
-  #
-
   services.greetd = {
     enable = true;
     settings.default_session = {
       user = "loid";
-      command = "${pkgs.hyprland}/bin/Hyprland";
+      command = "${pkgs.bash}/bin/bash -lc 'exec start-hyprland'";
     };
   };
 
