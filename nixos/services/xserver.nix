@@ -19,9 +19,15 @@
 
   services.greetd = {
     enable = true;
-    settings.default_session = {
-      user = "loid";
-      command = "${pkgs.bash}/bin/bash -lc 'exec start-hyprland'";
+    settings = {
+      default_session = {
+        command = "${pkgs.tuigreet}/bin/tuigreet \
+        --cmd start-hyprland \
+        --clear \
+        --remember \
+        --remember-session \
+        --time";
+      };
     };
   };
 
