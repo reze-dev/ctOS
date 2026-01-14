@@ -16,14 +16,18 @@
   # Enable the KDE plasma desktop environment
   #services.displayManager.sddm.enable = true;
   #services.desktopManager.plasma6.enable = true;
+  environment.etc."greetd/environments".text = ''
+    Hyprland (Wayland):start-hyprland
+    Niri (Wayland):niri
+  '';
 
   programs.niri.enable = true;
+
   services.greetd = {
     enable = true;
     settings = {
       default_session = {
         command = "${pkgs.tuigreet}/bin/tuigreet \
-        --cmd start-hyprland \
         --clear \
         --remember \
         --remember-session \
