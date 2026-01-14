@@ -23,7 +23,7 @@
       eza
       fd
       fzf
-      fastfetch
+      fuzzel
       gcc
       ghostty
       go
