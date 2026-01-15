@@ -16,10 +16,7 @@
   # Enable the KDE plasma desktop environment
   #services.displayManager.sddm.enable = true;
   #services.desktopManager.plasma6.enable = true;
-  environment.etc."greetd/environments".text = ''
-    Hyprland (Wayland):start-hyprland
-    Niri (Wayland):niri
-  '';
+
 
   programs.niri.enable = true;
 
@@ -28,10 +25,10 @@
     settings = {
       default_session = {
         command = "${pkgs.tuigreet}/bin/tuigreet \
-        --clear \
+        --time \
+        --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions \
         --remember \
-        --remember-session \
-        --time";
+        --remember-session";
       };
     };
   };
