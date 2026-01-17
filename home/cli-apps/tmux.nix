@@ -73,10 +73,8 @@
           set -g @powerkit_plugins "datetime,battery,cpu,memory,git"
           set -g @powerkit_theme "rose-pine"
           set -g @powerkit_theme_variant "main"
-          set -g @powerkit_separator_style "rounded"
           set -g @powerkit_elements_spacing "both"
           set -g @powerkit_status_interval "5"
-          set -g @powerkit_transparent "true"
         '';
       }
       {
