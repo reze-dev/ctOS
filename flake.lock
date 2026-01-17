@@ -170,6 +170,22 @@
     },
     "nixpkgs_4": {
       "locked": {
+        "lastModified": 1768127708,
+        "narHash": "sha256-1Sm77VfZh3mU0F5OqKABNLWxOuDeHIlcFjsXeeiPazs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_5": {
+      "locked": {
         "lastModified": 1766902085,
         "narHash": "sha256-coBu0ONtFzlwwVBzmjacUQwj3G+lybcZ1oeNSQkgC0M=",
         "owner": "nixos",
@@ -191,6 +207,7 @@
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_2",
         "rose-pine-hyprcursor": "rose-pine-hyprcursor",
+        "tmux-powerkit": "tmux-powerkit",
         "zen-browser": "zen-browser"
       }
     },
@@ -265,6 +282,24 @@
         "type": "github"
       }
     },
+    "tmux-powerkit": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_4"
+      },
+      "locked": {
+        "lastModified": 1768502914,
+        "narHash": "sha256-3msuLbmOYMRXVP+wYFiXRyTlVn4PA3OwtuXgUVOdLGo=",
+        "owner": "fabioluciano",
+        "repo": "tmux-powerkit",
+        "rev": "5a0c3a31b7bbe1954d884e8ba4688483234c921e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fabioluciano",
+        "repo": "tmux-powerkit",
+        "type": "github"
+      }
+    },
     "utils": {
       "inputs": {
         "systems": "systems_2"
@@ -286,7 +321,7 @@
     "zen-browser": {
       "inputs": {
         "home-manager": "home-manager_2",
-        "nixpkgs": "nixpkgs_4"
+        "nixpkgs": "nixpkgs_5"
       },
       "locked": {
         "lastModified": 1768379550,

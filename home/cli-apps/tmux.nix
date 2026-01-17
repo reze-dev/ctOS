@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -67,18 +68,15 @@
         '';
       }
       {
-        plugin = tmuxPlugins.catppuccin;
+        plugin = inputs.tmux-powerkit.packages.${pkgs.stdenv.hostPlatform.system}.default;
         extraConfig = ''
-          set -g @catppuccin_flavor 'latte'
-          set -g @catppuccin_window_status_style "rounded"
-          set -g status-right-length 100
-          set -g status-left-length 100
-          set -g status-left ""
-          set -g status-right "#{E:@catppuccin_status_application}"
-          set -agF status-right "#{E:@catppuccin_status_cpu}"
-          set -ag status-right "#{E:@catppuccin_status_session}"
-          set -ag status-right "#{E:@catppuccin_status_uptime}"
-          set -agF status-right "#{E:@catppuccin_status_battery}"
+          set -g @powerkit_plugins "datetime,battery,cpu,memory,git"
+          set -g @powerkit_theme "rose-pine"
+          set -g @powerkit_theme_variant "main"
+          set -g @powerkit_separator_style "rounded"
+          set -g @powerkit_elements_spacing "both"
+          set -g @powerkit_status_interval "5"
+          set -g @powerkit_transparent "true"
         '';
       }
       {

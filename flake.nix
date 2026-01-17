@@ -6,10 +6,9 @@
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
     rose-pine-hyprcursor.url = "github:ndom91/rose-pine-hyprcursor";
     awww.url = "git+https://codeberg.org/LGFae/awww";
-
+    tmux-powerkit.url = "github:fabioluciano/tmux-powerkit";
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -30,7 +29,10 @@
     {
       nixosConfigurations = {
         Yor = lib.nixosSystem {
-          specialArgs = { inherit inputs; importers = myLib; };
+          specialArgs = {
+            inherit inputs;
+            importers = myLib;
+          };
           inherit system;
           modules = [
             ./hosts/Yor/configuration.nix
