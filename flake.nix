@@ -11,6 +11,8 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -27,19 +29,28 @@
       myLib = import ./lib/importers.nix { inherit lib; };
     in
     {
-      nixosConfigurations = {
-        Yor = lib.nixosSystem {
-          specialArgs = {
-            inherit inputs;
-            importers = myLib;
+      nixosConfigurations =
+        let
+          # Get all subdirectories in ./hosts, excluding "common"
+          hosts = lib.filterAttrs
+            (name: type: type == "directory" && name != "common")
+            (builtins.readDir ./hosts);
+            
+          mkHost = hostName: lib.nixosSystem {
+            inherit system;
+            specialArgs = {
+              inherit inputs;
+              importers = myLib;
+            };
+            modules = [
+              ./hosts/${hostName}/configuration.nix
+              ./hosts/${hostName}/hardware-configuration.nix
+              inputs.disko.nixosModules.disko
+              ./hosts/common/disko-config.nix
+              { nix.nixPath = [ "nixpkgs=${nixpkgs}" ]; }
+            ];
           };
-          inherit system;
-          modules = [
-            ./hosts/Yor/configuration.nix
-            ./hosts/Yor/hardware-configuration.nix
-            { nix.nixPath = [ "nixpkgs=${nixpkgs}" ]; }
-          ];
-        };
-      };
+        in
+          lib.mapAttrs (name: _: mkHost name) hosts;
     };
 }

@@ -7,8 +7,8 @@
 }:
 
 {
-  home.username = "loid";
-  home.homeDirectory = "/home/loid";
+  home.username = lib.mkDefault "loid";
+  home.homeDirectory = lib.mkDefault "/home/loid";
   home.stateVersion = "24.11";
 
   home.packages = [
