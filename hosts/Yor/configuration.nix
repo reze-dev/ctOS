@@ -16,6 +16,8 @@
   home-manager.extraSpecialArgs = { inherit inputs importers; };
   home-manager.users.loid = {
     imports = [ ../../home.nix ];
+    home.username = lib.mkForce "loid";
+    home.homeDirectory = lib.mkForce "/home/loid";
   };
 
   # Enable flakes and other features

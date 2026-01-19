@@ -11,6 +11,8 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -27,19 +29,63 @@
       myLib = import ./lib/importers.nix { inherit lib; };
     in
     {
-      nixosConfigurations = {
-        Yor = lib.nixosSystem {
-          specialArgs = {
-            inherit inputs;
-            importers = myLib;
+      nixosConfigurations =
+        let
+          # Get all subdirectories in ./hosts, excluding "common"
+          hosts = lib.filterAttrs
+            (name: type: type == "directory" && name != "common")
+            (builtins.readDir ./hosts);
+          
+          # Check if a host uses disko (has a disko.nix file)
+          hostHasDisko = hostName: builtins.pathExists ./hosts/${hostName}/disko.nix;
+            
+          mkHost = hostName: lib.nixosSystem {
+            inherit system;
+            specialArgs = {
+              inherit inputs;
+              importers = myLib;
+            };
+            modules = [
+              ./hosts/${hostName}/configuration.nix
+              ./hosts/${hostName}/hardware-configuration.nix
+              { nix.nixPath = [ "nixpkgs=${nixpkgs}" ]; }
+            ] ++ (lib.optionals (hostHasDisko hostName) [
+              # Only include disko for hosts that have disko.nix
+              inputs.disko.nixosModules.disko
+              ./hosts/common/disko-config.nix
+            ]);
           };
-          inherit system;
-          modules = [
-            ./hosts/Yor/configuration.nix
-            ./hosts/Yor/hardware-configuration.nix
-            { nix.nixPath = [ "nixpkgs=${nixpkgs}" ]; }
-          ];
+        in
+          lib.mapAttrs (name: _: mkHost name) hosts;
+
+      # Installer package
+      packages.${system} = {
+        installer = pkgs.writeShellScriptBin "snowflake-install" ''
+          set -e
+          TEMP_DIR=$(mktemp -d -t snowflake-install.XXXXXX)
+          cleanup() { rm -rf "$TEMP_DIR"; }
+          trap cleanup EXIT
+          
+          echo "Cloning Snowflake..."
+          ${pkgs.git}/bin/git clone --depth 1 https://github.com/atomiksan/snowflake.git "$TEMP_DIR/snowflake"
+          cd "$TEMP_DIR/snowflake"
+          export SNOWFLAKE_REMOTE="$TEMP_DIR/snowflake"
+          chmod +x install.sh
+          exec ./install.sh
+        '';
+        
+        default = self.packages.${system}.installer;
+      };
+
+      # App for `nix run`
+      apps.${system} = {
+        install = {
+          type = "app";
+          program = "${self.packages.${system}.installer}/bin/snowflake-install";
         };
+        
+        default = self.apps.${system}.install;
       };
     };
 }
+
