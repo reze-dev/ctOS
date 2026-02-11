@@ -94,10 +94,10 @@ Singleton {
         return animationMode >= mode;
     }
 
-    readonly property var launchCommand: greeter.getOptional("greetd.launch", ["uwsm", "start", "hyprland.desktop"], {
+    readonly property var launchCommand: greeter.getOptional("modes.greetd.launch", ["uwsm", "start", "hyprland.desktop"], {
         overrideable: false
     })
-    readonly property var exitCommand: greeter.getOptional("greetd.exit", ["hyprctl", "dispatch", "exit"], {
+    readonly property var exitCommand: greeter.getOptional("modes.greetd.exit", ["uwsm", "stop"], {
         overrideable: false
     })
 
