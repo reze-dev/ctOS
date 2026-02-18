@@ -172,19 +172,15 @@ cat > "$HOST_DIR/configuration.nix" <<EOF
   config,
   lib,
   pkgs,
-  inputs,
-  importers,
   ...
 }:
 
 {
   imports = [
     ./disko.nix
-    inputs.home-manager.nixosModules.home-manager
-    inputs.nix-index-database.nixosModules.nix-index
-  ] ++ (importers.scanPaths ../../nixos);
+    ../common/base.nix
+  ];
 
-  home-manager.extraSpecialArgs = { inherit inputs importers; };
   home-manager.users.$USERNAME = {
     imports = [ ../../home.nix ];
     home.username = lib.mkForce "$USERNAME";
@@ -200,13 +196,10 @@ cat > "$HOST_DIR/configuration.nix" <<EOF
     hashedPassword = "$HASHED_PASSWORD";
   };
 
-  # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
   # Hostname
   networking.hostName = "$HOSTNAME";
 
-  system.stateVersion = "24.11"; 
+  system.stateVersion = "26.05";
 }
 EOF
 
@@ -227,9 +220,13 @@ EOF
     sed -i '/imports = \[/a \    ./disko-fs.nix' "$HOST_DIR/configuration.nix"
 fi
 
-# Git Tracking (Required for Flakes)
-echo -e "Staging files for flake..."
-git add .
+# Stage files when running from a git checkout
+echo -e "Staging files for flake (if git checkout)..."
+if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    git add .
+else
+    echo -e "${YELLOW}Not in a git repository, skipping git add.${NC}"
+fi
 
 # Apply Partitioning with Disko
 echo -e "\n${GREEN}Partitioning /dev/$DISK_DEV with Disko...${NC}"

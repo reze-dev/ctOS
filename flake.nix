@@ -66,8 +66,9 @@
           cleanup() { rm -rf "$TEMP_DIR"; }
           trap cleanup EXIT
           
-          echo "Cloning Snowflake..."
-          ${pkgs.git}/bin/git clone --depth 1 https://github.com/atomiksan/snowflake.git "$TEMP_DIR/snowflake"
+          echo "Preparing Snowflake source..."
+          cp -R "${self}" "$TEMP_DIR/snowflake"
+          chmod -R u+w "$TEMP_DIR/snowflake"
           cd "$TEMP_DIR/snowflake"
           export SNOWFLAKE_REMOTE="$TEMP_DIR/snowflake"
           chmod +x install.sh
@@ -82,10 +83,16 @@
         install = {
           type = "app";
           program = "${self.packages.${system}.installer}/bin/snowflake-install";
+          meta = {
+            description = "Interactive Snowflake installer";
+          };
         };
         
-        default = self.apps.${system}.install;
+        default = self.apps.${system}.install // {
+          meta = {
+            description = "Default Snowflake app (installer)";
+          };
+        };
       };
     };
 }
-
