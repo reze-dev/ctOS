@@ -6,13 +6,11 @@
 }:
 
 {
-
   boot = {
-    kernelParams = [ "i8042.nokbd" ];
     loader = {
       efi = {
         canTouchEfiVariables = true;
-        efiSysMountPoint = "/boot/efi"; # default /boot
+        efiSysMountPoint = "/boot/efi";
       };
       grub = {
         enable = true;
