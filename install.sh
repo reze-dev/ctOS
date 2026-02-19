@@ -30,20 +30,27 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# 1. Ask for Target Hostname
-echo -e "${GREEN}[1/6] Host Configuration${NC}"
+# ──────────────────────────────────────────────
+# 1. Host Configuration
+# ──────────────────────────────────────────────
+echo -e "${GREEN}[1/7] Host Configuration${NC}"
 read -p "Enter Target Hostname (e.g., my-laptop): " HOSTNAME
 if [ -z "$HOSTNAME" ]; then
     echo -e "${RED}Hostname cannot be empty${NC}"
     exit 1
 fi
 
-# 2. Ask for Username
-echo -e "\n${GREEN}[2/6] User Configuration${NC}"
-read -p "Enter Username (default: loid): " USERNAME
-USERNAME=${USERNAME:-loid}
+# ──────────────────────────────────────────────
+# 2. User Configuration
+# ──────────────────────────────────────────────
+echo -e "\n${GREEN}[2/7] User Configuration${NC}"
+read -p "Enter Username: " USERNAME
+if [ -z "$USERNAME" ]; then
+    echo -e "${RED}Username cannot be empty${NC}"
+    exit 1
+fi
 
-# 3. Ask for Password
+# 3. Password
 echo -e "\nEnter Password for user $USERNAME (will be hashed):"
 read -s PASSWORD
 echo -e "\nConfirm Password:"
@@ -60,7 +67,6 @@ if [ -z "$PASSWORD" ]; then
 fi
 
 echo -e "${GREEN}Hashing password...${NC}"
-# Try mkpasswd (from whois/mkpasswd), then openssl, then python
 if command -v mkpasswd &> /dev/null; then
   HASHED_PASSWORD=$(mkpasswd -m sha-512 "$PASSWORD")
 elif command -v openssl &> /dev/null; then
@@ -73,8 +79,10 @@ else
   exit 1
 fi
 
-# 4. Disk Selection  
-echo -e "\n${GREEN}[3/6] Disk Selection${NC}"
+# ──────────────────────────────────────────────
+# 4. Disk Selection
+# ──────────────────────────────────────────────
+echo -e "\n${GREEN}[3/7] Disk Selection${NC}"
 echo -e "${YELLOW}Available Disks:${NC}"
 lsblk -d -n -o NAME,SIZE,MODEL,TYPE | grep disk || true
 echo ""
@@ -92,20 +100,23 @@ if [ "$CONFIRM" != "yes" ]; then
     exit 1
 fi
 
-# 5. Swap Size Configuration
-echo -e "\n${GREEN}[4/6] Swap Configuration${NC}"
+# ──────────────────────────────────────────────
+# 5. Swap Configuration
+# ──────────────────────────────────────────────
+echo -e "\n${GREEN}[4/7] Swap Configuration${NC}"
 echo "Enter swap partition size (examples: 8G, 16G, 0 to disable)"
 read -p "Swap size [8G]: " SWAP_SIZE
 SWAP_SIZE=${SWAP_SIZE:-8G}
 
-# Validate swap size format
 if [[ ! "$SWAP_SIZE" =~ ^[0-9]+[GMgm]?$ ]] && [ "$SWAP_SIZE" != "0" ]; then
     echo -e "${RED}Invalid swap size format. Use format like 8G, 16G, or 0${NC}"
     exit 1
 fi
 
+# ──────────────────────────────────────────────
 # 6. Filesystem Type
-echo -e "\n${GREEN}[5/6] Filesystem Configuration${NC}"
+# ──────────────────────────────────────────────
+echo -e "\n${GREEN}[5/7] Filesystem Configuration${NC}"
 echo "Select root filesystem type:"
 echo "  1) btrfs (recommended - supports snapshots, subvolumes)"
 echo "  2) ext4 (simple, traditional)"
@@ -121,12 +132,71 @@ case "$FS_CHOICE" in
         ;;
 esac
 
+# ──────────────────────────────────────────────
+# 7. GPU Configuration
+# ──────────────────────────────────────────────
+echo -e "\n${GREEN}[6/7] GPU Configuration${NC}"
+echo "Select your GPU type:"
+echo "  1) None / Intel / AMD (no extra driver needed)"
+echo "  2) NVIDIA (proprietary driver)"
+echo "  3) NVIDIA + AMD/Intel hybrid (Prime)"
+read -p "Choice [1]: " GPU_CHOICE
+GPU_CHOICE=${GPU_CHOICE:-1}
+
+NVIDIA_ENABLE="false"
+NVIDIA_PRIME_ENABLE="false"
+NVIDIA_BUS_ID=""
+IGPU_BUS_ID=""
+IGPU_TYPE=""
+
+case "$GPU_CHOICE" in
+    2)
+        NVIDIA_ENABLE="true"
+        ;;
+    3)
+        NVIDIA_ENABLE="true"
+        NVIDIA_PRIME_ENABLE="true"
+        echo ""
+        echo -e "${YELLOW}To find PCI Bus IDs, run: lspci | grep -E 'VGA|3D'${NC}"
+        if command -v lspci &> /dev/null; then
+            echo -e "${CYAN}Detected GPUs:${NC}"
+            lspci | grep -E 'VGA|3D' || true
+        fi
+        echo ""
+        read -p "NVIDIA GPU Bus ID (e.g., PCI:1:0:0): " NVIDIA_BUS_ID
+        echo "iGPU type:"
+        echo "  1) Intel"
+        echo "  2) AMD"
+        read -p "Choice [1]: " IGPU_CHOICE
+        IGPU_CHOICE=${IGPU_CHOICE:-1}
+        read -p "iGPU Bus ID (e.g., PCI:0:2:0): " IGPU_BUS_ID
+        case "$IGPU_CHOICE" in
+            2) IGPU_TYPE="amd" ;;
+            *) IGPU_TYPE="intel" ;;
+        esac
+        ;;
+    *)
+        # No extra GPU config
+        ;;
+esac
+
+# ──────────────────────────────────────────────
+# Summary
+# ──────────────────────────────────────────────
 echo -e "\n${CYAN}Configuration Summary:${NC}"
 echo "  Hostname:   $HOSTNAME"
 echo "  Username:   $USERNAME"
 echo "  Disk:       /dev/$DISK_DEV"
 echo "  Swap:       $SWAP_SIZE"
 echo "  Filesystem: $FS_TYPE"
+if [ "$NVIDIA_ENABLE" = "true" ]; then
+    echo "  GPU:        NVIDIA"
+    if [ "$NVIDIA_PRIME_ENABLE" = "true" ]; then
+        echo "  Prime:      Enabled ($NVIDIA_BUS_ID + $IGPU_TYPE:$IGPU_BUS_ID)"
+    fi
+else
+    echo "  GPU:        Default (no NVIDIA)"
+fi
 echo ""
 read -p "Proceed with installation? [Y/n]: " PROCEED
 PROCEED=${PROCEED:-Y}
@@ -135,8 +205,10 @@ if [[ ! "$PROCEED" =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
-# Create host directory
-echo -e "\n${GREEN}[6/6] Setting up configuration...${NC}"
+# ──────────────────────────────────────────────
+# [7/7] Generate Configuration
+# ──────────────────────────────────────────────
+echo -e "\n${GREEN}[7/7] Setting up configuration...${NC}"
 HOST_DIR="$WORK_DIR/hosts/$HOSTNAME"
 mkdir -p "$HOST_DIR"
 
@@ -153,7 +225,6 @@ cat > "$HOST_DIR/disko.nix" <<EOF
   disko.devices.disk.main.device = "/dev/$DISK_DEV";
 EOF
 
-# Add swap size override if not default
 if [ "$SWAP_SIZE" != "8G" ]; then
     if [ "$SWAP_SIZE" = "0" ]; then
         echo '  # Swap disabled' >> "$HOST_DIR/disko.nix"
@@ -164,6 +235,30 @@ if [ "$SWAP_SIZE" != "8G" ]; then
 fi
 
 echo "}" >> "$HOST_DIR/disko.nix"
+
+# Build GPU configuration block
+GPU_CONFIG=""
+if [ "$NVIDIA_ENABLE" = "true" ]; then
+    GPU_CONFIG="
+  # NVIDIA GPU
+  snowflake.nvidia.enable = true;"
+
+    if [ "$NVIDIA_PRIME_ENABLE" = "true" ]; then
+        GPU_CONFIG="$GPU_CONFIG
+  snowflake.nvidia.prime = {
+    enable = true;
+    nvidiaBusId = \"$NVIDIA_BUS_ID\";"
+        if [ "$IGPU_TYPE" = "intel" ]; then
+            GPU_CONFIG="$GPU_CONFIG
+    intelBusId = \"$IGPU_BUS_ID\";"
+        else
+            GPU_CONFIG="$GPU_CONFIG
+    amdgpuBusId = \"$IGPU_BUS_ID\";"
+        fi
+        GPU_CONFIG="$GPU_CONFIG
+  };"
+    fi
+fi
 
 # Create Host Configuration
 echo -e "Creating host configuration..."
@@ -187,7 +282,7 @@ cat > "$HOST_DIR/configuration.nix" <<EOF
     home.homeDirectory = lib.mkForce "/home/$USERNAME";
   };
 
-  # Define the user account
+  # User account
   users.users.$USERNAME = {
     isNormalUser = true;
     description = "$USERNAME";
@@ -195,6 +290,7 @@ cat > "$HOST_DIR/configuration.nix" <<EOF
     shell = pkgs.zsh;
     hashedPassword = "$HASHED_PASSWORD";
   };
+$GPU_CONFIG
 
   # Hostname
   networking.hostName = "$HOSTNAME";
@@ -203,7 +299,7 @@ cat > "$HOST_DIR/configuration.nix" <<EOF
 }
 EOF
 
-# Handle filesystem type - for ext4, we need a different disko config
+# Handle filesystem type
 if [ "$FS_TYPE" = "ext4" ]; then
     echo -e "Configuring ext4 filesystem..."
     cat > "$HOST_DIR/disko-fs.nix" <<EOF
@@ -216,7 +312,6 @@ if [ "$FS_TYPE" = "ext4" ]; then
   };
 }
 EOF
-    # Add import to configuration.nix
     sed -i '/imports = \[/a \    ./disko-fs.nix' "$HOST_DIR/configuration.nix"
 fi
 
