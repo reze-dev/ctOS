@@ -13,6 +13,10 @@
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -32,31 +36,34 @@
       nixosConfigurations =
         let
           # Get all subdirectories in ./hosts, excluding "common"
-          hosts = lib.filterAttrs
-            (name: type: type == "directory" && name != "common")
-            (builtins.readDir ./hosts);
-          
+          hosts = lib.filterAttrs (name: type: type == "directory" && name != "common") (
+            builtins.readDir ./hosts
+          );
+
           # Check if a host uses disko (has a disko.nix file)
           hostHasDisko = hostName: builtins.pathExists ./hosts/${hostName}/disko.nix;
-            
-          mkHost = hostName: lib.nixosSystem {
-            inherit system;
-            specialArgs = {
-              inherit inputs;
-              importers = myLib;
+
+          mkHost =
+            hostName:
+            lib.nixosSystem {
+              inherit system;
+              specialArgs = {
+                inherit inputs;
+                importers = myLib;
+              };
+              modules = [
+                ./hosts/${hostName}/configuration.nix
+                ./hosts/${hostName}/hardware-configuration.nix
+                { nix.nixPath = [ "nixpkgs=${nixpkgs}" ]; }
+              ]
+              ++ (lib.optionals (hostHasDisko hostName) [
+                # Only include disko for hosts that have disko.nix
+                inputs.disko.nixosModules.disko
+                ./hosts/common/disko-config.nix
+              ]);
             };
-            modules = [
-              ./hosts/${hostName}/configuration.nix
-              ./hosts/${hostName}/hardware-configuration.nix
-              { nix.nixPath = [ "nixpkgs=${nixpkgs}" ]; }
-            ] ++ (lib.optionals (hostHasDisko hostName) [
-              # Only include disko for hosts that have disko.nix
-              inputs.disko.nixosModules.disko
-              ./hosts/common/disko-config.nix
-            ]);
-          };
         in
-          lib.mapAttrs (name: _: mkHost name) hosts;
+        lib.mapAttrs (name: _: mkHost name) hosts;
 
       # Installer package with runtime dependencies
       packages.${system} = {
@@ -65,17 +72,17 @@
           runtimeInputs = with pkgs; [
             git
             coreutils
-            util-linux     # lsblk
-            pciutils       # lspci (GPU detection)
-            whois          # mkpasswd
-            openssl        # fallback password hashing
+            util-linux # lsblk
+            pciutils # lspci (GPU detection)
+            whois # mkpasswd
+            openssl # fallback password hashing
           ];
           text = ''
             set -e
             TEMP_DIR=$(mktemp -d -t snowflake-install.XXXXXX)
             cleanup() { rm -rf "$TEMP_DIR"; }
             trap cleanup EXIT
-            
+
             echo "Preparing Snowflake source..."
             cp -R "${self}" "$TEMP_DIR/snowflake"
             chmod -R u+w "$TEMP_DIR/snowflake"
@@ -85,7 +92,7 @@
             exec ./install.sh
           '';
         };
-        
+
         default = self.packages.${system}.installer;
       };
 
@@ -98,7 +105,7 @@
             description = "Interactive Snowflake installer";
           };
         };
-        
+
         default = self.apps.${system}.install // {
           meta = {
             description = "Default Snowflake app (installer)";

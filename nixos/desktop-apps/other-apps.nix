@@ -66,5 +66,6 @@
       inputs.zen-browser.packages."${stdenv.hostPlatform.system}".default
       inputs.rose-pine-hyprcursor.packages.${pkgs.stdenv.hostPlatform.system}.default
       inputs.awww.packages.${pkgs.stdenv.hostPlatform.system}.awww
+      inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 }
