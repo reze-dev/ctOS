@@ -72,10 +72,12 @@
           runtimeInputs = with pkgs; [
             git
             coreutils
-            util-linux # lsblk
+            util-linux # lsblk, blkid
             pciutils # lspci (GPU detection)
             whois # mkpasswd
             openssl # fallback password hashing
+            parted # partition creation (dual-boot mode)
+            btrfs-progs # mkfs.btrfs, btrfs subvolume (dual-boot mode)
           ];
           text = ''
             set -e
