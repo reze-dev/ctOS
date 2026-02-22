@@ -30,7 +30,6 @@
       hyprpaper
       hyprcursor
       hyprlauncher
-      kdePackages.dolphin
       kitty
       libgcc
       libnotify
