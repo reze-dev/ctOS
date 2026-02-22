@@ -7,8 +7,8 @@
 }:
 
 {
-  home.username = lib.mkDefault "loid";
-  home.homeDirectory = lib.mkDefault "/home/loid";
+  home.username = lib.mkDefault "nixos";
+  home.homeDirectory = lib.mkDefault "/home/nixos";
   home.stateVersion = "24.11";
 
   home.packages = [
