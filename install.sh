@@ -10,6 +10,38 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
+# ──────────────────────────────────────────────
+# Helper: Copy flake to installed system
+# ──────────────────────────────────────────────
+copy_flake_to_target() {
+    echo -e "\n${GREEN}Copying Snowflake flake to installed system...${NC}"
+    local FLAKE_DEST="/mnt/home/$USERNAME/snowflake"
+    mkdir -p "$FLAKE_DEST"
+    cp -a "$WORK_DIR/." "$FLAKE_DEST/"
+
+    # Remove old .git internals and initialize a fresh repo
+    if [ -d "$FLAKE_DEST/.git" ]; then
+        rm -rf "$FLAKE_DEST/.git"
+    fi
+    pushd "$FLAKE_DEST" > /dev/null
+    git init
+    git add .
+    git commit -m "Initial Snowflake configuration for $HOSTNAME"
+    popd > /dev/null
+
+    # Fix ownership — look up UID/GID from the installed system's /etc/passwd
+    local INSTALLED_UID INSTALLED_GID
+    INSTALLED_UID=$(grep "^${USERNAME}:" /mnt/etc/passwd | cut -d: -f3)
+    INSTALLED_GID=$(grep "^${USERNAME}:" /mnt/etc/passwd | cut -d: -f4)
+    if [ -n "$INSTALLED_UID" ] && [ -n "$INSTALLED_GID" ]; then
+        chown -R "$INSTALLED_UID:$INSTALLED_GID" "$FLAKE_DEST"
+        echo -e "${GREEN}Flake saved to /home/$USERNAME/snowflake (owned by UID $INSTALLED_UID)${NC}"
+    else
+        echo -e "${YELLOW}Warning: Could not determine UID/GID for $USERNAME.${NC}"
+        echo -e "${YELLOW}After first boot, run: sudo chown -R $USERNAME:$USERNAME ~/snowflake${NC}"
+    fi
+}
+
 # Determine if running from remote (cloned to temp) or local
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="$SCRIPT_DIR"
@@ -494,6 +526,8 @@ EOF
     echo -e "\n${GREEN}Installing NixOS...${NC}"
     nixos-install --flake ".#$HOSTNAME" --no-root-password
 
+    copy_flake_to_target
+
 else
     # ═══════════════════════════════════════════════
     # PARTITION-ONLY MODE — manual btrfs + subvolumes
@@ -682,8 +716,12 @@ EOF
     # Install NixOS
     echo -e "\n${GREEN}Installing NixOS to /mnt...${NC}"
     nixos-install --flake ".#$HOSTNAME" --no-root-password
+
+    copy_flake_to_target
 fi
 
 echo -e "\n${GREEN}✅ Installation Complete!${NC}"
+echo -e "Your configuration has been saved to: ${CYAN}/home/$USERNAME/snowflake${NC}"
 echo -e "You can now reboot into your new Snowflake system."
+echo -e "After rebooting, run: ${CYAN}cd ~/snowflake && sudo nixos-rebuild switch --flake .#$HOSTNAME${NC}"
 echo -e "Run: ${CYAN}reboot${NC}"
