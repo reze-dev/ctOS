@@ -12,6 +12,7 @@
   # Set up the nix-ld libraries to load
   programs.nix-ld.libraries = with pkgs; [
     stdenv.cc.cc
+    dbus
     zlib
     openssl
     libgcc
