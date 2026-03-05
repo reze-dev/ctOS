@@ -40,6 +40,7 @@
       lo = "eza -l -o --icons";
       vim = "nvim";
       tmux = "tmux -u";
+      butt = "but";
     };
     shellInitLast = ''
       fzf --fish | source

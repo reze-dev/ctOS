@@ -70,6 +70,7 @@
       la = "eza -la --icons";
       lo = "eza -l -o --icons";
       vim = "nvim";
+      butt = "but";
     };
   };
 }
