@@ -26,6 +26,7 @@
       "wheel"
       "libvirtd"
       "docker"
+      "kvm"
     ];
     shell = pkgs.zsh;
     hashedPassword = "$6$TNpl8IIaySZaN12R$gxxDmE63zbhtrD4DW3NCynxwUv0FugzawdLaD9twSROPTPruwl4EVssynOiHFwjqUcr11U6SXZS3o8.uRNhba0";
