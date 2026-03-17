@@ -35,20 +35,6 @@
   # NVIDIA GPU
   snowflake.nvidia.enable = true;
 
-  # Boot — use existing EFI bootloader (dual-boot safe)
-  boot.loader = {
-    efi = {
-      canTouchEfiVariables = true;
-      efiSysMountPoint = "/boot/efi";
-    };
-    grub = {
-      enable = true;
-      device = "nodev";
-      efiSupport = true;
-      useOSProber = true; # Detect Windows and other OSes
-    };
-  };
-
   # Hostname
   networking.hostName = "Makima";
 
