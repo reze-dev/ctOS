@@ -24,7 +24,7 @@
         export GPG_TTY=$(tty)
         export PATH=$HOME/.config/emacs/bin:$PATH
         export PATH=$(go env GOPATH)/bin:$PATH
-        #export PATH=$HOME/zig:$PATH
+        export DIRENV_LOG_FORMAT=""
       '')
       (lib.mkOrder 1000 ''
         zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
