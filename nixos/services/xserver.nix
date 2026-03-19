@@ -8,13 +8,13 @@
 {
 
   # Enable the GNOME Desktop Environment.
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
+  #services.displayManager.gdm.enable = true;
+  #services.desktopManager.gnome.enable = true;
 
   # Enable the KDE plasma desktop environment
-  #services.displayManager.sddm.enable = true;
-  #services.desktopManager.plasma6.enable = true;
-
+  
+  services.desktopManager.plasma6.enable = true;
+  services.displayManager.plasma-login-manager.enable = true;
 
   programs.niri.enable = true;
 
