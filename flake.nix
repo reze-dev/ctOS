@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
-    rose-pine-hyprcursor.url = "github:ndom91/rose-pine-hyprcursor";
     awww.url = "git+https://codeberg.org/LGFae/awww";
     tmux-powerkit.url = "github:fabioluciano/tmux-powerkit";
     home-manager.url = "github:nix-community/home-manager/master";
