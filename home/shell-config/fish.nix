@@ -5,14 +5,14 @@
 }:
 
 {
-  xdg.configFile."fish/themes/Rosé Pine.theme".source = "${
+  xdg.configFile."fish/themes/Rosé Pine Auto.theme".source = "${
     pkgs.fetchFromGitHub {
       owner = "rose-pine";
       repo = "fish";
-      rev = "38aab5baabefea1bc7e560ba3fbdb53cb91a6186";
-      sha256 = "bSGGksL/jBNqVV0cHZ8eJ03/8j3HfD9HXpDa8G/Cmi8=";
+      rev = "127a990e5ad4688118c950123787fb0686afa4c8";
+      sha256 = "3heI6nhItw5WfKGQT1FRQKfv+lONyn+DzwYjYqJjzLE=";
     }
-  }/themes/Rosé Pine.theme";
+  }/themes/Rosé Pine Auto.theme";
 
   programs.fish = {
     enable = true;
@@ -23,7 +23,7 @@
       set -gx PATH (go env GOPATH)/bin $PATH
       set -gx PATH $HOME/.config/emacs/bin $PATH
       set -gx DIRENV_LOG_FORMAT ""
-      fish_config theme choose 'Rosé Pine'
+      fish_config theme choose 'Rosé Pine Auto'
     '';
     interactiveShellInit = ''
       set -x TERM xterm-256color
