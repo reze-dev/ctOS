@@ -17,6 +17,6 @@
     nerd-fonts.caskaydia-cove
     nerd-fonts.symbols-only
     nerd-fonts.victor-mono
-    nerd-fonts.maple-mono.NF
+    maple-mono.NF
   ];
 }
