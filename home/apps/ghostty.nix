@@ -18,6 +18,7 @@
       font-family = "JetBrainsMono Nerd Font";
       font-size = 14;
       background-opacity = 0.85;
+      window-decoration = "none";
     };
   };
 }
