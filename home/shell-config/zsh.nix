@@ -13,7 +13,6 @@
       enable = true;
       plugins = [
         "Aloxaf/fzf-tab"
-        #"romkatv/powerlevel10k"
         "zsh-users/zsh-syntax-highlighting"
       ];
       useFriendlyNames = true;
