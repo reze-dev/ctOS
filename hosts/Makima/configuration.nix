@@ -11,19 +11,16 @@
     ../common/base.nix
   ];
 
-  home-manager.users.Reze = {
+  home-manager.users.reze = {
     imports = [ ../../home.nix ];
-    home.username = lib.mkForce "Reze";
-    home.homeDirectory = lib.mkForce "/home/Reze";
+    home.username = lib.mkForce "reze";
+    home.homeDirectory = lib.mkForce "/home/reze";
   };
 
-  home-manager.useGlobalPkgs = true;
-  home-manager.useUserPackages = true;
-
   # User account
-  users.users.Reze = {
+  users.users.reze = {
     isNormalUser = true;
-    description = "Reze";
+    description = "reze";
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -31,7 +28,7 @@
       "docker"
     ];
     shell = pkgs.zsh;
-    hashedPassword = "$6$w6d6g8tYaUXmoN8U$Dfavhm1Na0BsH4Cl2ZLXZSlfewRmXRacTfa3bfAICm2h7sykp7A6Q6h9MlmU86N8T0mOoTRFf3RQol3cz6TJM1";
+    hashedPassword = "$6$zNbayJKO7FeS160q$nGXbt2SP1.3TzvUbGlOh3B9mcvbMG9CUjTwN5of7uHov7dCT1iN8ot0tbV/jazKRg6onGRk8D6Jxk3R5Bu.ma1";
   };
 
   # NVIDIA GPU
