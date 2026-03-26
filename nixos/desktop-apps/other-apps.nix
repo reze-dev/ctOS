@@ -16,6 +16,7 @@
     with pkgs;
     [
       bat
+      btop
       discord
       dunst
       emacs-pgtk
