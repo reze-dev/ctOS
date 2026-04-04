@@ -1,6 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"golang.org/x/term"
+)
 
 // ANSI color codes
 const (
@@ -46,10 +52,12 @@ func PromptRequired(prompt, errMsg string) string {
 
 func PromptPassword(prompt string) string {
 	fmt.Print(prompt)
-	// Read line including spaces
-	var pw string
-	fmt.Scanln(&pw)
-	return pw
+	pw, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println() // newline after hidden input
+	if err != nil {
+		Die(fmt.Sprintf("Failed to read password: %v", err))
+	}
+	return strings.TrimSpace(string(pw))
 }
 
 func ConfirmYes(prompt string) {
