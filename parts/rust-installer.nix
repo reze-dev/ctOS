@@ -6,28 +6,40 @@
     let
       craneLib = inputs.crane.mkLib pkgs;
 
-      # Assemble source: Rust code + embedded flake
-      rustSrc = pkgs.runCommand "rust-installer-src" { } ''
-        mkdir -p $out/src $out/flake
-        cp ${../installer-rs}/Cargo.toml $out/
-        cp ${../installer-rs}/Cargo.lock $out/ 2>/dev/null || true
-        cp -r ${../installer-rs}/src/* $out/src/
+      # Use the installer-rs directory directly so crane can read Cargo.toml
+      # at eval time. We'll populate the flake/ dir in the build phase.
+      rustSrc = pkgs.lib.cleanSourceWith {
+        src = ../installer-rs;
+        filter = path: type:
+          (craneLib.filterCargoSources path type)
+          || builtins.baseNameOf path == "PLACEHOLDER";
+      };
 
-        # Populate flake dir for include_dir! embed
-        cp ${../flake.nix} $out/flake/
-        cp ${../flake.lock} $out/flake/
-        cp ${../README.md} $out/flake/
-        cp -r ${../hosts} $out/flake/hosts
-        cp -r ${../home} $out/flake/home
-        cp -r ${../modules} $out/flake/modules
-        cp -r ${../parts} $out/flake/parts
-        cp -r ${../assets} $out/flake/assets
+      # Assemble the full flake source as a derivation
+      flakeSrc = pkgs.runCommand "snowflake-flake-src" { } ''
+        mkdir -p $out
+        cp ${../flake.nix} $out/flake.nix
+        cp ${../flake.lock} $out/flake.lock
+        cp ${../README.md} $out/README.md
+        cp -r ${../hosts} $out/hosts
+        cp -r ${../home} $out/home
+        cp -r ${../modules} $out/modules
+        cp -r ${../parts} $out/parts
+        cp -r ${../assets} $out/assets
       '';
 
       commonArgs = {
         src = rustSrc;
+        pname = "snowflake-installer";
+        version = "2.0.0";
         strictDeps = true;
         nativeBuildInputs = [ pkgs.pkg-config ];
+
+        # Populate flake/ dir before cargo build so include_dir! works
+        preBuild = ''
+          rm -rf flake/*
+          cp -r ${flakeSrc}/* flake/
+        '';
       };
 
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
