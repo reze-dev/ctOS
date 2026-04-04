@@ -14,13 +14,14 @@ snowflake/
 │   ├── common.nix            # Shared base — enables all snowflake.* modules
 │   ├── disko.nix             # Disko partition template
 │   └── Makima/               # Host: Makima (dual-boot, NVIDIA Prime)
-├── home.nix                  # Home Manager profile — enables all snowflake.home.*
+├── home/
+│   └── default.nix           # Home Manager profile — enables all snowflake.home.*
 ├── modules/                  # Pure option declarations only
 │   ├── nixos/                # snowflake.<name>.enable
 │   └── home/                 # snowflake.home.<name>.enable
 ├── assets/wallpapers/        # Wallpaper images
-└── install.sh                # Interactive installer
-```
+├── install.py                # Python installer (resumable, idempotent)
+└── README.md
 
 ## Usage
 
