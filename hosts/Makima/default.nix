@@ -11,7 +11,7 @@
   ];
 
   home-manager.users.reze = {
-    imports = [ ../../home.nix ];
+    imports = [ ../../home ];
     home.username = lib.mkForce "reze";
     home.homeDirectory = lib.mkForce "/home/reze";
   };

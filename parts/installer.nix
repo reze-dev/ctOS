@@ -7,14 +7,16 @@
       installer = pkgs.writeShellApplication {
         name = "snowflake-install";
         runtimeInputs = with pkgs; [
+          python3
           git
           coreutils
-          util-linux     # lsblk, blkid
+          util-linux     # lsblk, blkid, mkswap, swapon
           pciutils       # lspci (GPU detection)
           whois          # mkpasswd
           openssl        # fallback password hashing
           parted         # partition creation (dual-boot mode)
           btrfs-progs    # mkfs.btrfs, btrfs subvolume (dual-boot mode)
+          e2fsprogs      # chattr
         ];
         text = ''
           set -e
@@ -27,8 +29,7 @@
           chmod -R u+w "$TEMP_DIR/snowflake"
           cd "$TEMP_DIR/snowflake"
           export SNOWFLAKE_REMOTE="$TEMP_DIR/snowflake"
-          chmod +x install.sh
-          exec ./install.sh
+          exec python3 install.py
         '';
       };
 
