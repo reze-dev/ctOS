@@ -24,6 +24,7 @@ pub struct State {
     data: HashMap<String, String>,
 }
 
+#[allow(dead_code)]
 impl State {
     pub fn new() -> Self {
         let mut state = Self::default();

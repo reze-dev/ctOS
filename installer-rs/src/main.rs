@@ -249,11 +249,10 @@ async fn handle_text_submit(app: &mut App) {
             }
             app.config.disk_dev = val;
             // Fetch disk info for confirm page
-            app.cmd_output = cmd::run_capture(&format!(
-                "lsblk -d -n -o NAME,SIZE,MODEL,TYPE 2>/dev/null | grep disk"
-            ))
-            .await
-            .unwrap_or_default();
+            app.cmd_output =
+                cmd::run_capture("lsblk -d -n -o NAME,SIZE,MODEL,TYPE 2>/dev/null | grep disk")
+                    .await
+                    .unwrap_or_default();
             app.go_to_page(Page::DiskConfirm);
         }
         Page::PartNewStart => {
@@ -364,9 +363,7 @@ fn handle_confirm_submit(app: &mut App) {
         }
         Page::PartConfirm => {
             // Auto-detect EFI
-            let _disk = &app.config.disk_dev;
             app.go_to_page(Page::Efi);
-            // EFI detection will happen in go_to_page via cmd_output
         }
         _ => {}
     }
