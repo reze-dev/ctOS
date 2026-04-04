@@ -1,13 +1,10 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, pkgs, ... }:
+let cfg = config.snowflake.boot;
+in {
+  options.snowflake.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
 
-{
-  boot = {
-    loader = {
+  config = lib.mkIf cfg.enable {
+    boot.loader = {
       efi = {
         canTouchEfiVariables = true;
         efiSysMountPoint = "/boot/efi";
