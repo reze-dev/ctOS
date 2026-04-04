@@ -8,12 +8,14 @@ import (
 	"time"
 )
 
-// Run executes a shell command, printing output to stdout/stderr.
+// Run executes a shell command, capturing output. Returns error with output on failure.
 func Run(cmdStr string) error {
 	cmd := exec.Command("sh", "-c", cmdStr)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%v: %s", err, strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 // RunCapture executes a command and returns stdout trimmed.
@@ -26,9 +28,7 @@ func RunCapture(cmdStr string) (string, error) {
 // RunSilent runs a command, ignoring errors.
 func RunSilent(cmdStr string) {
 	cmd := exec.Command("sh", "-c", cmdStr)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	_ = cmd.Run()
+	_, _ = cmd.CombinedOutput()
 }
 
 // IsMounted checks if a path is a mount point.
@@ -61,8 +61,7 @@ func PathExists(path string) bool {
 	return err == nil
 }
 
-// Retry runs a function with exponential backoff.
-// On exhaustion, prompts the user for retry/skip/abort.
+// Retry runs a function with exponential backoff. Returns error on exhaustion.
 func Retry(name string, maxAttempts int, baseDelay time.Duration, fn func() error) error {
 	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
@@ -72,24 +71,8 @@ func Retry(name string, maxAttempts int, baseDelay time.Duration, fn func() erro
 		}
 		if attempt < maxAttempts {
 			wait := baseDelay * time.Duration(1<<(attempt-1))
-			Warn(fmt.Sprintf("  Attempt %d/%d failed: %v\n  Retrying in %v...", attempt, maxAttempts, lastErr, wait))
 			time.Sleep(wait)
-		} else {
-			Err(fmt.Sprintf("  All %d attempts failed: %v", maxAttempts, lastErr))
 		}
 	}
-
-	// Interactive fallback
-	for {
-		choice := Prompt(fmt.Sprintf("%s[r]etry / [s]kip / [a]bort? %s", Yellow, Reset))
-		switch strings.ToLower(choice) {
-		case "r":
-			return Retry(name, maxAttempts, baseDelay, fn)
-		case "s":
-			Warn("  Skipped.")
-			return nil
-		case "a":
-			Die("Aborted by user.")
-		}
-	}
+	return fmt.Errorf("%s failed after %d attempts: %w", name, maxAttempts, lastErr)
 }

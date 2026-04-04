@@ -40,7 +40,7 @@
         pname = "snowflake-installer-unwrapped";
         version = "1.0.0";
         src = goSrc;
-        vendorHash = "sha256-GlwDnvLCTNLID0SW1wHh4f5O1t0sz+NX/k4RdC1jKk0=";
+        vendorHash = "sha256-XgOllUod/bFhbbTNtu8ZNW+VjiNd4rCDMyqBSTr2Sm4=";
       };
     in
     {

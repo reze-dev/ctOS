@@ -284,9 +284,11 @@ home-manager.sharedModules = [ snowflake.homeManagerModules.default ];
 
 ### Go Installer (`nix run .#go-install`)
 
-A compiled Go binary that **embeds the entire Snowflake flake** inside itself. Requires no internet during installation (the flake is baked in at build time). Features:
+A compiled Go binary that **embeds the entire Snowflake flake** inside itself. Built with [Bubbletea](https://github.com/charmbracelet/bubbletea) for a beautiful interactive TUI. Features:
 
+- Wizard-style flow with styled inputs, selections, and progress display
 - Hidden password input (secure terminal reading)
+- Async installation with live progress, spinner, and checklist
 - JSON checkpoint resume — if power goes out, re-run to continue
 - Automatic retry with exponential backoff on failures
 - Dual-boot support with btrfs subvolumes or whole-disk with disko
