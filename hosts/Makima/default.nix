@@ -8,7 +8,6 @@
 {
   imports = [
     ./filesystems.nix
-    ../common/base.nix
   ];
 
   home-manager.users.reze = {
@@ -49,11 +48,10 @@
       enable = true;
       device = "nodev";
       efiSupport = true;
-      useOSProber = true; # Detect Windows and other OSes
+      useOSProber = true;
     };
   };
 
-  # Hostname
   networking.hostName = "Makima";
 
   system.stateVersion = "26.05";
