@@ -37,6 +37,9 @@ snowflake/
 ├── flake.nix                   # Flake entry — inputs + mkFlake via flake-parts
 ├── flake.lock
 │
+├── .github/workflows/
+│   └── release.yml             # CI/CD — builds Go binary + creates GitHub release
+│
 ├── parts/                      # flake-parts modules (build logic)
 │   ├── nixos.nix               # Host auto-discovery, module wiring, flake exports
 │   ├── installer.nix           # Python installer package + app
@@ -64,7 +67,7 @@ snowflake/
 │   ├── cmd.go                  # Shell command helpers + retry logic
 │   ├── ui.go                   # Terminal UI (colors, prompts, hidden password input)
 │   ├── go.mod / go.sum
-│   └── flake/                  # Populated at Nix build time with full flake source
+│   └── flake/                  # Populated at build time with full flake source
 │
 ├── assets/wallpapers/          # Wallpaper images
 ├── install.py                  # Python installer (legacy, still works)
@@ -77,13 +80,21 @@ snowflake/
 
 ### Fresh Install (from a NixOS live USB)
 
-**Option A — Go binary** (self-contained, recommended):
+**Option A — Download pre-built binary** (no Nix required, recommended):
+
+```bash
+curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer -o snowflake-installer
+chmod +x snowflake-installer
+sudo ./snowflake-installer
+```
+
+**Option B — Via Nix** (Go binary):
 
 ```bash
 nix run github:atomiksan/snowflake#go-install
 ```
 
-**Option B — Python installer**:
+**Option C — Via Nix** (Python installer):
 
 ```bash
 nix run github:atomiksan/snowflake
@@ -284,6 +295,23 @@ A compiled Go binary that **embeds the entire Snowflake flake** inside itself. R
 ### Python Installer (`nix run .#install`)
 
 The original interactive installer. Same functionality as the Go version but runs as a Python script with the flake source copied to a temp directory.
+
+### Releases (CI/CD)
+
+A GitHub Actions workflow automatically builds and publishes the Go installer binary when you push a version tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This triggers `.github/workflows/release.yml` which:
+
+1. Populates `installer/flake/` with the full repo source (mirrors what `go-installer.nix` does)
+2. Builds a statically linked `snowflake-installer` binary (`CGO_ENABLED=0`, stripped)
+3. Creates a GitHub release with auto-generated release notes and the binary attached
+
+The binary is fully self-contained — download it on a NixOS live USB and run it directly, no Nix needed.
 
 ---
 
