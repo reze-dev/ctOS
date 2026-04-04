@@ -2,7 +2,7 @@
   config,
   pkgs,
   lib,
-  importers,
+  homeModulePaths,
   ...
 }:
 
@@ -10,12 +10,6 @@
   home.username = lib.mkDefault "nixos";
   home.homeDirectory = lib.mkDefault "/home/nixos";
   home.stateVersion = "25.11";
-
-  home.packages = [
-  ];
-
-  home.file = {
-  };
 
   home.pointerCursor = {
     gtk.enable = true;
@@ -25,11 +19,23 @@
     size = 18;
   };
 
-  home.sessionVariables = {
-    # EDITOR = "emacs";
-  };
-
-  imports = (importers.scanPaths ./home);
+  imports = homeModulePaths;
 
   programs.home-manager.enable = true;
+
+  # Enable all snowflake home modules
+  snowflake.home = {
+    ghostty.enable = true;
+    kitty.enable = true;
+    fish.enable = true;
+    zsh.enable = true;
+    git.enable = true;
+    tmux.enable = true;
+    starship.enable = true;
+    omp.enable = true;
+    direnv.enable = true;
+    fzf.enable = true;
+    eza.enable = true;
+    zoxide.enable = true;
+  };
 }
