@@ -44,7 +44,6 @@ const (
 // ── Messages ───────────────────────────────────────────────────────
 
 type progressUpdateMsg ProgressUpdate
-type cmdOutputMsg string
 type hashDoneMsg struct {
 	hash string
 	err  error
