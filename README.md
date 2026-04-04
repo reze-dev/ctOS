@@ -284,7 +284,7 @@ home-manager.sharedModules = [ snowflake.homeManagerModules.default ];
 
 ### Go Installer (`nix run .#go-install`)
 
-A compiled Go binary that **embeds the entire Snowflake flake** inside itself. Built with [Bubbletea](https://github.com/charmbracelet/bubbletea) for a beautiful interactive TUI. Features:
+A compiled Go binary built with [Bubbletea](https://github.com/charmbracelet/bubbletea). Features:
 
 - Wizard-style flow with styled inputs, selections, and progress display
 - Hidden password input (secure terminal reading)
@@ -292,7 +292,17 @@ A compiled Go binary that **embeds the entire Snowflake flake** inside itself. B
 - JSON checkpoint resume — if power goes out, re-run to continue
 - Automatic retry with exponential backoff on failures
 - Dual-boot support with btrfs subvolumes or whole-disk with disko
-- Writes the flake to `~/snowflake` on the installed system
+
+### Rust Installer (`nix run .#rust-install`)
+
+A compiled Rust binary built with [Ratatui](https://ratatui.rs) + [Tokio](https://tokio.rs). Features:
+
+- Fully async TUI — all operations run on tokio, zero blocking
+- Ratatui rendering with progress gauge, animated spinner, and streaming log
+- Compile-time flake embedding via `include_dir!` — single self-contained binary
+- Arrow-key wizard navigation with icy snow color theme
+- Exponential backoff retry on failures
+- JSON checkpoint state for resume after power loss
 
 ### Python Installer (`nix run .#install`)
 
@@ -300,20 +310,35 @@ The original interactive installer. Same functionality as the Go version but run
 
 ### Releases (CI/CD)
 
-A GitHub Actions workflow automatically builds and publishes the Go installer binary when you push a version tag:
+GitHub Actions automatically builds **both** installer binaries when you push a version tag:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v3.0.0
+git push origin v3.0.0
 ```
 
 This triggers `.github/workflows/release.yml` which:
 
-1. Populates `installer/flake/` with the full repo source (mirrors what `go-installer.nix` does)
-2. Builds a statically linked `snowflake-installer` binary (`CGO_ENABLED=0`, stripped)
-3. Creates a GitHub release with auto-generated release notes and the binary attached
+1. **Go job** — Populates `installer/flake/`, builds a static `snowflake-installer-go` binary
+2. **Rust job** — Populates `installer-rs/flake/`, builds an optimized `snowflake-installer-rs` binary
+3. Creates a GitHub release with both binaries attached
 
-The binary is fully self-contained — download it on a NixOS live USB and run it directly, no Nix needed.
+Download either binary on a NixOS live USB and run it — no Nix required:
+
+```bash
+# Rust version (recommended)
+curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer-rs -o installer
+chmod +x installer && sudo ./installer
+
+# Go version
+curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer-go -o installer
+chmod +x installer && sudo ./installer
+```
+
+CI also runs **3 parallel checks** on every push to `main`:
+- 🧊 **Nix flake evaluation** — `nix flake check`
+- 🐹 **Go CI** — `gofmt`, `go vet`, `staticcheck`, `go build`
+- 🦀 **Rust CI** — `cargo fmt`, `cargo clippy`, `cargo build`
 
 ---
 
