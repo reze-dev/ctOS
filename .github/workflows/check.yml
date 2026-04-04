@@ -19,6 +19,8 @@ jobs:
         uses: cachix/install-nix-action@v30
         with:
           nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes pipe-operators
 
       - name: Evaluate flake
         run: nix flake check --no-build --all-systems
