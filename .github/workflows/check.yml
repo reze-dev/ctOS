@@ -78,3 +78,42 @@ jobs:
             exit 1
           fi
           echo "✅ go.mod is tidy"
+
+  rust-ci:
+    name: Rust Lint, Format & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: installer-rs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            installer-rs/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('installer-rs/Cargo.lock') }}
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Clippy (lint)
+        run: cargo clippy -- -D warnings
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Verify Cargo.lock is up to date
+        run: |
+          cargo update --dry-run 2>&1
+          echo "✅ Cargo.lock is up to date"

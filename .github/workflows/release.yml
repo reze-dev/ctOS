@@ -1,4 +1,4 @@
-name: Release Go Installer
+name: Release Installers
 
 on:
   push:
@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build & Release
+  build-go:
+    name: Build Go Installer
     runs-on: ubuntu-latest
 
     steps:
@@ -24,10 +24,7 @@ jobs:
 
       - name: Populate embedded flake directory
         run: |
-          # Mirror what parts/go-installer.nix does — assemble flake source
-          # into installer/flake/ so //go:embed picks it up
           rm -rf installer/flake/*
-
           cp flake.nix            installer/flake/
           cp flake.lock           installer/flake/
           cp README.md            installer/flake/
@@ -43,12 +40,80 @@ jobs:
           CGO_ENABLED: '0'
           GOOS: linux
           GOARCH: amd64
+        run: go build -ldflags="-s -w" -o snowflake-installer-go .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-binary
+          path: installer/snowflake-installer-go
+
+  build-rust:
+    name: Build Rust Installer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            installer-rs/target
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('installer-rs/Cargo.lock') }}
+
+      - name: Populate embedded flake directory
         run: |
-          go build -ldflags="-s -w" -o snowflake-installer .
+          rm -rf installer-rs/flake/*
+          cp flake.nix            installer-rs/flake/
+          cp flake.lock           installer-rs/flake/
+          cp README.md            installer-rs/flake/
+          cp -r hosts             installer-rs/flake/hosts
+          cp -r home              installer-rs/flake/home
+          cp -r modules           installer-rs/flake/modules
+          cp -r parts             installer-rs/flake/parts
+          cp -r assets            installer-rs/flake/assets
+
+      - name: Build
+        working-directory: installer-rs
+        run: cargo build --release
+
+      - name: Rename binary
+        run: cp installer-rs/target/release/snowflake-installer installer-rs/snowflake-installer-rs
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-binary
+          path: installer-rs/snowflake-installer-rs
+
+  release:
+    name: Create Release
+    needs: [build-go, build-rust]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Go binary
+        uses: actions/download-artifact@v4
+        with:
+          name: go-binary
+
+      - name: Download Rust binary
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-binary
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: installer/snowflake-installer
+          files: |
+            snowflake-installer-go
+            snowflake-installer-rs
           fail_on_unmatched_files: true
