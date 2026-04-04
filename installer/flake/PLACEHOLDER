@@ -1,0 +1,2 @@
+This directory is populated at Nix build time with the full Snowflake flake.
+See parts/go-installer.nix for details.
