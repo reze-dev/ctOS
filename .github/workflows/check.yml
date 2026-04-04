@@ -1,4 +1,4 @@
-name: Flake Check
+name: CI
 
 on:
   push:
@@ -7,10 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  check:
-    name: Evaluate Flake
+  flake-check:
+    name: Nix Flake Evaluation
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,3 +26,55 @@ jobs:
 
       - name: Show flake outputs
         run: nix flake show
+
+  go-ci:
+    name: Go Lint, Format & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: installer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: installer/go.mod
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "❌ The following files are not formatted:"
+            echo "$unformatted"
+            echo ""
+            echo "Run: gofmt -w ."
+            exit 1
+          fi
+          echo "✅ All files formatted"
+
+      - name: Vet (static analysis)
+        run: go vet ./...
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Staticcheck
+        run: staticcheck ./...
+
+      - name: Build
+        env:
+          CGO_ENABLED: '0'
+        run: go build -ldflags="-s -w" -o /dev/null .
+
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy
+          if ! git diff --quiet go.mod go.sum; then
+            echo "❌ go.mod or go.sum is not tidy. Run: go mod tidy"
+            git diff go.mod go.sum
+            exit 1
+          fi
+          echo "✅ go.mod is tidy"
