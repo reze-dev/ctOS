@@ -4,7 +4,7 @@
 {
   perSystem = { pkgs, system, ... }:
     let
-      craneLib = inputs.crane.lib.${system};
+      craneLib = inputs.crane.mkLib pkgs;
 
       # Assemble source: Rust code + embedded flake
       rustSrc = pkgs.runCommand "rust-installer-src" { } ''
