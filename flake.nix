@@ -19,6 +19,6 @@
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" ];
-      imports = [ ./parts/nixos.nix ./parts/installer.nix ./parts/go-installer.nix ./parts/rust-installer.nix ];
+      imports = [ ./parts/nixos.nix ./parts/installer.nix ./parts/rust-installer.nix ];
     };
 }

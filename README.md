@@ -23,7 +23,7 @@
 
 - **Toggle-based modules** — every NixOS and Home Manager module is behind a `snowflake.*.enable` option
 - **Auto-discovered hosts** — drop a directory in `hosts/` and it's wired up automatically
-- **Two installers** — a Python interactive installer and a Go binary with the entire flake embedded
+- **Two installers** — a Python interactive installer and a Rust binary with the entire flake embedded
 - **Dual-boot support** — partition-only mode with btrfs subvolumes
 - **Idempotent & resumable** — both installers save progress and can resume mid-install
 - **Reusable modules** — import `snowflake.nixosModules.default` in your own flake
@@ -38,12 +38,12 @@ snowflake/
 ├── flake.lock
 │
 ├── .github/workflows/
-│   └── release.yml             # CI/CD — builds Go binary + creates GitHub release
+│   └── release.yml             # CI/CD — builds Rust installer + creates GitHub release
 │
 ├── parts/                      # flake-parts modules (build logic)
 │   ├── nixos.nix               # Host auto-discovery, module wiring, flake exports
 │   ├── installer.nix           # Python installer package + app
-│   └── go-installer.nix        # Go installer package + app
+│   └── rust-installer.nix      # Rust installer package + app
 │
 ├── hosts/                      # Per-machine NixOS configurations
 │   ├── common.nix              # Shared base — enables all snowflake.* modules
@@ -60,13 +60,9 @@ snowflake/
 │   ├── nixos/                  # System modules  → snowflake.<name>.enable
 │   └── home/                   # User modules    → snowflake.home.<name>.enable
 │
-├── installer/                  # Go installer source
-│   ├── main.go                 # Entry point — embed flake, run steps
-│   ├── steps.go                # All 10 installation steps
-│   ├── state.go                # JSON checkpoint state for resume
-│   ├── cmd.go                  # Shell command helpers + retry logic
-│   ├── ui.go                   # Terminal UI (colors, prompts, hidden password input)
-│   ├── go.mod / go.sum
+├── installer-rs/               # Rust installer source
+│   ├── Cargo.toml / Cargo.lock
+│   ├── src/                    # TUI, backend, embedded flake loader
 │   └── flake/                  # Populated at build time with full flake source
 │
 ├── assets/wallpapers/          # Wallpaper images
@@ -88,10 +84,10 @@ chmod +x snowflake-installer
 sudo ./snowflake-installer
 ```
 
-**Option B — Via Nix** (Go binary):
+**Option B — Via Nix** (Rust binary):
 
 ```bash
-nix run github:atomiksan/snowflake#go-install
+nix run github:atomiksan/snowflake#rust-install
 ```
 
 **Option C — Via Nix** (Python installer):
@@ -282,17 +278,6 @@ home-manager.sharedModules = [ snowflake.homeManagerModules.default ];
 
 ## 🧊 Installer Details
 
-### Go Installer (`nix run .#go-install`)
-
-A compiled Go binary built with [Bubbletea](https://github.com/charmbracelet/bubbletea). Features:
-
-- Wizard-style flow with styled inputs, selections, and progress display
-- Hidden password input (secure terminal reading)
-- Async installation with live progress, spinner, and checklist
-- JSON checkpoint resume — if power goes out, re-run to continue
-- Automatic retry with exponential backoff on failures
-- Dual-boot support with btrfs subvolumes or whole-disk with disko
-
 ### Rust Installer (`nix run .#rust-install`)
 
 A compiled Rust binary built with [Ratatui](https://ratatui.rs) + [Tokio](https://tokio.rs). Features:
@@ -306,11 +291,11 @@ A compiled Rust binary built with [Ratatui](https://ratatui.rs) + [Tokio](https:
 
 ### Python Installer (`nix run .#install`)
 
-The original interactive installer. Same functionality as the Go version but runs as a Python script with the flake source copied to a temp directory.
+The original interactive installer. It uses the same install flow but runs as a Python script with the flake source copied to a temp directory.
 
 ### Releases (CI/CD)
 
-GitHub Actions automatically builds **both** installer binaries when you push a version tag:
+GitHub Actions automatically builds the Rust installer binary when you push a version tag:
 
 ```bash
 git tag v3.0.0
@@ -319,25 +304,19 @@ git push origin v3.0.0
 
 This triggers `.github/workflows/release.yml` which:
 
-1. **Go job** — Populates `installer/flake/`, builds a static `snowflake-installer-go` binary
-2. **Rust job** — Populates `installer-rs/flake/`, builds an optimized `snowflake-installer-rs` binary
-3. Creates a GitHub release with both binaries attached
+1. Populates `installer-rs/flake/`
+2. Builds an optimized `snowflake-installer` binary
+3. Creates a GitHub release with the binary attached
 
-Download either binary on a NixOS live USB and run it — no Nix required:
+Download the binary on a NixOS live USB and run it — no Nix required:
 
 ```bash
-# Rust version (recommended)
-curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer-rs -o installer
-chmod +x installer && sudo ./installer
-
-# Go version
-curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer-go -o installer
+curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer -o installer
 chmod +x installer && sudo ./installer
 ```
 
-CI also runs **3 parallel checks** on every push to `main`:
+CI also runs **2 parallel checks** on every push to `main`:
 - 🧊 **Nix flake evaluation** — `nix flake check`
-- 🐹 **Go CI** — `gofmt`, `go vet`, `staticcheck`, `go build`
 - 🦀 **Rust CI** — `cargo fmt`, `cargo clippy`, `cargo build`
 
 ---
