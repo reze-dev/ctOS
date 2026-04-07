@@ -29,7 +29,7 @@
           chmod -R u+w "$TEMP_DIR/snowflake"
           cd "$TEMP_DIR/snowflake"
           export SNOWFLAKE_REMOTE="$TEMP_DIR/snowflake"
-          exec python3 install.py
+          exec python3 installer/install.py
         '';
       };
 

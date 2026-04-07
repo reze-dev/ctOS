@@ -65,8 +65,9 @@ snowflake/
 │   ├── src/                    # TUI, backend, embedded flake loader
 │   └── flake/                  # Populated at build time with full flake source
 │
+├── installer/
+│   └── install.py              # Python installer (legacy, still works)
 ├── assets/wallpapers/          # Wallpaper images
-├── install.py                  # Python installer (legacy, still works)
 └── README.md
 ```
 
