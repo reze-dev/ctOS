@@ -2,7 +2,7 @@
   <img src="https://nixos.wiki/images/thumb/2/20/Home-nixos-logo.png/207px-Home-nixos-logo.png" width="100" alt="NixOS Logo"/>
 </p>
 
-<h1 align="center">❄️ Snowflake</h1>
+<h1 align="center">❄️ Cryonix</h1>
 
 <p align="center">
   A modular, option-driven NixOS configuration built with
@@ -21,19 +21,19 @@
 
 ## ✨ Features
 
-- **Toggle-based modules** — every NixOS and Home Manager module is behind a `snowflake.*.enable` option
+- **Toggle-based modules** — every NixOS and Home Manager module is behind a `cryonix.*.enable` option
 - **Auto-discovered hosts** — drop a directory in `hosts/` and it's wired up automatically
 - **Two installers** — a Python interactive installer and a Rust binary with the entire flake embedded
 - **Dual-boot support** — partition-only mode with btrfs subvolumes
 - **Idempotent & resumable** — both installers save progress and can resume mid-install
-- **Reusable modules** — import `snowflake.nixosModules.default` in your own flake
+- **Reusable modules** — import `cryonix.nixosModules.default` in your own flake
 
 ---
 
 ## 📂 Directory Structure
 
 ```
-snowflake/
+cryonix/
 ├── flake.nix                   # Flake entry — inputs + mkFlake via flake-parts
 ├── flake.lock
 │
@@ -46,7 +46,7 @@ snowflake/
 │   └── rust-installer.nix      # Rust installer package + app
 │
 ├── hosts/                      # Per-machine NixOS configurations
-│   ├── common.nix              # Shared base — enables all snowflake.* modules
+│   ├── common.nix              # Shared base — enables all cryonix.* modules
 │   ├── disko.nix               # Disko partitioning template (whole-disk installs)
 │   └── <hostname>/             # Each host gets its own directory
 │       ├── default.nix         # Host-specific config (user, GPU, boot, etc.)
@@ -54,11 +54,11 @@ snowflake/
 │       └── filesystems.nix     # Filesystem mounts (dual-boot) or disko.nix (whole-disk)
 │
 ├── home/
-│   └── default.nix             # Home Manager profile — enables all snowflake.home.*
+│   └── default.nix             # Home Manager profile — enables all cryonix.home.*
 │
 ├── modules/                    # Pure option-based module declarations
-│   ├── nixos/                  # System modules  → snowflake.<name>.enable
-│   └── home/                   # User modules    → snowflake.home.<name>.enable
+│   ├── nixos/                  # System modules  → cryonix.<name>.enable
+│   └── home/                   # User modules    → cryonix.home.<name>.enable
 │
 ├── installer-rs/               # Rust installer source
 │   ├── Cargo.toml / Cargo.lock
@@ -80,21 +80,21 @@ snowflake/
 **Option A — Download pre-built binary** (no Nix required, recommended):
 
 ```bash
-curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer -o snowflake-installer
-chmod +x snowflake-installer
-sudo ./snowflake-installer
+curl -fsSL https://github.com/atomiksan/cryonix/releases/latest/download/cryonix-installer -o cryonix-installer
+chmod +x cryonix-installer
+sudo ./cryonix-installer
 ```
 
 **Option B — Via Nix** (Rust binary):
 
 ```bash
-nix run github:atomiksan/snowflake#rust-install
+nix run github:atomiksan/cryonix#rust-install
 ```
 
 **Option C — Via Nix** (Python installer):
 
 ```bash
-nix run github:atomiksan/snowflake
+nix run github:atomiksan/cryonix
 ```
 
 Both installers will walk you through:
@@ -110,7 +110,7 @@ Both installers will walk you through:
 ### Rebuild After Installation
 
 ```bash
-cd ~/snowflake
+cd ~/cryonix
 sudo nixos-rebuild switch --flake .#<hostname>
 ```
 
@@ -124,46 +124,46 @@ sudo nixos-rebuild switch --flake .#Makima
 
 ## 🔧 Module Reference
 
-### NixOS System Modules (`snowflake.*`)
+### NixOS System Modules (`cryonix.*`)
 
 | Module | Option | Description |
 |--------|--------|-------------|
-| Audio | `snowflake.audio.enable` | PipeWire audio stack |
-| Bluetooth | `snowflake.bluetooth.enable` | Bluetooth + Blueman applet |
-| Boot | `snowflake.boot.enable` | GRUB with Sekiro theme |
-| CUPS | `snowflake.cups.enable` | Printing support |
-| Dev | `snowflake.dev.enable` | direnv, git, gpg, neovim, nix-ld |
-| Display | `snowflake.display.enable` | COSMIC greeter + niri compositor |
-| Emacs | `snowflake.emacs.enable` | Emacs daemon |
-| Environment | `snowflake.env.enable` | EDITOR/VISUAL environment vars |
-| Firefox | `snowflake.firefox.enable` | Firefox browser |
-| Fonts | `snowflake.fonts.enable` | Nerd Fonts collection |
-| Hyprland | `snowflake.hyprland.enable` | Hyprland Wayland compositor |
-| Locales | `snowflake.locales.enable` | Timezone + i18n settings |
-| Networking | `snowflake.networking.enable` | NetworkManager + firewall |
-| NVIDIA | `snowflake.nvidia.enable` | NVIDIA proprietary drivers |
-| NVIDIA Prime | `snowflake.nvidia.prime.enable` | Hybrid GPU (NVIDIA + Intel/AMD) |
-| Packages | `snowflake.packages.enable` | Curated system packages |
-| Shells | `snowflake.shells.enable` | Fish + Zsh |
-| SSH | `snowflake.ssh.enable` | OpenSSH server |
-| Virtualization | `snowflake.virtualization.enable` | libvirtd + Docker |
+| Audio | `cryonix.audio.enable` | PipeWire audio stack |
+| Bluetooth | `cryonix.bluetooth.enable` | Bluetooth + Blueman applet |
+| Boot | `cryonix.boot.enable` | GRUB with Sekiro theme |
+| CUPS | `cryonix.cups.enable` | Printing support |
+| Dev | `cryonix.dev.enable` | direnv, git, gpg, neovim, nix-ld |
+| Display | `cryonix.display.enable` | COSMIC greeter + niri compositor |
+| Emacs | `cryonix.emacs.enable` | Emacs daemon |
+| Environment | `cryonix.env.enable` | EDITOR/VISUAL environment vars |
+| Firefox | `cryonix.firefox.enable` | Firefox browser |
+| Fonts | `cryonix.fonts.enable` | Nerd Fonts collection |
+| Hyprland | `cryonix.hyprland.enable` | Hyprland Wayland compositor |
+| Locales | `cryonix.locales.enable` | Timezone + i18n settings |
+| Networking | `cryonix.networking.enable` | NetworkManager + firewall |
+| NVIDIA | `cryonix.nvidia.enable` | NVIDIA proprietary drivers |
+| NVIDIA Prime | `cryonix.nvidia.prime.enable` | Hybrid GPU (NVIDIA + Intel/AMD) |
+| Packages | `cryonix.packages.enable` | Curated system packages |
+| Shells | `cryonix.shells.enable` | Fish + Zsh |
+| SSH | `cryonix.ssh.enable` | OpenSSH server |
+| Virtualization | `cryonix.virtualization.enable` | libvirtd + Docker |
 
-### Home Manager Modules (`snowflake.home.*`)
+### Home Manager Modules (`cryonix.home.*`)
 
 | Module | Option | Description |
 |--------|--------|-------------|
-| Ghostty | `snowflake.home.ghostty.enable` | Ghostty terminal |
-| Kitty | `snowflake.home.kitty.enable` | Kitty terminal |
-| Fish | `snowflake.home.fish.enable` | Fish shell + plugins |
-| Zsh | `snowflake.home.zsh.enable` | Zsh + Oh My Zsh |
-| Git | `snowflake.home.git.enable` | Git configuration |
-| Tmux | `snowflake.home.tmux.enable` | Tmux + powerkit |
-| Starship | `snowflake.home.starship.enable` | Starship prompt |
-| Oh My Posh | `snowflake.home.omp.enable` | Oh My Posh prompt theme |
-| direnv | `snowflake.home.direnv.enable` | Per-directory environments |
-| fzf | `snowflake.home.fzf.enable` | Fuzzy finder |
-| eza | `snowflake.home.eza.enable` | Modern `ls` replacement |
-| zoxide | `snowflake.home.zoxide.enable` | Smart `cd` |
+| Ghostty | `cryonix.home.ghostty.enable` | Ghostty terminal |
+| Kitty | `cryonix.home.kitty.enable` | Kitty terminal |
+| Fish | `cryonix.home.fish.enable` | Fish shell + plugins |
+| Zsh | `cryonix.home.zsh.enable` | Zsh + Oh My Zsh |
+| Git | `cryonix.home.git.enable` | Git configuration |
+| Tmux | `cryonix.home.tmux.enable` | Tmux + powerkit |
+| Starship | `cryonix.home.starship.enable` | Starship prompt |
+| Oh My Posh | `cryonix.home.omp.enable` | Oh My Posh prompt theme |
+| direnv | `cryonix.home.direnv.enable` | Per-directory environments |
+| fzf | `cryonix.home.fzf.enable` | Fuzzy finder |
+| eza | `cryonix.home.eza.enable` | Modern `ls` replacement |
+| zoxide | `cryonix.home.zoxide.enable` | Smart `cd` |
 
 ### Toggling Modules
 
@@ -171,8 +171,8 @@ Disable any module from your host config or `common.nix`:
 
 ```nix
 # hosts/<hostname>/default.nix or hosts/common.nix
-snowflake.cups.enable = false;
-snowflake.home.kitty.enable = false;
+cryonix.cups.enable = false;
+cryonix.home.kitty.enable = false;
 ```
 
 ---
@@ -229,24 +229,24 @@ snowflake.home.kitty.enable = false;
 
 ## 🔌 Using Modules in Another Flake
 
-Snowflake exports its modules so you can use them in your own NixOS config:
+Cryonix exports its modules so you can use them in your own NixOS config:
 
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    snowflake.url = "github:atomiksan/snowflake";
+    cryonix.url = "github:atomiksan/cryonix";
   };
 
-  outputs = { nixpkgs, snowflake, ... }: {
+  outputs = { nixpkgs, cryonix, ... }: {
     nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        snowflake.nixosModules.default
+        cryonix.nixosModules.default
         {
-          snowflake.hyprland.enable = true;
-          snowflake.audio.enable = true;
-          snowflake.fonts.enable = true;
+          cryonix.hyprland.enable = true;
+          cryonix.audio.enable = true;
+          cryonix.fonts.enable = true;
         }
       ];
     };
@@ -257,7 +257,7 @@ Snowflake exports its modules so you can use them in your own NixOS config:
 Home Manager modules are also exported:
 
 ```nix
-home-manager.sharedModules = [ snowflake.homeManagerModules.default ];
+home-manager.sharedModules = [ cryonix.homeManagerModules.default ];
 ```
 
 ---
@@ -306,13 +306,13 @@ git push origin v3.0.0
 This triggers `.github/workflows/release.yml` which:
 
 1. Populates `installer-rs/flake/`
-2. Builds an optimized `snowflake-installer` binary
+2. Builds an optimized `cryonix-installer` binary
 3. Creates a GitHub release with the binary attached
 
 Download the binary on a NixOS live USB and run it — no Nix required:
 
 ```bash
-curl -fsSL https://github.com/atomiksan/snowflake/releases/latest/download/snowflake-installer -o installer
+curl -fsSL https://github.com/atomiksan/cryonix/releases/latest/download/cryonix-installer -o installer
 chmod +x installer && sudo ./installer
 ```
 

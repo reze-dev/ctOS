@@ -1,7 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
-let cfg = config.snowflake.packages;
+let cfg = config.cryonix.packages;
 in {
-  options.snowflake.packages.enable = lib.mkEnableOption "system packages and unfree config";
+  options.cryonix.packages.enable = lib.mkEnableOption "system packages and unfree config";
 
   config = lib.mkIf cfg.enable {
     nixpkgs.config.allowUnfree = true;

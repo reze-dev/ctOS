@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.home.zsh;
+let cfg = config.cryonix.home.zsh;
 in {
-  options.snowflake.home.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
+  options.cryonix.home.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
 
   config = lib.mkIf cfg.enable {
     programs.zsh = {

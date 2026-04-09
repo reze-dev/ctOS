@@ -6,7 +6,7 @@ static FLAKE_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/flake");
 
 /// Extract the embedded flake to a temporary directory.
 pub fn extract_flake() -> Result<String, String> {
-    let tmp = std::env::temp_dir().join(format!("snowflake-rs-install-{}", std::process::id()));
+    let tmp = std::env::temp_dir().join(format!("cryonix-rs-install-{}", std::process::id()));
 
     if tmp.exists() {
         let _ = fs::remove_dir_all(&tmp);

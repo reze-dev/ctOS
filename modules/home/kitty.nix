@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.home.kitty;
+let cfg = config.cryonix.home.kitty;
 in {
-  options.snowflake.home.kitty.enable = lib.mkEnableOption "Kitty terminal";
+  options.cryonix.home.kitty.enable = lib.mkEnableOption "Kitty terminal";
 
   config = lib.mkIf cfg.enable {
     programs.kitty = {

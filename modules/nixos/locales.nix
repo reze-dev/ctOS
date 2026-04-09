@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.locales;
+let cfg = config.cryonix.locales;
 in {
-  options.snowflake.locales.enable = lib.mkEnableOption "timezone and locale settings";
+  options.cryonix.locales.enable = lib.mkEnableOption "timezone and locale settings";
 
   config = lib.mkIf cfg.enable {
     time.timeZone = "Asia/Kolkata";

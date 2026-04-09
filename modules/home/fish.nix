@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.home.fish;
+let cfg = config.cryonix.home.fish;
 in {
-  options.snowflake.home.fish.enable = lib.mkEnableOption "Fish shell configuration";
+  options.cryonix.home.fish.enable = lib.mkEnableOption "Fish shell configuration";
 
   config = lib.mkIf cfg.enable {
     xdg.configFile."fish/themes/Rosé Pine Auto.theme".source = "${

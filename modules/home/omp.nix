@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.home.omp;
+let cfg = config.cryonix.home.omp;
 in {
-  options.snowflake.home.omp.enable = lib.mkEnableOption "Oh My Posh prompt";
+  options.cryonix.home.omp.enable = lib.mkEnableOption "Oh My Posh prompt";
 
   config = lib.mkIf cfg.enable {
     programs.oh-my-posh = {

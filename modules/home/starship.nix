@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.home.starship;
+let cfg = config.cryonix.home.starship;
 in {
-  options.snowflake.home.starship.enable = lib.mkEnableOption "Starship prompt";
+  options.cryonix.home.starship.enable = lib.mkEnableOption "Starship prompt";
 
   config = lib.mkIf cfg.enable {
     programs.starship = {

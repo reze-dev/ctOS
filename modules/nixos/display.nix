@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.display;
+let cfg = config.cryonix.display;
 in {
-  options.snowflake.display.enable = lib.mkEnableOption "display manager and desktop environment";
+  options.cryonix.display.enable = lib.mkEnableOption "display manager and desktop environment";
 
   config = lib.mkIf cfg.enable {
     # COSMIC desktop + greeter

@@ -16,7 +16,7 @@
       };
 
       # Assemble the full flake source as a derivation
-      flakeSrc = pkgs.runCommand "snowflake-flake-src" { } ''
+      flakeSrc = pkgs.runCommand "cryonix-flake-src" { } ''
         mkdir -p $out
         cp ${../flake.nix} $out/flake.nix
         cp ${../flake.lock} $out/flake.lock
@@ -30,7 +30,7 @@
 
       commonArgs = {
         src = rustSrc;
-        pname = "snowflake-installer";
+        pname = "cryonix-installer";
         version = "2.0.0";
         strictDeps = true;
         nativeBuildInputs = [ pkgs.pkg-config ];
@@ -56,23 +56,23 @@
     in
     {
       packages.rust-installer = pkgs.symlinkJoin {
-        name = "snowflake-installer-rs";
+        name = "cryonix-installer";
         paths = [ rustBin ];
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
-          wrapProgram $out/bin/snowflake-installer \
+          wrapProgram $out/bin/cryonix-installer \
             --prefix PATH : ${pkgs.lib.makeBinPath runtimeDeps}
         '';
         meta = {
-          description = "Snowflake NixOS installer (Rust + ratatui)";
-          mainProgram = "snowflake-installer";
+          description = "Cryonix NixOS installer (Rust + ratatui)";
+          mainProgram = "cryonix-installer";
         };
       };
 
       apps.rust-install = {
         type = "app";
-        program = "${self.packages.${system}.rust-installer}/bin/snowflake-installer";
-        meta.description = "Rust-based Snowflake installer with ratatui TUI";
+        program = "${self.packages.${system}.rust-installer}/bin/cryonix-installer";
+        meta.description = "Rust-based Cryonix installer with ratatui TUI";
       };
     };
 }

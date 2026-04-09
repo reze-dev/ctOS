@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.fonts;
+let cfg = config.cryonix.fonts;
 in {
-  options.snowflake.fonts.enable = lib.mkEnableOption "Nerd Fonts and system fonts";
+  options.cryonix.fonts.enable = lib.mkEnableOption "Nerd Fonts and system fonts";
 
   config = lib.mkIf cfg.enable {
     fonts.packages = with pkgs; [

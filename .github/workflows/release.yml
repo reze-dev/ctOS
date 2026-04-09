@@ -46,13 +46,13 @@ jobs:
         run: cargo build --release
 
       - name: Rename binary
-        run: cp installer-rs/target/release/snowflake-installer installer-rs/snowflake-installer
+        run: cp installer-rs/target/release/cryonix-installer installer-rs/cryonix-installer
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rust-binary
-          path: installer-rs/snowflake-installer
+          path: installer-rs/cryonix-installer
 
   release:
     name: Create Release
@@ -70,5 +70,5 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            snowflake-installer
+            cryonix-installer
           fail_on_unmatched_files: true

@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.env;
+let cfg = config.cryonix.env;
 in {
-  options.snowflake.env.enable = lib.mkEnableOption "environment variables (EDITOR, VISUAL)";
+  options.cryonix.env.enable = lib.mkEnableOption "environment variables (EDITOR, VISUAL)";
 
   config = lib.mkIf cfg.enable {
     environment.variables.EDITOR = "nvim";

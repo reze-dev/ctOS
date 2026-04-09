@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.home.git;
+let cfg = config.cryonix.home.git;
 in {
-  options.snowflake.home.git.enable = lib.mkEnableOption "Git user configuration";
+  options.cryonix.home.git.enable = lib.mkEnableOption "Git user configuration";
 
   config = lib.mkIf cfg.enable {
     programs.git = {

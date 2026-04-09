@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.cups;
+let cfg = config.cryonix.cups;
 in {
-  options.snowflake.cups.enable = lib.mkEnableOption "CUPS printing";
+  options.cryonix.cups.enable = lib.mkEnableOption "CUPS printing";
 
   config = lib.mkIf cfg.enable {
     services.printing.enable = true;

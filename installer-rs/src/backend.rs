@@ -27,10 +27,10 @@ fn build_gpu_config(cfg: &InstallConfig) -> String {
     }
     let mut lines = vec![
         "\n  # NVIDIA GPU".to_string(),
-        "  snowflake.nvidia.enable = true;".to_string(),
+        "  cryonix.nvidia.enable = true;".to_string(),
     ];
     if cfg.gpu_choice == "3" {
-        lines.push("  snowflake.nvidia.prime = {".into());
+        lines.push("  cryonix.nvidia.prime = {".into());
         lines.push("    enable = true;".into());
         lines.push(format!("    nvidiaBusId = \"{}\";", cfg.nvidia_bus_id));
         let key = if cfg.igpu_type == "amd" {
@@ -378,7 +378,7 @@ async fn do_install_nixos(cfg: &InstallConfig) -> Result<(), String> {
 }
 
 async fn do_copy_flake(cfg: &InstallConfig, work_dir: &str) -> Result<(), String> {
-    let dest = format!("/mnt/home/{}/snowflake", cfg.username);
+    let dest = format!("/mnt/home/{}/cryonix", cfg.username);
     let hostname = cfg.hostname.clone();
     let username = cfg.username.clone();
     let wd = work_dir.to_string();
@@ -393,7 +393,7 @@ async fn do_copy_flake(cfg: &InstallConfig, work_dir: &str) -> Result<(), String
             run(&format!("cp -a {wd}/. {dest}/")).await?;
             let _ = fs::remove_dir_all(format!("{dest}/.git"));
             run(&format!(
-                r#"cd {dest} && git init && git add . && git commit -m "Initial Snowflake configuration for {hostname}""#
+                r#"cd {dest} && git init && git add . && git commit -m "Initial Cryonix configuration for {hostname}""#
             )).await?;
 
             // Fix ownership

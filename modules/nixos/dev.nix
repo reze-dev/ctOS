@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.dev;
+let cfg = config.cryonix.dev;
 in {
-  options.snowflake.dev.enable = lib.mkEnableOption "development tools (direnv, git, gpg, neovim, nix-ld)";
+  options.cryonix.dev.enable = lib.mkEnableOption "development tools (direnv, git, gpg, neovim, nix-ld)";
 
   config = lib.mkIf cfg.enable {
     programs.direnv = {

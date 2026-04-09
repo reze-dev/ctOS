@@ -5,7 +5,7 @@
   perSystem = { pkgs, system, ... }: {
     packages = {
       installer = pkgs.writeShellApplication {
-        name = "snowflake-install";
+        name = "cryonix-install";
         runtimeInputs = with pkgs; [
           python3
           git
@@ -20,15 +20,15 @@
         ];
         text = ''
           set -e
-          TEMP_DIR=$(mktemp -d -t snowflake-install.XXXXXX)
+          TEMP_DIR=$(mktemp -d -t cryonix-install.XXXXXX)
           cleanup() { rm -rf "$TEMP_DIR"; }
           trap cleanup EXIT
 
-          echo "Preparing Snowflake source..."
-          cp -R "${self}" "$TEMP_DIR/snowflake"
-          chmod -R u+w "$TEMP_DIR/snowflake"
-          cd "$TEMP_DIR/snowflake"
-          export SNOWFLAKE_REMOTE="$TEMP_DIR/snowflake"
+          echo "Preparing Cryonix source..."
+          cp -R "${self}" "$TEMP_DIR/cryonix"
+          chmod -R u+w "$TEMP_DIR/cryonix"
+          cd "$TEMP_DIR/cryonix"
+          export CRYONIX_REMOTE="$TEMP_DIR/cryonix"
           exec python3 installer/install.py
         '';
       };
@@ -39,12 +39,12 @@
     apps = {
       install = {
         type = "app";
-        program = "${self.packages.${system}.installer}/bin/snowflake-install";
-        meta.description = "Interactive Snowflake installer";
+        program = "${self.packages.${system}.installer}/bin/cryonix-install";
+        meta.description = "Interactive Cryonix installer";
       };
 
       default = self.apps.${system}.install // {
-        meta.description = "Default Snowflake app (installer)";
+        meta.description = "Default Cryonix app (installer)";
       };
     };
   };

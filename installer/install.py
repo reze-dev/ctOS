@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Snowflake NixOS Installer — idempotent, resumable, with retries.
+Cryonix NixOS Installer — idempotent, resumable, with retries.
 
-State is saved to /tmp/snowflake-install-state.json after each step.
+State is saved to /tmp/cryonix-install-state.json after each step.
 On re-run, the installer resumes from the last incomplete checkpoint.
 """
 
@@ -19,7 +19,7 @@ from functools import wraps
 from typing import Optional
 
 # ── Constants ────────────────────────────────────────────────────
-STATE_FILE = Path("/tmp/snowflake-install-state.json")
+STATE_FILE = Path("/tmp/cryonix-install-state.json")
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds, doubles each attempt
 
@@ -266,10 +266,10 @@ def build_gpu_config(
     if gpu_choice == "1":
         return ""
 
-    lines = ["\n  # NVIDIA GPU", "  snowflake.nvidia.enable = true;"]
+    lines = ["\n  # NVIDIA GPU", "  cryonix.nvidia.enable = true;"]
 
     if gpu_choice == "3":
-        lines.append("  snowflake.nvidia.prime = {")
+        lines.append("  cryonix.nvidia.prime = {")
         lines.append("    enable = true;")
         lines.append(f'    nvidiaBusId = "{nvidia_bus}";')
         bus_key = "amdgpuBusId" if igpu_type == "amd" else "intelBusId"
@@ -811,8 +811,8 @@ def do_copy_flake(state: State, work_dir: Path) -> None:
     username = state.get("username")
     hostname = state.get("hostname")
 
-    msg("\nCopying Snowflake flake to installed system...")
-    dest = Path(f"/mnt/home/{username}/snowflake")
+    msg("\nCopying Cryonix flake to installed system...")
+    dest = Path(f"/mnt/home/{username}/cryonix")
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(work_dir, dest, dirs_exist_ok=True)
@@ -821,7 +821,7 @@ def do_copy_flake(state: State, work_dir: Path) -> None:
     git_dir = dest / ".git"
     if git_dir.exists():
         shutil.rmtree(git_dir)
-    run(f"cd {dest} && git init && git add . && git commit -m 'Initial Snowflake configuration for {hostname}'")
+    run(f"cd {dest} && git init && git add . && git commit -m 'Initial Cryonix configuration for {hostname}'")
 
     # Fix ownership
     try:
@@ -831,11 +831,11 @@ def do_copy_flake(state: State, work_dir: Path) -> None:
             if fields[0] == username:
                 uid, gid = fields[2], fields[3]
                 run(f"chown -R {uid}:{gid} {dest}")
-                msg(f"Flake saved to /home/{username}/snowflake (UID {uid})")
+                msg(f"Flake saved to /home/{username}/cryonix (UID {uid})")
                 break
         else:
             warn(f"Could not find UID for {username}. After boot, run:")
-            warn(f"  sudo chown -R {username}:{username} ~/snowflake")
+            warn(f"  sudo chown -R {username}:{username} ~/cryonix")
     except Exception:
         warn("Could not fix ownership. Fix after first boot.")
 
@@ -847,11 +847,13 @@ def do_copy_flake(state: State, work_dir: Path) -> None:
 # ════════════════════════════════════════════════════════════════
 
 def main() -> None:
-    script_dir = Path(os.environ.get("SNOWFLAKE_REMOTE", Path(__file__).resolve().parent))
+    script_dir = Path(
+        os.environ.get("CRYONIX_REMOTE", Path(__file__).resolve().parent.parent)
+    )
     os.chdir(script_dir)
 
     print(f"{CYAN}")
-    print("  ❄️  Snowflake NixOS Installer  ❄️")
+    print("  ❄️  Cryonix NixOS Installer  ❄️")
     print("  =================================")
     print(f"{NC}")
 
@@ -896,9 +898,9 @@ def main() -> None:
     username = state.data.get("username", "user")
     hostname = state.data.get("hostname", "host")
     print(f"\n{GREEN}✅ Installation Complete!{NC}")
-    print(f"Your configuration has been saved to: {CYAN}/home/{username}/snowflake{NC}")
-    print(f"You can now reboot into your new Snowflake system.")
-    print(f"After rebooting, run: {CYAN}cd ~/snowflake && sudo nixos-rebuild switch --flake .#{hostname}{NC}")
+    print(f"Your configuration has been saved to: {CYAN}/home/{username}/cryonix{NC}")
+    print(f"You can now reboot into your new Cryonix system.")
+    print(f"After rebooting, run: {CYAN}cd ~/cryonix && sudo nixos-rebuild switch --flake .#{hostname}{NC}")
     print(f"Run: {CYAN}reboot{NC}")
 
 

@@ -177,7 +177,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 
 fn draw_header(f: &mut Frame, area: Rect) {
     let header = Paragraph::new(Line::from(vec![Span::styled(
-        "  ❄️  Snowflake NixOS Installer  ❄️",
+        "  ❄️  Cryonix NixOS Installer  ❄️",
         Style::default().fg(CYAN).add_modifier(Modifier::BOLD),
     )]))
     .block(
@@ -210,7 +210,7 @@ fn draw_welcome(f: &mut Frame, area: Rect) {
         Line::from(Span::styled("             *", Style::default().fg(CYAN))),
         Line::from(""),
         Line::from(Span::styled(
-            "  Welcome to the Snowflake NixOS Installer",
+            "  Welcome to the Cryonix NixOS Installer",
             Style::default()
                 .fg(Color::White)
                 .add_modifier(Modifier::BOLD),
@@ -526,10 +526,10 @@ fn draw_done(f: &mut Frame, area: Rect, app: &App) {
         )),
         Line::from(""),
         Line::from(format!(
-            "  Configuration saved to: /home/{}/snowflake",
+            "  Configuration saved to: /home/{}/cryonix",
             app.config.username
         )),
-        Line::from("  You can now reboot into your new Snowflake system."),
+        Line::from("  You can now reboot into your new Cryonix system."),
         Line::from(""),
         Line::from(Span::styled(
             "  After reboot:",
@@ -539,7 +539,7 @@ fn draw_done(f: &mut Frame, area: Rect, app: &App) {
         )),
         Line::from(Span::styled(
             format!(
-                "    cd ~/snowflake && sudo nixos-rebuild switch --flake .#{}",
+                "    cd ~/cryonix && sudo nixos-rebuild switch --flake .#{}",
                 app.config.hostname
             ),
             Style::default().fg(CYAN),

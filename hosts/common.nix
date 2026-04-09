@@ -18,8 +18,8 @@
     "pipe-operators"
   ];
 
-  # Enable all snowflake NixOS modules
-  snowflake = {
+  # Enable all cryonix NixOS modules
+  cryonix = {
     boot.enable = true;
     hyprland.enable = true;
     packages.enable = true;

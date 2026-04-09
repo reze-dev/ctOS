@@ -1,5 +1,5 @@
 {
-  description = "Snow Flakes with Home Manager";
+  description = "Cryonix with Home Manager";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

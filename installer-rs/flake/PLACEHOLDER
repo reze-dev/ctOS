@@ -1,1 +1,1 @@
-Populated at build time with the full Snowflake flake. See parts/rust-installer.nix.
+Populated at build time with the full Cryonix flake. See parts/rust-installer.nix.

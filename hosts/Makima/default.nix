@@ -31,8 +31,8 @@
   };
 
   # NVIDIA GPU
-  snowflake.nvidia.enable = true;
-  snowflake.nvidia.prime = {
+  cryonix.nvidia.enable = true;
+  cryonix.nvidia.prime = {
     enable = true;
     nvidiaBusId = "PCI:1:0:0";
     amdgpuBusId = "PCI:5:0:0";

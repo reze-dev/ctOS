@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.home.ghostty;
+let cfg = config.cryonix.home.ghostty;
 in {
-  options.snowflake.home.ghostty.enable = lib.mkEnableOption "Ghostty terminal";
+  options.cryonix.home.ghostty.enable = lib.mkEnableOption "Ghostty terminal";
 
   config = lib.mkIf cfg.enable {
     programs.ghostty = {

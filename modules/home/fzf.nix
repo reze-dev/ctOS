@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.home.fzf;
+let cfg = config.cryonix.home.fzf;
 in {
-  options.snowflake.home.fzf.enable = lib.mkEnableOption "FZF fuzzy finder";
+  options.cryonix.home.fzf.enable = lib.mkEnableOption "FZF fuzzy finder";
 
   config = lib.mkIf cfg.enable {
     programs.fzf = {

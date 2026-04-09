@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.emacs;
+let cfg = config.cryonix.emacs;
 in {
-  options.snowflake.emacs.enable = lib.mkEnableOption "Emacs daemon service";
+  options.cryonix.emacs.enable = lib.mkEnableOption "Emacs daemon service";
 
   config = lib.mkIf cfg.enable {
     services.emacs = {

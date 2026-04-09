@@ -6,10 +6,10 @@
 }:
 
 let
-  cfg = config.snowflake.nvidia;
+  cfg = config.cryonix.nvidia;
 in
 {
-  options.snowflake.nvidia = {
+  options.cryonix.nvidia = {
     enable = lib.mkEnableOption "NVIDIA GPU drivers";
 
     prime = {

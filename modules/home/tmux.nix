@@ -1,7 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
-let cfg = config.snowflake.home.tmux;
+let cfg = config.cryonix.home.tmux;
 in {
-  options.snowflake.home.tmux.enable = lib.mkEnableOption "Tmux terminal multiplexer";
+  options.cryonix.home.tmux.enable = lib.mkEnableOption "Tmux terminal multiplexer";
 
   config = lib.mkIf cfg.enable {
     programs.tmux = {

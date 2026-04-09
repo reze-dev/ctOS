@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.snowflake.boot;
+let cfg = config.cryonix.boot;
 in {
-  options.snowflake.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
+  options.cryonix.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
 
   config = lib.mkIf cfg.enable {
     boot.loader = {

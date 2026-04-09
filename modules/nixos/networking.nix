@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.networking;
+let cfg = config.cryonix.networking;
 in {
-  options.snowflake.networking.enable = lib.mkEnableOption "NetworkManager and host entries";
+  options.cryonix.networking.enable = lib.mkEnableOption "NetworkManager and host entries";
 
   config = lib.mkIf cfg.enable {
     networking.extraHosts = ''

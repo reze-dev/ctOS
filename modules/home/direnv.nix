@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.home.direnv;
+let cfg = config.cryonix.home.direnv;
 in {
-  options.snowflake.home.direnv.enable = lib.mkEnableOption "Direnv integration";
+  options.cryonix.home.direnv.enable = lib.mkEnableOption "Direnv integration";
 
   config = lib.mkIf cfg.enable {
     programs.direnv = {

@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.shells;
+let cfg = config.cryonix.shells;
 in {
-  options.snowflake.shells.enable = lib.mkEnableOption "system-level shell support (fish, zsh)";
+  options.cryonix.shells.enable = lib.mkEnableOption "system-level shell support (fish, zsh)";
 
   config = lib.mkIf cfg.enable {
     programs.fish.enable = true;

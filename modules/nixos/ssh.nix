@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.ssh;
+let cfg = config.cryonix.ssh;
 in {
-  options.snowflake.ssh.enable = lib.mkEnableOption "OpenSSH daemon";
+  options.cryonix.ssh.enable = lib.mkEnableOption "OpenSSH daemon";
 
   config = lib.mkIf cfg.enable {
     services.openssh.enable = true;

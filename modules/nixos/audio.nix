@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.snowflake.audio;
+let cfg = config.cryonix.audio;
 in {
-  options.snowflake.audio.enable = lib.mkEnableOption "PipeWire audio";
+  options.cryonix.audio.enable = lib.mkEnableOption "PipeWire audio";
 
   config = lib.mkIf cfg.enable {
     services.pulseaudio.enable = false;

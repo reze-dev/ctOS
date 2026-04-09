@@ -23,8 +23,8 @@
 
   programs.home-manager.enable = true;
 
-  # Enable all snowflake home modules
-  snowflake.home = {
+  # Enable all cryonix home modules
+  cryonix.home = {
     ghostty.enable = true;
     kitty.enable = true;
     fish.enable = true;
