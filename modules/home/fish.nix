@@ -1,6 +1,13 @@
-{ config, lib, pkgs, ... }:
-let cfg = config.cryonix.home.fish;
-in {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.cryonix.home.fish;
+in
+{
   options.cryonix.home.fish.enable = lib.mkEnableOption "Fish shell configuration";
 
   config = lib.mkIf cfg.enable {
@@ -45,6 +52,7 @@ in {
         fzf --fish | source
         zoxide init --cmd cd fish |source
         direnv hook fish | source
+        but completions fish | source
       '';
     };
   };

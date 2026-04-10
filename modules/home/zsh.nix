@@ -1,6 +1,13 @@
-{ config, lib, pkgs, ... }:
-let cfg = config.cryonix.home.zsh;
-in {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.cryonix.home.zsh;
+in
+{
   options.cryonix.home.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
 
   config = lib.mkIf cfg.enable {
@@ -31,6 +38,7 @@ in {
           eval "$(fzf --zsh)"
           eval "$(zoxide init --cmd cd zsh)"
           eval "$(direnv hook zsh)"
+          eval "$(but completions zsh)"
         '')
       ];
       completionInit = ''
