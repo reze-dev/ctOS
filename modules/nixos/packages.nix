@@ -1,6 +1,14 @@
-{ config, lib, pkgs, inputs, ... }:
-let cfg = config.cryonix.packages;
-in {
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
+let
+  cfg = config.cryonix.packages;
+in
+{
   options.cryonix.packages.enable = lib.mkEnableOption "system packages and unfree config";
 
   config = lib.mkIf cfg.enable {
@@ -11,6 +19,7 @@ in {
       [
         bat
         btop
+        codecrafters-cli
         discord
         dunst
         emacs-pgtk
