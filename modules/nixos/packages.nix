@@ -45,6 +45,7 @@ in
         nodejs
         obsidian
         quickshell
+        redis
         ripgrep
         rofi
         rustup
