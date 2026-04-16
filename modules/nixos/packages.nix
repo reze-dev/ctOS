@@ -58,6 +58,7 @@ in
         zig
         zoxide
         jdk17
+        jetbrains.rust-rover
         clang
         clang-tools
         cmake
