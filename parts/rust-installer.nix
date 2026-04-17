@@ -16,7 +16,7 @@
       };
 
       # Assemble the full flake source as a derivation
-      flakeSrc = pkgs.runCommand "cryonix-flake-src" { } ''
+      flakeSrc = pkgs.runCommand "northstar-flake-src" { } ''
         mkdir -p $out
         cp ${../flake.nix} $out/flake.nix
         cp ${../flake.lock} $out/flake.lock
@@ -30,7 +30,7 @@
 
       commonArgs = {
         src = rustSrc;
-        pname = "cryonix-installer";
+        pname = "northstar-installer";
         version = "2.0.0";
         strictDeps = true;
         nativeBuildInputs = [ pkgs.pkg-config ];
@@ -56,23 +56,23 @@
     in
     {
       packages.rust-installer = pkgs.symlinkJoin {
-        name = "cryonix-installer";
+        name = "northstar-installer";
         paths = [ rustBin ];
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
-          wrapProgram $out/bin/cryonix-installer \
+          wrapProgram $out/bin/northstar-installer \
             --prefix PATH : ${pkgs.lib.makeBinPath runtimeDeps}
         '';
         meta = {
-          description = "Cryonix NixOS installer (Rust + ratatui)";
-          mainProgram = "cryonix-installer";
+          description = "Northstar NixOS installer (Rust + ratatui)";
+          mainProgram = "northstar-installer";
         };
       };
 
       apps.rust-install = {
         type = "app";
-        program = "${self.packages.${system}.rust-installer}/bin/cryonix-installer";
-        meta.description = "Rust-based Cryonix installer with ratatui TUI";
+        program = "${self.packages.${system}.rust-installer}/bin/northstar-installer";
+        meta.description = "Rust-based Northstar installer with ratatui TUI";
       };
     };
 }

@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.display;
+let cfg = config.northstar.display;
 in {
-  options.cryonix.display.enable = lib.mkEnableOption "display manager and desktop environment";
+  options.northstar.display.enable = lib.mkEnableOption "display manager and desktop environment";
 
   config = lib.mkIf cfg.enable {
     # COSMIC desktop + greeter

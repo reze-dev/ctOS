@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.home.ghostty;
+let cfg = config.northstar.home.ghostty;
 in {
-  options.cryonix.home.ghostty.enable = lib.mkEnableOption "Ghostty terminal";
+  options.northstar.home.ghostty.enable = lib.mkEnableOption "Ghostty terminal";
 
   config = lib.mkIf cfg.enable {
     programs.ghostty = {

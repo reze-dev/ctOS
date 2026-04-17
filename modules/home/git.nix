@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.home.git;
+let cfg = config.northstar.home.git;
 in {
-  options.cryonix.home.git.enable = lib.mkEnableOption "Git user configuration";
+  options.northstar.home.git.enable = lib.mkEnableOption "Git user configuration";
 
   config = lib.mkIf cfg.enable {
     programs.git = {

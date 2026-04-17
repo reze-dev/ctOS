@@ -5,7 +5,7 @@
   perSystem = { pkgs, system, ... }: {
     packages = {
       installer = pkgs.writeShellApplication {
-        name = "cryonix-install";
+        name = "northstar-install";
         runtimeInputs = with pkgs; [
           python3
           git
@@ -20,15 +20,15 @@
         ];
         text = ''
           set -e
-          TEMP_DIR=$(mktemp -d -t cryonix-install.XXXXXX)
+          TEMP_DIR=$(mktemp -d -t northstar-install.XXXXXX)
           cleanup() { rm -rf "$TEMP_DIR"; }
           trap cleanup EXIT
 
-          echo "Preparing Cryonix source..."
-          cp -R "${self}" "$TEMP_DIR/cryonix"
-          chmod -R u+w "$TEMP_DIR/cryonix"
-          cd "$TEMP_DIR/cryonix"
-          export CRYONIX_REMOTE="$TEMP_DIR/cryonix"
+          echo "Preparing Northstar source..."
+          cp -R "${self}" "$TEMP_DIR/northstar"
+          chmod -R u+w "$TEMP_DIR/northstar"
+          cd "$TEMP_DIR/northstar"
+          export NORTHSTAR_REMOTE="$TEMP_DIR/northstar"
           exec python3 installer/install.py
         '';
       };
@@ -39,12 +39,12 @@
     apps = {
       install = {
         type = "app";
-        program = "${self.packages.${system}.installer}/bin/cryonix-install";
-        meta.description = "Interactive Cryonix installer";
+        program = "${self.packages.${system}.installer}/bin/northstar-install";
+        meta.description = "Interactive Northstar installer";
       };
 
       default = self.apps.${system}.install // {
-        meta.description = "Default Cryonix app (installer)";
+        meta.description = "Default Northstar app (installer)";
       };
     };
   };

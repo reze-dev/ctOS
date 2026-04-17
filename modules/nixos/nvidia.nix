@@ -6,10 +6,10 @@
 }:
 
 let
-  cfg = config.cryonix.nvidia;
+  cfg = config.northstar.nvidia;
 in
 {
-  options.cryonix.nvidia = {
+  options.northstar.nvidia = {
     enable = lib.mkEnableOption "NVIDIA GPU drivers";
 
     prime = {

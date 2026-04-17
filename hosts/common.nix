@@ -18,8 +18,8 @@
     "pipe-operators"
   ];
 
-  # Enable all cryonix NixOS modules
-  cryonix = {
+  # Enable all northstar NixOS modules
+  northstar = {
     boot.enable = true;
     hyprland.enable = true;
     packages.enable = true;

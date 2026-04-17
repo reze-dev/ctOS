@@ -5,10 +5,10 @@
   ...
 }:
 let
-  cfg = config.cryonix.home.fish;
+  cfg = config.northstar.home.fish;
 in
 {
-  options.cryonix.home.fish.enable = lib.mkEnableOption "Fish shell configuration";
+  options.northstar.home.fish.enable = lib.mkEnableOption "Fish shell configuration";
 
   config = lib.mkIf cfg.enable {
     xdg.configFile."fish/themes/Rosé Pine Auto.theme".source = "${

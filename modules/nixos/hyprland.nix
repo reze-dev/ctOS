@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.hyprland;
+let cfg = config.northstar.hyprland;
 in {
-  options.cryonix.hyprland.enable = lib.mkEnableOption "Hyprland window manager";
+  options.northstar.hyprland.enable = lib.mkEnableOption "Hyprland window manager";
 
   config = lib.mkIf cfg.enable {
     programs.hyprland = {

@@ -1,7 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
-let cfg = config.cryonix.home.tmux;
+let cfg = config.northstar.home.tmux;
 in {
-  options.cryonix.home.tmux.enable = lib.mkEnableOption "Tmux terminal multiplexer";
+  options.northstar.home.tmux.enable = lib.mkEnableOption "Tmux terminal multiplexer";
 
   config = lib.mkIf cfg.enable {
     programs.tmux = {

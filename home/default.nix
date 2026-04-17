@@ -23,8 +23,8 @@
 
   programs.home-manager.enable = true;
 
-  # Enable all cryonix home modules
-  cryonix.home = {
+  # Enable all northstar home modules
+  northstar.home = {
     ghostty.enable = true;
     kitty.enable = true;
     fish.enable = true;

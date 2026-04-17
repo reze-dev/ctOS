@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.home.direnv;
+let cfg = config.northstar.home.direnv;
 in {
-  options.cryonix.home.direnv.enable = lib.mkEnableOption "Direnv integration";
+  options.northstar.home.direnv.enable = lib.mkEnableOption "Direnv integration";
 
   config = lib.mkIf cfg.enable {
     programs.direnv = {

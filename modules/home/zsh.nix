@@ -5,10 +5,10 @@
   ...
 }:
 let
-  cfg = config.cryonix.home.zsh;
+  cfg = config.northstar.home.zsh;
 in
 {
-  options.cryonix.home.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
+  options.northstar.home.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
 
   config = lib.mkIf cfg.enable {
     programs.zsh = {

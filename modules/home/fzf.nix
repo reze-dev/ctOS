@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.home.fzf;
+let cfg = config.northstar.home.fzf;
 in {
-  options.cryonix.home.fzf.enable = lib.mkEnableOption "FZF fuzzy finder";
+  options.northstar.home.fzf.enable = lib.mkEnableOption "FZF fuzzy finder";
 
   config = lib.mkIf cfg.enable {
     programs.fzf = {

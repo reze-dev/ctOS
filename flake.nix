@@ -1,5 +1,5 @@
 {
-  description = "Cryonix with Home Manager";
+  description = "Northstar with Home Manager";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

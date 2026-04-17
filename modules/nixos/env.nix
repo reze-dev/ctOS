@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.env;
+let cfg = config.northstar.env;
 in {
-  options.cryonix.env.enable = lib.mkEnableOption "environment variables (EDITOR, VISUAL)";
+  options.northstar.env.enable = lib.mkEnableOption "environment variables (EDITOR, VISUAL)";
 
   config = lib.mkIf cfg.enable {
     environment.variables.EDITOR = "nvim";

@@ -2,7 +2,7 @@
   <img src="https://nixos.wiki/images/thumb/2/20/Home-nixos-logo.png/207px-Home-nixos-logo.png" width="100" alt="NixOS Logo"/>
 </p>
 
-<h1 align="center">❄️ Cryonix</h1>
+<h1 align="center">❄️ Northstar-nix</h1>
 
 <p align="center">
   A modular, option-driven NixOS configuration built with
@@ -21,19 +21,19 @@
 
 ## ✨ Features
 
-- **Toggle-based modules** — every NixOS and Home Manager module is behind a `cryonix.*.enable` option
+- **Toggle-based modules** — every NixOS and Home Manager module is behind a `northstar.*.enable` option
 - **Auto-discovered hosts** — drop a directory in `hosts/` and it's wired up automatically
 - **Two installers** — a Python interactive installer and a Rust binary with the entire flake embedded
 - **Dual-boot support** — partition-only mode with btrfs subvolumes
 - **Idempotent & resumable** — both installers save progress and can resume mid-install
-- **Reusable modules** — import `cryonix.nixosModules.default` in your own flake
+- **Reusable modules** — import `northstar.nixosModules.default` in your own flake
 
 ---
 
 ## 📂 Directory Structure
 
 ```
-cryonix/
+northstar/
 ├── flake.nix                   # Flake entry — inputs + mkFlake via flake-parts
 ├── flake.lock
 │
@@ -46,7 +46,7 @@ cryonix/
 │   └── rust-installer.nix      # Rust installer package + app
 │
 ├── hosts/                      # Per-machine NixOS configurations
-│   ├── common.nix              # Shared base — enables all cryonix.* modules
+│   ├── common.nix              # Shared base — enables all northstar.* modules
 │   ├── disko.nix               # Disko partitioning template (whole-disk installs)
 │   └── <hostname>/             # Each host gets its own directory
 │       ├── default.nix         # Host-specific config (user, GPU, boot, etc.)
@@ -54,11 +54,11 @@ cryonix/
 │       └── filesystems.nix     # Filesystem mounts (dual-boot) or disko.nix (whole-disk)
 │
 ├── home/
-│   └── default.nix             # Home Manager profile — enables all cryonix.home.*
+│   └── default.nix             # Home Manager profile — enables all northstar.home.*
 │
 ├── modules/                    # Pure option-based module declarations
-│   ├── nixos/                  # System modules  → cryonix.<name>.enable
-│   └── home/                   # User modules    → cryonix.home.<name>.enable
+│   ├── nixos/                  # System modules  → northstar.<name>.enable
+│   └── home/                   # User modules    → northstar.home.<name>.enable
 │
 ├── installer-rs/               # Rust installer source
 │   ├── Cargo.toml / Cargo.lock
@@ -80,21 +80,21 @@ cryonix/
 **Option A — Download pre-built binary** (no Nix required, recommended):
 
 ```bash
-curl -fsSL https://github.com/atomiksan/cryonix/releases/latest/download/cryonix-installer -o cryonix-installer
-chmod +x cryonix-installer
-sudo ./cryonix-installer
+curl -fsSL https://github.com/atomiksan/northstar/releases/latest/download/northstar-installer -o northstar-installer
+chmod +x northstar-installer
+sudo ./northstar-installer
 ```
 
 **Option B — Via Nix** (Rust binary):
 
 ```bash
-nix run github:atomiksan/cryonix#rust-install
+nix run github:atomiksan/northstar#rust-install
 ```
 
 **Option C — Via Nix** (Python installer):
 
 ```bash
-nix run github:atomiksan/cryonix
+nix run github:atomiksan/northstar
 ```
 
 Both installers will walk you through:
@@ -110,7 +110,7 @@ Both installers will walk you through:
 ### Rebuild After Installation
 
 ```bash
-cd ~/cryonix
+cd ~/northstar
 sudo nixos-rebuild switch --flake .#<hostname>
 ```
 
@@ -124,46 +124,46 @@ sudo nixos-rebuild switch --flake .#Makima
 
 ## 🔧 Module Reference
 
-### NixOS System Modules (`cryonix.*`)
+### NixOS System Modules (`northstar.*`)
 
 | Module | Option | Description |
 |--------|--------|-------------|
-| Audio | `cryonix.audio.enable` | PipeWire audio stack |
-| Bluetooth | `cryonix.bluetooth.enable` | Bluetooth + Blueman applet |
-| Boot | `cryonix.boot.enable` | GRUB with Sekiro theme |
-| CUPS | `cryonix.cups.enable` | Printing support |
-| Dev | `cryonix.dev.enable` | direnv, git, gpg, neovim, nix-ld |
-| Display | `cryonix.display.enable` | COSMIC greeter + niri compositor |
-| Emacs | `cryonix.emacs.enable` | Emacs daemon |
-| Environment | `cryonix.env.enable` | EDITOR/VISUAL environment vars |
-| Firefox | `cryonix.firefox.enable` | Firefox browser |
-| Fonts | `cryonix.fonts.enable` | Nerd Fonts collection |
-| Hyprland | `cryonix.hyprland.enable` | Hyprland Wayland compositor |
-| Locales | `cryonix.locales.enable` | Timezone + i18n settings |
-| Networking | `cryonix.networking.enable` | NetworkManager + firewall |
-| NVIDIA | `cryonix.nvidia.enable` | NVIDIA proprietary drivers |
-| NVIDIA Prime | `cryonix.nvidia.prime.enable` | Hybrid GPU (NVIDIA + Intel/AMD) |
-| Packages | `cryonix.packages.enable` | Curated system packages |
-| Shells | `cryonix.shells.enable` | Fish + Zsh |
-| SSH | `cryonix.ssh.enable` | OpenSSH server |
-| Virtualization | `cryonix.virtualization.enable` | libvirtd + Docker |
+| Audio | `northstar.audio.enable` | PipeWire audio stack |
+| Bluetooth | `northstar.bluetooth.enable` | Bluetooth + Blueman applet |
+| Boot | `northstar.boot.enable` | GRUB with Sekiro theme |
+| CUPS | `northstar.cups.enable` | Printing support |
+| Dev | `northstar.dev.enable` | direnv, git, gpg, neovim, nix-ld |
+| Display | `northstar.display.enable` | COSMIC greeter + niri compositor |
+| Emacs | `northstar.emacs.enable` | Emacs daemon |
+| Environment | `northstar.env.enable` | EDITOR/VISUAL environment vars |
+| Firefox | `northstar.firefox.enable` | Firefox browser |
+| Fonts | `northstar.fonts.enable` | Nerd Fonts collection |
+| Hyprland | `northstar.hyprland.enable` | Hyprland Wayland compositor |
+| Locales | `northstar.locales.enable` | Timezone + i18n settings |
+| Networking | `northstar.networking.enable` | NetworkManager + firewall |
+| NVIDIA | `northstar.nvidia.enable` | NVIDIA proprietary drivers |
+| NVIDIA Prime | `northstar.nvidia.prime.enable` | Hybrid GPU (NVIDIA + Intel/AMD) |
+| Packages | `northstar.packages.enable` | Curated system packages |
+| Shells | `northstar.shells.enable` | Fish + Zsh |
+| SSH | `northstar.ssh.enable` | OpenSSH server |
+| Virtualization | `northstar.virtualization.enable` | libvirtd + Docker |
 
-### Home Manager Modules (`cryonix.home.*`)
+### Home Manager Modules (`northstar.home.*`)
 
 | Module | Option | Description |
 |--------|--------|-------------|
-| Ghostty | `cryonix.home.ghostty.enable` | Ghostty terminal |
-| Kitty | `cryonix.home.kitty.enable` | Kitty terminal |
-| Fish | `cryonix.home.fish.enable` | Fish shell + plugins |
-| Zsh | `cryonix.home.zsh.enable` | Zsh + Oh My Zsh |
-| Git | `cryonix.home.git.enable` | Git configuration |
-| Tmux | `cryonix.home.tmux.enable` | Tmux + powerkit |
-| Starship | `cryonix.home.starship.enable` | Starship prompt |
-| Oh My Posh | `cryonix.home.omp.enable` | Oh My Posh prompt theme |
-| direnv | `cryonix.home.direnv.enable` | Per-directory environments |
-| fzf | `cryonix.home.fzf.enable` | Fuzzy finder |
-| eza | `cryonix.home.eza.enable` | Modern `ls` replacement |
-| zoxide | `cryonix.home.zoxide.enable` | Smart `cd` |
+| Ghostty | `northstar.home.ghostty.enable` | Ghostty terminal |
+| Kitty | `northstar.home.kitty.enable` | Kitty terminal |
+| Fish | `northstar.home.fish.enable` | Fish shell + plugins |
+| Zsh | `northstar.home.zsh.enable` | Zsh + Oh My Zsh |
+| Git | `northstar.home.git.enable` | Git configuration |
+| Tmux | `northstar.home.tmux.enable` | Tmux + powerkit |
+| Starship | `northstar.home.starship.enable` | Starship prompt |
+| Oh My Posh | `northstar.home.omp.enable` | Oh My Posh prompt theme |
+| direnv | `northstar.home.direnv.enable` | Per-directory environments |
+| fzf | `northstar.home.fzf.enable` | Fuzzy finder |
+| eza | `northstar.home.eza.enable` | Modern `ls` replacement |
+| zoxide | `northstar.home.zoxide.enable` | Smart `cd` |
 
 ### Toggling Modules
 
@@ -171,8 +171,8 @@ Disable any module from your host config or `common.nix`:
 
 ```nix
 # hosts/<hostname>/default.nix or hosts/common.nix
-cryonix.cups.enable = false;
-cryonix.home.kitty.enable = false;
+northstar.cups.enable = false;
+northstar.home.kitty.enable = false;
 ```
 
 ---
@@ -229,24 +229,24 @@ cryonix.home.kitty.enable = false;
 
 ## 🔌 Using Modules in Another Flake
 
-Cryonix exports its modules so you can use them in your own NixOS config:
+Northstar exports its modules so you can use them in your own NixOS config:
 
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    cryonix.url = "github:atomiksan/cryonix";
+    northstar.url = "github:atomiksan/northstar";
   };
 
-  outputs = { nixpkgs, cryonix, ... }: {
+  outputs = { nixpkgs, northstar, ... }: {
     nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        cryonix.nixosModules.default
+        northstar.nixosModules.default
         {
-          cryonix.hyprland.enable = true;
-          cryonix.audio.enable = true;
-          cryonix.fonts.enable = true;
+          northstar.hyprland.enable = true;
+          northstar.audio.enable = true;
+          northstar.fonts.enable = true;
         }
       ];
     };
@@ -257,7 +257,7 @@ Cryonix exports its modules so you can use them in your own NixOS config:
 Home Manager modules are also exported:
 
 ```nix
-home-manager.sharedModules = [ cryonix.homeManagerModules.default ];
+home-manager.sharedModules = [ northstar.homeManagerModules.default ];
 ```
 
 ---
@@ -306,13 +306,13 @@ git push origin v3.0.0
 This triggers `.github/workflows/release.yml` which:
 
 1. Populates `installer-rs/flake/`
-2. Builds an optimized `cryonix-installer` binary
+2. Builds an optimized `northstar-installer` binary
 3. Creates a GitHub release with the binary attached
 
 Download the binary on a NixOS live USB and run it — no Nix required:
 
 ```bash
-curl -fsSL https://github.com/atomiksan/cryonix/releases/latest/download/cryonix-installer -o installer
+curl -fsSL https://github.com/atomiksan/northstar/releases/latest/download/northstar-installer -o installer
 chmod +x installer && sudo ./installer
 ```
 

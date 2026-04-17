@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.home.starship;
+let cfg = config.northstar.home.starship;
 in {
-  options.cryonix.home.starship.enable = lib.mkEnableOption "Starship prompt";
+  options.northstar.home.starship.enable = lib.mkEnableOption "Starship prompt";
 
   config = lib.mkIf cfg.enable {
     programs.starship = {

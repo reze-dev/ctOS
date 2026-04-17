@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.home.kitty;
+let cfg = config.northstar.home.kitty;
 in {
-  options.cryonix.home.kitty.enable = lib.mkEnableOption "Kitty terminal";
+  options.northstar.home.kitty.enable = lib.mkEnableOption "Kitty terminal";
 
   config = lib.mkIf cfg.enable {
     programs.kitty = {

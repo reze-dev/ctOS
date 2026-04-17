@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.home.eza;
+let cfg = config.northstar.home.eza;
 in {
-  options.cryonix.home.eza.enable = lib.mkEnableOption "Eza (ls replacement)";
+  options.northstar.home.eza.enable = lib.mkEnableOption "Eza (ls replacement)";
 
   config = lib.mkIf cfg.enable {
     programs.eza = {

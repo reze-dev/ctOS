@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.dev;
+let cfg = config.northstar.dev;
 in {
-  options.cryonix.dev.enable = lib.mkEnableOption "development tools (direnv, git, gpg, neovim, nix-ld)";
+  options.northstar.dev.enable = lib.mkEnableOption "development tools (direnv, git, gpg, neovim, nix-ld)";
 
   config = lib.mkIf cfg.enable {
     programs.direnv = {

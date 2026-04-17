@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.boot;
+let cfg = config.northstar.boot;
 in {
-  options.cryonix.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
+  options.northstar.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
 
   config = lib.mkIf cfg.enable {
     boot.loader = {

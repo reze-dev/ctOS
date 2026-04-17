@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.emacs;
+let cfg = config.northstar.emacs;
 in {
-  options.cryonix.emacs.enable = lib.mkEnableOption "Emacs daemon service";
+  options.northstar.emacs.enable = lib.mkEnableOption "Emacs daemon service";
 
   config = lib.mkIf cfg.enable {
     services.emacs = {

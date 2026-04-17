@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.home.omp;
+let cfg = config.northstar.home.omp;
 in {
-  options.cryonix.home.omp.enable = lib.mkEnableOption "Oh My Posh prompt";
+  options.northstar.home.omp.enable = lib.mkEnableOption "Oh My Posh prompt";
 
   config = lib.mkIf cfg.enable {
     programs.oh-my-posh = {

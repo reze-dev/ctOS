@@ -6,10 +6,10 @@
   ...
 }:
 let
-  cfg = config.cryonix.packages;
+  cfg = config.northstar.packages;
 in
 {
-  options.cryonix.packages.enable = lib.mkEnableOption "system packages and unfree config";
+  options.northstar.packages.enable = lib.mkEnableOption "system packages and unfree config";
 
   config = lib.mkIf cfg.enable {
     nixpkgs.config.allowUnfree = true;

@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.cups;
+let cfg = config.northstar.cups;
 in {
-  options.cryonix.cups.enable = lib.mkEnableOption "CUPS printing";
+  options.northstar.cups.enable = lib.mkEnableOption "CUPS printing";
 
   config = lib.mkIf cfg.enable {
     services.printing.enable = true;

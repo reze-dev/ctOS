@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.networking;
+let cfg = config.northstar.networking;
 in {
-  options.cryonix.networking.enable = lib.mkEnableOption "NetworkManager and host entries";
+  options.northstar.networking.enable = lib.mkEnableOption "NetworkManager and host entries";
 
   config = lib.mkIf cfg.enable {
     networking.extraHosts = ''

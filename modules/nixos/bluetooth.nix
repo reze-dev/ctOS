@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.bluetooth;
+let cfg = config.northstar.bluetooth;
 in {
-  options.cryonix.bluetooth.enable = lib.mkEnableOption "Bluetooth support";
+  options.northstar.bluetooth.enable = lib.mkEnableOption "Bluetooth support";
 
   config = lib.mkIf cfg.enable {
     hardware.bluetooth.enable = true;

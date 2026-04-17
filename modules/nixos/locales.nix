@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.locales;
+let cfg = config.northstar.locales;
 in {
-  options.cryonix.locales.enable = lib.mkEnableOption "timezone and locale settings";
+  options.northstar.locales.enable = lib.mkEnableOption "timezone and locale settings";
 
   config = lib.mkIf cfg.enable {
     time.timeZone = "Asia/Kolkata";

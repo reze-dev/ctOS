@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.audio;
+let cfg = config.northstar.audio;
 in {
-  options.cryonix.audio.enable = lib.mkEnableOption "PipeWire audio";
+  options.northstar.audio.enable = lib.mkEnableOption "PipeWire audio";
 
   config = lib.mkIf cfg.enable {
     services.pulseaudio.enable = false;

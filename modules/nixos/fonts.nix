@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
-let cfg = config.cryonix.fonts;
+let cfg = config.northstar.fonts;
 in {
-  options.cryonix.fonts.enable = lib.mkEnableOption "Nerd Fonts and system fonts";
+  options.northstar.fonts.enable = lib.mkEnableOption "Nerd Fonts and system fonts";
 
   config = lib.mkIf cfg.enable {
     fonts.packages = with pkgs; [

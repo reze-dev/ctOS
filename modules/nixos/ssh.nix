@@ -1,7 +1,7 @@
 { config, lib, ... }:
-let cfg = config.cryonix.ssh;
+let cfg = config.northstar.ssh;
 in {
-  options.cryonix.ssh.enable = lib.mkEnableOption "OpenSSH daemon";
+  options.northstar.ssh.enable = lib.mkEnableOption "OpenSSH daemon";
 
   config = lib.mkIf cfg.enable {
     services.openssh.enable = true;

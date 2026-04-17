@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-const STATE_FILE: &str = "/tmp/cryonix-install-state.json";
+const STATE_FILE: &str = "/tmp/northstar-install-state.json";
 
 pub const STEP_ORDER: &[&str] = &[
     "gather_host",
