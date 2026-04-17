@@ -184,15 +184,13 @@ async fn handle_key(app: &mut App, key: KeyCode) {
 
         // Selection pages
         Page::Mode | Page::PartSelect | Page::Fs | Page::Gpu | Page::GpuIgpuType => match key {
-            KeyCode::Up | KeyCode::Char('k') => {
-                if app.cursor > 0 {
-                    app.cursor -= 1;
-                }
+            KeyCode::Up | KeyCode::Char('k') if app.cursor > 0 => {
+                app.cursor -= 1;
             }
-            KeyCode::Down | KeyCode::Char('j') => {
-                if app.cursor < app.choices.len().saturating_sub(1) {
-                    app.cursor += 1;
-                }
+            KeyCode::Down | KeyCode::Char('j')
+                if app.cursor < app.choices.len().saturating_sub(1) =>
+            {
+                app.cursor += 1;
             }
             KeyCode::Enter => handle_selection(app),
             KeyCode::Esc => {
