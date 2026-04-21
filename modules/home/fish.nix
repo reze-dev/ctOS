@@ -29,7 +29,7 @@ in
         set -gx PATH (go env GOPATH)/bin $PATH
         set -gx PATH $HOME/.config/emacs/bin $PATH
         set -gx DIRENV_LOG_FORMAT ""
-        fish_config theme choose nord
+        fish_config theme choose "Rosé Pine Auto"
       '';
       interactiveShellInit = ''
         set -x TERM xterm-256color
