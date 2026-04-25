@@ -23,7 +23,6 @@ in
         discord
         dunst
         emacs-pgtk
-        epy
         eza
         fd
         fzf
@@ -37,17 +36,14 @@ in
         kitty
         libgcc
         libnotify
-        lazygit
         mpv
         nil
         nitch
         nixfmt
         nodejs
         obsidian
-        quickshell
         redis
         ripgrep
-        rofi
         rustup
         tmux
         unzip
