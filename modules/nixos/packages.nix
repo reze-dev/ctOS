@@ -36,7 +36,6 @@ in
         kitty
         libgcc
         libnotify
-        mpv
         nil
         nitch
         nixfmt
