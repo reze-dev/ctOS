@@ -801,7 +801,7 @@ def do_install_nixos(state: State) -> None:
     """Run nixos-install. Safe to re-run."""
     hostname = state.get("hostname")
     msg(f"\nInstalling NixOS (host: {hostname})...")
-    run(f'nixos-install --flake ".#{hostname}" --no-root-password --extra-experimental-features "nix-command flakes pipe-operators"')
+    run(f'nixos-install --flake ".#{hostname}" --no-root-password')
     state.set_step("copy_flake")
 
 
