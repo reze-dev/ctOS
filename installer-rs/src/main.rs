@@ -16,8 +16,12 @@ use std::io::stdout;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+const NIX_CONFIG_FEATURES: &str = "experimental-features = nix-command flakes pipe-operators";
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ensure_nix_config();
+
     // Root check
     if nix::unistd::geteuid().as_raw() != 0 {
         eprintln!("\x1b[0;31mPlease run as root\x1b[0m");
@@ -54,6 +58,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = std::fs::remove_dir_all(&work_dir);
 
     result
+}
+
+fn ensure_nix_config() {
+    let current = std::env::var("NIX_CONFIG").unwrap_or_default();
+    if current.contains(NIX_CONFIG_FEATURES) {
+        return;
+    }
+
+    let next = if current.trim().is_empty() {
+        NIX_CONFIG_FEATURES.to_string()
+    } else {
+        format!("{}\n{}", current.trim_end(), NIX_CONFIG_FEATURES)
+    };
+    std::env::set_var("NIX_CONFIG", next);
 }
 
 async fn run_app(
