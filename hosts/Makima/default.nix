@@ -19,7 +19,12 @@
   users.users.reze = {
     isNormalUser = true;
     description = "reze";
-    extraGroups = [ "networkmanager" "wheel" "libvirtd" "docker" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "libvirtd"
+      "docker"
+    ];
     shell = pkgs.zsh;
     hashedPassword = "$6$6VzoJUwHF0jvIr3V$UeSeDOI.6.JcC9CjxW26V0r0W0SeCos7Ne7/AWSxL1ACNb1.goIYDQAnn8K7ODSvyUKn9zfOc9996t.OXBTBX.";
   };
@@ -33,20 +38,6 @@
   };
 
   networking.hostName = "Makima";
-
-  # Boot — use existing EFI bootloader (dual-boot safe)
-  boot.loader = {
-    efi = {
-      canTouchEfiVariables = true;
-      efiSysMountPoint = "/boot/efi";
-    };
-    grub = {
-      enable = true;
-      device = "nodev";
-      efiSupport = true;
-      useOSProber = true;
-    };
-  };
 
   system.stateVersion = "26.05";
 }
