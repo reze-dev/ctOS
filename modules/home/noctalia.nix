@@ -26,7 +26,7 @@ in
           position = "top";
           density = "compact";
           showCapsule = true;
-          backgroundOpacity = 0.92;
+          backgroundOpacity = 0.70;
           widgets = {
             left = [
               { id = "Launcher"; }
