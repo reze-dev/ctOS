@@ -21,7 +21,6 @@ in
         btop
         codecrafters-cli
         discord
-        dunst
         emacs-pgtk
         eza
         fd
@@ -30,9 +29,7 @@ in
         gcc
         ghostty
         go
-        hyprpaper
         hyprcursor
-        hyprlauncher
         kitty
         libgcc
         libnotify
@@ -62,7 +59,6 @@ in
       ]
       ++ [
         inputs.zen-browser.packages."${stdenv.hostPlatform.system}".default
-        inputs.awww.packages.${pkgs.stdenv.hostPlatform.system}.awww
       ];
   };
 }
