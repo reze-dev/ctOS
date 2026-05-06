@@ -28,7 +28,7 @@ in
         "$mainMod" = "SUPER";
 
         monitor = [
-          ",preferred,auto,auto"
+          ",preferred,auto,1.22"
         ];
 
         exec-once = lib.optionals config.programs.noctalia-shell.enable [
