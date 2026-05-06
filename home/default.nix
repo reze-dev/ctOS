@@ -7,6 +7,8 @@
 }:
 
 {
+  imports = homeModulePaths;
+
   home.username = lib.mkDefault "nixos";
   home.homeDirectory = lib.mkDefault "/home/nixos";
   home.stateVersion = "25.11";
@@ -18,8 +20,6 @@
     name = "Bibata-Modern-Classic";
     size = 18;
   };
-
-  imports = homeModulePaths;
 
   programs.home-manager.enable = true;
 
@@ -37,5 +37,7 @@
     fzf.enable = true;
     eza.enable = true;
     zoxide.enable = true;
+    hyprland.enable = true;
+    noctalia.enable = true;
   };
 }

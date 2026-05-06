@@ -37,5 +37,6 @@
     fonts.enable = true;
     locales.enable = true;
     networking.enable = true;
+    power.enable = true;
   };
 }

@@ -22,6 +22,7 @@ from typing import Optional
 STATE_FILE = Path("/tmp/northstar-install-state.json")
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds, doubles each attempt
+NIX_CONFIG_FEATURES = "experimental-features = nix-command flakes pipe-operators"
 
 STEPS = [
     "gather_host",
@@ -65,6 +66,16 @@ def step(num: str, text: str) -> None:
 def die(text: str) -> None:
     err(text)
     sys.exit(1)
+
+
+def ensure_nix_config() -> None:
+    """Export flake feature flags for every Nix command run by this session."""
+    current = os.environ.get("NIX_CONFIG", "").strip()
+    if NIX_CONFIG_FEATURES in current:
+        return
+    os.environ["NIX_CONFIG"] = (
+        f"{current}\n{NIX_CONFIG_FEATURES}" if current else NIX_CONFIG_FEATURES
+    )
 
 
 # ── State Management ─────────────────────────────────────────────
@@ -851,6 +862,7 @@ def main() -> None:
         os.environ.get("NORTHSTAR_REMOTE", Path(__file__).resolve().parent.parent)
     )
     os.chdir(script_dir)
+    ensure_nix_config()
 
     print(f"{CYAN}")
     print("  ❄️  Northstar NixOS Installer  ❄️")

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://nixos.wiki/images/thumb/2/20/Home-nixos-logo.png/207px-Home-nixos-logo.png" width="100" alt="NixOS Logo"/>
+  <img src="https://raw.githubusercontent.com/NixOS/nixos-artwork/master/logo/nix-snowflake-colours.svg" width="100" alt="NixOS Logo"/>
 </p>
 
 <h1 align="center">❄️ Northstar-nix</h1>
@@ -77,6 +77,12 @@ northstar/
 
 ### Fresh Install (from a NixOS live USB)
 
+If you launch an installer through `nix run`, export the flake feature flags first:
+
+```bash
+export NIX_CONFIG="experimental-features = nix-command flakes pipe-operators"
+```
+
 **Option A — Download pre-built binary** (no Nix required, recommended):
 
 ```bash
@@ -144,6 +150,7 @@ sudo nixos-rebuild switch --flake .#Makima
 | NVIDIA | `northstar.nvidia.enable` | NVIDIA proprietary drivers |
 | NVIDIA Prime | `northstar.nvidia.prime.enable` | Hybrid GPU (NVIDIA + Intel/AMD) |
 | Packages | `northstar.packages.enable` | Curated system packages |
+| Power | `northstar.power.enable` | UPower + power profiles |
 | Shells | `northstar.shells.enable` | Fish + Zsh |
 | SSH | `northstar.ssh.enable` | OpenSSH server |
 | Virtualization | `northstar.virtualization.enable` | libvirtd + Docker |
@@ -164,6 +171,7 @@ sudo nixos-rebuild switch --flake .#Makima
 | fzf | `northstar.home.fzf.enable` | Fuzzy finder |
 | eza | `northstar.home.eza.enable` | Modern `ls` replacement |
 | zoxide | `northstar.home.zoxide.enable` | Smart `cd` |
+| Noctalia | `northstar.home.noctalia.enable` | Noctalia Wayland shell |
 
 ### Toggling Modules
 
@@ -272,7 +280,7 @@ home-manager.sharedModules = [ northstar.homeManagerModules.default ];
 | `disko` | [nix-community/disko](https://github.com/nix-community/disko) | Declarative disk partitioning |
 | `nix-index-database` | [nix-community/nix-index-database](https://github.com/nix-community/nix-index-database) | Pre-built `nix-index` database |
 | `zen-browser` | [0xc000022070/zen-browser-flake](https://github.com/0xc000022070/zen-browser-flake) | Zen Browser |
-| `awww` | [LGFae/awww](https://codeberg.org/LGFae/awww) | Wallpaper daemon |
+| `noctalia` | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) | Wayland shell |
 | `tmux-powerkit` | [fabioluciano/tmux-powerkit](https://github.com/fabioluciano/tmux-powerkit) | Tmux status line plugin |
 
 ---
@@ -286,13 +294,14 @@ A compiled Rust binary built with [Ratatui](https://ratatui.rs) + [Tokio](https:
 - Fully async TUI — all operations run on tokio, zero blocking
 - Ratatui rendering with progress gauge, animated spinner, and streaming log
 - Compile-time flake embedding via `include_dir!` — single self-contained binary
+- Session-local `NIX_CONFIG` export for `nix-command`, `flakes`, and `pipe-operators`
 - Arrow-key wizard navigation with icy snow color theme
 - Exponential backoff retry on failures
 - JSON checkpoint state for resume after power loss
 
 ### Python Installer (`nix run .#install`)
 
-The original interactive installer. It uses the same install flow but runs as a Python script with the flake source copied to a temp directory.
+The original interactive installer. It uses the same install flow, exports the same session-local Nix feature flags, and runs as a Python script with the flake source copied to a temp directory.
 
 ### Releases (CI/CD)
 
