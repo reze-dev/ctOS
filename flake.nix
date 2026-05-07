@@ -26,6 +26,8 @@
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     crane.url = "github:ipetkov/crane";
+    dedsec-grub-theme.url = "gitlab:VandalByte/dedsec-grub-theme";
+    dedsec-grub-theme.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
