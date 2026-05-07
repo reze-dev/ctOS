@@ -1,6 +1,13 @@
-{ config, lib, pkgs, ... }:
-let cfg = config.northstar.home.kitty;
-in {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.northstar.home.kitty;
+in
+{
   options.northstar.home.kitty.enable = lib.mkEnableOption "Kitty terminal";
 
   config = lib.mkIf cfg.enable {
