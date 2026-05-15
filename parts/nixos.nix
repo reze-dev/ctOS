@@ -5,10 +5,12 @@ let
   lib = inputs.nixpkgs.lib;
 
   # Inline scanPaths — recursively collect .nix files, skipping default.nix
-  scanPaths = path:
+  scanPaths =
+    path:
     builtins.readDir path
     |> builtins.attrNames
-    |> builtins.concatMap (name:
+    |> builtins.concatMap (
+      name:
       let
         type = (builtins.readDir path).${name};
         fullPath = path + "/${name}";
@@ -18,23 +20,23 @@ let
       else if type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix" then
         [ fullPath ]
       else
-        []
+        [ ]
     );
 
   nixosModulePaths = scanPaths ../modules/nixos;
   homeModulePaths = scanPaths ../modules/home;
 
-  hosts =
-    builtins.readDir ../hosts
-    |> lib.filterAttrs (name: type: type == "directory");
+  hosts = builtins.readDir ../hosts |> lib.filterAttrs (name: type: type == "directory");
 
   hostHasDisko = hostName: builtins.pathExists ../hosts/${hostName}/disko.nix;
 
-  mkHost = hostName:
+  mkHost =
+    hostName:
     lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs homeModulePaths; };
       modules = [
+        inputs.dedsec-grub-theme.nixosModule
         ../hosts/${hostName}
         ../hosts/${hostName}/hardware.nix
         ../hosts/common.nix
@@ -50,7 +52,11 @@ in
 {
   flake = {
     nixosConfigurations = hosts |> lib.mapAttrs (name: _: mkHost name);
-    nixosModules.default = { imports = nixosModulePaths; };
-    homeManagerModules.default = { imports = homeModulePaths; };
+    nixosModules.default = {
+      imports = nixosModulePaths;
+    };
+    homeManagerModules.default = {
+      imports = homeModulePaths;
+    };
   };
 }

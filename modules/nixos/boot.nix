@@ -1,6 +1,13 @@
-{ config, lib, pkgs, ... }:
-let cfg = config.northstar.boot;
-in {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.northstar.boot;
+in
+{
   options.northstar.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
 
   config = lib.mkIf cfg.enable {
@@ -14,14 +21,21 @@ in {
         useOSProber = true;
         efiSupport = true;
         device = "nodev";
-        theme =
-          pkgs.fetchFromGitHub {
-            owner = "semimqmo";
-            repo = "sekiro_grub_theme";
-            rev = "1affe05f7257b72b69404cfc0a60e88aa19f54a6";
-            sha256 = "02gdihkd2w33qy86vs8g0pfljp919ah9c13cj4bh9fvvzm5zjfn1";
-          }
-          + "/Sekiro";
+
+        dedsec-theme = {
+          enable = true;
+          style = "wannacry";
+          icon = "color";
+          resolution = "1080p";
+        };
+        # theme =
+        #   pkgs.fetchFromGitHub {
+        #     owner = "semimqmo";
+        #     repo = "sekiro_grub_theme";
+        #     rev = "1affe05f7257b72b69404cfc0a60e88aa19f54a6";
+        #     sha256 = "02gdihkd2w33qy86vs8g0pfljp919ah9c13cj4bh9fvvzm5zjfn1";
+        #   }
+        #   + "/Sekiro";
       };
     };
   };
