@@ -20,6 +20,7 @@ in
       enable = true;
       package = null;
       portalPackage = null;
+      configType = "lua";
 
       settings = {
         "$terminal" = "kitty";
