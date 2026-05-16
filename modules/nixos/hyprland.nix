@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, inputs, lib, pkgs, ... }:
 let cfg = config.northstar.hyprland;
 in {
   options.northstar.hyprland.enable = lib.mkEnableOption "Hyprland window manager";
@@ -6,6 +6,7 @@ in {
   config = lib.mkIf cfg.enable {
     programs.hyprland = {
       enable = true;
+      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
       xwayland.enable = true;
     };
 
