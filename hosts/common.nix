@@ -12,11 +12,17 @@
 
   home-manager.extraSpecialArgs = { inherit inputs homeModulePaths; };
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-    "pipe-operators"
-  ];
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+      "pipe-operators"
+    ];
+    trusted-users = [
+      "root"
+      "reze"
+    ];
+  };
 
   # Enable all northstar NixOS modules
   northstar = {
@@ -37,6 +43,8 @@
     fonts.enable = true;
     locales.enable = true;
     networking.enable = true;
+    neovim.enable = true;
     power.enable = true;
+    zen-browser.enable = true;
   };
 }
