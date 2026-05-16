@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 let cfg = config.northstar.dev;
 in {
-  options.northstar.dev.enable = lib.mkEnableOption "development tools (direnv, git, gpg, neovim, nix-ld)";
+  options.northstar.dev.enable = lib.mkEnableOption "development tools (direnv, git, gpg, nix-ld)";
 
   config = lib.mkIf cfg.enable {
     programs.direnv = {
@@ -15,8 +15,6 @@ in {
       enable = true;
       enableSSHSupport = true;
     };
-
-    programs.neovim.enable = true;
 
     programs.nix-ld.enable = true;
     programs.nix-ld.libraries = with pkgs; [
