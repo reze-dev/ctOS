@@ -1,6 +1,14 @@
-{ config, inputs, lib, pkgs, ... }:
-let cfg = config.northstar.hyprland;
-in {
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.northstar.hyprland;
+in
+{
   options.northstar.hyprland.enable = lib.mkEnableOption "Hyprland window manager";
 
   config = lib.mkIf cfg.enable {

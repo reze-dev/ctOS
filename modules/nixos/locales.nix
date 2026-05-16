@@ -1,6 +1,8 @@
 { config, lib, ... }:
-let cfg = config.northstar.locales;
-in {
+let
+  cfg = config.northstar.locales;
+in
+{
   options.northstar.locales.enable = lib.mkEnableOption "timezone and locale settings";
 
   config = lib.mkIf cfg.enable {

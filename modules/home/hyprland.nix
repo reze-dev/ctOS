@@ -82,7 +82,6 @@ in
           },
           dwindle = {
               preserve_split = true,
-              pseudotile = true,
           },
           master = {
               new_status = "master",

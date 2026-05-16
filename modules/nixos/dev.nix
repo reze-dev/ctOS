@@ -1,6 +1,13 @@
-{ config, lib, pkgs, ... }:
-let cfg = config.northstar.dev;
-in {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.northstar.dev;
+in
+{
   options.northstar.dev.enable = lib.mkEnableOption "development tools (direnv, git, gpg, nix-ld)";
 
   config = lib.mkIf cfg.enable {
