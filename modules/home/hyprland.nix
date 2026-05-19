@@ -37,8 +37,8 @@ in
       local menu = "fuzzel"
       local mainMod = "SUPER"
 
-      hl.env("XCURSOR_SIZE", "20")
-      hl.env("HYPRCURSOR_SIZE", "20")
+      hl.env("XCURSOR_SIZE", "18")
+      hl.env("HYPRCURSOR_SIZE", "18")
 
       hl.on("hyprland.start", function()
           hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target")
