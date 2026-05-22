@@ -38,5 +38,29 @@ in
         #   + "/Sekiro";
       };
     };
+    boot.plymouth = {
+      enable = true;
+      theme = "dedsec";
+
+      themePackages = [
+        (pkgs.stdenv.mkDerivation {
+          pname = "dedsec-plymouth";
+          version = "1.0";
+
+          src = ../../assets/dedsec-plymouth;
+
+          installPhase = ''
+            mkdir -p $out/share/plymouth/themes/dedsec
+            cp * $out/share/plymouth/themes/dedsec/
+          '';
+        })
+      ];
+    };
+    boot.initrd.systemd.enable = true;
+    boot.kernelParams = [
+      "quiet"
+      "splash"
+      "udev.log_priority=3"
+    ];
   };
 }

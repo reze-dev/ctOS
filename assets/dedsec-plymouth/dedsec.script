@@ -1,0 +1,77 @@
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+screen_w = Window.GetWidth();
+screen_h = Window.GetHeight();
+
+background_image = Image("background.png");
+background_image = background_image.Scale(screen_w, screen_h);
+background = Sprite(background_image);
+background.SetZ(-10000);
+
+title_image = Image.Text("NORTHSTAR", 1, 0, 0, 1, "Monospace Bold 24");
+title = Sprite(title_image);
+title.SetX((screen_w - title_image.GetWidth()) / 2);
+title.SetY(screen_h * 0.58);
+title.SetZ(10);
+
+logs = [
+    "[ OK ] Initializing network interface",
+    "[ OK ] Starting encrypted volumes",
+    "[ OK ] Mounting system partitions",
+    "[ OK ] Launching ctOS daemon",
+    "[ OK ] Starting dbus service",
+    "[ OK ] Loading exploit modules",
+    "[ OK ] Starting display manager"
+];
+
+log_image = [];
+log_sprite = [];
+
+for (i = 0; i < 7; i++) {
+    log_image[i] = Image.Text(logs[i], 1, 0, 0, 1, "Monospace 12");
+    log_sprite[i] = Sprite(log_image[i]);
+    log_sprite[i].SetX(screen_w * 0.04);
+    log_sprite[i].SetY(screen_h * 0.66 + (i * 18));
+    log_sprite[i].SetZ(10);
+}
+
+bar_image = [];
+bar_image[0] = Image.Text("[          ]", 1, 0, 0, 1, "Monospace Bold 16");
+bar_image[1] = Image.Text("[=         ]", 1, 0, 0, 1, "Monospace Bold 16");
+bar_image[2] = Image.Text("[===       ]", 1, 0, 0, 1, "Monospace Bold 16");
+bar_image[3] = Image.Text("[=====     ]", 1, 0, 0, 1, "Monospace Bold 16");
+bar_image[4] = Image.Text("[=======   ]", 1, 0, 0, 1, "Monospace Bold 16");
+bar_image[5] = Image.Text("[========= ]", 1, 0, 0, 1, "Monospace Bold 16");
+bar_image[6] = Image.Text("[==========]", 1, 0, 0, 1, "Monospace Bold 16");
+
+bar = Sprite(bar_image[0]);
+bar.SetX((screen_w - bar_image[0].GetWidth()) / 2);
+bar.SetY(screen_h * 0.92);
+bar.SetZ(20);
+
+cursor_image = Image.Text("_", 1, 0, 0, 1, "Monospace Bold 18");
+cursor = Sprite(cursor_image);
+cursor.SetX((screen_w + title_image.GetWidth()) / 2 + 8);
+cursor.SetY(screen_h * 0.58);
+cursor.SetZ(20);
+
+frame = 0;
+cursor_visible = 1;
+
+fun refresh_callback() {
+    frame++;
+    bar.SetImage(bar_image[Math.Int(frame / 4) % 7]);
+
+    if (cursor_visible == 1) {
+        cursor.SetOpacity(1);
+        cursor_visible = 0;
+    } else {
+        cursor.SetOpacity(0);
+        cursor_visible = 1;
+    }
+
+    Plymouth.SetRefreshFunction(refresh_callback);
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
