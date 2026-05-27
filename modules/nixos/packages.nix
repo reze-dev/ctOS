@@ -24,18 +24,16 @@ in
       fzf
       fuzzel
       gcc
-      ghostty
       go
       hyprcursor
+      jq
       kitty
       libgcc
       libnotify
       nil
       nitch
       nixfmt
-      nodejs
       obsidian
-      redis
       ripgrep
       rustup
       tmux
