@@ -4,72 +4,104 @@ Window.SetBackgroundBottomColor(0, 0, 0);
 screen_w = Window.GetWidth();
 screen_h = Window.GetHeight();
 
-background_image = Image("background.png");
-background_image = background_image.Scale(screen_w, screen_h);
+background_source = Image("background.png");
+background_image = background_source.Scale(screen_w, screen_h);
 background = Sprite(background_image);
-background.SetZ(-10000);
+background.SetPosition(Window.GetX(), Window.GetY(), 0);
 
-title_image = Image.Text("NORTHSTAR", 1, 0, 0, 1, "Monospace Bold 24");
+veil_image = Image.Text("................................................................................................................................................................................................", 1, 0, 0, 0.22, "Monospace 10", "left");
+veil = Sprite(veil_image);
+veil.SetZ(20);
+
+scan_image = Image.Text(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", 1, 0, 0, 0.45, "Monospace Bold 12", "left");
+scan = Sprite(scan_image);
+scan.SetZ(30);
+
+title_image = Image.Text("// DEDSEC NODE ONLINE", 1, 0, 0, 1, "Monospace Bold 22", "left");
+title_shadow_image = Image.Text("// DEDSEC NODE ONLINE", 0.1, 0.9, 0.85, 0.45, "Monospace Bold 22", "left");
 title = Sprite(title_image);
-title.SetX((screen_w - title_image.GetWidth()) / 2);
-title.SetY(screen_h * 0.58);
-title.SetZ(10);
+title_shadow = Sprite(title_shadow_image);
+title.SetZ(50);
+title_shadow.SetZ(49);
 
-logs = [
-    "[ OK ] Initializing network interface",
-    "[ OK ] Starting encrypted volumes",
-    "[ OK ] Mounting system partitions",
-    "[ OK ] Launching ctOS daemon",
-    "[ OK ] Starting dbus service",
-    "[ OK ] Loading exploit modules",
-    "[ OK ] Starting display manager"
-];
+status_text = [];
+status_image = [];
+status_sprite = [];
+status_text[0] = "[ OK ] ctOS handshake accepted";
+status_text[1] = "[ OK ] exploit chain staged";
+status_text[2] = "[ OK ] kernel noise suppressed";
+status_text[3] = "[ OK ] encrypted volumes mapped";
+status_text[4] = "[ OK ] watcher daemons masked";
+status_text[5] = "[ OK ] greetd endpoint armed";
 
-log_image = [];
-log_sprite = [];
-
-for (i = 0; i < 7; i++) {
-    log_image[i] = Image.Text(logs[i], 1, 0, 0, 1, "Monospace 12");
-    log_sprite[i] = Sprite(log_image[i]);
-    log_sprite[i].SetX(screen_w * 0.04);
-    log_sprite[i].SetY(screen_h * 0.66 + (i * 18));
-    log_sprite[i].SetZ(10);
+for (i = 0; i < 6; i++) {
+    status_image[i] = Image.Text(status_text[i], 1, 0, 0, 0.9, "Monospace 13", "left");
+    status_sprite[i] = Sprite(status_image[i]);
+    status_sprite[i].SetZ(55);
 }
 
-bar_image = [];
-bar_image[0] = Image.Text("[          ]", 1, 0, 0, 1, "Monospace Bold 16");
-bar_image[1] = Image.Text("[=         ]", 1, 0, 0, 1, "Monospace Bold 16");
-bar_image[2] = Image.Text("[===       ]", 1, 0, 0, 1, "Monospace Bold 16");
-bar_image[3] = Image.Text("[=====     ]", 1, 0, 0, 1, "Monospace Bold 16");
-bar_image[4] = Image.Text("[=======   ]", 1, 0, 0, 1, "Monospace Bold 16");
-bar_image[5] = Image.Text("[========= ]", 1, 0, 0, 1, "Monospace Bold 16");
-bar_image[6] = Image.Text("[==========]", 1, 0, 0, 1, "Monospace Bold 16");
+progress_image = [];
+progress_image[0] = Image.Text("[                    ]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress_image[1] = Image.Text("[###                 ]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress_image[2] = Image.Text("[######              ]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress_image[3] = Image.Text("[#########           ]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress_image[4] = Image.Text("[############        ]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress_image[5] = Image.Text("[###############     ]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress_image[6] = Image.Text("[##################  ]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress_image[7] = Image.Text("[####################]", 1, 0, 0, 1, "Monospace Bold 16", "left");
+progress = Sprite(progress_image[0]);
+progress.SetZ(60);
 
-bar = Sprite(bar_image[0]);
-bar.SetX((screen_w - bar_image[0].GetWidth()) / 2);
-bar.SetY(screen_h * 0.92);
-bar.SetZ(20);
-
-cursor_image = Image.Text("_", 1, 0, 0, 1, "Monospace Bold 18");
-cursor = Sprite(cursor_image);
-cursor.SetX((screen_w + title_image.GetWidth()) / 2 + 8);
-cursor.SetY(screen_h * 0.58);
-cursor.SetZ(20);
+signal_image = [];
+signal_image[0] = Image.Text("ACCESSING WANNACRY PAYLOAD...", 1, 0, 0, 0.85, "Monospace Bold 13", "left");
+signal_image[1] = Image.Text("ACCESSING W4NN4CRY P4YL04D...", 1, 0, 0, 0.85, "Monospace Bold 13", "left");
+signal_image[2] = Image.Text("ACCESSING ctOS BACKDOOR...", 1, 0, 0, 0.85, "Monospace Bold 13", "left");
+signal = Sprite(signal_image[0]);
+signal.SetZ(65);
 
 frame = 0;
-cursor_visible = 1;
 
 fun refresh_callback() {
     frame++;
-    bar.SetImage(bar_image[Math.Int(frame / 4) % 7]);
 
-    if (cursor_visible == 1) {
-        cursor.SetOpacity(1);
-        cursor_visible = 0;
-    } else {
-        cursor.SetOpacity(0);
-        cursor_visible = 1;
+    pulse = (Math.Sin(frame / 7) + 1) / 2;
+    flicker = (Math.Sin(frame * 3) + 1) / 2;
+    jitter = Math.Int(Math.Sin(frame * 2.7) * 2);
+
+    background.SetX(Window.GetX() + jitter);
+    background.SetY(Window.GetY());
+    background.SetOpacity(0.92 + (flicker * 0.08));
+
+    veil.SetX(Window.GetX());
+    veil.SetY(Window.GetY() + ((frame * 5) % screen_h));
+    veil.SetOpacity(0.08 + (pulse * 0.12));
+
+    scan.SetX(Window.GetX());
+    scan.SetY(Window.GetY() + ((frame * 11) % screen_h));
+    scan.SetOpacity(0.18 + (pulse * 0.22));
+
+    title_x = Window.GetX() + (screen_w * 0.05);
+    title_y = Window.GetY() + (screen_h * 0.07);
+    title.SetPosition(title_x, title_y, 50);
+    title.SetOpacity(0.75 + (pulse * 0.25));
+    title_shadow.SetPosition(title_x + Math.Int(Math.Sin(frame) * 4), title_y + 2, 49);
+    title_shadow.SetOpacity(flicker * 0.55);
+
+    for (i = 0; i < 6; i++) {
+        status_sprite[i].SetX(Window.GetX() + (screen_w * 0.06));
+        status_sprite[i].SetY(Window.GetY() + (screen_h * 0.62) + (i * 20));
+        status_sprite[i].SetOpacity(0.45 + (((frame + i * 9) % 40) / 80));
     }
+
+    progress.SetX(Window.GetX() + (screen_w / 2) - (progress_image[0].GetWidth() / 2));
+    progress.SetY(Window.GetY() + (screen_h * 0.91));
+    progress.SetImage(progress_image[Math.Int(frame / 5) % 8]);
+    progress.SetOpacity(0.7 + (pulse * 0.3));
+
+    signal.SetX(Window.GetX() + (screen_w * 0.64));
+    signal.SetY(Window.GetY() + (screen_h * 0.78));
+    signal.SetImage(signal_image[Math.Int(frame / 18) % 3]);
+    signal.SetOpacity(0.55 + (flicker * 0.45));
 
     Plymouth.SetRefreshFunction(refresh_callback);
 }
