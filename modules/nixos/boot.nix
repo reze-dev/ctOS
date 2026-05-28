@@ -59,7 +59,6 @@ in
     boot.initrd.systemd.enable = true;
     boot.kernelParams = [
       "quiet"
-      "splash"
       "udev.log_priority=3"
     ];
   };
