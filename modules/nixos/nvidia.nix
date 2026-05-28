@@ -42,6 +42,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    boot.initrd.kernelModules =
+      lib.optionals (cfg.prime.enable && cfg.prime.intelBusId != "") [ "i915" ]
+      ++ lib.optionals (cfg.prime.enable && cfg.prime.amdgpuBusId != "") [ "amdgpu" ];
+
     # Enable OpenGL
     hardware.graphics.enable = true;
 
