@@ -33,6 +33,7 @@ in
       nil
       nitch
       nixfmt
+      ollama
       obsidian
       ripgrep
       rustup
