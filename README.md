@@ -80,7 +80,7 @@ northstar/
 If you launch an installer through `nix run`, export the flake feature flags first:
 
 ```bash
-export NIX_CONFIG="experimental-features = nix-command flakes pipe-operators"
+export NIX_CONFIG="experimental-features = nix-command flakes"
 ```
 
 **Option A — Download pre-built binary** (no Nix required, recommended):
@@ -294,7 +294,7 @@ A compiled Rust binary built with [Ratatui](https://ratatui.rs) + [Tokio](https:
 - Fully async TUI — all operations run on tokio, zero blocking
 - Ratatui rendering with progress gauge, animated spinner, and streaming log
 - Compile-time flake embedding via `include_dir!` — single self-contained binary
-- Session-local `NIX_CONFIG` export for `nix-command`, `flakes`, and `pipe-operators`
+- Session-local `NIX_CONFIG` export for `nix-command` and `flakes`
 - Arrow-key wizard navigation with icy snow color theme
 - Exponential backoff retry on failures
 - JSON checkpoint state for resume after power loss
