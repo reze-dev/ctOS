@@ -16,7 +16,6 @@
     experimental-features = [
       "nix-command"
       "flakes"
-      "pipe-operators"
     ];
     trusted-users = [
       "root"
@@ -24,27 +23,5 @@
     ];
   };
 
-  # Enable all northstar NixOS modules
-  northstar = {
-    boot.enable = true;
-    hyprland.enable = true;
-    packages.enable = true;
-    dev.enable = true;
-    shells.enable = true;
-    firefox.enable = true;
-    audio.enable = true;
-    bluetooth.enable = true;
-    cups.enable = true;
-    display.enable = true;
-    emacs.enable = true;
-    ssh.enable = true;
-    virtualization.enable = true;
-    env.enable = true;
-    fonts.enable = true;
-    locales.enable = true;
-    networking.enable = true;
-    neovim.enable = true;
-    power.enable = true;
-    zen-browser.enable = true;
-  };
+  northstar.profiles.base.enable = true;
 }

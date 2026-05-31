@@ -10,6 +10,11 @@
     ./filesystems.nix
   ];
 
+  northstar.profiles = {
+    desktop.enable = true;
+    workstation.enable = true;
+  };
+
   home-manager.users.reze = {
     imports = [ ../../home ];
     home.username = lib.mkForce "reze";
