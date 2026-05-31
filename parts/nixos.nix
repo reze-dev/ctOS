@@ -1,32 +1,21 @@
 # Flake-parts module: auto-discover NixOS hosts + export module sets
-{ self, inputs, ... }:
+{ inputs, ... }:
 
 let
   lib = inputs.nixpkgs.lib;
 
-  # Inline scanPaths — recursively collect .nix files, skipping default.nix
-  scanPaths =
+  scanModules =
     path:
-    builtins.readDir path
-    |> builtins.attrNames
-    |> builtins.concatMap (
-      name:
-      let
-        type = (builtins.readDir path).${name};
-        fullPath = path + "/${name}";
-      in
-      if type == "directory" then
-        scanPaths fullPath
-      else if type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix" then
-        [ fullPath ]
-      else
-        [ ]
-    );
+    builtins.filter (
+      file: lib.hasSuffix ".nix" (toString file) && builtins.baseNameOf file != "default.nix"
+    ) (lib.filesystem.listFilesRecursive path);
 
-  nixosModulePaths = scanPaths ../modules/nixos;
-  homeModulePaths = scanPaths ../modules/home;
+  nixosModulePaths = scanModules ../modules/nixos;
+  homeModulePaths = scanModules ../modules/home;
 
-  hosts = builtins.readDir ../hosts |> lib.filterAttrs (name: type: type == "directory");
+  hosts = builtins.attrNames (
+    lib.filterAttrs (_: type: type == "directory") (builtins.readDir ../hosts)
+  );
 
   hostHasDisko = hostName: builtins.pathExists ../hosts/${hostName}/disko.nix;
 
@@ -51,7 +40,7 @@ let
 in
 {
   flake = {
-    nixosConfigurations = hosts |> lib.mapAttrs (name: _: mkHost name);
+    nixosConfigurations = lib.genAttrs hosts mkHost;
     nixosModules.default = {
       imports = nixosModulePaths;
     };
