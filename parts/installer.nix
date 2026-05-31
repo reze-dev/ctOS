@@ -5,7 +5,7 @@
   perSystem =
     { pkgs, system, ... }:
     let
-      nixConfigFeatures = "experimental-features = nix-command flakes pipe-operators";
+      nixConfigFeatures = "experimental-features = nix-command flakes";
     in
     {
       packages = {
