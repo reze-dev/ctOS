@@ -22,7 +22,7 @@ from typing import Optional
 STATE_FILE = Path("/tmp/northstar-install-state.json")
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds, doubles each attempt
-NIX_CONFIG_FEATURES = "experimental-features = nix-command flakes pipe-operators"
+NIX_CONFIG_FEATURES = "experimental-features = nix-command flakes"
 
 STEPS = [
     "gather_host",

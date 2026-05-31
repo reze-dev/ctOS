@@ -16,7 +16,7 @@ use std::io::stdout;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-const NIX_CONFIG_FEATURES: &str = "experimental-features = nix-command flakes pipe-operators";
+const NIX_CONFIG_FEATURES: &str = "experimental-features = nix-command flakes";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
