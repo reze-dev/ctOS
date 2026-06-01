@@ -35,7 +35,7 @@ in
       nixfmt
       ollama
       obsidian
-      pinokio
+      openconnect
       ripgrep
       rustup
       tmux
