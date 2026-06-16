@@ -6,9 +6,9 @@
 }:
 let
   cfg = config.northstar.home.hyprland;
-  noctaliaAutostart = lib.optionalString config.programs.noctalia-shell.enable ''
+  noctaliaAutostart = lib.optionalString config.programs.noctalia.enable ''
     hl.on("hyprland.start", function()
-        hl.exec_cmd("noctalia-shell")
+        hl.exec_cmd("noctalia")
     end)
   '';
 in
