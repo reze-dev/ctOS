@@ -16,47 +16,60 @@ in
   options.northstar.home.noctalia.enable = lib.mkEnableOption "Noctalia Wayland shell";
 
   config = lib.mkIf cfg.enable {
-    programs.noctalia-shell = {
+    programs.noctalia = {
       enable = true;
       systemd.enable = false;
 
       settings = {
-        settingsVersion = 0;
-        bar = {
+        shell = {
+          time_format = "{:%H:%M}";
+          settings_show_advanced = true;
+        };
+
+        bar.main = {
           position = "top";
-          density = "compact";
-          showCapsule = true;
-          backgroundOpacity = 0.70;
-          widgets = {
-            left = [
-              { id = "Launcher"; }
-              { id = "ActiveWindow"; }
-            ];
-            center = [
-              {
-                id = "Workspace";
-                hideUnoccupied = false;
-              }
-            ];
-            right = [
-              { id = "Network"; }
-              { id = "Bluetooth"; }
-              { id = "Battery"; }
-              {
-                id = "Clock";
-                formatHorizontal = "HH:mm";
-                useMonospacedFont = true;
-              }
-            ];
+          thickness = 34;
+          background_opacity = 0.70;
+          radius = 12;
+          margin_h = 180;
+          margin_v = 10;
+          padding = 14;
+          widget_spacing = 6;
+          capsule = true;
+          start = [
+            "launcher"
+            "active_window"
+          ];
+          center = [ "workspaces" ];
+          end = [
+            "network"
+            "bluetooth"
+            "battery"
+            "clock"
+          ];
+        };
+
+        widget.workspaces.settings = {
+          hide_empty_workspaces = false;
+        };
+
+        widget.clock = {
+          type = "clock";
+          settings = {
+            format = "{:%H:%M}";
           };
         };
-        colorSchemes = {
-          darkMode = true;
-          useWallpaperColors = true;
+
+        theme = {
+          mode = "dark";
+          source = "wallpaper";
+          wallpaper_scheme = "m3-content";
         };
+
         wallpaper = {
           enabled = true;
           directory = "${../../assets/wallpapers}";
+          default.path = "${wallpaper}";
         };
       };
     };
