@@ -24,7 +24,7 @@ in
 
         dedsec-theme = {
           enable = true;
-          style = "wannacry";
+          style = "lovetrap";
           icon = "color";
           resolution = "1080p";
         };
