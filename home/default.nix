@@ -6,6 +6,24 @@
   ...
 }:
 
+let
+  desktopModules = [
+    "direnv"
+    "eza"
+    "fish"
+    "fzf"
+    "ghostty"
+    "git"
+    "hyprland"
+    "kitty"
+    "noctalia"
+    "omp"
+    "starship"
+    "tmux"
+    "zoxide"
+    "zsh"
+  ];
+in
 {
   imports = homeModulePaths;
 
@@ -23,21 +41,7 @@
 
   programs.home-manager.enable = true;
 
-  # Enable all northstar home modules
-  northstar.home = {
-    ghostty.enable = true;
-    kitty.enable = true;
-    fish.enable = true;
-    zsh.enable = true;
-    git.enable = true;
-    tmux.enable = true;
-    starship.enable = true;
-    omp.enable = true;
-    direnv.enable = true;
-    fzf.enable = true;
-    eza.enable = true;
-    zoxide.enable = true;
-    hyprland.enable = true;
-    noctalia.enable = true;
-  };
+  northstar.home = lib.genAttrs desktopModules (_: {
+    enable = true;
+  });
 }

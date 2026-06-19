@@ -47,7 +47,7 @@ in
           pname = "dedsec-plymouth";
           version = "1.0";
 
-          src = ../../assets/dedsec-plymouth;
+          src = ../../../assets/dedsec-plymouth;
 
           installPhase = ''
             mkdir -p $out/share/plymouth/themes/dedsec

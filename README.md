@@ -58,7 +58,14 @@ northstar/
 │
 ├── modules/                    # Pure option-based module declarations
 │   ├── nixos/                  # System modules  → northstar.<name>.enable
+│   │   ├── core/               # Boot, locale, networking, shells, packages
+│   │   ├── desktop/            # Audio, display, browsers, Hyprland, power
+│   │   ├── hardware/           # Hardware-specific support such as NVIDIA
+│   │   ├── profiles/           # Base/desktop/workstation module bundles
+│   │   └── workstation/        # Development, editor, and virtualization stack
 │   └── home/                   # User modules    → northstar.home.<name>.enable
+│       ├── cli/                # Shells, prompts, git, tmux, direnv, fzf
+│       └── desktop/            # Terminals, Hyprland config, Noctalia shell
 │
 ├── installer-rs/               # Rust installer source
 │   ├── Cargo.toml / Cargo.lock

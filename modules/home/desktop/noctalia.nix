@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.northstar.home.noctalia;
-  wallpaper = ../../assets/wallpapers/rose-pine-fractal.jpg;
+  wallpaper = ../../../assets/wallpapers/rose-pine-fractal.jpg;
 in
 {
   imports = [
@@ -68,7 +68,7 @@ in
 
         wallpaper = {
           enabled = true;
-          directory = "${../../assets/wallpapers}";
+          directory = "${../../../assets/wallpapers}";
           default.path = "${wallpaper}";
         };
       };
