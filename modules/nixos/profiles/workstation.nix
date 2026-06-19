@@ -6,16 +6,19 @@
 
 let
   cfg = config.northstar.profiles.workstation;
+  modules = [
+    "dev"
+    "emacs"
+    "virtualization"
+  ];
 in
 {
   options.northstar.profiles.workstation.enable =
     lib.mkEnableOption "development workstation Northstar profile";
 
   config = lib.mkIf cfg.enable {
-    northstar = {
-      dev.enable = true;
-      emacs.enable = true;
-      virtualization.enable = true;
-    };
+    northstar = lib.genAttrs modules (_: {
+      enable = true;
+    });
   };
 }

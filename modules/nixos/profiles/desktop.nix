@@ -6,20 +6,23 @@
 
 let
   cfg = config.northstar.profiles.desktop;
+  modules = [
+    "audio"
+    "bluetooth"
+    "cups"
+    "display"
+    "firefox"
+    "hyprland"
+    "power"
+    "zen-browser"
+  ];
 in
 {
   options.northstar.profiles.desktop.enable = lib.mkEnableOption "desktop Northstar profile";
 
   config = lib.mkIf cfg.enable {
-    northstar = {
-      audio.enable = true;
-      bluetooth.enable = true;
-      cups.enable = true;
-      display.enable = true;
-      firefox.enable = true;
-      hyprland.enable = true;
-      power.enable = true;
-      zen-browser.enable = true;
-    };
+    northstar = lib.genAttrs modules (_: {
+      enable = true;
+    });
   };
 }

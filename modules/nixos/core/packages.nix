@@ -17,6 +17,7 @@ in
       bat
       btop
       codecrafters-cli
+      commitizen
       discord
       emacs-pgtk
       eza
