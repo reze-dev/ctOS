@@ -13,7 +13,6 @@ in
   config = lib.mkIf cfg.enable {
     programs.neovim = {
       enable = true;
-      package = pkgs.neovim;
     };
   };
 }
