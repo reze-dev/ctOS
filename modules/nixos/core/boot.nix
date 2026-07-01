@@ -24,7 +24,7 @@ in
 
         dedsec-theme = {
           enable = true;
-          style = "lovetrap";
+          style = "sitedown";
           icon = "color";
           resolution = "1080p";
         };
