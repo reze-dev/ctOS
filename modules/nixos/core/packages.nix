@@ -28,6 +28,7 @@ in
       go
       hyprcursor
       jq
+      kdePackages.dolphin
       kitty
       libgcc
       libnotify
