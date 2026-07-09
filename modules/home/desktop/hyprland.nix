@@ -37,9 +37,9 @@ in
       local menu = "fuzzel"
       local mainMod = "SUPER"
 
-      hl.env("XCURSOR_THEME", "BreezeX-Black")
+      hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
       hl.env("XCURSOR_SIZE", "20")
-      hl.env("HYPRCURSOR_THEME", "BreezeX-Black")
+      hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
       hl.env("HYPRCURSOR_SIZE", "20")
 
       hl.on("hyprland.start", function()
