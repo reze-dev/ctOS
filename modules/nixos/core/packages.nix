@@ -17,8 +17,6 @@ in
       bat
       btop
       codecrafters-cli
-      commitizen
-      discord
       emacs-pgtk
       eza
       fd
@@ -36,12 +34,13 @@ in
       nil
       nitch
       nixfmt
-      ollama
+      nodejs
       obsidian
       openconnect
       ripgrep
       rustup
       tmux
+      tree-sitter
       unzip
       vscode
       wget
