@@ -34,6 +34,7 @@ in
       nil
       nitch
       nixfmt
+      nodejs
       obsidian
       openconnect
       ripgrep
