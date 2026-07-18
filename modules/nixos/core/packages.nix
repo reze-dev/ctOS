@@ -56,6 +56,13 @@ in
       gnumake
       shfmt
       shellcheck
+
+      #Hasklul packages
+      ghc
+      cabal-install
+      haskell-language-server
+      hoogle
+      fourmolu
     ];
   };
 }
