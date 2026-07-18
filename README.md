@@ -40,32 +40,33 @@ northstar/
 ├── flake.nix                   # Flake entry point (inputs, flake-parts wire-up)
 ├── flake.lock
 │
-├── parts/                      # flake-parts build logic
-│   ├── nixos.nix               # Host auto-discovery & modules exporter
+├── flake/                      # flake-parts modules
+│   ├── hosts.nix               # Host discovery & module exports
 │   ├── installer.nix           # Python installer package definition
 │   └── rust-installer.nix      # Rust TUI installer package definition
 │
 ├── hosts/                      # Host machine configurations
 │   ├── common.nix              # Common system base config
-│   ├── disko.nix               # Whole-disk disko partitioning layout
 │   └── <hostname>/             # Per-machine system settings & hardware scans
+│
+├── lib/                        # Shared Nix helpers and templates
+│   ├── default.nix             # Module/host discovery helpers
+│   └── disko/
+│       └── btrfs.nix           # Shared whole-disk Btrfs disko layout
 │
 ├── home/
 │   └── default.nix             # Home Manager profile entry point
 │
 ├── modules/                    # Option-based module definitions
-│   ├── nixos/                  # System-level modules (NixOS)
-│   │   ├── system/             # Core system (boot, env, locales, network, shells, ssh, packages)
-│   │   ├── development/        # Dev environments (dev tools, devtools package list, emacs, virtualization)
-│   │   ├── desktop/            # GUI components (audio, display manager, compositor)
-│   │   ├── hardware/           # Hardware drivers (NVIDIA, Prime)
-│   │   └── profiles/           # Module bundles (base, desktop, workstation)
-│   │
-│   └── home/                   # User-level modules (Home Manager)
-│       ├── shell/              # Shells (Fish/Zsh) & prompt configs (Starship/OMP)
-│       ├── terminals/          # Terminal emulators (Ghostty, Kitty)
-│       ├── tools/              # User utilities (Git, Tmux, Yazi, Eza, Fzf, Zoxide, Direnv)
-│       └── desktop/            # Desktop environments (Hyprland, Noctalia Wayland shell, Udiskie daemon)
+│   ├── features/               # Vertical feature slices
+│   │   ├── core/               # Boot, env, fonts, locale, networking, packages, shells
+│   │   ├── desktop/            # Audio, display/session, browsers, Hyprland, Noctalia
+│   │   ├── development/        # Dev defaults, toolchains, git, Emacs, virtualization
+│   │   ├── shell/              # Fish, Zsh, Starship, Oh My Posh
+│   │   ├── terminals/          # Ghostty and Kitty
+│   │   └── tools/              # Eza, Fzf, Tmux, Yazi, Zoxide
+│   ├── hardware/               # Hardware-specific modules (NVIDIA, Prime)
+│   └── profiles/               # Feature bundles (base, desktop, workstation)
 │
 ├── installer-rs/               # Ratatui TUI installer source (Rust)
 ├── installer/                  # Python interactive installer source
@@ -121,51 +122,46 @@ sudo nixos-rebuild switch --flake .#Makima
 
 ## 🔧 Module Reference
 
-### NixOS System Modules (`northstar.*`)
+### Feature Modules (`northstar.features.*`)
 
 | Module | Option | Description |
 | :--- | :--- | :--- |
-| **Audio** | `northstar.audio.enable` | PipeWire audio stack & plugins |
-| **Bluetooth** | `northstar.bluetooth.enable` | Bluetooth daemon + Blueman applet |
-| **Boot** | `northstar.boot.enable` | GRUB bootloader styled with Dedsec theme |
-| **CUPS** | `northstar.cups.enable` | Printing support (CUPS daemon) |
-| **Dev** | `northstar.dev.enable` | System-wide direnv, git, gpg, and nix-ld configs |
-| **DevTools** | `northstar.devtools.enable` | Languages, compilers (GCC/Clang/Go/Rustup/Zig/JDK/Haskell), and LSPs |
-| **Display** | `northstar.display.enable` | Greetd with tuigreet + Niri compositor |
-| **Emacs** | `northstar.emacs.enable` | Emacs daemon running under systemd |
-| **Environment** | `northstar.env.enable` | Standard environment variables (EDITOR, VISUAL, etc.) |
-| **Firefox** | `northstar.firefox.enable` | Firefox browser |
-| **Fonts** | `northstar.fonts.enable` | Nerd Fonts collection |
-| **Hyprland** | `northstar.hyprland.enable` | Hyprland Wayland compositor |
-| **Locales** | `northstar.locales.enable` | Timezone, keyboard layout, and i18n locales |
-| **Networking** | `northstar.networking.enable` | NetworkManager daemon + custom firewall settings |
+| **Audio** | `northstar.features.audio.enable` | PipeWire audio stack & plugins |
+| **Bluetooth** | `northstar.features.bluetooth.enable` | Bluetooth daemon + Blueman applet |
+| **Boot** | `northstar.features.boot.enable` | GRUB bootloader styled with Dedsec theme |
+| **CUPS** | `northstar.features.cups.enable` | Printing support (CUPS daemon) |
+| **Dev** | `northstar.features.dev.enable` | System-wide direnv, git, gpg, and nix-ld configs |
+| **DevTools** | `northstar.features.devtools.enable` | Languages, compilers (GCC/Clang/Go/Rustup/Zig/JDK/Haskell), and LSPs |
+| **Display** | `northstar.features.display.enable` | Greetd with tuigreet + Niri compositor |
+| **Emacs** | `northstar.features.emacs.enable` | Emacs daemon running under systemd |
+| **Environment** | `northstar.features.env.enable` | Standard environment variables (EDITOR, VISUAL, etc.) |
+| **Firefox** | `northstar.features.firefox.enable` | Firefox browser |
+| **Fonts** | `northstar.features.fonts.enable` | Nerd Fonts collection |
+| **Hyprland** | `northstar.features.hyprland.enable` | Hyprland Wayland compositor |
+| **Locales** | `northstar.features.locales.enable` | Timezone, keyboard layout, and i18n locales |
+| **Networking** | `northstar.features.networking.enable` | NetworkManager daemon + custom firewall settings |
 | **NVIDIA** | `northstar.nvidia.enable` | Proprietary NVIDIA drivers |
 | **NVIDIA Prime** | `northstar.nvidia.prime.enable` | Hybrid GPU offload settings (NVIDIA + Intel/AMD) |
-| **Packages** | `northstar.packages.enable` | Curated base utility packages, `udisks2`, and `gvfs` |
-| **Power** | `northstar.power.enable` | UPower daemon + power-profiles-daemon |
-| **Shells** | `northstar.shells.enable` | Fish and Zsh system shells |
-| **SSH** | `northstar.ssh.enable` | OpenSSH daemon |
-| **Virtualization** | `northstar.virtualization.enable` | Libvirtd + QEMU/KVM + Docker daemon |
-
-### Home Manager Modules (`northstar.home.*`)
-
-| Module | Option | Description |
-| :--- | :--- | :--- |
-| **Ghostty** | `northstar.home.ghostty.enable` | Ghostty terminal configuration |
-| **Kitty** | `northstar.home.kitty.enable` | Kitty terminal configuration |
-| **Fish** | `northstar.home.fish.enable` | Fish shell, aliases, and plugin integrations |
-| **Zsh** | `northstar.home.zsh.enable` | Zsh, Oh My Zsh, and customized plugins |
-| **Git** | `northstar.home.git.enable` | Git user, aliases, and extra config |
-| **Tmux** | `northstar.home.tmux.enable` | Tmux, shortcuts, and tmux-powerkit plugin |
-| **Starship** | `northstar.home.starship.enable` | Starship shell prompt configuration |
-| **Oh My Posh** | `northstar.home.omp.enable` | Oh My Posh shell prompt theme |
-| **direnv** | `northstar.home.direnv.enable` | Per-directory shell environments |
-| **fzf** | `northstar.home.fzf.enable` | Fzf fuzzy finder |
-| **eza** | `northstar.home.eza.enable` | Eza modern `ls` alternative |
-| **zoxide** | `northstar.home.zoxide.enable` | Zoxide quick jump `cd` alternative |
-| **Yazi** | `northstar.home.yazi.enable` | Yazi terminal file manager + Quick-media jump (`g` + `m`) |
-| **Noctalia** | `northstar.home.noctalia.enable` | Noctalia Wayland shell configuration |
-| **udiskie** | `northstar.home.udiskie.enable` | udiskie auto-mount daemon for removable media |
+| **Packages** | `northstar.features.packages.enable` | Curated base utility packages, `udisks2`, and `gvfs` |
+| **Power** | `northstar.features.power.enable` | UPower daemon + power-profiles-daemon |
+| **Shells** | `northstar.features.shells.enable` | Fish and Zsh system shells |
+| **SSH** | `northstar.features.ssh.enable` | OpenSSH daemon |
+| **Virtualization** | `northstar.features.virtualization.enable` | Libvirtd + QEMU/KVM + Docker daemon |
+| **Ghostty** | `northstar.features.ghostty.enable` | Ghostty terminal configuration |
+| **Kitty** | `northstar.features.kitty.enable` | Kitty terminal configuration |
+| **Fish** | `northstar.features.fish.enable` | Fish shell, aliases, and plugin integrations |
+| **Zsh** | `northstar.features.zsh.enable` | Zsh, Oh My Zsh, and customized plugins |
+| **Git** | `northstar.features.git.enable` | Git user, aliases, and extra config |
+| **Tmux** | `northstar.features.tmux.enable` | Tmux, shortcuts, and tmux-powerkit plugin |
+| **Starship** | `northstar.features.starship.enable` | Starship shell prompt configuration |
+| **Oh My Posh** | `northstar.features.omp.enable` | Oh My Posh shell prompt theme |
+| **direnv** | `northstar.features.direnv.enable` | Per-directory shell environments |
+| **fzf** | `northstar.features.fzf.enable` | Fzf fuzzy finder |
+| **eza** | `northstar.features.eza.enable` | Eza modern `ls` alternative |
+| **zoxide** | `northstar.features.zoxide.enable` | Zoxide quick jump `cd` alternative |
+| **Yazi** | `northstar.features.yazi.enable` | Yazi terminal file manager + Quick-media jump (`g` + `m`) |
+| **Noctalia** | `northstar.features.noctalia.enable` | Noctalia Wayland shell configuration |
+| **udiskie** | `northstar.features.udiskie.enable` | udiskie auto-mount daemon for removable media |
 
 ---
 
@@ -175,8 +171,8 @@ Modules can be enabled or disabled globally in `hosts/common.nix` or in your hos
 
 ```nix
 # hosts/Makima/default.nix
-northstar.cups.enable = false;          # Disable printing
-northstar.home.kitty.enable = false;     # Disable Kitty configurations
+northstar.features.cups.enable = false;          # Disable printing
+northstar.features.kitty.enable = false;         # Disable Kitty configuration
 ```
 
 ### Adding a New Host Machine
@@ -208,6 +204,13 @@ northstar.home.kitty.enable = false;     # Disable Kitty configurations
      system.stateVersion = "26.05";
    }
    ```
+   For whole-disk installs, `hosts/<hostname>/disko.nix` should import the shared layout:
+   ```nix
+   {
+     imports = [ ../../lib/disko/btrfs.nix ];
+     disko.devices.disk.main.device = "/dev/nvme0n1";
+   }
+   ```
 3. Generate hardware config scan:
    ```bash
    nixos-generate-config --show-hardware-config > hosts/<hostname>/hardware.nix
@@ -221,7 +224,7 @@ northstar.home.kitty.enable = false;     # Disable Kitty configurations
 
 ## 🔌 Reusing Modules in Other Flakes
 
-Northstar system and user modules are fully exported:
+Northstar feature modules are exported as a NixOS module set:
 
 ```nix
 # Example external flake.nix
@@ -237,8 +240,8 @@ Northstar system and user modules are fully exported:
       modules = [
         northstar.nixosModules.default
         {
-          northstar.hyprland.enable = true;
-          northstar.audio.enable = true;
+          northstar.features.hyprland.enable = true;
+          northstar.features.audio.enable = true;
         }
       ];
     };
@@ -246,10 +249,6 @@ Northstar system and user modules are fully exported:
 }
 ```
 
-For Home Manager user environments:
-```nix
-home-manager.sharedModules = [ northstar.homeManagerModules.default ];
-```
 
 ---
 
