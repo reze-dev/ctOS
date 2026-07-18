@@ -25,6 +25,7 @@ in
       fzf
       fuzzel
       hyprcursor
+      hyprpolkitagent
       jq
       kdePackages.dolphin
       kitty
