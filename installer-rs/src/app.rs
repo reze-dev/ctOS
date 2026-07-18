@@ -1,4 +1,70 @@
+use std::collections::VecDeque;
 use tokio::sync::mpsc;
+use tokio::task::JoinHandle;
+use zeroize::Zeroize;
+
+/// Installation mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum InstallMode {
+    #[default]
+    WholeDisk,
+    PartitionOnly,
+}
+
+impl std::fmt::Display for InstallMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::WholeDisk => write!(f, "whole-disk"),
+            Self::PartitionOnly => write!(f, "partition-only"),
+        }
+    }
+}
+
+/// GPU driver choice.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum GpuChoice {
+    #[default]
+    None,
+    Nvidia,
+    NvidiaPrime,
+}
+
+impl std::fmt::Display for GpuChoice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "Default (no NVIDIA)"),
+            Self::Nvidia => write!(f, "NVIDIA"),
+            Self::NvidiaPrime => write!(f, "NVIDIA Prime"),
+        }
+    }
+}
+
+/// Integrated GPU type for Prime setups.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum IgpuType {
+    #[default]
+    Intel,
+    Amd,
+}
+
+impl std::fmt::Display for IgpuType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Intel => write!(f, "intel"),
+            Self::Amd => write!(f, "amd"),
+        }
+    }
+}
+
+impl IgpuType {
+    /// Returns the Nix option key for this iGPU type.
+    pub fn bus_id_key(&self) -> &'static str {
+        match self {
+            Self::Intel => "intelBusId",
+            Self::Amd => "amdgpuBusId",
+        }
+    }
+}
 
 /// Holds all user-collected configuration for installation.
 #[derive(Debug, Clone, Default)]
@@ -6,16 +72,16 @@ pub struct InstallConfig {
     pub hostname: String,
     pub username: String,
     pub hashed_pw: String,
-    pub mode: String, // "whole-disk" or "partition-only"
+    pub mode: InstallMode,
     pub disk_dev: String,
     pub nixos_part: String,
     pub efi_part: String,
     pub swap_size: String,
     pub fs_type: String,
-    pub gpu_choice: String, // "1"=none, "2"=nvidia, "3"=prime
+    pub gpu_choice: GpuChoice,
     pub nvidia_bus_id: String,
     pub igpu_bus_id: String,
-    pub igpu_type: String,
+    pub igpu_type: IgpuType,
 }
 
 /// Progress updates sent from backend to TUI.
@@ -97,10 +163,11 @@ pub struct App {
 
     // Installation
     pub install_steps: Vec<InstallStep>,
-    pub log_lines: Vec<String>,
+    pub log_lines: VecDeque<String>,
     pub install_done: bool,
     pub install_err: Option<String>,
     pub progress_rx: Option<mpsc::UnboundedReceiver<ProgressUpdate>>,
+    pub install_handle: Option<JoinHandle<()>>,
     pub spinner_frame: usize,
 
     // Work dir
@@ -150,10 +217,11 @@ impl App {
                     status: StepStatus::Pending,
                 },
             ],
-            log_lines: Vec::new(),
+            log_lines: VecDeque::new(),
             install_done: false,
             install_err: None,
             progress_rx: None,
+            install_handle: None,
             spinner_frame: 0,
             work_dir,
         }
@@ -235,7 +303,7 @@ impl App {
             Page::PartConfirm => Page::PartSelect,
             Page::Efi => Page::PartConfirm,
             Page::Swap => {
-                if self.config.mode == "whole-disk" {
+                if self.config.mode == InstallMode::WholeDisk {
                     Page::DiskConfirm
                 } else {
                     Page::Efi
@@ -243,7 +311,7 @@ impl App {
             }
             Page::Fs => Page::Swap,
             Page::Gpu => {
-                if self.config.mode == "whole-disk" {
+                if self.config.mode == InstallMode::WholeDisk {
                     Page::Fs
                 } else {
                     Page::Swap
@@ -264,6 +332,11 @@ impl App {
     pub fn spinner_char(&self) -> &str {
         const FRAMES: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
         FRAMES[self.spinner_frame % FRAMES.len()]
+    }
+
+    /// Clear the temporary plaintext password from memory.
+    pub fn clear_password(&mut self) {
+        self.password_tmp.zeroize();
     }
 
     pub fn handle_progress(&mut self, p: ProgressUpdate) {
@@ -288,9 +361,9 @@ impl App {
         }
 
         if !p.message.is_empty() {
-            self.log_lines.push(p.message);
-            if self.log_lines.len() > 8 {
-                self.log_lines.drain(..self.log_lines.len() - 8);
+            self.log_lines.push_back(p.message);
+            while self.log_lines.len() > 8 {
+                self.log_lines.pop_front();
             }
         }
 
@@ -311,5 +384,21 @@ impl App {
             .filter(|s| s.status == StepStatus::Done)
             .count();
         done as f64 / self.install_steps.len() as f64
+    }
+
+    /// Check if the spawned installation task has finished (panic or completion).
+    pub fn check_install_handle(&mut self) {
+        if let Some(ref handle) = self.install_handle {
+            if handle.is_finished() {
+                let handle = self.install_handle.take().unwrap();
+                match tokio::runtime::Handle::current().block_on(handle) {
+                    Ok(()) => {} // normal completion, progress updates handle the rest
+                    Err(e) => {
+                        self.install_err =
+                            Some(format!("Installation task panicked: {e}"));
+                    }
+                }
+            }
+        }
     }
 }

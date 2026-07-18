@@ -5,13 +5,8 @@ use std::path::Path;
 
 const STATE_FILE: &str = "/tmp/northstar-install-state.json";
 
+/// Steps that the backend actually executes, in order.
 pub const STEP_ORDER: &[&str] = &[
-    "gather_host",
-    "gather_user",
-    "gather_mode",
-    "gather_disk",
-    "gather_swap_fs_gpu",
-    "confirm",
     "generate_config",
     "partition",
     "install_nixos",
@@ -24,7 +19,6 @@ pub struct State {
     data: HashMap<String, String>,
 }
 
-#[allow(dead_code)]
 impl State {
     pub fn new() -> Self {
         let mut state = Self::default();
@@ -46,17 +40,9 @@ impl State {
         }
     }
 
-    pub fn get(&self, key: &str) -> String {
-        self.data.get(key).cloned().unwrap_or_default()
-    }
-
-    pub fn set(&mut self, key: &str, value: &str) {
-        self.data.insert(key.to_string(), value.to_string());
-        self.save();
-    }
-
     pub fn set_step(&mut self, step: &str) {
-        self.set("step", step);
+        self.data.insert("step".to_string(), step.to_string());
+        self.save();
     }
 
     pub fn current_step(&self) -> &str {
@@ -76,6 +62,7 @@ impl State {
         }
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.data.clear();
         let _ = fs::remove_file(STATE_FILE);
