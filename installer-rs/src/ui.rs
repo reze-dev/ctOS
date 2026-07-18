@@ -1,4 +1,4 @@
-use crate::app::{App, InputMode, Page, StepStatus};
+use crate::app::{App, GpuChoice, InputMode, InstallMode, Page, StepStatus};
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -344,13 +344,13 @@ fn draw_select(f: &mut Frame, area: Rect, app: &App, step: &str, title: &str, la
 
 fn draw_summary(f: &mut Frame, area: Rect, app: &App) {
     let cfg = &app.config;
-    let gpu_label = match cfg.gpu_choice.as_str() {
-        "2" => "NVIDIA".to_string(),
-        "3" => format!(
+    let gpu_label = match cfg.gpu_choice {
+        GpuChoice::Nvidia => "NVIDIA".to_string(),
+        GpuChoice::NvidiaPrime => format!(
             "NVIDIA Prime ({} + {}:{})",
             cfg.nvidia_bus_id, cfg.igpu_type, cfg.igpu_bus_id
         ),
-        _ => "Default (no NVIDIA)".to_string(),
+        GpuChoice::None => "Default (no NVIDIA)".to_string(),
     };
 
     let mut lines = vec![
@@ -361,10 +361,11 @@ fn draw_summary(f: &mut Frame, area: Rect, app: &App) {
         Line::from(""),
     ];
 
-    let rows = vec![
+    let mode_str = cfg.mode.to_string();
+    let rows: Vec<(&str, &str)> = vec![
         ("Hostname", &cfg.hostname),
         ("Username", &cfg.username),
-        ("Mode", &cfg.mode),
+        ("Mode", &mode_str),
         ("Disk", &cfg.disk_dev),
         ("Swap", &cfg.swap_size),
     ];
@@ -379,7 +380,7 @@ fn draw_summary(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(v.to_string()),
         ]));
     }
-    if cfg.mode == "partition-only" {
+    if cfg.mode == InstallMode::PartitionOnly {
         lines.push(Line::from(vec![
             Span::styled(
                 "  NixOS Part    ".to_string(),
@@ -399,7 +400,7 @@ fn draw_summary(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(&cfg.efi_part),
         ]));
     }
-    if cfg.mode == "whole-disk" {
+    if cfg.mode == InstallMode::WholeDisk {
         lines.push(Line::from(vec![
             Span::styled(
                 "  Filesystem    ".to_string(),
@@ -472,6 +473,10 @@ fn draw_installing(f: &mut Frame, area: Rect, app: &App) {
         lines.push(Line::from(Span::styled(
             format!("  ✗ Error: {e}"),
             Style::default().fg(RED).add_modifier(Modifier::BOLD),
+        )));
+        lines.push(Line::from(Span::styled(
+            "  Checkpoint saved — re-run installer to resume from last step",
+            Style::default().fg(YELLOW),
         )));
         lines.push(Line::from(Span::styled(
             "  ctrl+c to exit",
