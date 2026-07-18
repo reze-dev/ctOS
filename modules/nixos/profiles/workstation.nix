@@ -8,6 +8,7 @@ let
   cfg = config.northstar.profiles.workstation;
   modules = [
     "dev"
+    "devtools"
     "emacs"
     "virtualization"
   ];
