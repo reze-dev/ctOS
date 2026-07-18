@@ -29,6 +29,7 @@ in
       clang-tools
       cmake
       gnumake
+      python3
       shfmt
       shellcheck
 
