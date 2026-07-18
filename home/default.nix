@@ -20,6 +20,8 @@ let
     "omp"
     "starship"
     "tmux"
+    "udiskie"
+    "yazi"
     "zoxide"
     "zsh"
   ];
