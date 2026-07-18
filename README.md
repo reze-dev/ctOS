@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/NixOS/nixos-artwork/master/logo/nix-snowflake-colours.svg" width="100" alt="NixOS Logo"/>
+  <img src="https://raw.githubusercontent.com/NixOS/nixos-artwork/master/logo/nix-snowflake-colours.svg" width="120" alt="NixOS Logo"/>
 </p>
 
 <h1 align="center">❄️ Northstar-nix</h1>
 
 <p align="center">
-  A modular, option-driven NixOS configuration built with
+  A premium, modular, option-driven NixOS & Home Manager configuration built on
   <a href="https://flake.parts">flake-parts</a>,
   <a href="https://github.com/nix-community/home-manager">Home Manager</a>, and
   <a href="https://github.com/nix-community/disko">disko</a>.
@@ -19,110 +19,93 @@
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-- **Toggle-based modules** — every NixOS and Home Manager module is behind a `northstar.*.enable` option
-- **Auto-discovered hosts** — drop a directory in `hosts/` and it's wired up automatically
-- **Two installers** — a Python interactive installer and a Rust binary with the entire flake embedded
-- **Dual-boot support** — partition-only mode with btrfs subvolumes
-- **Idempotent & resumable** — both installers save progress and can resume mid-install
-- **Reusable modules** — import `northstar.nixosModules.default` in your own flake
+- **🎛️ Toggle-based modularity** — every system and user module is isolated behind clean `northstar.<module>.enable` options.
+- **📁 Auto-discovered configurations** — drop a host directory in `hosts/` or a module anywhere in `modules/` and it is dynamically detected and wired up.
+- **🛠️ Automated USB Auto-mounting** — seamless external device detection, auto-mounting, and notifications inside minimal window managers via `udisks2`, `gvfs`, and `udiskie`.
+- **💻 Decoupled Development Workspace** — all programming languages, compilers, LSPs, and developer tools are isolated into a standalone `devtools` workstation module.
+- **🚀 Dual Installers** — features both a TUI-based async Rust installer (Ratatui + Tokio) and an interactive Python installer.
+- **💾 Dual-boot & Partitioning** — supports full-disk partitioning via `disko` or partition-only dual-boot layouts with Btrfs subvolume integration.
+- **🔄 Idempotency** — both installers save execution checkpoints to securely resume from where they left off in case of interruptions.
 
 ---
 
 ## 📂 Directory Structure
 
+The repository is organized into distinct domain layers:
+
 ```
 northstar/
-├── flake.nix                   # Flake entry — inputs + mkFlake via flake-parts
+├── flake.nix                   # Flake entry point (inputs, flake-parts wire-up)
 ├── flake.lock
 │
-├── .github/workflows/
-│   └── release.yml             # CI/CD — builds Rust installer + creates GitHub release
+├── parts/                      # flake-parts build logic
+│   ├── nixos.nix               # Host auto-discovery & modules exporter
+│   ├── installer.nix           # Python installer package definition
+│   └── rust-installer.nix      # Rust TUI installer package definition
 │
-├── parts/                      # flake-parts modules (build logic)
-│   ├── nixos.nix               # Host auto-discovery, module wiring, flake exports
-│   ├── installer.nix           # Python installer package + app
-│   └── rust-installer.nix      # Rust installer package + app
-│
-├── hosts/                      # Per-machine NixOS configurations
-│   ├── common.nix              # Shared base — enables all northstar.* modules
-│   ├── disko.nix               # Disko partitioning template (whole-disk installs)
-│   └── <hostname>/             # Each host gets its own directory
-│       ├── default.nix         # Host-specific config (user, GPU, boot, etc.)
-│       ├── hardware.nix        # Hardware scan output (nixos-generate-config)
-│       └── filesystems.nix     # Filesystem mounts (dual-boot) or disko.nix (whole-disk)
+├── hosts/                      # Host machine configurations
+│   ├── common.nix              # Common system base config
+│   ├── disko.nix               # Whole-disk disko partitioning layout
+│   └── <hostname>/             # Per-machine system settings & hardware scans
 │
 ├── home/
-│   └── default.nix             # Home Manager profile — enables all northstar.home.*
+│   └── default.nix             # Home Manager profile entry point
 │
-├── modules/                    # Pure option-based module declarations
-│   ├── nixos/                  # System modules  → northstar.<name>.enable
-│   │   ├── system/             # Boot, locale, networking, shells, packages
-│   │   ├── desktop/            # Audio, display, browsers, Hyprland, power
-│   │   ├── hardware/           # Hardware-specific support such as NVIDIA
-│   │   ├── profiles/           # Base/desktop/workstation module bundles
-│   │   └── development/        # Development, editor, and virtualization stack
-│   └── home/                   # User modules    → northstar.home.<name>.enable
-│       ├── shell/              # Shells (Fish/Zsh) and prompt configs (Starship/OMP)
+├── modules/                    # Option-based module definitions
+│   ├── nixos/                  # System-level modules (NixOS)
+│   │   ├── system/             # Core system (boot, env, locales, network, shells, ssh, packages)
+│   │   ├── development/        # Dev environments (dev tools, devtools package list, emacs, virtualization)
+│   │   ├── desktop/            # GUI components (audio, display manager, compositor)
+│   │   ├── hardware/           # Hardware drivers (NVIDIA, Prime)
+│   │   └── profiles/           # Module bundles (base, desktop, workstation)
+│   │
+│   └── home/                   # User-level modules (Home Manager)
+│       ├── shell/              # Shells (Fish/Zsh) & prompt configs (Starship/OMP)
 │       ├── terminals/          # Terminal emulators (Ghostty, Kitty)
-│       ├── tools/              # Git, Tmux, Yazi, Eza, Fzf, Zoxide, Direnv
-│       └── desktop/            # Hyprland, Noctalia Wayland shell, Udiskie
+│       ├── tools/              # User utilities (Git, Tmux, Yazi, Eza, Fzf, Zoxide, Direnv)
+│       └── desktop/            # Desktop environments (Hyprland, Noctalia Wayland shell, Udiskie daemon)
 │
-├── installer-rs/               # Rust installer source
-│   ├── Cargo.toml / Cargo.lock
-│   ├── src/                    # TUI, backend, embedded flake loader
-│   └── flake/                  # Populated at build time with full flake source
-│
-├── installer/
-│   └── install.py              # Python installer (legacy, still works)
-├── assets/wallpapers/          # Wallpaper images
-└── README.md
+├── installer-rs/               # Ratatui TUI installer source (Rust)
+├── installer/                  # Python interactive installer source
+└── assets/                     # Wallpaper and media assets
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### Fresh Install (from a NixOS live USB)
-
-If you launch an installer through `nix run`, export the flake feature flags first:
+### 1. Installation from a NixOS Live USB
+Before running the installers, export the flake feature flags:
 
 ```bash
 export NIX_CONFIG="experimental-features = nix-command flakes"
 ```
 
-**Option A — Download pre-built binary** (no Nix required, recommended):
+> [!TIP]
+> **Option A (Recommended): Pre-built Rust Installer Binary (No Nix required)**
+> ```bash
+> curl -fsSL https://github.com/reze-dev/northstar/releases/latest/download/northstar-installer -o installer
+> chmod +x installer && sudo ./installer
+> ```
 
-```bash
-curl -fsSL https://github.com/reze-dev/northstar/releases/latest/download/northstar-installer -o northstar-installer
-chmod +x northstar-installer
-sudo ./northstar-installer
-```
+> [!NOTE]
+> **Option B: Run Rust Installer via Nix**
+> ```bash
+> nix run github:reze-dev/northstar#rust-install
+> ```
 
-**Option B — Via Nix** (Rust binary):
+> [!NOTE]
+> **Option C: Run Python Installer via Nix**
+> ```bash
+> nix run github:reze-dev/northstar
+> ```
 
-```bash
-nix run github:reze-dev/northstar#rust-install
-```
+---
 
-**Option C — Via Nix** (Python installer):
-
-```bash
-nix run github:reze-dev/northstar
-```
-
-Both installers will walk you through:
-
-1. Hostname and username configuration
-2. Password setup (securely hashed)
-3. Installation mode — whole-disk (disko) or partition-only (dual-boot)
-4. Disk and partition selection
-5. Swap, filesystem, and GPU configuration
-6. Partitioning, formatting, and NixOS installation
-7. Copying the flake to your new system
-
-### Rebuild After Installation
+### 2. Post-installation Rebuilding
+To apply configuration changes on an installed system:
 
 ```bash
 cd ~/northstar
@@ -130,7 +113,6 @@ sudo nixos-rebuild switch --flake .#<hostname>
 ```
 
 For example, for the `Makima` host:
-
 ```bash
 sudo nixos-rebuild switch --flake .#Makima
 ```
@@ -142,73 +124,72 @@ sudo nixos-rebuild switch --flake .#Makima
 ### NixOS System Modules (`northstar.*`)
 
 | Module | Option | Description |
-|--------|--------|-------------|
-| Audio | `northstar.audio.enable` | PipeWire audio stack |
-| Bluetooth | `northstar.bluetooth.enable` | Bluetooth + Blueman applet |
-| Boot | `northstar.boot.enable` | GRUB with Sekiro theme |
-| CUPS | `northstar.cups.enable` | Printing support |
-| Dev | `northstar.dev.enable` | direnv, git, gpg, neovim, nix-ld |
-| Display | `northstar.display.enable` | COSMIC greeter + niri compositor |
-| Emacs | `northstar.emacs.enable` | Emacs daemon |
-| Environment | `northstar.env.enable` | EDITOR/VISUAL environment vars |
-| Firefox | `northstar.firefox.enable` | Firefox browser |
-| Fonts | `northstar.fonts.enable` | Nerd Fonts collection |
-| Hyprland | `northstar.hyprland.enable` | Hyprland Wayland compositor |
-| Locales | `northstar.locales.enable` | Timezone + i18n settings |
-| Networking | `northstar.networking.enable` | NetworkManager + firewall |
-| NVIDIA | `northstar.nvidia.enable` | NVIDIA proprietary drivers |
-| NVIDIA Prime | `northstar.nvidia.prime.enable` | Hybrid GPU (NVIDIA + Intel/AMD) |
-| Packages | `northstar.packages.enable` | Curated system packages |
-| Power | `northstar.power.enable` | UPower + power profiles |
-| Shells | `northstar.shells.enable` | Fish + Zsh |
-| SSH | `northstar.ssh.enable` | OpenSSH server |
-| Virtualization | `northstar.virtualization.enable` | libvirtd + Docker |
+| :--- | :--- | :--- |
+| **Audio** | `northstar.audio.enable` | PipeWire audio stack & plugins |
+| **Bluetooth** | `northstar.bluetooth.enable` | Bluetooth daemon + Blueman applet |
+| **Boot** | `northstar.boot.enable` | GRUB bootloader styled with Dedsec theme |
+| **CUPS** | `northstar.cups.enable` | Printing support (CUPS daemon) |
+| **Dev** | `northstar.dev.enable` | System-wide direnv, git, gpg, and nix-ld configs |
+| **DevTools** | `northstar.devtools.enable` | Languages, compilers (GCC/Clang/Go/Rustup/Zig/JDK/Haskell), and LSPs |
+| **Display** | `northstar.display.enable` | Greetd with tuigreet + Niri compositor |
+| **Emacs** | `northstar.emacs.enable` | Emacs daemon running under systemd |
+| **Environment** | `northstar.env.enable` | Standard environment variables (EDITOR, VISUAL, etc.) |
+| **Firefox** | `northstar.firefox.enable` | Firefox browser |
+| **Fonts** | `northstar.fonts.enable` | Nerd Fonts collection |
+| **Hyprland** | `northstar.hyprland.enable` | Hyprland Wayland compositor |
+| **Locales** | `northstar.locales.enable` | Timezone, keyboard layout, and i18n locales |
+| **Networking** | `northstar.networking.enable` | NetworkManager daemon + custom firewall settings |
+| **NVIDIA** | `northstar.nvidia.enable` | Proprietary NVIDIA drivers |
+| **NVIDIA Prime** | `northstar.nvidia.prime.enable` | Hybrid GPU offload settings (NVIDIA + Intel/AMD) |
+| **Packages** | `northstar.packages.enable` | Curated base utility packages, `udisks2`, and `gvfs` |
+| **Power** | `northstar.power.enable` | UPower daemon + power-profiles-daemon |
+| **Shells** | `northstar.shells.enable` | Fish and Zsh system shells |
+| **SSH** | `northstar.ssh.enable` | OpenSSH daemon |
+| **Virtualization** | `northstar.virtualization.enable` | Libvirtd + QEMU/KVM + Docker daemon |
 
 ### Home Manager Modules (`northstar.home.*`)
 
 | Module | Option | Description |
-|--------|--------|-------------|
-| Ghostty | `northstar.home.ghostty.enable` | Ghostty terminal |
-| Kitty | `northstar.home.kitty.enable` | Kitty terminal |
-| Fish | `northstar.home.fish.enable` | Fish shell + plugins |
-| Zsh | `northstar.home.zsh.enable` | Zsh + Oh My Zsh |
-| Git | `northstar.home.git.enable` | Git configuration |
-| Tmux | `northstar.home.tmux.enable` | Tmux + powerkit |
-| Starship | `northstar.home.starship.enable` | Starship prompt |
-| Oh My Posh | `northstar.home.omp.enable` | Oh My Posh prompt theme |
-| direnv | `northstar.home.direnv.enable` | Per-directory environments |
-| fzf | `northstar.home.fzf.enable` | Fuzzy finder |
-| eza | `northstar.home.eza.enable` | Modern `ls` replacement |
-| zoxide | `northstar.home.zoxide.enable` | Smart `cd` |
-| Noctalia | `northstar.home.noctalia.enable` | Noctalia Wayland shell |
-
-### Toggling Modules
-
-Disable any module from your host config or `common.nix`:
-
-```nix
-# hosts/<hostname>/default.nix or hosts/common.nix
-northstar.cups.enable = false;
-northstar.home.kitty.enable = false;
-```
+| :--- | :--- | :--- |
+| **Ghostty** | `northstar.home.ghostty.enable` | Ghostty terminal configuration |
+| **Kitty** | `northstar.home.kitty.enable` | Kitty terminal configuration |
+| **Fish** | `northstar.home.fish.enable` | Fish shell, aliases, and plugin integrations |
+| **Zsh** | `northstar.home.zsh.enable` | Zsh, Oh My Zsh, and customized plugins |
+| **Git** | `northstar.home.git.enable` | Git user, aliases, and extra config |
+| **Tmux** | `northstar.home.tmux.enable` | Tmux, shortcuts, and tmux-powerkit plugin |
+| **Starship** | `northstar.home.starship.enable` | Starship shell prompt configuration |
+| **Oh My Posh** | `northstar.home.omp.enable` | Oh My Posh shell prompt theme |
+| **direnv** | `northstar.home.direnv.enable` | Per-directory shell environments |
+| **fzf** | `northstar.home.fzf.enable` | Fzf fuzzy finder |
+| **eza** | `northstar.home.eza.enable` | Eza modern `ls` alternative |
+| **zoxide** | `northstar.home.zoxide.enable` | Zoxide quick jump `cd` alternative |
+| **Yazi** | `northstar.home.yazi.enable` | Yazi terminal file manager + Quick-media jump (`g` + `m`) |
+| **Noctalia** | `northstar.home.noctalia.enable` | Noctalia Wayland shell configuration |
+| **udiskie** | `northstar.home.udiskie.enable` | udiskie auto-mount daemon for removable media |
 
 ---
 
-## 🏠 Adding a New Host
+## 🛠️ Customizing Modules
 
-1. **Create the host directory:**
+Modules can be enabled or disabled globally in `hosts/common.nix` or in your host-specific file:
 
+```nix
+# hosts/Makima/default.nix
+northstar.cups.enable = false;          # Disable printing
+northstar.home.kitty.enable = false;     # Disable Kitty configurations
+```
+
+### Adding a New Host Machine
+1. Create a host directory:
    ```bash
    mkdir -p hosts/<hostname>
    ```
-
-2. **Create `default.nix`** with your user, password hash, and any host-specific settings:
-
+2. Create `default.nix` specifying imports, user details, and GPU options:
    ```nix
    { config, lib, pkgs, ... }:
    {
-     imports = [ ./filesystems.nix ];  # or ./disko.nix for whole-disk
-
+     imports = [ ./filesystems.nix ];  # or ./disko.nix for whole-disk setup
+     
      home-manager.users.<username> = {
        imports = [ ../../home ];
        home.username = lib.mkForce "<username>";
@@ -220,35 +201,30 @@ northstar.home.kitty.enable = false;
        description = "<username>";
        extraGroups = [ "networkmanager" "wheel" ];
        shell = pkgs.zsh;
-       hashedPassword = "<hash>";  # mkpasswd -m sha-512
+       hashedPassword = "<hash>";  # Generated via: mkpasswd -m sha-512
      };
 
      networking.hostName = "<hostname>";
      system.stateVersion = "26.05";
    }
    ```
-
-3. **Generate `hardware.nix`:**
-
+3. Generate hardware config scan:
    ```bash
    nixos-generate-config --show-hardware-config > hosts/<hostname>/hardware.nix
    ```
-
-4. **Build:** The host is auto-discovered — no changes to `flake.nix` needed!
-
+4. Build! Auto-discovery will automatically pick up the new host:
    ```bash
    sudo nixos-rebuild switch --flake .#<hostname>
    ```
 
-> **Tip:** The installer generates all of this for you automatically. You only need to do this manually when setting up a host without the installer.
-
 ---
 
-## 🔌 Using Modules in Another Flake
+## 🔌 Reusing Modules in Other Flakes
 
-Northstar exports its modules so you can use them in your own NixOS config:
+Northstar system and user modules are fully exported:
 
 ```nix
+# Example external flake.nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -263,7 +239,6 @@ Northstar exports its modules so you can use them in your own NixOS config:
         {
           northstar.hyprland.enable = true;
           northstar.audio.enable = true;
-          northstar.fonts.enable = true;
         }
       ];
     };
@@ -271,75 +246,27 @@ Northstar exports its modules so you can use them in your own NixOS config:
 }
 ```
 
-Home Manager modules are also exported:
-
+For Home Manager user environments:
 ```nix
 home-manager.sharedModules = [ northstar.homeManagerModules.default ];
 ```
 
 ---
 
-## 📦 Flake Inputs
+## 🧊 Installer & Releases
 
-| Input | Source | Description |
-|-------|--------|-------------|
-| `nixpkgs` | `nixos-unstable` | NixOS package set |
-| `flake-parts` | [hercules-ci/flake-parts](https://github.com/hercules-ci/flake-parts) | Modular flake output composition |
-| `home-manager` | [nix-community/home-manager](https://github.com/nix-community/home-manager) | Declarative user environment management |
-| `disko` | [nix-community/disko](https://github.com/nix-community/disko) | Declarative disk partitioning |
-| `nix-index-database` | [nix-community/nix-index-database](https://github.com/nix-community/nix-index-database) | Pre-built `nix-index` database |
-| `zen-browser` | [0xc000022070/zen-browser-flake](https://github.com/0xc000022070/zen-browser-flake) | Zen Browser |
-| `noctalia` | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) | Wayland shell |
-| `tmux-powerkit` | [fabioluciano/tmux-powerkit](https://github.com/fabioluciano/tmux-powerkit) | Tmux status line plugin |
+### Rust TUI Installer
+Built on [Ratatui](https://ratatui.rs) and [Tokio](https://tokio.rs), featuring:
+- **Async Execution** — non-blocking operations with smooth progress widgets.
+- **Self-Contained** — includes the entire configuration flake source at compile time using `include_dir!`.
+- **JSON Checkpoints** — state serialization to save progress during power failure or reboots.
 
----
-
-## 🧊 Installer Details
-
-### Rust Installer (`nix run .#rust-install`)
-
-A compiled Rust binary built with [Ratatui](https://ratatui.rs) + [Tokio](https://tokio.rs). Features:
-
-- Fully async TUI — all operations run on tokio, zero blocking
-- Ratatui rendering with progress gauge, animated spinner, and streaming log
-- Compile-time flake embedding via `include_dir!` — single self-contained binary
-- Session-local `NIX_CONFIG` export for `nix-command` and `flakes`
-- Arrow-key wizard navigation with icy snow color theme
-- Exponential backoff retry on failures
-- JSON checkpoint state for resume after power loss
-
-### Python Installer (`nix run .#install`)
-
-The original interactive installer. It uses the same install flow, exports the same session-local Nix feature flags, and runs as a Python script with the flake source copied to a temp directory.
-
-### Releases (CI/CD)
-
-GitHub Actions automatically builds the Rust installer binary when you push a version tag:
-
-```bash
-git tag v3.0.0
-git push origin v3.0.0
-```
-
-This triggers `.github/workflows/release.yml` which:
-
-1. Populates `installer-rs/flake/`
-2. Builds an optimized `northstar-installer` binary
-3. Creates a GitHub release with the binary attached
-
-Download the binary on a NixOS live USB and run it — no Nix required:
-
-```bash
-curl -fsSL https://github.com/reze-dev/northstar/releases/latest/download/northstar-installer -o installer
-chmod +x installer && sudo ./installer
-```
-
-CI also runs **2 parallel checks** on every push to `main`:
-- 🧊 **Nix flake evaluation** — `nix flake check`
-- 🦀 **Rust CI** — `cargo fmt`, `cargo clippy`, `cargo build`
+### CI/CD
+GitHub Actions automatically builds and releases the Rust installer executable on version tags. It also runs checks on all pushes to `main`:
+- ❄️ **Nix flake check** — `nix flake check`
+- 🦀 **Rust quality assurance** — `cargo fmt`, `cargo clippy`, `cargo build`
 
 ---
 
 ## 📝 License
-
-MIT
+This project is licensed under the [MIT License](LICENSE).
