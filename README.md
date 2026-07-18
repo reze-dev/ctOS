@@ -58,14 +58,16 @@ northstar/
 │
 ├── modules/                    # Pure option-based module declarations
 │   ├── nixos/                  # System modules  → northstar.<name>.enable
-│   │   ├── core/               # Boot, locale, networking, shells, packages
+│   │   ├── system/             # Boot, locale, networking, shells, packages
 │   │   ├── desktop/            # Audio, display, browsers, Hyprland, power
 │   │   ├── hardware/           # Hardware-specific support such as NVIDIA
 │   │   ├── profiles/           # Base/desktop/workstation module bundles
-│   │   └── workstation/        # Development, editor, and virtualization stack
+│   │   └── development/        # Development, editor, and virtualization stack
 │   └── home/                   # User modules    → northstar.home.<name>.enable
-│       ├── cli/                # Shells, prompts, git, tmux, direnv, fzf
-│       └── desktop/            # Terminals, Hyprland config, Noctalia shell
+│       ├── shell/              # Shells (Fish/Zsh) and prompt configs (Starship/OMP)
+│       ├── terminals/          # Terminal emulators (Ghostty, Kitty)
+│       ├── tools/              # Git, Tmux, Yazi, Eza, Fzf, Zoxide, Direnv
+│       └── desktop/            # Hyprland, Noctalia Wayland shell, Udiskie
 │
 ├── installer-rs/               # Rust installer source
 │   ├── Cargo.toml / Cargo.lock
@@ -93,7 +95,7 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 **Option A — Download pre-built binary** (no Nix required, recommended):
 
 ```bash
-curl -fsSL https://github.com/atomiksan/northstar/releases/latest/download/northstar-installer -o northstar-installer
+curl -fsSL https://github.com/reze-dev/northstar/releases/latest/download/northstar-installer -o northstar-installer
 chmod +x northstar-installer
 sudo ./northstar-installer
 ```
@@ -101,13 +103,13 @@ sudo ./northstar-installer
 **Option B — Via Nix** (Rust binary):
 
 ```bash
-nix run github:atomiksan/northstar#rust-install
+nix run github:reze-dev/northstar#rust-install
 ```
 
 **Option C — Via Nix** (Python installer):
 
 ```bash
-nix run github:atomiksan/northstar
+nix run github:reze-dev/northstar
 ```
 
 Both installers will walk you through:
@@ -250,7 +252,7 @@ Northstar exports its modules so you can use them in your own NixOS config:
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    northstar.url = "github:atomiksan/northstar";
+    northstar.url = "github:reze-dev/northstar";
   };
 
   outputs = { nixpkgs, northstar, ... }: {
@@ -328,7 +330,7 @@ This triggers `.github/workflows/release.yml` which:
 Download the binary on a NixOS live USB and run it — no Nix required:
 
 ```bash
-curl -fsSL https://github.com/atomiksan/northstar/releases/latest/download/northstar-installer -o installer
+curl -fsSL https://github.com/reze-dev/northstar/releases/latest/download/northstar-installer -o installer
 chmod +x installer && sudo ./installer
 ```
 
