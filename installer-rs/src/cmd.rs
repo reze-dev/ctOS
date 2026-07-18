@@ -104,10 +104,7 @@ where
                 last_err = e;
                 if attempt < max {
                     // Cap the multiplier at 64x to prevent overflow
-                    let multiplier = 1u32
-                        .checked_shl((attempt - 1) as u32)
-                        .unwrap_or(64)
-                        .min(64);
+                    let multiplier = 1u32.checked_shl((attempt - 1) as u32).unwrap_or(64).min(64);
                     let wait = base_delay * multiplier;
                     tokio::time::sleep(wait).await;
                 }

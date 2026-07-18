@@ -394,8 +394,7 @@ impl App {
                 match tokio::runtime::Handle::current().block_on(handle) {
                     Ok(()) => {} // normal completion, progress updates handle the rest
                     Err(e) => {
-                        self.install_err =
-                            Some(format!("Installation task panicked: {e}"));
+                        self.install_err = Some(format!("Installation task panicked: {e}"));
                     }
                 }
             }

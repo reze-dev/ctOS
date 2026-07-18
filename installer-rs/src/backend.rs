@@ -55,9 +55,7 @@ pub async fn hash_password(pw: &str) -> Result<String, String> {
 fn build_gpu_config(cfg: &InstallConfig) -> String {
     match cfg.gpu_choice {
         GpuChoice::None => String::new(),
-        GpuChoice::Nvidia => {
-            "\n  # NVIDIA GPU\n  northstar.nvidia.enable = true;".to_string()
-        }
+        GpuChoice::Nvidia => "\n  # NVIDIA GPU\n  northstar.nvidia.enable = true;".to_string(),
         GpuChoice::NvidiaPrime => {
             let key = cfg.igpu_type.bus_id_key();
             format!(
@@ -181,13 +179,11 @@ async fn generate_config(cfg: &InstallConfig, work_dir: &str) -> Result<(), Stri
 
             if cfg.fs_type == "ext4" {
                 let ext4 = "{\n  disko.devices.disk.main.content.partitions.root.content = {\n    type = \"filesystem\";\n    format = \"ext4\";\n    mountpoint = \"/\";\n  };\n}\n";
-                fs::write(format!("{host_dir}/disko-fs.nix"), ext4)
-                    .map_err(|e| e.to_string())?;
+                fs::write(format!("{host_dir}/disko-fs.nix"), ext4).map_err(|e| e.to_string())?;
                 let data =
                     fs::read_to_string(format!("{host_dir}/default.nix")).unwrap_or_default();
                 let patched = data.replacen("imports = [", "imports = [\n    ./disko-fs.nix", 1);
-                fs::write(format!("{host_dir}/default.nix"), patched)
-                    .map_err(|e| e.to_string())?;
+                fs::write(format!("{host_dir}/default.nix"), patched).map_err(|e| e.to_string())?;
             }
         }
         InstallMode::PartitionOnly => {
@@ -260,9 +256,7 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
                 ))
                 .await
             }
-            InstallMode::PartitionOnly => {
-                partition_only_setup(cfg, &host_dir).await
-            }
+            InstallMode::PartitionOnly => partition_only_setup(cfg, &host_dir).await,
         }
     })
     .await
