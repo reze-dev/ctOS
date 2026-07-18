@@ -5,7 +5,7 @@ mod flake;
 mod state;
 mod ui;
 
-use app::{App, Page};
+use app::{App, GpuChoice, IgpuType, InstallMode, Page};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -18,8 +18,8 @@ use tokio::sync::mpsc;
 
 const NIX_CONFIG_FEATURES: &str = "experimental-features = nix-command flakes";
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Set NIX_CONFIG before any threads exist — safe to call set_var here.
     ensure_nix_config();
 
     // Root check
@@ -28,6 +28,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
+    // Build the tokio runtime explicitly so set_var is done before any threads.
+    let runtime = tokio::runtime::Runtime::new()?;
+    runtime.block_on(async_main())
+}
+
+async fn async_main() -> Result<(), Box<dyn std::error::Error>> {
     // Extract embedded flake
     let work_dir = flake::extract_flake().map_err(|e| -> Box<dyn std::error::Error> {
         eprintln!("Failed to extract flake: {e}");
@@ -37,6 +43,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_current_dir(&work_dir)?;
 
     let mut app = App::new(work_dir.clone());
+
+    // Install a panic hook that restores the terminal before printing the panic.
+    let original_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |panic_info| {
+        let _ = disable_raw_mode();
+        let _ = stdout().execute(LeaveAlternateScreen);
+        original_hook(panic_info);
+    }));
 
     // Terminal setup
     enable_raw_mode()?;
@@ -71,7 +85,8 @@ fn ensure_nix_config() {
     } else {
         format!("{}\n{}", current.trim_end(), NIX_CONFIG_FEATURES)
     };
-    std::env::set_var("NIX_CONFIG", next);
+    // SAFETY: called from single-threaded main() before tokio runtime starts.
+    unsafe { std::env::set_var("NIX_CONFIG", next) };
 }
 
 async fn run_app(
@@ -93,6 +108,9 @@ async fn run_app(
                 app.handle_progress(update);
             }
             app.tick_spinner();
+
+            // Check if the background task panicked
+            app.check_install_handle();
         }
 
         // Poll for keyboard events with a timeout (allows spinner to animate)
@@ -259,8 +277,8 @@ async fn handle_text_submit(app: &mut App) {
             app.go_to_page(Page::Password);
         }
         Page::Disk => {
-            if val.is_empty() {
-                app.err = "Device cannot be empty".into();
+            if let Err(e) = cmd::validate_device_name(&val) {
+                app.err = e;
                 return;
             }
             app.config.disk_dev = val;
@@ -316,7 +334,7 @@ async fn handle_text_submit(app: &mut App) {
         }
         Page::Swap => {
             app.config.swap_size = if val.is_empty() { "8G".into() } else { val };
-            if app.config.mode == "whole-disk" {
+            if app.config.mode == InstallMode::WholeDisk {
                 app.go_to_page(Page::Fs);
             } else {
                 app.go_to_page(Page::Gpu);
@@ -354,6 +372,8 @@ async fn handle_password_submit(app: &mut App) {
         match backend::hash_password(&val).await {
             Ok(hash) => {
                 app.config.hashed_pw = hash;
+                // Clear plaintext password from memory
+                app.clear_password();
                 app.go_to_page(Page::Mode);
             }
             Err(e) => {
@@ -371,7 +391,7 @@ fn handle_confirm_submit(app: &mut App) {
     }
     match app.page {
         Page::DiskConfirm => {
-            if app.config.mode == "whole-disk" {
+            if app.config.mode == InstallMode::WholeDisk {
                 app.go_to_page(Page::Swap);
             } else {
                 app.go_to_page(Page::PartSelect);
@@ -389,11 +409,10 @@ fn handle_selection(app: &mut App) {
     match app.page {
         Page::Mode => {
             app.config.mode = if app.cursor == 0 {
-                "whole-disk"
+                InstallMode::WholeDisk
             } else {
-                "partition-only"
-            }
-            .into();
+                InstallMode::PartitionOnly
+            };
             app.go_to_page(Page::Disk);
         }
         Page::PartSelect => {
@@ -408,15 +427,23 @@ fn handle_selection(app: &mut App) {
             app.go_to_page(Page::Gpu);
         }
         Page::Gpu => {
-            app.config.gpu_choice = format!("{}", app.cursor + 1);
-            if app.cursor == 2 {
+            app.config.gpu_choice = match app.cursor {
+                0 => GpuChoice::None,
+                1 => GpuChoice::Nvidia,
+                _ => GpuChoice::NvidiaPrime,
+            };
+            if app.config.gpu_choice == GpuChoice::NvidiaPrime {
                 app.go_to_page(Page::GpuNvBus);
             } else {
                 app.go_to_page(Page::Summary);
             }
         }
         Page::GpuIgpuType => {
-            app.config.igpu_type = if app.cursor == 0 { "intel" } else { "amd" }.into();
+            app.config.igpu_type = if app.cursor == 0 {
+                IgpuType::Intel
+            } else {
+                IgpuType::Amd
+            };
             app.go_to_page(Page::GpuIgpuBus);
         }
         _ => {}
@@ -436,9 +463,10 @@ async fn start_installation(app: &mut App) {
     let (tx, rx) = mpsc::unbounded_channel();
     app.progress_rx = Some(rx);
 
-    // Spawn installation in background task
-    tokio::spawn(async move {
+    // Spawn installation in background task and track the handle
+    let handle = tokio::spawn(async move {
         let mut state = state::State::new();
         backend::run_installation(cfg, &mut state, &work_dir, tx).await;
     });
+    app.install_handle = Some(handle);
 }
