@@ -1,0 +1,30 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.northstar.home.ghostty;
+in
+{
+  options.northstar.home.ghostty.enable = lib.mkEnableOption "Ghostty terminal";
+
+  config = lib.mkIf cfg.enable {
+    programs.ghostty = {
+      enable = false;
+      enableFishIntegration = true;
+      enableZshIntegration = true;
+      installBatSyntax = true;
+      installVimSyntax = true;
+      settings = {
+        theme = "Rose Pine";
+        command = "fish";
+        font-family = "Maple Mono";
+        font-size = 14;
+        background-opacity = 0.85;
+        window-decoration = "none";
+      };
+    };
+  };
+}
