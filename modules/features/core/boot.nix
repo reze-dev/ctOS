@@ -1,0 +1,65 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.northstar.features.boot;
+in
+{
+  options.northstar.features.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
+
+  config = lib.mkIf cfg.enable {
+    boot.loader = {
+      efi = {
+        canTouchEfiVariables = true;
+        efiSysMountPoint = "/boot/efi";
+      };
+      grub = {
+        enable = true;
+        useOSProber = true;
+        efiSupport = true;
+        device = "nodev";
+
+        dedsec-theme = {
+          enable = true;
+          style = "sitedown";
+          icon = "color";
+          resolution = "1080p";
+        };
+        # theme =
+        #   pkgs.fetchFromGitHub {
+        #     owner = "semimqmo";
+        #     repo = "sekiro_grub_theme";
+        #     rev = "1affe05f7257b72b69404cfc0a60e88aa19f54a6";
+        #     sha256 = "02gdihkd2w33qy86vs8g0pfljp919ah9c13cj4bh9fvvzm5zjfn1";
+        #   }
+        #   + "/Sekiro";
+      };
+    };
+    boot.plymouth = {
+      enable = true;
+      theme = "dedsec";
+
+      themePackages = [
+        (pkgs.stdenv.mkDerivation {
+          pname = "dedsec-plymouth";
+          version = "1.0";
+
+          src = ../../../assets/dedsec-plymouth;
+
+          installPhase = ''
+            mkdir -p $out/share/plymouth/themes/dedsec
+            cp * $out/share/plymouth/themes/dedsec/
+          '';
+        })
+      ];
+    };
+    boot.initrd.systemd.enable = true;
+    boot.kernelParams = [
+      "quiet"
+      "udev.log_priority=3"
+    ];
+  };
+}
