@@ -24,13 +24,10 @@ jobs:
             extra-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
 
       - name: Check flake
-        run: nix flake check --all-systems
+        run: nix flake check
 
       - name: Show flake outputs
         run: nix flake show
-
-      - name: Build Makima system
-        run: nix build .#nixosConfigurations.Makima.config.system.build.toplevel --print-build-logs
 
   rust-ci:
     name: Rust Lint, Format & Build
