@@ -1,47 +1,71 @@
-use crate::app::{InstallConfig, ProgressUpdate};
+use crate::app::{GpuChoice, InstallConfig, InstallMode, ProgressUpdate};
 use crate::cmd::*;
 use crate::state::State;
 use std::fs;
 use std::time::Duration;
+use tokio::io::AsyncWriteExt;
 use tokio::sync::mpsc;
 
-/// Hash a password using mkpasswd or openssl.
+/// Hash a password securely without shell interpolation.
 pub async fn hash_password(pw: &str) -> Result<String, String> {
-    let cmds = [
-        format!("mkpasswd -m sha-512 '{pw}'"),
-        format!("echo '{pw}' | openssl passwd -6 -stdin"),
-    ];
-    for cmd in &cmds {
-        if let Ok(out) = run_capture(cmd).await {
-            if !out.is_empty() {
-                return Ok(out);
+    // Try mkpasswd first (no shell — pass password as argument directly)
+    if let Ok(output) = tokio::process::Command::new("mkpasswd")
+        .args(["-m", "sha-512", pw])
+        .output()
+        .await
+    {
+        if output.status.success() {
+            let hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !hash.is_empty() {
+                return Ok(hash);
             }
         }
     }
-    Err("No password hashing tool found (mkpasswd, openssl)".into())
+
+    // Fallback: pipe password to openssl via stdin (no shell interpolation)
+    let mut child = tokio::process::Command::new("openssl")
+        .args(["passwd", "-6", "-stdin"])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn openssl: {e}"))?;
+
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin
+            .write_all(pw.as_bytes())
+            .await
+            .map_err(|e| format!("Failed to write password: {e}"))?;
+        // Drop stdin to close it and signal EOF
+    }
+
+    let output = child
+        .wait_with_output()
+        .await
+        .map_err(|e| format!("openssl failed: {e}"))?;
+
+    let hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if hash.is_empty() {
+        Err("No password hashing tool found (mkpasswd, openssl)".into())
+    } else {
+        Ok(hash)
+    }
 }
 
 fn build_gpu_config(cfg: &InstallConfig) -> String {
-    if cfg.gpu_choice == "1" {
-        return String::new();
+    match cfg.gpu_choice {
+        GpuChoice::None => String::new(),
+        GpuChoice::Nvidia => {
+            "\n  # NVIDIA GPU\n  northstar.nvidia.enable = true;".to_string()
+        }
+        GpuChoice::NvidiaPrime => {
+            let key = cfg.igpu_type.bus_id_key();
+            format!(
+                "\n  # NVIDIA GPU\n  northstar.nvidia.enable = true;\n  northstar.nvidia.prime = {{\n    enable = true;\n    nvidiaBusId = \"{}\";\n    {key} = \"{}\";\n  }};",
+                cfg.nvidia_bus_id, cfg.igpu_bus_id
+            )
+        }
     }
-    let mut lines = vec![
-        "\n  # NVIDIA GPU".to_string(),
-        "  northstar.nvidia.enable = true;".to_string(),
-    ];
-    if cfg.gpu_choice == "3" {
-        lines.push("  northstar.nvidia.prime = {".into());
-        lines.push("    enable = true;".into());
-        lines.push(format!("    nvidiaBusId = \"{}\";", cfg.nvidia_bus_id));
-        let key = if cfg.igpu_type == "amd" {
-            "amdgpuBusId"
-        } else {
-            "intelBusId"
-        };
-        lines.push(format!("    {key} = \"{}\";", cfg.igpu_bus_id));
-        lines.push("  };".into());
-    }
-    lines.join("\n")
 }
 
 /// Run all installation steps, sending progress updates through the channel.
@@ -130,40 +154,46 @@ async fn generate_config(cfg: &InstallConfig, work_dir: &str) -> Result<(), Stri
 
     let gpu_config = build_gpu_config(cfg);
 
-    if cfg.mode == "whole-disk" {
-        let hw = run_capture("nixos-generate-config --show-hardware-config")
-            .await
-            .map_err(|e| format!("hardware config: {e}"))?;
-        fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"))
-            .map_err(|e| e.to_string())?;
+    match cfg.mode {
+        InstallMode::WholeDisk => {
+            let hw = run_capture("nixos-generate-config --show-hardware-config")
+                .await
+                .map_err(|e| format!("hardware config: {e}"))?;
+            fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"))
+                .map_err(|e| e.to_string())?;
 
-        let mut disko = format!(
-            "# Auto-generated disko config for {}\n{{\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
-            cfg.hostname, cfg.disk_dev
-        );
-        if cfg.swap_size == "0" {
-            disko += "  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = \"0\";\n";
-        } else if cfg.swap_size != "8G" {
-            disko += &format!(
-                "  disko.devices.disk.main.content.partitions.swap.size = \"{}\";\n",
-                cfg.swap_size
+            let mut disko = format!(
+                "# Auto-generated disko config for {}\n{{\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
+                cfg.hostname, cfg.disk_dev
             );
-        }
-        disko += "}\n";
-        fs::write(format!("{host_dir}/disko.nix"), &disko).map_err(|e| e.to_string())?;
+            if cfg.swap_size == "0" {
+                disko += "  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = \"0\";\n";
+            } else if cfg.swap_size != "8G" {
+                disko += &format!(
+                    "  disko.devices.disk.main.content.partitions.swap.size = \"{}\";\n",
+                    cfg.swap_size
+                );
+            }
+            disko += "}\n";
+            fs::write(format!("{host_dir}/disko.nix"), &disko).map_err(|e| e.to_string())?;
 
-        write_host_config(&host_dir, cfg, &gpu_config, "    ./disko.nix", "");
+            write_host_config(&host_dir, cfg, &gpu_config, "    ./disko.nix", "");
 
-        if cfg.fs_type == "ext4" {
-            let ext4 = "{\n  disko.devices.disk.main.content.partitions.root.content = {\n    type = \"filesystem\";\n    format = \"ext4\";\n    mountpoint = \"/\";\n  };\n}\n";
-            fs::write(format!("{host_dir}/disko-fs.nix"), ext4).map_err(|e| e.to_string())?;
-            let data = fs::read_to_string(format!("{host_dir}/default.nix")).unwrap_or_default();
-            let patched = data.replacen("imports = [", "imports = [\n    ./disko-fs.nix", 1);
-            fs::write(format!("{host_dir}/default.nix"), patched).map_err(|e| e.to_string())?;
+            if cfg.fs_type == "ext4" {
+                let ext4 = "{\n  disko.devices.disk.main.content.partitions.root.content = {\n    type = \"filesystem\";\n    format = \"ext4\";\n    mountpoint = \"/\";\n  };\n}\n";
+                fs::write(format!("{host_dir}/disko-fs.nix"), ext4)
+                    .map_err(|e| e.to_string())?;
+                let data =
+                    fs::read_to_string(format!("{host_dir}/default.nix")).unwrap_or_default();
+                let patched = data.replacen("imports = [", "imports = [\n    ./disko-fs.nix", 1);
+                fs::write(format!("{host_dir}/default.nix"), patched)
+                    .map_err(|e| e.to_string())?;
+            }
         }
-    } else {
-        let boot = "\n  # Boot — use existing EFI bootloader (dual-boot safe)\n  boot.loader = {\n    efi = {\n      canTouchEfiVariables = true;\n      efiSysMountPoint = \"/boot/efi\";\n    };\n    grub = {\n      enable = true;\n      device = \"nodev\";\n      efiSupport = true;\n      useOSProber = true;\n    };\n  };\n\n";
-        write_host_config(&host_dir, cfg, &gpu_config, "    ./filesystems.nix", boot);
+        InstallMode::PartitionOnly => {
+            let boot = "\n  # Boot — use existing EFI bootloader (dual-boot safe)\n  boot.loader = {\n    efi = {\n      canTouchEfiVariables = true;\n      efiSysMountPoint = \"/boot/efi\";\n    };\n    grub = {\n      enable = true;\n      device = \"nodev\";\n      efiSupport = true;\n      useOSProber = true;\n    };\n  };\n\n";
+            write_host_config(&host_dir, cfg, &gpu_config, "    ./filesystems.nix", boot);
+        }
     }
 
     run_silent("git add .").await;
@@ -222,86 +252,136 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
     let host_dir = format!("{work_dir}/hosts/{}", cfg.hostname);
 
     retry("partition", 3, Duration::from_secs(5), || async {
-        if cfg.mode == "whole-disk" {
-            return run(&format!(
-                r#"nix run github:nix-community/disko -- --mode disko --flake ".#{}""#,
-                cfg.hostname
-            ))
-            .await;
-        }
-
-        let np = &cfg.nixos_part;
-        let ep = &cfg.efi_part;
-        let swap = &cfg.swap_size;
-
-        // Format
-        if !has_filesystem(np).await || get_filesystem(np).await != "btrfs" {
-            run(&format!("mkfs.btrfs -f {np}")).await?;
-        }
-
-        // Subvolumes
-        if !is_mounted("/mnt").await {
-            run(&format!("mount {np} /mnt")).await?;
-        }
-        let mut subvols = vec!["@root", "@home", "@nix", "@log"];
-        if swap != "0" {
-            subvols.push("@swap");
-        }
-        for sv in &subvols {
-            if !subvolume_exists("/mnt", sv).await {
-                run(&format!("btrfs subvolume create /mnt/{sv}")).await?;
+        match cfg.mode {
+            InstallMode::WholeDisk => {
+                run(&format!(
+                    r#"nix run github:nix-community/disko -- --mode disko --flake ".#{}""#,
+                    cfg.hostname
+                ))
+                .await
+            }
+            InstallMode::PartitionOnly => {
+                partition_only_setup(cfg, &host_dir).await
             }
         }
-        let _ = run("umount /mnt").await;
+    })
+    .await
+}
 
-        // Mount
-        if !is_mounted("/mnt").await {
-            run(&format!("mount -o subvol=@root,compress=zstd {np} /mnt")).await?;
-        }
-        for d in &["home", "nix", "var/log", "boot/efi"] {
-            let _ = fs::create_dir_all(format!("/mnt/{d}"));
-        }
-        let mounts = [
-            (format!("-o subvol=@home,compress=zstd {np}"), "/mnt/home"),
-            (
-                format!("-o subvol=@nix,compress=zstd,noatime {np}"),
-                "/mnt/nix",
-            ),
-            (format!("-o subvol=@log,compress=zstd {np}"), "/mnt/var/log"),
-            (ep.clone(), "/mnt/boot/efi"),
-        ];
-        for (opts, mp) in &mounts {
-            if !is_mounted(mp).await {
-                run(&format!("mount {opts} {mp}")).await?;
-            }
-        }
+/// Partition-only setup: format, create subvolumes, mount, and generate config.
+async fn partition_only_setup(cfg: &InstallConfig, host_dir: &str) -> Result<(), String> {
+    let np = &cfg.nixos_part;
+    let ep = &cfg.efi_part;
+    let swap = &cfg.swap_size;
 
-        // Swapfile
-        if swap != "0" && !path_exists("/mnt/swap/swapfile") {
-            let _ = fs::create_dir_all("/mnt/swap");
-            if !is_mounted("/mnt/swap").await {
-                let _ = run(&format!("mount -o subvol=@swap {np} /mnt/swap")).await;
-            }
-            run_silent("chattr +C /mnt/swap").await;
-            let _ = run("truncate -s 0 /mnt/swap/swapfile").await;
-            run_silent("chattr +C /mnt/swap/swapfile").await;
-            let _ = run(&format!("fallocate -l {swap} /mnt/swap/swapfile")).await;
-            let _ = run("chmod 600 /mnt/swap/swapfile").await;
-            let _ = run("mkswap /mnt/swap/swapfile").await;
-            let _ = run("swapon /mnt/swap/swapfile").await;
+    format_btrfs(np).await?;
+    create_subvolumes(np, swap).await?;
+    mount_all(np, ep).await?;
+    setup_swap(np, swap).await?;
+    generate_filesystems_nix(cfg, host_dir).await?;
+
+    let hw = run_capture("nixos-generate-config --root /mnt --show-hardware-config").await?;
+    let _ = fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"));
+    run_silent("git add .").await;
+    Ok(())
+}
+
+/// Format the NixOS partition as btrfs if needed.
+async fn format_btrfs(partition: &str) -> Result<(), String> {
+    if !has_filesystem(partition).await || get_filesystem(partition).await != "btrfs" {
+        run(&format!("mkfs.btrfs -f {partition}")).await?;
+    }
+    Ok(())
+}
+
+/// Create btrfs subvolumes on the partition.
+async fn create_subvolumes(partition: &str, swap: &str) -> Result<(), String> {
+    if !is_mounted("/mnt").await {
+        run(&format!("mount {partition} /mnt")).await?;
+    }
+    let mut subvols = vec!["@root", "@home", "@nix", "@log"];
+    if swap != "0" {
+        subvols.push("@swap");
+    }
+    for sv in &subvols {
+        if !subvolume_exists("/mnt", sv).await {
+            run(&format!("btrfs subvolume create /mnt/{sv}")).await?;
         }
+    }
+    let _ = run("umount /mnt").await;
+    Ok(())
+}
 
-        // UUIDs + filesystems.nix
-        let nixos_uuid = run_capture(&format!("blkid -s UUID -o value {np}"))
-            .await
-            .unwrap_or_default();
-        let efi_uuid = run_capture(&format!("blkid -s UUID -o value {ep}"))
-            .await
-            .unwrap_or_default();
+/// Mount all btrfs subvolumes and the EFI partition.
+async fn mount_all(partition: &str, efi: &str) -> Result<(), String> {
+    if !is_mounted("/mnt").await {
+        run(&format!(
+            "mount -o subvol=@root,compress=zstd {partition} /mnt"
+        ))
+        .await?;
+    }
+    for d in &["home", "nix", "var/log", "boot/efi"] {
+        let _ = fs::create_dir_all(format!("/mnt/{d}"));
+    }
+    let mounts = [
+        (
+            format!("-o subvol=@home,compress=zstd {partition}"),
+            "/mnt/home",
+        ),
+        (
+            format!("-o subvol=@nix,compress=zstd,noatime {partition}"),
+            "/mnt/nix",
+        ),
+        (
+            format!("-o subvol=@log,compress=zstd {partition}"),
+            "/mnt/var/log",
+        ),
+        (efi.to_string(), "/mnt/boot/efi"),
+    ];
+    for (opts, mp) in &mounts {
+        if !is_mounted(mp).await {
+            run(&format!("mount {opts} {mp}")).await?;
+        }
+    }
+    Ok(())
+}
 
-        let swap_config = if swap != "0" {
-            format!(
-                r#"
+/// Set up the btrfs swapfile.
+async fn setup_swap(partition: &str, swap: &str) -> Result<(), String> {
+    if swap == "0" || path_exists("/mnt/swap/swapfile") {
+        return Ok(());
+    }
+    let _ = fs::create_dir_all("/mnt/swap");
+    if !is_mounted("/mnt/swap").await {
+        let _ = run(&format!("mount -o subvol=@swap {partition} /mnt/swap")).await;
+    }
+    run_silent("chattr +C /mnt/swap").await;
+    let _ = run("truncate -s 0 /mnt/swap/swapfile").await;
+    run_silent("chattr +C /mnt/swap/swapfile").await;
+    let _ = run(&format!("fallocate -l {swap} /mnt/swap/swapfile")).await;
+    let _ = run("chmod 600 /mnt/swap/swapfile").await;
+    let _ = run("mkswap /mnt/swap/swapfile").await;
+    let _ = run("swapon /mnt/swap/swapfile").await;
+    Ok(())
+}
+
+/// Generate the filesystems.nix file with UUID-based mounts.
+async fn generate_filesystems_nix(cfg: &InstallConfig, host_dir: &str) -> Result<(), String> {
+    let np = &cfg.nixos_part;
+    let ep = &cfg.efi_part;
+    let swap = &cfg.swap_size;
+
+    let nixos_uuid = run_capture(&format!("blkid -s UUID -o value {np}"))
+        .await
+        .unwrap_or_default();
+    let efi_uuid = run_capture(&format!("blkid -s UUID -o value {ep}"))
+        .await
+        .unwrap_or_default();
+
+    let swap_config = if swap != "0" {
+        format!(
+            r#"
+
   fileSystems."/swap" = {{
     device = "/dev/disk/by-uuid/{nixos_uuid}";
     fsType = "btrfs";
@@ -311,13 +391,13 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
   swapDevices = [
     {{ device = "/swap/swapfile"; }}
   ];"#
-            )
-        } else {
-            String::new()
-        };
+        )
+    } else {
+        String::new()
+    };
 
-        let fs_nix = format!(
-            r#"# Auto-generated filesystem configuration for {host}
+    let fs_nix = format!(
+        r#"# Auto-generated filesystem configuration for {host}
 {{
   fileSystems."/" = {{
     device = "/dev/disk/by-uuid/{nixos_uuid}";
@@ -351,17 +431,11 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
 {swap_config}
 }}
 "#,
-            host = cfg.hostname
-        );
+        host = cfg.hostname
+    );
 
-        let _ = fs::write(format!("{}/filesystems.nix", host_dir), fs_nix);
-
-        let hw = run_capture("nixos-generate-config --root /mnt --show-hardware-config").await?;
-        let _ = fs::write(format!("{}/hardware.nix", host_dir), format!("{hw}\n"));
-        run_silent("git add .").await;
-        Ok(())
-    })
-    .await
+    let _ = fs::write(format!("{host_dir}/filesystems.nix"), fs_nix);
+    Ok(())
 }
 
 async fn do_install_nixos(cfg: &InstallConfig) -> Result<(), String> {

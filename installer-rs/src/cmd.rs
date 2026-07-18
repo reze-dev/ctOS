@@ -79,7 +79,18 @@ pub fn path_exists(path: &str) -> bool {
     Path::new(path).exists()
 }
 
-/// Retry a function with exponential backoff.
+/// Validate a disk device name — reject path traversal attempts.
+pub fn validate_device_name(name: &str) -> Result<(), String> {
+    if name.contains("..") || name.contains('/') {
+        return Err("Invalid device name: must not contain '..' or '/'".into());
+    }
+    if name.is_empty() {
+        return Err("Device name cannot be empty".into());
+    }
+    Ok(())
+}
+
+/// Retry a function with exponential backoff, capped to prevent overflow.
 pub async fn retry<F, Fut>(name: &str, max: usize, base_delay: Duration, f: F) -> Result<(), String>
 where
     F: Fn() -> Fut,
@@ -92,7 +103,12 @@ where
             Err(e) => {
                 last_err = e;
                 if attempt < max {
-                    let wait = base_delay * (1 << (attempt - 1)) as u32;
+                    // Cap the multiplier at 64x to prevent overflow
+                    let multiplier = 1u32
+                        .checked_shl((attempt - 1) as u32)
+                        .unwrap_or(64)
+                        .min(64);
+                    let wait = base_delay * multiplier;
                     tokio::time::sleep(wait).await;
                 }
             }
