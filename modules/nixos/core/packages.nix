@@ -61,7 +61,7 @@ in
       ghc
       cabal-install
       haskell-language-server
-      hoogle
+      haskellPackages.hoogle
       fourmolu
     ];
   };
