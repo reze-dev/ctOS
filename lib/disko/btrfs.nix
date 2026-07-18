@@ -3,8 +3,8 @@
     disk = {
       main = {
         type = "disk";
-        # The device will be determined by the installer script
-        # device = "/dev/nvme0n1"; 
+        # Host-specific disko modules must set this.
+        # device = "/dev/nvme0n1";
         content = {
           type = "gpt";
           partitions = {
@@ -25,7 +25,7 @@
               content = {
                 type = "swap";
                 discardPolicy = "both";
-                resumeDevice = true; # resume from hiberation from this device
+                resumeDevice = true; # resume from hibernation from this device
               };
             };
             root = {

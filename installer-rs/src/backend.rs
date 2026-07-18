@@ -161,7 +161,7 @@ async fn generate_config(cfg: &InstallConfig, work_dir: &str) -> Result<(), Stri
                 .map_err(|e| e.to_string())?;
 
             let mut disko = format!(
-                "# Auto-generated disko config for {}\n{{\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
+                "# Auto-generated disko config for {}\n{{\n  imports = [ ../../lib/disko/btrfs.nix ];\n\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
                 cfg.hostname, cfg.disk_dev
             );
             if cfg.swap_size == "0" {
