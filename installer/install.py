@@ -587,7 +587,12 @@ def generate_config(state: State, work_dir: Path) -> None:
         msg("Creating disko configuration...")
         disk_dev = state.get("disk_dev")
         swap = state.get("swap_size")
-        disko = f'# Auto-generated disko config for {hostname}\n{{\n  disko.devices.disk.main.device = "/dev/{disk_dev}";\n'
+        disko = (
+            f'# Auto-generated disko config for {hostname}\n'
+            '{\n'
+            '  imports = [ ../../lib/disko/btrfs.nix ];\n\n'
+            f'  disko.devices.disk.main.device = "/dev/{disk_dev}";\n'
+        )
         if swap == "0":
             disko += '  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = "0";\n'
         elif swap != "8G":

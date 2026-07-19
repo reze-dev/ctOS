@@ -1,0 +1,13 @@
+{ config, lib, ... }:
+let
+  cfg = config.northstar.features.shells;
+in
+{
+  options.northstar.features.shells.enable =
+    lib.mkEnableOption "system-level shell support (fish, zsh)";
+
+  config = lib.mkIf cfg.enable {
+    programs.fish.enable = true;
+    programs.zsh.enable = true;
+  };
+}

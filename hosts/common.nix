@@ -1,8 +1,4 @@
-{
-  inputs,
-  homeModulePaths,
-  ...
-}:
+{ inputs, ... }:
 
 {
   imports = [
@@ -10,7 +6,7 @@
     inputs.nix-index-database.nixosModules.nix-index
   ];
 
-  home-manager.extraSpecialArgs = { inherit inputs homeModulePaths; };
+  home-manager.extraSpecialArgs = { inherit inputs; };
 
   nix.settings = {
     experimental-features = [

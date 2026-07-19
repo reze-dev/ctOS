@@ -6,9 +6,7 @@
 }:
 
 {
-  imports = [
-    ./filesystems.nix
-  ];
+  imports = [ ./filesystems.nix ];
 
   northstar.profiles = {
     desktop.enable = true;
