@@ -2,7 +2,8 @@
 { self, inputs, ... }:
 
 {
-  perSystem = { pkgs, system, ... }:
+  perSystem =
+    { pkgs, system, ... }:
     let
       craneLib = inputs.crane.mkLib pkgs;
 
@@ -10,9 +11,8 @@
       # at eval time. We'll populate the flake/ dir in the build phase.
       rustSrc = pkgs.lib.cleanSourceWith {
         src = ../installer-rs;
-        filter = path: type:
-          (craneLib.filterCargoSources path type)
-          || builtins.baseNameOf path == "PLACEHOLDER";
+        filter =
+          path: type: (craneLib.filterCargoSources path type) || builtins.baseNameOf path == "PLACEHOLDER";
       };
 
       # Assemble the full flake source as a derivation
@@ -45,14 +45,20 @@
 
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-      rustBin = craneLib.buildPackage (commonArgs // {
-        inherit cargoArtifacts;
-      });
+      rustBin = craneLib.buildPackage (commonArgs // { inherit cargoArtifacts; });
 
       # Runtime tools the installer shells out to
       runtimeDeps = with pkgs; [
-        git coreutils util-linux pciutils whois openssl
-        parted btrfs-progs e2fsprogs nixos-install-tools
+        git
+        coreutils
+        util-linux
+        pciutils
+        whois
+        openssl
+        parted
+        btrfs-progs
+        e2fsprogs
+        nixos-install-tools
       ];
     in
     {

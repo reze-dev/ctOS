@@ -25,8 +25,13 @@ in
     lib.mkEnableOption "development workstation Northstar profile";
 
   config = lib.mkIf cfg.enable {
-    northstar.features = lib.genAttrs features (_: {
-      enable = true;
-    });
+    northstar.features =
+      features
+      |> (
+        f:
+        lib.genAttrs f (_: {
+          enable = true;
+        })
+      );
   };
 }

@@ -4,9 +4,9 @@
 let
   lib = inputs.nixpkgs.lib;
   northstar = import ../lib { inherit lib; };
-  modulePaths = northstar.scanModules ../modules;
+  modulePaths = ../modules |> northstar.scanModules;
   hostsDir = ../hosts;
-  hosts = northstar.discoverHosts hostsDir;
+  hosts = hostsDir |> northstar.discoverHosts;
 
   mkHost =
     hostName:
@@ -26,7 +26,7 @@ let
 in
 {
   flake = {
-    nixosConfigurations = lib.genAttrs hosts mkHost;
+    nixosConfigurations = hosts |> (h: lib.genAttrs h mkHost);
     nixosModules.default = {
       imports = modulePaths;
     };
