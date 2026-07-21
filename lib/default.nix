@@ -17,7 +17,37 @@ let
 
   hostHasDisko = hostsDir: hostName: (hostsDir + "/${hostName}/disko.nix") |> builtins.pathExists;
 in
-{
+rec {
+  # Functional Feature & Profile Combinator
+  mkProfile = features: {
+    northstar.features = lib.genAttrs features (_: { enable = true; });
+  };
+
+  # User & Home-Manager Functional Combinator
+  mkUser =
+    {
+      username,
+      groups ? [ "wheel" ],
+      shell ? null,
+      homeDir ? "/home/${username}",
+      homeConfig ? ../home,
+      extraConfig ? { },
+    }:
+    { pkgs, ... }:
+    {
+      users.users.${username} = {
+        isNormalUser = true;
+        description = username;
+        extraGroups = groups;
+      } // (lib.optionalAttrs (shell != null) { inherit shell; }) // extraConfig;
+
+      home-manager.users.${username} = {
+        imports = [ homeConfig ];
+        home.username = username;
+        home.homeDirectory = homeDir;
+      };
+    };
+
   scanModules =
     dir:
     if dir |> builtins.pathExists then
@@ -47,9 +77,9 @@ in
   mkHostModules =
     {
       inputs,
-      modulePaths,
-      hostsDir,
-      commonModule,
+      modulePaths ? scanModules ../modules,
+      hostsDir ? ../hosts,
+      commonModule ? ../hosts/common.nix,
       hostName,
     }:
     [
@@ -61,4 +91,18 @@ in
     ]
     ++ modulePaths
     ++ lib.optionals (hostHasDisko hostsDir hostName) [ inputs.disko.nixosModules.disko ];
+
+  mkSystem =
+    {
+      inputs,
+      hostName,
+      system ? "x86_64-linux",
+      hostsDir ? ../hosts,
+      extraModules ? [ ],
+    }:
+    lib.nixosSystem {
+      inherit system;
+      specialArgs = { inherit inputs; };
+      modules = (mkHostModules { inherit inputs hostsDir hostName; }) ++ extraModules;
+    };
 }

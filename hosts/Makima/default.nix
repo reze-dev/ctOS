@@ -2,34 +2,29 @@
   config,
   lib,
   pkgs,
+  northstar,
   ...
 }:
 
 {
-  imports = [ ./filesystems.nix ];
+  imports = [
+    ./filesystems.nix
+    (northstar.mkUser {
+      username = "reze";
+      groups = [
+        "networkmanager"
+        "wheel"
+        "libvirtd"
+        "docker"
+      ];
+      shell = pkgs.zsh;
+      extraConfig.hashedPassword = "$6$6VzoJUwHF0jvIr3V$UeSeDOI.6.JcC9CjxW26V0r0W0SeCos7Ne7/AWSxL1ACNb1.goIYDQAnn8K7ODSvyUKn9zfOc9996t.OXBTBX.";
+    })
+  ];
 
   northstar.profiles = {
     desktop.enable = true;
     workstation.enable = true;
-  };
-
-  home-manager.users.reze = {
-    imports = [ ../../home ];
-    home.username = lib.mkForce "reze";
-    home.homeDirectory = lib.mkForce "/home/reze";
-  };
-
-  users.users.reze = {
-    isNormalUser = true;
-    description = "reze";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "libvirtd"
-      "docker"
-    ];
-    shell = pkgs.zsh;
-    hashedPassword = "$6$6VzoJUwHF0jvIr3V$UeSeDOI.6.JcC9CjxW26V0r0W0SeCos7Ne7/AWSxL1ACNb1.goIYDQAnn8K7ODSvyUKn9zfOc9996t.OXBTBX.";
   };
 
   # NVIDIA GPU
