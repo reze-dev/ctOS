@@ -41,16 +41,5 @@
   };
 
   networking.hostName = "Makima";
-
-  boot.loader.grub.extraEntries = ''
-    menuentry "Kali Linux" --class kali --class gnu-linux --class os {
-      insmod part_gpt
-      insmod fat
-      insmod chain
-      search --no-floppy --fs-uuid --set=esp 238D-76D7
-      chainloader ($esp)/EFI/kali/grubx64.efi
-    }
-  '';
-
-  system.stateVersion = "26.05";
+  system.stateVersion = "26.11";
 }
