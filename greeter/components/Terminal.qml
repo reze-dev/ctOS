@@ -1,12 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
+import QtQml.Models
 
 import qs.greeter.services
 import qs.common
+import qs.common.services
 import qs.common.components
 import qs.greeter.config
 
-Column {
+ColumnLayout {
     id: terminal
 
     property int margins: 10
@@ -31,7 +34,7 @@ Column {
 
     required property var logModel
 
-    spacing: 8 * Units.vh
+    spacing: 15 * Units.vh
 
     TextMetrics {
         id: textMetrics
@@ -45,19 +48,16 @@ Column {
         model: terminal.logModel
         clip: true
 
-        anchors {
-            left: parent.left
-            right: parent.right
-        }
-
-        height: terminal.lineHeight * terminal.maxLines
+        Layout.fillWidth: true
+        Layout.preferredHeight: terminal.lineHeight * terminal.maxLines
 
         boundsBehavior: Flickable.StopAtBounds
-        interactive: false
         verticalLayoutDirection: ListView.TopToBottom
 
         Behavior on contentY {
+            id: scrollBehavior
             NumberAnimation {
+                id: scrollAnimation
                 duration: 50
                 easing.type: Easing.OutCubic
             }
@@ -69,40 +69,152 @@ Column {
             height: logView.height
         }
 
-        delegate: Item {
-            width: logView.width
-            height: entry.implicitHeight
+        Connections {
+            target: terminal.logModel
 
-            required property string message
+            function onCountChanged() {
+                Qt.callLater(() => {
+                    logView.contentY = -logView.height + terminal.logModel.count * terminal.lineHeight;
+                });
+            }
+        }
 
-            Text {
-                id: entry
+        delegate: DelegateChooser {
+            role: "type"
 
-                color: Theme.textPrimaryDimmer
-                font: terminal.font
+            DelegateChoice {
+                roleValue: TerminalManager.MessageType.Output
 
-                lineHeight: terminal.lineHeight
-                lineHeightMode: Text.FixedHeight
-                wrapMode: Text.Wrap
+                delegate: Item {
+                    id: outputDelegate
+                    width: logView.width
+                    height: terminal.lineHeight
 
-                width: logView.width
+                    required property string message
+                    required property string type
+                    required property bool instant
 
-                text: {
-                    if (parent.message.startsWith("---")) {
-                        const stripped = parent.message.replace(/-/g, "");
-
-                        const spareRoom = Math.floor(terminal.width / textMetrics.advanceWidth) - 4 - (stripped.length);
-
-                        const hyphenCount = Math.floor(spareRoom / 2);
-
-                        return `${("-").repeat(hyphenCount)}  ${stripped}  ${("-").repeat(hyphenCount)}`;
+                    Binding {
+                        target: scrollAnimation
+                        property: "duration"
+                        value: outputDelegate.instant ? 0 : 50
                     }
 
-                    return `» ${parent.message}`;
-                }
+                    Text {
+                        id: entry
 
-                onImplicitHeightChanged: {
-                    logView.contentY += implicitHeight;
+                        color: Theme.textPrimaryDimmer
+                        font: terminal.font
+
+                        lineHeight: terminal.lineHeight
+                        lineHeightMode: Text.FixedHeight
+                        wrapMode: Text.Wrap
+
+                        width: logView.width
+
+                        text: {
+                            if (parent.message.startsWith("---")) {
+                                const stripped = parent.message.replace(/-/g, "");
+
+                                const spareRoom = Math.floor(terminal.width / textMetrics.advanceWidth) - 4 - (stripped.length);
+
+                                const hyphenCount = Math.floor(spareRoom / 2);
+
+                                return `${("-").repeat(hyphenCount)}  ${stripped}  ${("-").repeat(hyphenCount)}`;
+                            }
+
+                            return `${parent.message}`;
+                        }
+                    }
+                }
+            }
+
+            DelegateChoice {
+                roleValue: TerminalManager.MessageType.Prompt
+
+                delegate: Row {
+                    id: inputDelegate
+                    width: logView.width
+                    height: terminal.lineHeight
+
+                    spacing: 0
+
+                    required property bool instant
+                    required property string syntheticCommand
+
+                    Binding {
+                        target: scrollAnimation
+                        property: "duration"
+                        value: inputDelegate.instant ? 0 : 50
+                    }
+
+                    Text {
+                        id: terminalPrompt
+
+                        property int charIndex: 0
+
+                        property string command: inputDelegate.syntheticCommand
+
+                        text: "» " + command.substr(0, charIndex)
+                        color: Theme.textPrimaryDim
+                        font: terminal.font
+                        height: parent.height
+
+                        onCommandChanged: {
+                            typewriterAnimation.to = command.length;
+                            typewriterAnimation.start();
+                        }
+
+                        NumberAnimation {
+                            id: typewriterAnimation
+                            target: terminalPrompt
+                            property: "charIndex"
+                            from: 0
+                            easing.type: Easing.Linear
+                        }
+                    }
+
+                    TextInput {
+                        id: terminalInput
+
+                        height: parent.height
+                        width: parent.width - terminalPrompt.width
+
+                        color: Theme.textPrimaryDim
+                        font: terminal.font
+
+                        enabled: !inputDelegate.syntheticCommand
+                        focus: !inputDelegate.syntheticCommand
+
+                        onAccepted: {
+                            enabled = false;
+                            focus = false;
+
+                            CommandManager.sendCommand(terminalInput.text);
+                        }
+
+                        Keys.onUpPressed: {
+                            terminalInput.text = CommandManager.previousHistory();
+                            terminalInput.cursorPosition = terminalInput.text.length;
+                        }
+
+                        Keys.onDownPressed: {
+                            terminalInput.text = CommandManager.nextHistory();
+                            terminalInput.cursorPosition = terminalInput.text.length;
+                        }
+
+                        onActiveFocusChanged: {
+                            if (activeFocus) {
+                                FocusManager.requestFocus(terminalInput);
+                            }
+                        }
+
+                        Component.onCompleted: {
+                            FocusManager.registerTarget(terminalInput, {
+                                tabIndex: 1
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -118,12 +230,8 @@ Column {
         opacityDuration: 200
         translateDuration: 300
 
-        anchors {
-            left: parent.left
-            right: parent.right
-        }
-
-        height: versionBorder.height
+        Layout.fillWidth: true
+        Layout.preferredHeight: versionBorder.height
 
         SequentialAnimation {
             id: accentAnimation

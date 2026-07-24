@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Services.Greetd
 import QtQuick
 
-import qs.greeter.config
+import qs.greeter.services
 import qs.common
 
 Singleton {
@@ -25,19 +25,33 @@ Singleton {
 
         function onAuthMessage(message) {
             // requesting password
-            logger.info("Credentials requested...");
+            logger.info("Credentials requested.");
             handler.ready();
         }
 
         function onAuthFailure(message) {
             // password is wrong
-            logger.info("// AUTH_ERROR");
+            logger.info("Authentication failed.");
             handler.failed();
         }
 
         function onReadyToLaunch() {
             // password is correct
+            logger.info("Authentication success.");
             handler.success();
+        }
+    }
+
+    Connections {
+        target: SessionManager
+
+        function onActiveUserChanged() {
+            if (Greetd.state === GreetdState.Authenticating) {
+                logger.info(`User changed, cancelling active session.`);
+                Greetd.cancelSession();
+            }
+
+            handler.start();
         }
     }
 
@@ -56,8 +70,8 @@ Singleton {
                 return;
             }
 
-            logger.info(`Initializing session...(user:${AuthManager.user})`);
-            Greetd.createSession(AuthManager.user);
+            logger.info(`Created session (user:${SessionManager.activeUser.uid}:${SessionManager.activeUser.username})`);
+            Greetd.createSession(SessionManager.activeUser.username);
 
             sessionStarter.stop();
         }
@@ -72,9 +86,16 @@ Singleton {
     }
 
     function finish() {
-        logger.info(`Launching: ${Settings.launchCommand.join(" ")}`);
+        const launchCommand = SessionManager.getLaunchCommand();
+        const exitCommand = SessionManager.getExitCommand();
 
-        Greetd.launch(Settings.launchCommand);
-        Quickshell.execDetached(Settings.exitCommand);
+        logger.info(`Launching: ${launchCommand.join(" ")}`);
+        logger.info(`Exiting Greeter: ${exitCommand.join(" ") || "<none>"}`);
+
+        Greetd.launch(launchCommand);
+
+        if (exitCommand.length) {
+            Quickshell.execDetached(exitCommand);
+        }
     }
 }

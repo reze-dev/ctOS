@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.common
+import qs.common.services
 import qs.greeter.components
 import qs.greeter.config
 import qs.greeter.services
@@ -35,7 +36,7 @@ ColumnLayout {
             id: userText
 
             color: Theme.textPrimary
-            initialText: AuthManager.user.toUpperCase()
+            initialText: "PASSPHRASE"
 
             font {
                 pixelSize: 14
@@ -49,7 +50,6 @@ ColumnLayout {
 
         property int progressPercentage: 0
 
-        enabled: AuthManager.state === AuthManager.State.Ready
         Layout.fillWidth: true
         Layout.preferredHeight: 40 * Units.vh
         Layout.alignment: Qt.AlignCenter
@@ -66,12 +66,24 @@ ColumnLayout {
                 return Theme.textPrimary;
             }
         }
+        enabled: AuthManager.state === AuthManager.State.Ready
         z: 5
+
         onAccepted: {
             AuthManager.respond(passwordField.text);
         }
+
+        onActiveFocusChanged: {
+            if (activeFocus) {
+                FocusManager.requestFocus(passwordField);
+            }
+        }
+
         Component.onCompleted: {
-            passwordField.forceActiveFocus();
+            FocusManager.registerTarget(passwordField, {
+                tabIndex: 0
+            });
+            FocusManager.requestFocus(passwordField);
         }
 
         Rectangle {
@@ -163,8 +175,7 @@ ColumnLayout {
             id: loginText
 
             text: "LOGIN"
-            visible: AuthManager.state === AuthManager.State.Loading ? false :
-                                                                       true
+            visible: AuthManager.state === AuthManager.State.Loading ? false : true
             color: Theme.background
 
             anchors {

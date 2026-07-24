@@ -4,6 +4,7 @@ import qs.greeter.services
 import qs.greeter.components
 import qs.greeter.config
 import qs.common
+import qs.common.services
 import qs.common.components
 
 Item {
@@ -16,6 +17,11 @@ Item {
     Keys.onPressed: event => {
         // Disable Ctrl + C exiting
         if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
+            event.accepted = true;
+        }
+
+        if (event.key === Qt.Key_Tab) {
+            FocusManager.focusNext();
             event.accepted = true;
         }
 
@@ -152,12 +158,12 @@ Item {
         width: 94.5 * terminal.rem
     }
 
-    Status {
-        id: status
+    Session {
+        id: session
         anchors {
             right: root.right
             top: root.top
-            rightMargin: (root.height * 0.0375) - status.barWidth  // visual fix
+            rightMargin: root.height * 0.0375
             topMargin: root.height * 0.046
         }
     }
@@ -271,16 +277,12 @@ Item {
             }
         }
 
-        onFinished: TerminalManager.unPause()
+        onFinished: TerminalManager.resume()
     }
 
     SequentialAnimation {
         id: exitAnimation
         running: AuthManager.state === AuthManager.State.Success
-
-        ScriptAction {
-            script: accents.state = "field_group"
-        }
 
         PauseAnimation {
             duration: 200
@@ -302,13 +304,19 @@ Item {
         target: TerminalManager
 
         function onPaused(marker: string) {
-            if (Settings.animationProfile(Settings.AnimationMode.Reduced)) {
-                // startup sequence won't run so manually unpause
-                TerminalManager.unPause();
-            }
+            /**
+            * 1. The terminal prints output until it reaches the UI initialization line.
+            * 2. The terminal is paused at this line, and the splash animation begins.
+            * 3. Once the animation finishes, it signals the terminal to unpause and continue output.
+            */
 
             if (marker == "UI_INIT") {
                 startSplash.resume();
+            }
+
+            if (Settings.animationMode < Settings.AnimationMode.All) {
+                // startup sequence won't run so manually unpause
+                TerminalManager.resume();
             }
         }
     }
@@ -319,7 +327,6 @@ Item {
         function onProgressBarMidway() {
             time.start();
             device.start();
-            status.start();
         }
 
         function onRevealFinished() {
