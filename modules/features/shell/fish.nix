@@ -59,7 +59,6 @@ in
                 fzf --fish | source
                 zoxide init --cmd cd fish |source
                 direnv hook fish | source
-                starship preset nerd-font-symbols -o ~/.config/starship.toml
               '';
             };
           };
