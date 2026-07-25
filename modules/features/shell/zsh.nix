@@ -45,7 +45,6 @@ in
                   zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza --color=always --icons $realpath'
                   eval "$(fzf --zsh)"
                   eval "$(zoxide init --cmd cd zsh)"
-                  eval "$(direnv hook zsh)"
                 '')
                 (lib.mkOrder 1500 ''
                   TRANSIENT_PROMPT_PROMPT='$(starship prompt --terminal-width="$COLUMNS" --keymap="''${KEYMAP:-}" --status="''${STARSHIP_CMD_STATUS}" --pipestatus="''${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="''${STARSHIP_DURATION:-}" --jobs="''${STARSHIP_JOBS_COUNT}")'
