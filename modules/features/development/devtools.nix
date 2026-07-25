@@ -24,23 +24,25 @@ in
       rustup
       tree-sitter
       vscode
-      zig
-      jdk17
+      jdk21
       clang
       clang-tools
       cmake
       gnumake
       python3
+      scala
       shfmt
       shellcheck
+      zig
+      zls
 
       # Haskell (GHC 9.14 toolchain)
-      hs.ghc
-      hs.cabal-install
-      hs.haskell-language-server
-      hs.haskell-debugger
-      hs.hoogle
-      hs.fourmolu
+      ##hs.ghc
+      ##hs.cabal-install
+      ##hs.haskell-language-server
+      ##hs.haskell-debugger
+      ##hs.hoogle
+      ##hs.fourmolu
     ];
   };
 }
