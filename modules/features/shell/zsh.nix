@@ -41,8 +41,8 @@ in
                   zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
                   zstyle ':completion:*' menu no
                   zstyle ':completion:*' list-colors "''${(s.:.)LS_COLORS}"
-                  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --color=always --icons $realpath'
-                  zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza --color=always --icons $realpath'
+                  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --color=always --icons=always $realpath'
+                  zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza --color=always --icons=always $realpath'
                   eval "$(fzf --zsh)"
                   eval "$(zoxide init --cmd cd zsh)"
                 '')
