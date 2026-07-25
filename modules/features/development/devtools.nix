@@ -38,7 +38,6 @@ in
       cabal-install
       haskell-language-server
       haskellPackages.hoogle
-      haskellPackages.ghcup
       fourmolu
     ];
   };
