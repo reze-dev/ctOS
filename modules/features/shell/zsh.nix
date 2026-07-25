@@ -46,6 +46,8 @@ in
                   eval "$(fzf --zsh)"
                   eval "$(zoxide init --cmd cd zsh)"
                   eval "$(direnv hook zsh)"
+                '')
+                (lib.mkOrder 1500 ''
                   TRANSIENT_PROMPT_PROMPT='$(starship prompt --terminal-width="$COLUMNS" --keymap="''${KEYMAP:-}" --status="''${STARSHIP_CMD_STATUS}" --pipestatus="''${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="''${STARSHIP_DURATION:-}" --jobs="''${STARSHIP_JOBS_COUNT}")'
                   TRANSIENT_PROMPT_RPROMPT='$(starship prompt --right --terminal-width="$COLUMNS" --keymap="''${KEYMAP:-}" --status="''${STARSHIP_CMD_STATUS}" --pipestatus="''${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="''${STARSHIP_DURATION:-}" --jobs="''${STARSHIP_JOBS_COUNT}")'
                   TRANSIENT_PROMPT_TRANSIENT_PROMPT='$(starship module character)'
