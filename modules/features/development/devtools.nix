@@ -48,6 +48,7 @@ in
       hs.cabal-install
       hs.haskell-language-server
       #hs.haskell-debugger
+      hs.haskell-debug-adapter
       hs.hoogle
       hs.fourmolu
     ];
