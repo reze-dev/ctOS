@@ -36,6 +36,7 @@ in
                   export PATH=$HOME/.config/emacs/bin:$PATH
                   export PATH=$(go env GOPATH)/bin:$PATH
                   export DIRENV_LOG_FORMAT=""
+                  export STARSHIP_CONFIG=~/.config/starship2.toml
                 '')
                 (lib.mkOrder 1000 ''
                   zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -50,7 +51,7 @@ in
                   TRANSIENT_PROMPT_PROMPT='$(starship prompt --terminal-width="$COLUMNS" --keymap="''${KEYMAP:-}" --status="''${STARSHIP_CMD_STATUS}" --pipestatus="''${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="''${STARSHIP_DURATION:-}" --jobs="''${STARSHIP_JOBS_COUNT}")'
                   TRANSIENT_PROMPT_RPROMPT='$(starship prompt --right --terminal-width="$COLUMNS" --keymap="''${KEYMAP:-}" --status="''${STARSHIP_CMD_STATUS}" --pipestatus="''${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="''${STARSHIP_DURATION:-}" --jobs="''${STARSHIP_JOBS_COUNT}")'
                   TRANSIENT_PROMPT_TRANSIENT_PROMPT='$(starship module character)'
-                  starship preset pure-preset -o ~/.config/starship.toml
+                  starship preset pure-preset -o ~/.config/starship2.toml
                 '')
               ];
               completionInit = ''
