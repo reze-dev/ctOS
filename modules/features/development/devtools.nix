@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.northstar.features.devtools;
-  hs = pkgs.haskell.packages.ghc914;
+  hs = pkgs.haskell.packages.ghc910;
 in
 {
   options.northstar.features.devtools.enable =
@@ -30,19 +30,26 @@ in
       cmake
       gnumake
       python3
-      scala
       shfmt
       shellcheck
+
+      # Zig
       zig
       zls
 
+      # Scala
+      scala
+      metals
+      scala-cli
+      sbt
+
       # Haskell (GHC 9.14 toolchain)
-      ##hs.ghc
-      ##hs.cabal-install
-      ##hs.haskell-language-server
-      ##hs.haskell-debugger
-      ##hs.hoogle
-      ##hs.fourmolu
+      hs.ghc
+      hs.cabal-install
+      hs.haskell-language-server
+      #hs.haskell-debugger
+      hs.hoogle
+      hs.fourmolu
     ];
   };
 }
