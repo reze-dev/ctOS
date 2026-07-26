@@ -40,8 +40,7 @@ in
       # Scala
       scala
       metals
-      scala-cli
-      sbt
+      coursier
 
       # Haskell (GHC 9.14 toolchain)
       hs.ghc
