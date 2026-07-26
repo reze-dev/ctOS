@@ -38,7 +38,6 @@ in
       zls
 
       # Scala
-      scala
       metals
       coursier
 
