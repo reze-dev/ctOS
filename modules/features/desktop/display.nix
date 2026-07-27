@@ -39,9 +39,6 @@ in
       TTYVTDisallocate = true;
     };
 
-    # Emable Niri
-    programs.niri.enable = true;
-
     # Keymap
     services.xserver.xkb = {
       layout = "us";
