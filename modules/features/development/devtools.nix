@@ -15,23 +15,30 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       codecrafters-cli
-      gcc
       go
-      libgcc
-      nil
-      nixfmt
-      nodejs
       rustup
       tree-sitter
       vscode
       jdk21
+      python3
+      shfmt
+      shellcheck
+
+      # Nix
+      nil
+      nixfmt
+
+      # C/C++
+      gcc
+      libgcc
       clang
       clang-tools
       cmake
       gnumake
-      python3
-      shfmt
-      shellcheck
+
+      # JavaScript
+      nodejs
+      bun
 
       # Zig
       zig
@@ -41,11 +48,10 @@ in
       metals
       coursier
 
-      # Haskell (GHC 9.14 toolchain)
+      # Haskell (GHC 9.10 toolchain)
       hs.ghc
       hs.cabal-install
       hs.haskell-language-server
-      #hs.haskell-debugger
       hs.haskell-debug-adapter
       hs.hoogle
       hs.fourmolu
