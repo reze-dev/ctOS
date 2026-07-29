@@ -21,6 +21,7 @@ in
       vscode
       jdk21
       python3
+      nushell
       shfmt
       shellcheck
 
