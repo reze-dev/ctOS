@@ -9,5 +9,6 @@ in
   config = lib.mkIf cfg.enable {
     programs.fish.enable = true;
     programs.zsh.enable = true;
+    programs.nushell.enable = true;
   };
 }
