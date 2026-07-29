@@ -8,12 +8,12 @@ On re-run, the installer resumes from the last incomplete checkpoint.
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import time
 import getpass
-import re
 from pathlib import Path
 from functools import wraps
 from typing import Optional
@@ -202,24 +202,6 @@ def is_mounted(path: str) -> bool:
         return False
 
 
-def has_filesystem(device: str) -> bool:
-    """Check if a device already has a filesystem."""
-    try:
-        result = run_capture(f"blkid -o value -s TYPE {device}", check=False)
-        return bool(result)
-    except Exception:
-        return False
-
-
-def subvolume_exists(mount: str, name: str) -> bool:
-    """Check if a btrfs subvolume already exists."""
-    try:
-        out = run_capture(f"btrfs subvolume list {mount}", check=False)
-        return name in out
-    except Exception:
-        return False
-
-
 def confirm_input(prompt: str, err_msg: str = "Value cannot be empty") -> str:
     """Prompt for non-empty input."""
     value = input(prompt).strip()
@@ -290,6 +272,214 @@ def build_gpu_config(
     return "\n".join(lines)
 
 
+# ── Hardware Config Post-processing ─────────────────────────────
+def strip_filesystems_from_hardware(hw_text: str) -> str:
+    """Strip fileSystems.* and swapDevices entries from hardware.nix output.
+
+    Disko is the single source of truth for filesystem declarations, so we
+    remove them from the auto-generated hardware config to prevent conflicts.
+    """
+    cleaned_lines = []
+    skip_depth = 0
+    in_swap_devices = False
+
+    for line in hw_text.splitlines():
+        stripped = line.strip()
+
+        # Detect fileSystems."..." = { blocks
+        if re.match(r'^fileSystems\."[^"]*"\s*=\s*\{', stripped):
+            skip_depth = 1
+            continue
+
+        # Detect swapDevices = [ ... ];
+        if stripped.startswith("swapDevices"):
+            in_swap_devices = True
+            # Single-line declaration
+            if ";" in stripped:
+                in_swap_devices = False
+            continue
+
+        if in_swap_devices:
+            if ";" in stripped:
+                in_swap_devices = False
+            continue
+
+        # Track brace depth for multi-line fileSystems blocks
+        if skip_depth > 0:
+            skip_depth += stripped.count("{") - stripped.count("}")
+            if skip_depth <= 0:
+                skip_depth = 0
+            continue
+
+        cleaned_lines.append(line)
+
+    # Remove excessive blank lines
+    result = "\n".join(cleaned_lines)
+    while "\n\n\n" in result:
+        result = result.replace("\n\n\n", "\n\n")
+    return result
+
+
+# ── Disko Config Generation ─────────────────────────────────────
+def generate_disko_whole_disk(
+    hostname: str,
+    disk_dev: str,
+    fs_type: str,
+    swap_size: str,
+    root_size: str,
+) -> str:
+    """Generate disko.nix content for whole-disk mode."""
+    template = "btrfs" if fs_type == "btrfs" else "ext4"
+    disko = (
+        f'# Auto-generated disko config for {hostname}\n'
+        '{\n'
+        f'  imports = [ ../../lib/disko/{template}.nix ];\n\n'
+        f'  disko.devices.disk.main.device = "/dev/{disk_dev}";\n'
+    )
+
+    if swap_size == "0":
+        disko += '  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = "0";\n'
+    elif swap_size != "8G":
+        disko += f'  disko.devices.disk.main.content.partitions.swap.size = "{swap_size}";\n'
+
+    if root_size != "100%":
+        disko += f'  disko.devices.disk.main.content.partitions.root.size = "{root_size}";\n'
+
+    disko += "}\n"
+    return disko
+
+
+def generate_disko_partition_only(
+    hostname: str,
+    nixos_part: str,
+    efi_part: str,
+    fs_type: str,
+    swap_size: str,
+    swap_partition: str = "",
+) -> str:
+    """Generate disko.nix content for partition-only mode.
+
+    This creates an inline disko config that targets an existing partition
+    rather than importing a whole-disk template. The EFI partition is
+    declared as a regular fileSystems entry (not managed by disko) so it
+    isn't reformatted.
+
+    For ext4, swap uses a dedicated partition managed by disko.
+    For btrfs, swap uses a swapfile on the @swap subvolume.
+    """
+    # Get EFI UUID before generating — we need it for the fileSystems block
+    try:
+        efi_uuid = run_capture(f"blkid -s UUID -o value {efi_part}")
+    except Exception:
+        efi_uuid = ""
+
+    lines = [
+        f"# Auto-generated disko config for {hostname} (partition-only)",
+        "{",
+        f'  disko.devices.disk.nixos = {{',
+        f'    type = "disk";',
+        f'    device = "{nixos_part}";',
+        f'    content = {{',
+    ]
+
+    if fs_type == "btrfs":
+        lines += [
+            f'      type = "btrfs";',
+            f'      extraArgs = [ "-f" ];',
+            f'      subvolumes = {{',
+            f'        "/root" = {{',
+            f'          mountpoint = "/";',
+            f'          mountOptions = [ "compress=zstd" ];',
+            f'        }};',
+            f'        "/home" = {{',
+            f'          mountpoint = "/home";',
+            f'          mountOptions = [ "compress=zstd" ];',
+            f'        }};',
+            f'        "/nix" = {{',
+            f'          mountpoint = "/nix";',
+            f'          mountOptions = [ "compress=zstd" "noatime" ];',
+            f'        }};',
+            f'        "/log" = {{',
+            f'          mountpoint = "/var/log";',
+            f'          mountOptions = [ "compress=zstd" ];',
+            f'        }};',
+        ]
+        if swap_size != "0":
+            lines += [
+                f'        "/swap" = {{',
+                f'          mountpoint = "/swap";',
+                f'        }};',
+            ]
+        lines += [
+            f'      }};',
+        ]
+    else:
+        # ext4
+        lines += [
+            f'      type = "filesystem";',
+            f'      format = "ext4";',
+            f'      mountpoint = "/";',
+        ]
+
+    lines += [
+        f'    }};',
+        f'  }};',
+    ]
+
+    # Swap partition for ext4 (managed by disko)
+    if swap_size != "0" and fs_type == "ext4" and swap_partition:
+        lines += [
+            f'',
+            f'  disko.devices.disk.swap = {{',
+            f'    type = "disk";',
+            f'    device = "{swap_partition}";',
+            f'    content = {{',
+            f'      type = "swap";',
+            f'      discardPolicy = "both";',
+            f'      resumeDevice = true;',
+            f'    }};',
+            f'  }};',
+        ]
+
+    lines += [
+        f'',
+        f'  # Existing EFI partition — not managed by disko',
+    ]
+
+    if efi_uuid:
+        lines += [
+            f'  fileSystems."/boot/efi" = {{',
+            f'    device = "/dev/disk/by-uuid/{efi_uuid}";',
+            f'    fsType = "vfat";',
+            f'    options = [ "fmask=0022" "dmask=0022" ];',
+            f'  }};',
+        ]
+    else:
+        lines += [
+            f'  fileSystems."/boot/efi" = {{',
+            f'    device = "{efi_part}";',
+            f'    fsType = "vfat";',
+            f'    options = [ "fmask=0022" "dmask=0022" ];',
+            f'  }};',
+        ]
+
+    # Swap devices declaration (for btrfs swapfile only — ext4 swap is managed by disko)
+    if swap_size != "0" and fs_type == "btrfs":
+        lines += [
+            f'',
+            f'  swapDevices = [',
+            f'    {{ device = "/swap/swapfile"; }}',
+            f'  ];',
+        ]
+
+    lines += [
+        "}",
+        "",
+    ]
+
+    return "\n".join(lines)
+
+
 # ── Config Generation ────────────────────────────────────────────
 def generate_host_config(
     host_dir: Path,
@@ -297,10 +487,8 @@ def generate_host_config(
     hostname: str,
     hashed_pw: str,
     gpu_config: str,
-    imports: str,
-    boot_config: str,
 ) -> None:
-    """Write the host default.nix."""
+    """Write the host default.nix. Both modes use disko.nix now."""
     content = f"""\
 {{
   config,
@@ -311,7 +499,7 @@ def generate_host_config(
 
 {{
   imports = [
-{imports}
+    ./disko.nix
   ];
 
   home-manager.users.{user} = {{
@@ -330,7 +518,7 @@ def generate_host_config(
 {gpu_config}
 
   networking.hostName = "{hostname}";
-{boot_config}  system.stateVersion = "26.05";
+  system.stateVersion = "26.05";
 }}
 """
     (host_dir / "default.nix").write_text(content)
@@ -480,10 +668,33 @@ def gather_disk(state: State) -> None:
 
 def gather_swap_fs_gpu(state: State) -> None:
     mode = state.get("install_mode")
+    disk_dev = state.get("disk_dev")
+
+    # Filesystem (ask first — swap behavior depends on fs_type)
+    step("5/9", "Filesystem Configuration")
+    print("Select root filesystem:")
+    print("  1) btrfs (recommended)")
+    print("  2) ext4")
+    fc = input("Choice [1]: ").strip() or "1"
+    fs = "ext4" if fc == "2" else "btrfs"
+    state.set("fs_type", fs)
+
+    # Root partition size (whole-disk only)
+    if mode == "whole-disk":
+        step("6/9", "Root Partition Size")
+        print("How much space for the root partition?")
+        print("  Examples: 100% (use all remaining), 200G, 500G")
+        print("  Leave space unallocated for future use by entering a specific size.")
+        root_size = input("Root size [100%]: ").strip() or "100%"
+        if root_size != "100%" and not re.match(r"^\d+[GMgm%]$", root_size):
+            die("Invalid root size. Use format like 200G, 50%, or 100%")
+        state.set("root_size", root_size)
+    else:
+        state.set("root_size", "100%")
 
     # Swap
-    step("5/8", "Swap Configuration")
-    if mode == "partition-only":
+    step("7/9", "Swap Configuration")
+    if mode == "partition-only" and fs == "btrfs":
         print("Enter swap size (btrfs swapfile). Examples: 8G, 16G, 0 to disable")
     else:
         print("Enter swap partition size. Examples: 8G, 16G, 0 to disable")
@@ -492,21 +703,22 @@ def gather_swap_fs_gpu(state: State) -> None:
         die("Invalid swap size. Use format like 8G, 16G, or 0")
     state.set("swap_size", swap)
 
-    # Filesystem
-    step("6/8", "Filesystem Configuration")
-    if mode == "partition-only":
-        print(f"Filesystem: {BOLD}btrfs{NC} (required for dual-boot)")
-        fs = "btrfs"
+    # Swap partition selection (partition-only + ext4 needs a dedicated partition)
+    if mode == "partition-only" and fs == "ext4" and swap != "0":
+        print(f"\n{YELLOW}ext4 requires a dedicated swap partition.{NC}")
+        print(f"Partitions on /dev/{disk_dev}:")
+        run(f"lsblk -n -o NAME,SIZE,FSTYPE,LABEL /dev/{disk_dev}", check=False)
+        swap_name = input("Enter swap partition device (e.g., nvme0n1p6): ").strip()
+        swap_part = f"/dev/{swap_name}"
+        if not Path(swap_part).exists():
+            die(f"Swap partition {swap_part} does not exist")
+        state.set("swap_partition", swap_part)
     else:
-        print("Select root filesystem:")
-        print("  1) btrfs (recommended)")
-        print("  2) ext4")
-        fc = input("Choice [1]: ").strip() or "1"
-        fs = "ext4" if fc == "2" else "btrfs"
-    state.set("fs_type", fs)
+        state.set("swap_partition", "")
 
     # GPU
-    step("7/8", "GPU Configuration")
+    step_n = "8/9" if mode == "whole-disk" else "7/9"
+    step(step_n, "GPU Configuration")
     print("Select GPU type:")
     print("  1) None / Intel / AMD")
     print("  2) NVIDIA (proprietary)")
@@ -548,8 +760,15 @@ def show_summary_and_confirm(state: State) -> None:
     if mode == "partition-only":
         print(f"  NixOS Part:   {state.get('nixos_partition')}")
         print(f"  EFI Part:     {state.get('efi_partition')}")
-    print(f"  Swap:         {state.get('swap_size')}")
+    swap_info = state.get('swap_size')
+    if state.get('swap_partition'):
+        swap_info += f" (partition: {state.get('swap_partition')})"
+    elif mode == 'partition-only' and state.get('fs_type') == 'btrfs' and swap_info != '0':
+        swap_info += " (btrfs swapfile)"
+    print(f"  Swap:         {swap_info}")
     print(f"  Filesystem:   {state.get('fs_type')}")
+    if mode == "whole-disk":
+        print(f"  Root Size:    {state.get('root_size')}")
     if gpu != "1":
         g = "NVIDIA"
         if gpu == "3":
@@ -566,7 +785,7 @@ def show_summary_and_confirm(state: State) -> None:
 
 
 def generate_config(state: State, work_dir: Path) -> None:
-    step("8/8", "Setting up configuration...")
+    step("9/9", "Setting up configuration...")
     hostname = state.get("hostname")
     host_dir = work_dir / "hosts" / hostname
     host_dir.mkdir(parents=True, exist_ok=True)
@@ -582,74 +801,40 @@ def generate_config(state: State, work_dir: Path) -> None:
     if mode == "whole-disk":
         msg("Generating hardware configuration...")
         hw = run_capture("nixos-generate-config --show-hardware-config")
+        hw = strip_filesystems_from_hardware(hw)
         (host_dir / "hardware.nix").write_text(hw + "\n")
 
         msg("Creating disko configuration...")
-        disk_dev = state.get("disk_dev")
-        swap = state.get("swap_size")
-        disko = (
-            f'# Auto-generated disko config for {hostname}\n'
-            '{\n'
-            '  imports = [ ../../lib/disko/btrfs.nix ];\n\n'
-            f'  disko.devices.disk.main.device = "/dev/{disk_dev}";\n'
+        disko = generate_disko_whole_disk(
+            hostname,
+            state.get("disk_dev"),
+            state.get("fs_type"),
+            state.get("swap_size"),
+            state.get("root_size"),
         )
-        if swap == "0":
-            disko += '  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = "0";\n'
-        elif swap != "8G":
-            disko += f'  disko.devices.disk.main.content.partitions.swap.size = "{swap}";\n'
-        disko += "}\n"
         (host_dir / "disko.nix").write_text(disko)
 
-        imports = "    ./disko.nix"
-        boot_config = ""
-        generate_host_config(
-            host_dir, state.get("username"), hostname,
-            state.get("hashed_password"), gpu_config, imports, boot_config,
-        )
-
-        # ext4 override
-        if state.get("fs_type") == "ext4":
-            msg("Configuring ext4 filesystem...")
-            ext4_nix = """\
-{
-  disko.devices.disk.main.content.partitions.root.content = {
-    type = "filesystem";
-    format = "ext4";
-    mountpoint = "/";
-  };
-}
-"""
-            (host_dir / "disko-fs.nix").write_text(ext4_nix)
-            # Inject import
-            default_nix = (host_dir / "default.nix").read_text()
-            default_nix = default_nix.replace(
-                "imports = [", "imports = [\n    ./disko-fs.nix", 1
-            )
-            (host_dir / "default.nix").write_text(default_nix)
-
     else:
-        # Partition-only — config is generated, actual partitioning in next step
-        imports = "    ./filesystems.nix"
-        boot_config = """
-  # Boot — use existing EFI bootloader (dual-boot safe)
-  boot.loader = {
-    efi = {
-      canTouchEfiVariables = true;
-      efiSysMountPoint = "/boot/efi";
-    };
-    grub = {
-      enable = true;
-      device = "nodev";
-      efiSupport = true;
-      useOSProber = true;
-    };
-  };
-
-"""
-        generate_host_config(
-            host_dir, state.get("username"), hostname,
-            state.get("hashed_password"), gpu_config, imports, boot_config,
+        # Partition-only — generate disko.nix targeting the specific partition
+        msg("Creating disko configuration...")
+        disko = generate_disko_partition_only(
+            hostname,
+            state.get("nixos_partition"),
+            state.get("efi_partition"),
+            state.get("fs_type"),
+            state.get("swap_size"),
+            swap_partition=state.get("swap_partition", ""),
         )
+        (host_dir / "disko.nix").write_text(disko)
+
+    # Generate host default.nix (same shape for both modes)
+    generate_host_config(
+        host_dir,
+        state.get("username"),
+        hostname,
+        state.get("hashed_password"),
+        gpu_config,
+    )
 
     # Stage files
     msg("Staging files for flake...")
@@ -663,144 +848,46 @@ def generate_config(state: State, work_dir: Path) -> None:
 
 @retry(max_attempts=3, delay=5)
 def do_partition(state: State, work_dir: Path) -> None:
-    """Partition and format disks. Idempotent — checks state before acting."""
+    """Partition and format disks using disko. Both modes use disko now."""
     mode = state.get("install_mode")
     hostname = state.get("hostname")
     host_dir = work_dir / "hosts" / hostname
 
-    if mode == "whole-disk":
-        msg("Partitioning with Disko...")
-        run(f'nix run github:nix-community/disko -- --mode disko --flake ".#{hostname}"')
+    msg("Partitioning with Disko...")
+    run(f'nix run github:nix-community/disko -- --mode disko --flake ".#{hostname}"')
 
-    else:
-        nixos_part = state.get("nixos_partition")
+    if mode == "partition-only":
         efi_part = state.get("efi_partition")
-        swap = state.get("swap_size")
+        swap_size = state.get("swap_size")
+        fs_type = state.get("fs_type")
 
-        # Format — idempotent: skip if already btrfs
-        if has_filesystem(nixos_part):
-            fs = run_capture(f"blkid -o value -s TYPE {nixos_part}", check=False)
-            if fs == "btrfs":
-                msg(f"{nixos_part} already formatted as btrfs, skipping format.")
-            else:
-                msg(f"Formatting {nixos_part} as btrfs...")
-                run(f"mkfs.btrfs -f {nixos_part}")
-        else:
-            msg(f"Formatting {nixos_part} as btrfs...")
-            run(f"mkfs.btrfs -f {nixos_part}")
+        # Mount EFI partition (not managed by disko)
+        os.makedirs("/mnt/boot/efi", exist_ok=True)
+        if not is_mounted("/mnt/boot/efi"):
+            msg(f"Mounting EFI partition {efi_part}...")
+            run(f"mount {efi_part} /mnt/boot/efi")
 
-        # Create subvolumes — idempotent
-        if not is_mounted("/mnt"):
-            run(f"mount {nixos_part} /mnt")
-
-        subvols = ["@root", "@home", "@nix", "@log"]
-        if swap != "0":
-            subvols.append("@swap")
-
-        for sv in subvols:
-            if subvolume_exists("/mnt", sv):
-                msg(f"  Subvolume {sv} already exists, skipping.")
-            else:
-                msg(f"  Creating subvolume {sv}...")
-                run(f"btrfs subvolume create /mnt/{sv}")
-
-        run("umount /mnt")
-
-        # Mount subvolumes — idempotent
-        if not is_mounted("/mnt"):
-            run(f"mount -o subvol=@root,compress=zstd {nixos_part} /mnt")
-
-        for d in ["home", "nix", "var/log", "boot/efi"]:
-            os.makedirs(f"/mnt/{d}", exist_ok=True)
-
-        mounts = [
-            (f"-o subvol=@home,compress=zstd {nixos_part}", "/mnt/home"),
-            (f"-o subvol=@nix,compress=zstd,noatime {nixos_part}", "/mnt/nix"),
-            (f"-o subvol=@log,compress=zstd {nixos_part}", "/mnt/var/log"),
-            (f"{efi_part}", "/mnt/boot/efi"),
-        ]
-        for opts, mp in mounts:
-            if not is_mounted(mp):
-                run(f"mount {opts} {mp}")
-            else:
-                msg(f"  {mp} already mounted, skipping.")
-
-        # Swapfile — idempotent
-        if swap != "0":
+        # Create swapfile for btrfs (disko creates the subvolume, but not the swapfile)
+        if swap_size != "0" and fs_type == "btrfs":
             swapfile = Path("/mnt/swap/swapfile")
             if swapfile.exists():
                 msg("  Swapfile already exists, skipping.")
             else:
-                msg(f"Creating {swap} swapfile...")
-                os.makedirs("/mnt/swap", exist_ok=True)
-                if not is_mounted("/mnt/swap"):
-                    run(f"mount -o subvol=@swap {nixos_part} /mnt/swap")
+                msg(f"Creating {swap_size} btrfs swapfile...")
                 run("chattr +C /mnt/swap", check=False)
                 run("truncate -s 0 /mnt/swap/swapfile")
                 run("chattr +C /mnt/swap/swapfile", check=False)
-                run(f"fallocate -l {swap} /mnt/swap/swapfile")
+                run(f"fallocate -l {swap_size} /mnt/swap/swapfile")
                 run("chmod 600 /mnt/swap/swapfile")
                 run("mkswap /mnt/swap/swapfile")
                 run("swapon /mnt/swap/swapfile")
 
-        # Get UUIDs and generate filesystems.nix
-        nixos_uuid = run_capture(f"blkid -s UUID -o value {nixos_part}")
-        efi_uuid = run_capture(f"blkid -s UUID -o value {efi_part}")
-        msg(f"NixOS UUID: {nixos_uuid}")
-        msg(f"EFI UUID:   {efi_uuid}")
+        # ext4 swap: handled by disko (dedicated swap partition), no manual setup needed
 
-        swap_config = ""
-        if swap != "0":
-            swap_config = f"""
-  fileSystems."/swap" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@swap" ];
-  }};
-
-  swapDevices = [
-    {{ device = "/swap/swapfile"; }}
-  ];"""
-
-        fs_nix = f"""\
-# Auto-generated filesystem configuration for {hostname}
-{{
-  fileSystems."/" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@root" "compress=zstd" ];
-  }};
-
-  fileSystems."/home" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@home" "compress=zstd" ];
-  }};
-
-  fileSystems."/nix" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@nix" "compress=zstd" "noatime" ];
-  }};
-
-  fileSystems."/var/log" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@log" "compress=zstd" ];
-  }};
-
-  fileSystems."/boot/efi" = {{
-    device = "/dev/disk/by-uuid/{efi_uuid}";
-    fsType = "vfat";
-    options = [ "fmask=0022" "dmask=0022" ];
-  }};
-{swap_config}
-}}
-"""
-        (host_dir / "filesystems.nix").write_text(fs_nix)
-
+        # Generate hardware.nix from the mounted system
         msg("Generating hardware configuration...")
         hw = run_capture("nixos-generate-config --root /mnt --show-hardware-config")
+        hw = strip_filesystems_from_hardware(hw)
         (host_dir / "hardware.nix").write_text(hw + "\n")
 
         # Re-stage
