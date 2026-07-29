@@ -132,7 +132,7 @@ pub fn draw(f: &mut Frame, app: &App) {
             f,
             chunks[1],
             app,
-            "5/8",
+            "7/9",
             "Swap Configuration",
             "Enter swap size (e.g., 8G, 16G, 0 to disable):",
         ),
@@ -140,15 +140,31 @@ pub fn draw(f: &mut Frame, app: &App) {
             f,
             chunks[1],
             app,
-            "6/8",
+            "5/9",
             "Filesystem",
             "Select root filesystem:",
+        ),
+        Page::RootSize => draw_input(
+            f,
+            chunks[1],
+            app,
+            "6/9",
+            "Root Partition Size",
+            "Root size (e.g., 100%, 200G, 500G):",
+        ),
+        Page::SwapPartition => draw_input(
+            f,
+            chunks[1],
+            app,
+            "7/9",
+            "Swap Partition",
+            "Enter swap partition device (ext4 requires a dedicated swap partition):",
         ),
         Page::Gpu => draw_select(
             f,
             chunks[1],
             app,
-            "7/8",
+            "8/9",
             "GPU Configuration",
             "Select GPU type:",
         ),
@@ -156,7 +172,7 @@ pub fn draw(f: &mut Frame, app: &App) {
             f,
             chunks[1],
             app,
-            "7/8",
+            "8/9",
             "NVIDIA Configuration",
             "NVIDIA Bus ID:",
         ),
@@ -164,11 +180,11 @@ pub fn draw(f: &mut Frame, app: &App) {
             f,
             chunks[1],
             app,
-            "7/8",
+            "8/9",
             "NVIDIA Prime",
             "Select iGPU type:",
         ),
-        Page::GpuIgpuBus => draw_input(f, chunks[1], app, "7/8", "NVIDIA Prime", "iGPU Bus ID:"),
+        Page::GpuIgpuBus => draw_input(f, chunks[1], app, "8/9", "NVIDIA Prime", "iGPU Bus ID:"),
         Page::Summary => draw_summary(f, chunks[1], app),
         Page::Installing => draw_installing(f, chunks[1], app),
         Page::Done => draw_done(f, chunks[1], app),
@@ -355,19 +371,27 @@ fn draw_summary(f: &mut Frame, area: Rect, app: &App) {
 
     let mut lines = vec![
         Line::from(Span::styled(
-            "  [Step 8/8] Review Configuration",
+            "  [Step 9/9] Review Configuration",
             Style::default().fg(BLUE).add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
     ];
 
     let mode_str = cfg.mode.to_string();
-    let rows: Vec<(&str, &str)> = vec![
-        ("Hostname", &cfg.hostname),
-        ("Username", &cfg.username),
-        ("Mode", &mode_str),
-        ("Disk", &cfg.disk_dev),
-        ("Swap", &cfg.swap_size),
+    let swap_label = if !cfg.swap_partition.is_empty() {
+        format!("{} (partition: {})", cfg.swap_size, cfg.swap_partition)
+    } else if cfg.mode == InstallMode::PartitionOnly && cfg.fs_type == "btrfs" && cfg.swap_size != "0" {
+        format!("{} (btrfs swapfile)", cfg.swap_size)
+    } else {
+        cfg.swap_size.clone()
+    };
+    let rows: Vec<(&str, String)> = vec![
+        ("Hostname", cfg.hostname.clone()),
+        ("Username", cfg.username.clone()),
+        ("Mode", mode_str),
+        ("Disk", cfg.disk_dev.clone()),
+        ("Filesystem", cfg.fs_type.clone()),
+        ("Swap", swap_label),
     ];
     for (k, v) in &rows {
         lines.push(Line::from(vec![
@@ -403,12 +427,12 @@ fn draw_summary(f: &mut Frame, area: Rect, app: &App) {
     if cfg.mode == InstallMode::WholeDisk {
         lines.push(Line::from(vec![
             Span::styled(
-                "  Filesystem    ".to_string(),
+                "  Root Size     ".to_string(),
                 Style::default()
                     .fg(Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
-            Span::raw(&cfg.fs_type),
+            Span::raw(&cfg.root_size),
         ]));
     }
     lines.push(Line::from(vec![
