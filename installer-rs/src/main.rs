@@ -157,6 +157,8 @@ async fn handle_key(app: &mut App, key: KeyCode) {
         | Page::PartNewEnd
         | Page::PartExist
         | Page::Swap
+        | Page::RootSize
+        | Page::SwapPartition
         | Page::GpuNvBus
         | Page::GpuIgpuBus => match key {
             KeyCode::Enter => handle_text_submit(app).await,
@@ -333,12 +335,30 @@ async fn handle_text_submit(app: &mut App) {
             app.go_to_page(Page::PartConfirm);
         }
         Page::Swap => {
-            app.config.swap_size = if val.is_empty() { "8G".into() } else { val };
-            if app.config.mode == InstallMode::WholeDisk {
-                app.go_to_page(Page::Fs);
+            let swap = if val.is_empty() { "8G".into() } else { val };
+            app.config.swap_size = swap.clone();
+            // For partition-only + ext4: need a swap partition
+            if app.config.mode == InstallMode::PartitionOnly
+                && app.config.fs_type == "ext4"
+                && swap != "0"
+            {
+                app.go_to_page(Page::SwapPartition);
             } else {
+                app.config.swap_partition.clear();
                 app.go_to_page(Page::Gpu);
             }
+        }
+        Page::RootSize => {
+            app.config.root_size = if val.is_empty() { "100%".into() } else { val };
+            app.go_to_page(Page::Swap);
+        }
+        Page::SwapPartition => {
+            if val.is_empty() {
+                app.err = "Swap partition device required".into();
+                return;
+            }
+            app.config.swap_partition = format!("/dev/{val}");
+            app.go_to_page(Page::Gpu);
         }
         Page::GpuNvBus => {
             app.config.nvidia_bus_id = val;
@@ -392,7 +412,7 @@ fn handle_confirm_submit(app: &mut App) {
     match app.page {
         Page::DiskConfirm => {
             if app.config.mode == InstallMode::WholeDisk {
-                app.go_to_page(Page::Swap);
+                app.go_to_page(Page::Fs);
             } else {
                 app.go_to_page(Page::PartSelect);
             }
@@ -424,7 +444,12 @@ fn handle_selection(app: &mut App) {
         }
         Page::Fs => {
             app.config.fs_type = if app.cursor == 0 { "btrfs" } else { "ext4" }.into();
-            app.go_to_page(Page::Gpu);
+            if app.config.mode == InstallMode::WholeDisk {
+                app.go_to_page(Page::RootSize);
+            } else {
+                app.config.root_size = "100%".into();
+                app.go_to_page(Page::Swap);
+            }
         }
         Page::Gpu => {
             app.config.gpu_choice = match app.cursor {
