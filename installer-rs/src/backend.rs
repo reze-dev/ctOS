@@ -66,6 +66,184 @@ fn build_gpu_config(cfg: &InstallConfig) -> String {
     }
 }
 
+/// Strip fileSystems and swapDevices entries from hardware.nix output.
+/// Disko is the single source of truth for filesystem declarations.
+fn strip_filesystems_from_hardware(hw_text: &str) -> String {
+    let mut cleaned_lines = Vec::new();
+    let mut skip_depth: i32 = 0;
+    let mut in_swap_devices = false;
+
+    for line in hw_text.lines() {
+        let stripped = line.trim();
+
+        // Detect fileSystems."..." = { blocks
+        if stripped.starts_with("fileSystems.\"") && stripped.contains("= {") {
+            skip_depth = 1;
+            continue;
+        }
+
+        // Detect swapDevices = [ ... ];
+        if stripped.starts_with("swapDevices") {
+            in_swap_devices = true;
+            if stripped.contains(';') {
+                in_swap_devices = false;
+            }
+            continue;
+        }
+
+        if in_swap_devices {
+            if stripped.contains(';') {
+                in_swap_devices = false;
+            }
+            continue;
+        }
+
+        // Track brace depth for multi-line fileSystems blocks
+        if skip_depth > 0 {
+            skip_depth += stripped.matches('{').count() as i32 - stripped.matches('}').count() as i32;
+            if skip_depth <= 0 {
+                skip_depth = 0;
+            }
+            continue;
+        }
+
+        cleaned_lines.push(line);
+    }
+
+    let mut result = cleaned_lines.join("\n");
+    while result.contains("\n\n\n") {
+        result = result.replace("\n\n\n", "\n\n");
+    }
+    result
+}
+
+/// Generate disko.nix content for whole-disk mode.
+fn generate_disko_whole_disk(cfg: &InstallConfig) -> String {
+    let template = if cfg.fs_type == "ext4" { "ext4" } else { "btrfs" };
+    let mut disko = format!(
+        "# Auto-generated disko config for {}\n{{\n  imports = [ ../../lib/disko/{template}.nix ];\n\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
+        cfg.hostname, cfg.disk_dev
+    );
+
+    if cfg.swap_size == "0" {
+        disko += "  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = \"0\";\n";
+    } else if cfg.swap_size != "8G" {
+        disko += &format!(
+            "  disko.devices.disk.main.content.partitions.swap.size = \"{}\";\n",
+            cfg.swap_size
+        );
+    }
+
+    if cfg.root_size != "100%" {
+        disko += &format!(
+            "  disko.devices.disk.main.content.partitions.root.size = \"{}\";\n",
+            cfg.root_size
+        );
+    }
+
+    disko += "}\n";
+    disko
+}
+
+/// Generate disko.nix content for partition-only mode.
+async fn generate_disko_partition_only(cfg: &InstallConfig) -> String {
+    let np = &cfg.nixos_part;
+    let ep = &cfg.efi_part;
+
+    // Get EFI UUID
+    let efi_uuid = run_capture(&format!("blkid -s UUID -o value {ep}"))
+        .await
+        .unwrap_or_default();
+
+    let mut lines = vec![
+        format!("# Auto-generated disko config for {} (partition-only)", cfg.hostname),
+        "{".to_string(),
+        format!("  disko.devices.disk.nixos = {{"),
+        format!("    type = \"disk\";"),
+        format!("    device = \"{np}\";"),
+        format!("    content = {{"),
+    ];
+
+    if cfg.fs_type == "btrfs" {
+        lines.push("      type = \"btrfs\";".into());
+        lines.push("      extraArgs = [ \"-f\" ];".into());
+        lines.push("      subvolumes = {".into());
+        lines.push("        \"/root\" = {".into());
+        lines.push("          mountpoint = \"/\";".into());
+        lines.push("          mountOptions = [ \"compress=zstd\" ];".into());
+        lines.push("        };".into());
+        lines.push("        \"/home\" = {".into());
+        lines.push("          mountpoint = \"/home\";".into());
+        lines.push("          mountOptions = [ \"compress=zstd\" ];".into());
+        lines.push("        };".into());
+        lines.push("        \"/nix\" = {".into());
+        lines.push("          mountpoint = \"/nix\";".into());
+        lines.push("          mountOptions = [ \"compress=zstd\" \"noatime\" ];".into());
+        lines.push("        };".into());
+        lines.push("        \"/log\" = {".into());
+        lines.push("          mountpoint = \"/var/log\";".into());
+        lines.push("          mountOptions = [ \"compress=zstd\" ];".into());
+        lines.push("        };".into());
+        if cfg.swap_size != "0" {
+            lines.push("        \"/swap\" = {".into());
+            lines.push("          mountpoint = \"/swap\";".into());
+            lines.push("        };".into());
+        }
+        lines.push("      };".into());
+    } else {
+        lines.push("      type = \"filesystem\";".into());
+        lines.push("      format = \"ext4\";".into());
+        lines.push("      mountpoint = \"/\";".into());
+    }
+
+    lines.push("    };".into());
+    lines.push("  };".into());
+
+    // Swap partition for ext4 (managed by disko)
+    if cfg.swap_size != "0" && cfg.fs_type == "ext4" && !cfg.swap_partition.is_empty() {
+        lines.push(String::new());
+        lines.push("  disko.devices.disk.swap = {".into());
+        lines.push("    type = \"disk\";".into());
+        lines.push(format!("    device = \"{}\";", cfg.swap_partition));
+        lines.push("    content = {".into());
+        lines.push("      type = \"swap\";".into());
+        lines.push("      discardPolicy = \"both\";".into());
+        lines.push("      resumeDevice = true;".into());
+        lines.push("    };".into());
+        lines.push("  };".into());
+    }
+
+    lines.push(String::new());
+    lines.push("  # Existing EFI partition — not managed by disko".into());
+
+    if !efi_uuid.is_empty() {
+        lines.push("  fileSystems.\"/boot/efi\" = {".into());
+        lines.push(format!("    device = \"/dev/disk/by-uuid/{efi_uuid}\";"));
+        lines.push("    fsType = \"vfat\";".into());
+        lines.push("    options = [ \"fmask=0022\" \"dmask=0022\" ];".into());
+        lines.push("  };".into());
+    } else {
+        lines.push("  fileSystems.\"/boot/efi\" = {".into());
+        lines.push(format!("    device = \"{ep}\";"));
+        lines.push("    fsType = \"vfat\";".into());
+        lines.push("    options = [ \"fmask=0022\" \"dmask=0022\" ];".into());
+        lines.push("  };".into());
+    }
+
+    // Swap devices declaration (for btrfs swapfile only — ext4 swap is managed by disko)
+    if cfg.swap_size != "0" && cfg.fs_type == "btrfs" {
+        lines.push(String::new());
+        lines.push("  swapDevices = [".into());
+        lines.push("    { device = \"/swap/swapfile\"; }".into());
+        lines.push("  ];".into());
+    }
+
+    lines.push("}".into());
+    lines.push(String::new());
+
+    lines.join("\n")
+}
+
 /// Run all installation steps, sending progress updates through the channel.
 pub async fn run_installation(
     cfg: InstallConfig,
@@ -157,52 +335,27 @@ async fn generate_config(cfg: &InstallConfig, work_dir: &str) -> Result<(), Stri
             let hw = run_capture("nixos-generate-config --show-hardware-config")
                 .await
                 .map_err(|e| format!("hardware config: {e}"))?;
+            let hw = strip_filesystems_from_hardware(&hw);
             fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"))
                 .map_err(|e| e.to_string())?;
 
-            let mut disko = format!(
-                "# Auto-generated disko config for {}\n{{\n  imports = [ ../../lib/disko/btrfs.nix ];\n\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
-                cfg.hostname, cfg.disk_dev
-            );
-            if cfg.swap_size == "0" {
-                disko += "  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = \"0\";\n";
-            } else if cfg.swap_size != "8G" {
-                disko += &format!(
-                    "  disko.devices.disk.main.content.partitions.swap.size = \"{}\";\n",
-                    cfg.swap_size
-                );
-            }
-            disko += "}\n";
+            let disko = generate_disko_whole_disk(cfg);
             fs::write(format!("{host_dir}/disko.nix"), &disko).map_err(|e| e.to_string())?;
-
-            write_host_config(&host_dir, cfg, &gpu_config, "    ./disko.nix", "");
-
-            if cfg.fs_type == "ext4" {
-                let ext4 = "{\n  disko.devices.disk.main.content.partitions.root.content = {\n    type = \"filesystem\";\n    format = \"ext4\";\n    mountpoint = \"/\";\n  };\n}\n";
-                fs::write(format!("{host_dir}/disko-fs.nix"), ext4).map_err(|e| e.to_string())?;
-                let data =
-                    fs::read_to_string(format!("{host_dir}/default.nix")).unwrap_or_default();
-                let patched = data.replacen("imports = [", "imports = [\n    ./disko-fs.nix", 1);
-                fs::write(format!("{host_dir}/default.nix"), patched).map_err(|e| e.to_string())?;
-            }
         }
         InstallMode::PartitionOnly => {
-            let boot = "\n  # Boot — use existing EFI bootloader (dual-boot safe)\n  boot.loader = {\n    efi = {\n      canTouchEfiVariables = true;\n      efiSysMountPoint = \"/boot/efi\";\n    };\n    grub = {\n      enable = true;\n      device = \"nodev\";\n      efiSupport = true;\n      useOSProber = true;\n    };\n  };\n\n";
-            write_host_config(&host_dir, cfg, &gpu_config, "    ./filesystems.nix", boot);
+            let disko = generate_disko_partition_only(cfg).await;
+            fs::write(format!("{host_dir}/disko.nix"), &disko).map_err(|e| e.to_string())?;
         }
     }
+
+    // Both modes use the same default.nix shape
+    write_host_config(&host_dir, cfg, &gpu_config);
 
     run_silent("git add .").await;
     Ok(())
 }
 
-fn write_host_config(
-    host_dir: &str,
-    cfg: &InstallConfig,
-    gpu_config: &str,
-    imports: &str,
-    boot_config: &str,
-) {
+fn write_host_config(host_dir: &str, cfg: &InstallConfig, gpu_config: &str) {
     let content = format!(
         r#"{{
   config,
@@ -213,7 +366,7 @@ fn write_host_config(
 
 {{
   imports = [
-{imports}
+    ./disko.nix
   ];
 
   home-manager.users.{user} = {{
@@ -232,14 +385,13 @@ fn write_host_config(
 {gpu}
 
   networking.hostName = "{host}";
-{boot}  system.stateVersion = "26.05";
+  system.stateVersion = "26.05";
 }}
 "#,
         user = cfg.username,
         pw = cfg.hashed_pw,
         gpu = gpu_config,
         host = cfg.hostname,
-        boot = boot_config,
     );
     let _ = fs::write(format!("{host_dir}/default.nix"), content);
 }
@@ -248,187 +400,42 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
     let host_dir = format!("{work_dir}/hosts/{}", cfg.hostname);
 
     retry("partition", 3, Duration::from_secs(5), || async {
-        match cfg.mode {
-            InstallMode::WholeDisk => {
-                run(&format!(
-                    r#"nix run github:nix-community/disko -- --mode disko --flake ".#{}""#,
-                    cfg.hostname
-                ))
-                .await
-            }
-            InstallMode::PartitionOnly => partition_only_setup(cfg, &host_dir).await,
-        }
-    })
-    .await
-}
-
-/// Partition-only setup: format, create subvolumes, mount, and generate config.
-async fn partition_only_setup(cfg: &InstallConfig, host_dir: &str) -> Result<(), String> {
-    let np = &cfg.nixos_part;
-    let ep = &cfg.efi_part;
-    let swap = &cfg.swap_size;
-
-    format_btrfs(np).await?;
-    create_subvolumes(np, swap).await?;
-    mount_all(np, ep).await?;
-    setup_swap(np, swap).await?;
-    generate_filesystems_nix(cfg, host_dir).await?;
-
-    let hw = run_capture("nixos-generate-config --root /mnt --show-hardware-config").await?;
-    let _ = fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"));
-    run_silent("git add .").await;
-    Ok(())
-}
-
-/// Format the NixOS partition as btrfs if needed.
-async fn format_btrfs(partition: &str) -> Result<(), String> {
-    if !has_filesystem(partition).await || get_filesystem(partition).await != "btrfs" {
-        run(&format!("mkfs.btrfs -f {partition}")).await?;
-    }
-    Ok(())
-}
-
-/// Create btrfs subvolumes on the partition.
-async fn create_subvolumes(partition: &str, swap: &str) -> Result<(), String> {
-    if !is_mounted("/mnt").await {
-        run(&format!("mount {partition} /mnt")).await?;
-    }
-    let mut subvols = vec!["@root", "@home", "@nix", "@log"];
-    if swap != "0" {
-        subvols.push("@swap");
-    }
-    for sv in &subvols {
-        if !subvolume_exists("/mnt", sv).await {
-            run(&format!("btrfs subvolume create /mnt/{sv}")).await?;
-        }
-    }
-    let _ = run("umount /mnt").await;
-    Ok(())
-}
-
-/// Mount all btrfs subvolumes and the EFI partition.
-async fn mount_all(partition: &str, efi: &str) -> Result<(), String> {
-    if !is_mounted("/mnt").await {
         run(&format!(
-            "mount -o subvol=@root,compress=zstd {partition} /mnt"
+            r#"nix run github:nix-community/disko -- --mode disko --flake ".#{}""#,
+            cfg.hostname
         ))
-        .await?;
-    }
-    for d in &["home", "nix", "var/log", "boot/efi"] {
-        let _ = fs::create_dir_all(format!("/mnt/{d}"));
-    }
-    let mounts = [
-        (
-            format!("-o subvol=@home,compress=zstd {partition}"),
-            "/mnt/home",
-        ),
-        (
-            format!("-o subvol=@nix,compress=zstd,noatime {partition}"),
-            "/mnt/nix",
-        ),
-        (
-            format!("-o subvol=@log,compress=zstd {partition}"),
-            "/mnt/var/log",
-        ),
-        (efi.to_string(), "/mnt/boot/efi"),
-    ];
-    for (opts, mp) in &mounts {
-        if !is_mounted(mp).await {
-            run(&format!("mount {opts} {mp}")).await?;
+        .await
+    })
+    .await?;
+
+    if cfg.mode == InstallMode::PartitionOnly {
+        // Mount EFI partition (not managed by disko)
+        let _ = fs::create_dir_all("/mnt/boot/efi");
+        if !is_mounted("/mnt/boot/efi").await {
+            run(&format!("mount {} /mnt/boot/efi", cfg.efi_part)).await?;
         }
+
+        // Create btrfs swapfile (disko creates the subvolume, but not the file)
+        if cfg.swap_size != "0" && cfg.fs_type == "btrfs" {
+            if !path_exists("/mnt/swap/swapfile") {
+                run_silent("chattr +C /mnt/swap").await;
+                let _ = run("truncate -s 0 /mnt/swap/swapfile").await;
+                run_silent("chattr +C /mnt/swap/swapfile").await;
+                let _ = run(&format!("fallocate -l {} /mnt/swap/swapfile", cfg.swap_size)).await;
+                let _ = run("chmod 600 /mnt/swap/swapfile").await;
+                let _ = run("mkswap /mnt/swap/swapfile").await;
+                let _ = run("swapon /mnt/swap/swapfile").await;
+            }
+        }
+        // ext4 swap: handled by disko (dedicated swap partition), no manual setup needed
+
+        // Generate hardware.nix from the mounted system
+        let hw = run_capture("nixos-generate-config --root /mnt --show-hardware-config").await?;
+        let hw = strip_filesystems_from_hardware(&hw);
+        let _ = fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"));
+        run_silent("git add .").await;
     }
-    Ok(())
-}
 
-/// Set up the btrfs swapfile.
-async fn setup_swap(partition: &str, swap: &str) -> Result<(), String> {
-    if swap == "0" || path_exists("/mnt/swap/swapfile") {
-        return Ok(());
-    }
-    let _ = fs::create_dir_all("/mnt/swap");
-    if !is_mounted("/mnt/swap").await {
-        let _ = run(&format!("mount -o subvol=@swap {partition} /mnt/swap")).await;
-    }
-    run_silent("chattr +C /mnt/swap").await;
-    let _ = run("truncate -s 0 /mnt/swap/swapfile").await;
-    run_silent("chattr +C /mnt/swap/swapfile").await;
-    let _ = run(&format!("fallocate -l {swap} /mnt/swap/swapfile")).await;
-    let _ = run("chmod 600 /mnt/swap/swapfile").await;
-    let _ = run("mkswap /mnt/swap/swapfile").await;
-    let _ = run("swapon /mnt/swap/swapfile").await;
-    Ok(())
-}
-
-/// Generate the filesystems.nix file with UUID-based mounts.
-async fn generate_filesystems_nix(cfg: &InstallConfig, host_dir: &str) -> Result<(), String> {
-    let np = &cfg.nixos_part;
-    let ep = &cfg.efi_part;
-    let swap = &cfg.swap_size;
-
-    let nixos_uuid = run_capture(&format!("blkid -s UUID -o value {np}"))
-        .await
-        .unwrap_or_default();
-    let efi_uuid = run_capture(&format!("blkid -s UUID -o value {ep}"))
-        .await
-        .unwrap_or_default();
-
-    let swap_config = if swap != "0" {
-        format!(
-            r#"
-
-  fileSystems."/swap" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@swap" ];
-  }};
-
-  swapDevices = [
-    {{ device = "/swap/swapfile"; }}
-  ];"#
-        )
-    } else {
-        String::new()
-    };
-
-    let fs_nix = format!(
-        r#"# Auto-generated filesystem configuration for {host}
-{{
-  fileSystems."/" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@root" "compress=zstd" ];
-  }};
-
-  fileSystems."/home" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@home" "compress=zstd" ];
-  }};
-
-  fileSystems."/nix" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@nix" "compress=zstd" "noatime" ];
-  }};
-
-  fileSystems."/var/log" = {{
-    device = "/dev/disk/by-uuid/{nixos_uuid}";
-    fsType = "btrfs";
-    options = [ "subvol=@log" "compress=zstd" ];
-  }};
-
-  fileSystems."/boot/efi" = {{
-    device = "/dev/disk/by-uuid/{efi_uuid}";
-    fsType = "vfat";
-    options = [ "fmask=0022" "dmask=0022" ];
-  }};
-{swap_config}
-}}
-"#,
-        host = cfg.hostname
-    );
-
-    let _ = fs::write(format!("{host_dir}/filesystems.nix"), fs_nix);
     Ok(())
 }
 
