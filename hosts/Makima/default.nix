@@ -6,12 +6,9 @@
 }:
 
 {
-  imports = [ ./filesystems.nix ];
-
-  northstar.profiles = {
-    desktop.enable = true;
-    workstation.enable = true;
-  };
+  imports = [
+    ./disko.nix
+  ];
 
   home-manager.users.reze = {
     imports = [ ../../home ];
@@ -29,7 +26,12 @@
       "docker"
     ];
     shell = pkgs.zsh;
-    hashedPassword = "$6$6VzoJUwHF0jvIr3V$UeSeDOI.6.JcC9CjxW26V0r0W0SeCos7Ne7/AWSxL1ACNb1.goIYDQAnn8K7ODSvyUKn9zfOc9996t.OXBTBX.";
+    hashedPassword = "$6$Fbr/jW8KWBKk15qS$vYqAkhbPbRZ0XQ7gbEZWYF.1qQRauhfKwXKPhAjJiSdpzU1ChjpBl34E.Lup6glq2rjVLdB6glr7RHC9bjHBV1";
+  };
+
+  northstar.profiles = {
+    desktop.enable = true;
+    workstation.enable = true;
   };
 
   # NVIDIA GPU
@@ -37,7 +39,7 @@
   northstar.nvidia.prime = {
     enable = true;
     nvidiaBusId = "PCI:1:0:0";
-    amdgpuBusId = "PCI:5:0:0";
+    amdgpuBusId = "PCI:0:2:0";
   };
 
   networking.hostName = "Makima";

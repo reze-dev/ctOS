@@ -77,7 +77,9 @@ pub struct InstallConfig {
     pub nixos_part: String,
     pub efi_part: String,
     pub swap_size: String,
+    pub swap_partition: String,
     pub fs_type: String,
+    pub root_size: String,
     pub gpu_choice: GpuChoice,
     pub nvidia_bus_id: String,
     pub igpu_bus_id: String,
@@ -110,8 +112,10 @@ pub enum Page {
     PartExist,
     PartConfirm,
     Efi,
-    Swap,
     Fs,
+    RootSize,
+    Swap,
+    SwapPartition,
     Gpu,
     GpuNvBus,
     GpuIgpuType,
@@ -302,17 +306,28 @@ impl App {
             Page::PartNewEnd => Page::PartNewStart,
             Page::PartConfirm => Page::PartSelect,
             Page::Efi => Page::PartConfirm,
-            Page::Swap => {
+            Page::Fs => {
                 if self.config.mode == InstallMode::WholeDisk {
                     Page::DiskConfirm
                 } else {
                     Page::Efi
                 }
             }
-            Page::Fs => Page::Swap,
-            Page::Gpu => {
+            Page::RootSize => Page::Fs,
+            Page::Swap => {
                 if self.config.mode == InstallMode::WholeDisk {
+                    Page::RootSize
+                } else {
                     Page::Fs
+                }
+            }
+            Page::SwapPartition => Page::Swap,
+            Page::Gpu => {
+                if self.config.mode == InstallMode::PartitionOnly
+                    && self.config.fs_type == "ext4"
+                    && self.config.swap_size != "0"
+                {
+                    Page::SwapPartition
                 } else {
                     Page::Swap
                 }
@@ -387,11 +402,11 @@ impl App {
     }
 
     /// Check if the spawned installation task has finished (panic or completion).
-    pub fn check_install_handle(&mut self) {
+    pub async fn check_install_handle(&mut self) {
         if let Some(ref handle) = self.install_handle {
             if handle.is_finished() {
                 let handle = self.install_handle.take().unwrap();
-                match tokio::runtime::Handle::current().block_on(handle) {
+                match handle.await {
                     Ok(()) => {} // normal completion, progress updates handle the rest
                     Err(e) => {
                         self.install_err = Some(format!("Installation task panicked: {e}"));

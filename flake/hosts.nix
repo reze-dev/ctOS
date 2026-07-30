@@ -12,7 +12,9 @@ let
     hostName:
     lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
+      specialArgs = {
+        inherit inputs northstar;
+      };
       modules = northstar.mkHostModules {
         inherit
           inputs
