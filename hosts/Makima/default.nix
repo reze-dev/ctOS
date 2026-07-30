@@ -8,7 +8,7 @@
 
 {
   imports = [
-    ./filesystems.nix
+    ./disko.nix
     (northstar.mkUser {
       username = "reze";
       groups = [

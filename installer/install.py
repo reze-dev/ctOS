@@ -22,7 +22,7 @@ from typing import Optional
 STATE_FILE = Path("/tmp/northstar-install-state.json")
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds, doubles each attempt
-NIX_CONFIG_FEATURES = "experimental-features = nix-command flakes"
+NIX_CONFIG_FEATURES = "experimental-features = nix-command flakes pipe-operators"
 
 STEPS = [
     "gather_host",
@@ -219,33 +219,35 @@ def confirm_yes(prompt: str) -> None:
 
 # ── Password Hashing ────────────────────────────────────────────
 def hash_password(password: str) -> str:
-    """Hash password using best available tool."""
-    for cmd_tpl in [
-        "mkpasswd -m sha-512 '{pw}'",
-        "openssl passwd -6 -stdin",
-        "python3 -c \"import crypt; print(crypt.crypt('{pw}', crypt.mksalt(crypt.METHOD_SHA512)))\"",
-    ]:
-        tool = cmd_tpl.split()[0]
-        if shutil.which(tool):
-            if "stdin" in cmd_tpl:
-                r = subprocess.run(
-                    cmd_tpl.format(pw=password),
-                    shell=True,
-                    input=password,
-                    capture_output=True,
-                    text=True,
-                )
-            else:
-                r = subprocess.run(
-                    cmd_tpl.format(pw=password),
-                    shell=True,
-                    capture_output=True,
-                    text=True,
-                )
-            if r.returncode == 0 and r.stdout.strip():
-                return r.stdout.strip()
+    """Hash password using best available tool without shell interpolation issues."""
+    if shutil.which("mkpasswd"):
+        r = subprocess.run(
+            ["mkpasswd", "-m", "sha-512", "--stdin"],
+            input=password,
+            capture_output=True,
+            text=True,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+
+    if shutil.which("openssl"):
+        r = subprocess.run(
+            ["openssl", "passwd", "-6", "-stdin"],
+            input=password,
+            capture_output=True,
+            text=True,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+
+    try:
+        import crypt
+        return crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512))
+    except Exception:
+        pass
+
     die("No tool found to hash password (mkpasswd, openssl, python3).")
-    return ""  # unreachable
+    return ""
 
 
 # ── GPU Config Builder ───────────────────────────────────────────
@@ -280,35 +282,33 @@ def strip_filesystems_from_hardware(hw_text: str) -> str:
     remove them from the auto-generated hardware config to prevent conflicts.
     """
     cleaned_lines = []
-    skip_depth = 0
-    in_swap_devices = False
+    in_fs = False
+    in_swap = False
+    brace_depth = 0
 
     for line in hw_text.splitlines():
         stripped = line.strip()
 
-        # Detect fileSystems."..." = { blocks
-        if re.match(r'^fileSystems\."[^"]*"\s*=\s*\{', stripped):
-            skip_depth = 1
+        # Detect start of fileSystems declaration (e.g. fileSystems."/" = ...)
+        if stripped.startswith("fileSystems.") or in_fs:
+            if not in_fs and stripped.startswith("fileSystems."):
+                in_fs = True
+                brace_depth = 0
+
+            brace_depth += stripped.count("{") - stripped.count("}")
+
+            if ";" in stripped and brace_depth <= 0:
+                in_fs = False
+                brace_depth = 0
             continue
 
-        # Detect swapDevices = [ ... ];
-        if stripped.startswith("swapDevices"):
-            in_swap_devices = True
-            # Single-line declaration
+        # Detect start of swapDevices declaration (e.g. swapDevices = [ ... ];)
+        if stripped.startswith("swapDevices") or in_swap:
+            if not in_swap and stripped.startswith("swapDevices"):
+                in_swap = True
+
             if ";" in stripped:
-                in_swap_devices = False
-            continue
-
-        if in_swap_devices:
-            if ";" in stripped:
-                in_swap_devices = False
-            continue
-
-        # Track brace depth for multi-line fileSystems blocks
-        if skip_depth > 0:
-            skip_depth += stripped.count("{") - stripped.count("}")
-            if skip_depth <= 0:
-                skip_depth = 0
+                in_swap = False
             continue
 
         cleaned_lines.append(line)
