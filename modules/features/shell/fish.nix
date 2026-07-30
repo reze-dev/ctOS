@@ -35,6 +35,7 @@ in
                 set -gx PATH $HOME/.local/bin $PATH
                 set -gx PATH (go env GOPATH)/bin $PATH
                 set -gx PATH $HOME/.config/emacs/bin $PATH
+                set -gx PATH $HOME/.local/share/coursier/bin $PATH
                 set -gx DIRENV_LOG_FORMAT ""
                 fish_config theme choose "Rosé Pine Auto"
               '';

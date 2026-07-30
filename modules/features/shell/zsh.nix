@@ -35,6 +35,7 @@ in
                   export GPG_TTY=$(tty)
                   export PATH=$HOME/.config/emacs/bin:$PATH
                   export PATH=$(go env GOPATH)/bin:$PATH
+                  export PATH=$HOME/.local/share/coursier/bin:$PATH
                   export DIRENV_LOG_FORMAT=""
                   export STARSHIP_CONFIG=~/.cache/starship.toml
                 '')
