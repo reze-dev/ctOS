@@ -402,11 +402,11 @@ impl App {
     }
 
     /// Check if the spawned installation task has finished (panic or completion).
-    pub fn check_install_handle(&mut self) {
+    pub async fn check_install_handle(&mut self) {
         if let Some(ref handle) = self.install_handle {
             if handle.is_finished() {
                 let handle = self.install_handle.take().unwrap();
-                match tokio::runtime::Handle::current().block_on(handle) {
+                match handle.await {
                     Ok(()) => {} // normal completion, progress updates handle the rest
                     Err(e) => {
                         self.install_err = Some(format!("Installation task panicked: {e}"));

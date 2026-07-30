@@ -121,22 +121,22 @@ fn strip_filesystems_from_hardware(hw_text: &str) -> String {
 fn generate_disko_whole_disk(cfg: &InstallConfig) -> String {
     let template = if cfg.fs_type == "ext4" { "ext4" } else { "btrfs" };
     let mut disko = format!(
-        "# Auto-generated disko config for {}\n{{\n  imports = [ ../../lib/disko/{template}.nix ];\n\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
+        "# Auto-generated disko config for {}\n{{ lib, ... }}:\n{{\n  imports = [ ../../lib/disko/{template}.nix ];\n\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
         cfg.hostname, cfg.disk_dev
     );
 
     if cfg.swap_size == "0" {
-        disko += "  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = \"0\";\n";
+        disko += "  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = lib.mkForce \"0\";\n";
     } else if cfg.swap_size != "8G" {
         disko += &format!(
-            "  disko.devices.disk.main.content.partitions.swap.size = \"{}\";\n",
+            "  disko.devices.disk.main.content.partitions.swap.size = lib.mkForce \"{}\";\n",
             cfg.swap_size
         );
     }
 
     if cfg.root_size != "100%" {
         disko += &format!(
-            "  disko.devices.disk.main.content.partitions.root.size = \"{}\";\n",
+            "  disko.devices.disk.main.content.partitions.root.size = lib.mkForce \"{}\";\n",
             cfg.root_size
         );
     }

@@ -332,18 +332,19 @@ def generate_disko_whole_disk(
     template = "btrfs" if fs_type == "btrfs" else "ext4"
     disko = (
         f'# Auto-generated disko config for {hostname}\n'
+        '{ lib, ... }:\n'
         '{\n'
         f'  imports = [ ../../lib/disko/{template}.nix ];\n\n'
         f'  disko.devices.disk.main.device = "/dev/{disk_dev}";\n'
     )
 
     if swap_size == "0":
-        disko += '  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = "0";\n'
+        disko += '  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "0";\n'
     elif swap_size != "8G":
-        disko += f'  disko.devices.disk.main.content.partitions.swap.size = "{swap_size}";\n'
+        disko += f'  disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "{swap_size}";\n'
 
     if root_size != "100%":
-        disko += f'  disko.devices.disk.main.content.partitions.root.size = "{root_size}";\n'
+        disko += f'  disko.devices.disk.main.content.partitions.root.size = lib.mkForce "{root_size}";\n'
 
     disko += "}\n"
     return disko

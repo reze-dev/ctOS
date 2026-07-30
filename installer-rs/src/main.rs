@@ -110,7 +110,7 @@ async fn run_app(
             app.tick_spinner();
 
             // Check if the background task panicked
-            app.check_install_handle();
+            app.check_install_handle().await;
         }
 
         // Poll for keyboard events with a timeout (allows spinner to animate)
