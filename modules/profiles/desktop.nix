@@ -11,6 +11,7 @@ let
     "ghostty"
     "hyprland"
     "kitty"
+    "niri"
     "noctalia"
     "power"
     "udiskie"

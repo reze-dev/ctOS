@@ -138,6 +138,7 @@ sudo nixos-rebuild switch --flake .#Makima
 | **Firefox** | `northstar.features.firefox.enable` | Firefox browser |
 | **Fonts** | `northstar.features.fonts.enable` | Nerd Fonts collection |
 | **Hyprland** | `northstar.features.hyprland.enable` | Hyprland Wayland compositor |
+| **Niri** | `northstar.features.niri.enable` | Niri scrollable-tiling Wayland compositor |
 | **Locales** | `northstar.features.locales.enable` | Timezone, keyboard layout, and i18n locales |
 | **Networking** | `northstar.features.networking.enable` | NetworkManager daemon + custom firewall settings |
 | **NVIDIA** | `northstar.nvidia.enable` | Proprietary NVIDIA drivers |
