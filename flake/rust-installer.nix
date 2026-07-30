@@ -12,7 +12,10 @@
       rustSrc = pkgs.lib.cleanSourceWith {
         src = ../installer-rs;
         filter =
-          path: type: (craneLib.filterCargoSources path type) || builtins.baseNameOf path == "PLACEHOLDER";
+          path: type:
+          (craneLib.filterCargoSources path type)
+          || (type == "directory" && builtins.baseNameOf path == "flake")
+          || builtins.baseNameOf path == "PLACEHOLDER";
       };
 
       # Assemble the full flake source as a derivation
@@ -38,8 +41,10 @@
 
         # Populate flake/ dir before cargo build so include_dir! works
         preBuild = ''
+          mkdir -p flake
           rm -rf flake/*
           cp -r ${flakeSrc}/* flake/
+          chmod -R u+w flake
         '';
       };
 
