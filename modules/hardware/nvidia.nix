@@ -58,7 +58,7 @@ in
       powerManagement.finegrained = false;
       open = cfg.openKernelModule;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.beta;
+      package = config.boot.kernelPackages.nvidiaPackages.latest;
 
       prime = lib.mkIf cfg.prime.enable {
         sync.enable = true;
