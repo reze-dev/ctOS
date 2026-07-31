@@ -16,10 +16,9 @@ in
           ...
         }:
         {
-
           config = {
             programs.ghostty = {
-              enable = false;
+              enable = true;
               enableFishIntegration = true;
               enableZshIntegration = true;
               installBatSyntax = true;

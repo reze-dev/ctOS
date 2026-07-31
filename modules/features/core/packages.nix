@@ -17,7 +17,6 @@ in
     services.gvfs.enable = true;
 
     environment.systemPackages = with pkgs; [
-      alacritty
       bat
       btop
       eza
@@ -28,7 +27,6 @@ in
       hyprpolkitagent
       jq
       kdePackages.dolphin
-      kitty
       libnotify
       mpv
       nitch

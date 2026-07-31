@@ -61,5 +61,6 @@ in
       "quiet"
       "udev.log_priority=3"
     ];
+    boot.kernelPackages = pkgs.linuxPackages_latest;
   };
 }
