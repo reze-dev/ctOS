@@ -78,19 +78,21 @@ let
                 { proportion = 0.66667; }
               ];
 
-              default-column-width = { proportion = 0.5; };
+              default-column-width = {
+                proportion = 0.5;
+              };
 
               # Focus ring (Active window outline)
               focus-ring = {
                 enable = true;
                 width = 2;
                 active.color = "#7dcfff";
-                inactive.color = "#414868";
+                inactive.color = "#00000000";
               };
 
               # Window border styling
               border = {
-                enable = true;
+                enable = false;
                 width = 2;
                 active.color = "#bb9af7";
                 inactive.color = "#24283b";
@@ -156,7 +158,7 @@ let
                   { namespace = "^noctalia.*$"; }
                   { namespace = "^waybar$"; }
                 ];
-                shadow.enable = true;
+                shadow.enable = false;
               }
             ];
 
@@ -169,6 +171,7 @@ let
               "Mod+Space".action = actions.spawn "fuzzel";
               "Mod+E".action = actions.spawn "kitty" "-e" "yazi";
               "Mod+B".action = actions.spawn "zen";
+              "Mod+Shift+Slash".action = actions.show-hotkey-overlay;
 
               # Window & Column Controls
               "Mod+Q".action = actions.close-window;
@@ -188,6 +191,12 @@ let
               "Mod+K".action = actions.focus-window-or-workspace-up;
               "Mod+Down".action = actions.focus-window-or-workspace-down;
               "Mod+J".action = actions.focus-window-or-workspace-down;
+
+              # Mouse Wheel Scroll Navigation
+              "Mod+WheelScrollRight".action = actions.focus-column-right;
+              "Mod+WheelScrollLeft".action = actions.focus-column-left;
+              "Mod+WheelScrollDown".action = actions.focus-column-right;
+              "Mod+WheelScrollUp".action = actions.focus-column-left;
 
               "Mod+Home".action = actions.focus-column-first;
               "Mod+End".action = actions.focus-column-last;
@@ -274,7 +283,8 @@ in
 {
   imports = [ inputs.niri.nixosModules.niri ];
 
-  options.northstar.features.niri.enable = lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
+  options.northstar.features.niri.enable =
+    lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
 
   config = lib.mkIf cfg.enable {
     programs.niri = {
@@ -290,4 +300,3 @@ in
     };
   };
 }
-
