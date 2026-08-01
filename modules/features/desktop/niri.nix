@@ -25,7 +25,6 @@ let
     {
       config = lib.mkIf niriEnabled {
         home.packages = with pkgs; [
-          alacritty
           brightnessctl
           fuzzel
           playerctl
