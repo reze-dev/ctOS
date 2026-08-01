@@ -15,6 +15,7 @@ let
     "noctalia"
     "power"
     "udiskie"
+    "xdg"
     "zen-browser"
   ];
 in

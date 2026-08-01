@@ -36,7 +36,9 @@ let
         programs.niri = {
           settings = {
             # Autostart processes
-            spawn-at-startup = lib.optionals noctaliaEnabled [
+            spawn-at-startup = [
+              { command = [ "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP" "DISPLAY" ]; }
+            ] ++ lib.optionals noctaliaEnabled [
               { command = [ "noctalia" ]; }
             ];
 
@@ -297,6 +299,8 @@ in
 
     environment.sessionVariables = {
       NIXOS_OZONE_WL = "1";
+      XDG_CURRENT_DESKTOP = "Niri";
+      XDG_SESSION_TYPE = "wayland";
     };
   };
 }
