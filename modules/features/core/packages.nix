@@ -19,24 +19,33 @@ in
     environment.systemPackages = with pkgs; [
       bat
       btop
+      cliphist
+      easyeffects
       eza
       fd
       fzf
       fuzzel
+      grim
       hyprcursor
       hyprpolkitagent
       jq
       kdePackages.dolphin
+      kdePackages.okular
       libnotify
       mpv
       nitch
       obsidian
       openconnect
+      qpwgraph
+      qview
       ripgrep
+      satty
+      slurp
       tmux
       unzip
       wget
       wl-clipboard
+      zathura
       zoxide
     ];
   };

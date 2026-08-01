@@ -18,7 +18,7 @@ in
       go
       rustup
       tree-sitter
-      vscode
+      zed-editor
       jdk21
       python3
       nushell

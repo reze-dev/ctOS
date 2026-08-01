@@ -6,7 +6,6 @@ let
     "dev"
     "devtools"
     "direnv"
-    "emacs"
     "eza"
     "fish"
     "fzf"
