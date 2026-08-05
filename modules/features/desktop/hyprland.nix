@@ -16,9 +16,9 @@ let
       ...
     }:
     let
-      noctaliaAutostart = lib.optionalString config.programs.noctalia.enable ''
+      caelestiaAutostart = lib.optionalString config.programs.caelestia.enable ''
         hl.on("hyprland.start", function()
-            hl.exec_cmd("noctalia")
+            hl.exec_cmd("caelestia-shell")
         end)
       '';
     in
@@ -31,7 +31,7 @@ let
 
         xdg.configFile."hypr/hyprland.lua".text = ''
           -- Managed by Northstar. Hyprland 0.55+ loads this before hyprland.conf.
-          -- Based on Hyprland's default Lua example, with Noctalia owning shell and wallpapers.
+          -- Based on Hyprland's default Lua example, with Caelestia owning shell and wallpapers.
 
           hl.monitor({
               output = "",
@@ -55,7 +55,7 @@ let
               hl.exec_cmd("systemctl --user start hyprpolkitagent")
           end)
 
-          ${noctaliaAutostart}
+          ${caelestiaAutostart}
 
           hl.config({
               general = {
