@@ -19,6 +19,11 @@ let
       config = {
         xdg.mimeApps = {
           enable = true;
+          associations.added = {
+            "text/html" = [ "zen.desktop" ];
+            "x-scheme-handler/http" = [ "zen.desktop" ];
+            "x-scheme-handler/https" = [ "zen.desktop" ];
+          };
           defaultApplications = {
             # File manager / Directories
             "inode/directory" = [ "org.kde.dolphin.desktop" ];
@@ -84,10 +89,10 @@ in
   config = lib.mkIf cfg.enable {
     xdg.portal = {
       enable = true;
-      wlr.enable = true;
       extraPortals = with pkgs; [
         kdePackages.xdg-desktop-portal-kde
         xdg-desktop-portal-gtk
+        xdg-desktop-portal-hyprland
       ];
       config = {
         common = {
@@ -106,6 +111,7 @@ in
         };
         hyprland = {
           default = [
+            "hyprland"
             "kde"
             "gtk"
           ];

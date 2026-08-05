@@ -8,5 +8,6 @@ in
   config = lib.mkIf cfg.enable {
     environment.variables.EDITOR = "nvim";
     environment.variables.VISUAL = "nvim";
+    environment.variables.BROWSER = "zen";
   };
 }
