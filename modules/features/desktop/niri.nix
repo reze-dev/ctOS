@@ -19,7 +19,7 @@ let
     }:
     let
       niriEnabled = osConfig.northstar.features.niri.enable or false;
-      caelestiaEnabled = osConfig.northstar.features.caelestia.enable or false;
+      noctaliaEnabled = osConfig.northstar.features.noctalia.enable or false;
       actions = config.lib.niri.actions;
     in
     {
@@ -46,8 +46,8 @@ let
                 ];
               }
             ]
-            ++ lib.optionals caelestiaEnabled [
-              { command = [ "caelestia-shell" ]; }
+            ++ lib.optionals noctaliaEnabled [
+              { command = [ "noctalia" ]; }
             ];
 
             # Input configuration
@@ -165,7 +165,7 @@ let
             layer-rules = [
               {
                 matches = [
-                  { namespace = "^caelestia.*$"; }
+                  { namespace = "^noctalia.*$"; }
                   { namespace = "^waybar$"; }
                 ];
                 shadow.enable = false;

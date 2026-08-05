@@ -5,7 +5,7 @@ let
   features = [
     "audio"
     "bluetooth"
-    "caelestia"
+    "noctalia"
     "cups"
     "display"
     "firefox"
