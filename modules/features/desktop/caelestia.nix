@@ -19,7 +19,6 @@ let
           systemd.enable = false; # Autostarted by compositor
 
           cli.enable = true;
-
         };
       };
     };
