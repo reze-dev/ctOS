@@ -20,29 +20,12 @@ let
 
           cli.enable = true;
 
-          settings = {
-            bar.statusIcons = [
-              {
-                id = "network";
-                enabled = true;
-              }
-              {
-                id = "bluetooth";
-                enabled = true;
-              }
-              {
-                id = "battery";
-                enabled = true;
-              }
-            ];
-          };
         };
       };
     };
 in
 {
-  options.northstar.features.caelestia.enable =
-    lib.mkEnableOption "Caelestia Wayland desktop shell";
+  options.northstar.features.caelestia.enable = lib.mkEnableOption "Caelestia Wayland desktop shell";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [ hmCaelestiaModule ];
