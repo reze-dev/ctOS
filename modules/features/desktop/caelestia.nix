@@ -15,10 +15,10 @@ let
 
       config = {
         programs.caelestia = {
-          enable = true;
+          enable = false;
           systemd.enable = false; # Autostarted by compositor
 
-          cli.enable = true;
+          cli.enable = false;
         };
       };
     };
