@@ -7,7 +7,7 @@
 let
   cfg = config.northstar.features.display;
   tuigreet = "${pkgs.tuigreet}/bin/tuigreet";
-  hyprland-session = "${pkgs.hyprland}/share/wayland-sessions";
+  hyprland-session = "${config.programs.hyprland.package}/share/wayland-sessions";
 in
 {
   options.northstar.features.display.enable =

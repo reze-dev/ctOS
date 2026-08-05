@@ -5,6 +5,7 @@ let
   features = [
     "audio"
     "bluetooth"
+    "noctalia"
     "cups"
     "display"
     "firefox"
@@ -12,7 +13,6 @@ let
     "hyprland"
     "kitty"
     "niri"
-    "noctalia"
     "power"
     "udiskie"
     "xdg"
