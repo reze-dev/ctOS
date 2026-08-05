@@ -92,7 +92,6 @@ in
       extraPortals = with pkgs; [
         kdePackages.xdg-desktop-portal-kde
         xdg-desktop-portal-gtk
-        xdg-desktop-portal-hyprland
       ];
       config = {
         common = {
