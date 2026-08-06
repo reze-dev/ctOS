@@ -98,6 +98,10 @@ let
             <DefaultMergeDirs/>
           </Menu>
         '';
+
+        home.sessionVariables = {
+          GTK_USE_PORTAL = "1";
+        };
       };
     };
 in
