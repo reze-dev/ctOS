@@ -45,6 +45,13 @@ let
                   "DISPLAY"
                 ];
               }
+              {
+                command = [
+                  "sh"
+                  "-c"
+                  "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY && systemctl --user start graphical-session.target"
+                ];
+              }
             ]
             ++ lib.optionals noctaliaEnabled [
               { command = [ "noctalia" ]; }

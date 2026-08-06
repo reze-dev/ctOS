@@ -19,6 +19,13 @@ let
       config = {
         xdg.mimeApps = {
           enable = true;
+          associations.removed = {
+            "text/html" = [ "firefox.desktop" ];
+            "x-scheme-handler/http" = [ "firefox.desktop" ];
+            "x-scheme-handler/https" = [ "firefox.desktop" ];
+            "x-scheme-handler/about" = [ "firefox.desktop" ];
+            "x-scheme-handler/unknown" = [ "firefox.desktop" ];
+          };
           associations.added = {
             "text/html" = [ "zen-beta.desktop" ];
             "x-scheme-handler/http" = [ "zen-beta.desktop" ];

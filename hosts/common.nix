@@ -7,6 +7,7 @@
   ];
 
   home-manager.extraSpecialArgs = { inherit inputs; };
+  home-manager.backupFileExtension = "backup";
 
   nix.settings = {
     experimental-features = [
