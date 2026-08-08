@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
   ...
@@ -299,8 +298,6 @@ let
     };
 in
 {
-  imports = [ inputs.niri.nixosModules.niri ];
-
   options.northstar.features.niri.enable =
     lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
 
