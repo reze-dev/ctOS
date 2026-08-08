@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -298,12 +299,19 @@ let
     };
 in
 {
+  imports = [ inputs.niri.nixosModules.niri ];
+
   options.northstar.features.niri.enable =
     lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
 
   config = lib.mkIf cfg.enable {
+    # Disable the niri-flake binary cache — we use nixpkgs's niri instead
+    niri-flake.cache.enable = false;
+
     programs.niri = {
       enable = true;
+      # Override the package to use nixpkgs's niri instead of the flake's build
+      package = pkgs.niri;
     };
 
     home-manager.sharedModules = [ hmNiriModule ];
