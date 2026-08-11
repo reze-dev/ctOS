@@ -19,16 +19,12 @@
   users.users.reze = {
     isNormalUser = true;
     description = "reze";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "libvirtd"
-      "docker"
-    ];
+    extraGroups = [ "networkmanager" "wheel" "libvirtd" "docker" ];
     shell = pkgs.zsh;
-    hashedPassword = "$6$Fbr/jW8KWBKk15qS$vYqAkhbPbRZ0XQ7gbEZWYF.1qQRauhfKwXKPhAjJiSdpzU1ChjpBl34E.Lup6glq2rjVLdB6glr7RHC9bjHBV1";
+    hashedPassword = "$6$oXzrheHsEVSMJyV3$KzMdb2T8CHzGwcAlJqE3khEVfH/b5jFs/n5vNriwifcJ9mlgbsB221oILkizsjSYcFVJ5/kkYfjt8M2QFkkNl0";
   };
 
+  #Northstar profiles
   northstar.profiles = {
     desktop.enable = true;
     workstation.enable = true;
@@ -39,7 +35,7 @@
   northstar.nvidia.prime = {
     enable = true;
     nvidiaBusId = "PCI:1:0:0";
-    amdgpuBusId = "PCI:0:2:0";
+    amdgpuBusId = "PCI:5:0:0";
   };
 
   networking.hostName = "Makima";
