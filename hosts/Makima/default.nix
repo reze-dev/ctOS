@@ -18,7 +18,7 @@
 
   boot.loader.grub.extraEntries = ''
     menuentry "Fedora" {
-      search --fs-uuid --set=esp CB41-6695
+      search --fs-uuid --set=root CB41-6695
       chainloader /EFI/fedora/shimx64.efi
     }
   '';
