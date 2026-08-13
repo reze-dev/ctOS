@@ -16,10 +16,22 @@
     home.homeDirectory = lib.mkForce "/home/reze";
   };
 
+  boot.loader.grub.extraEntries = ''
+    menuentry "Fedora" {
+      search --fs-uuid --set=esp CB41-6695
+      chainloader /EFI/fedora/shimx64.efi
+    }
+  '';
+
   users.users.reze = {
     isNormalUser = true;
     description = "reze";
-    extraGroups = [ "networkmanager" "wheel" "libvirtd" "docker" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "libvirtd"
+      "docker"
+    ];
     shell = pkgs.zsh;
     hashedPassword = "$6$oXzrheHsEVSMJyV3$KzMdb2T8CHzGwcAlJqE3khEVfH/b5jFs/n5vNriwifcJ9mlgbsB221oILkizsjSYcFVJ5/kkYfjt8M2QFkkNl0";
   };
