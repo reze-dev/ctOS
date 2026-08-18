@@ -1,5 +1,6 @@
 {
   config,
+  inputs ? null,
   lib,
   pkgs,
   ...
@@ -8,6 +9,10 @@ let
   cfg = config.northstar.features.boot;
 in
 {
+  imports = lib.optionals (inputs != null && inputs ? lanzaboote) [
+    inputs.lanzaboote.nixosModules.lanzaboote
+  ];
+
   options.northstar.features.boot = {
     enable = lib.mkEnableOption "system bootloader and Plymouth splash";
 
@@ -19,57 +24,85 @@ in
       default = "grub";
       description = "The bootloader to use (grub with DedSec theme, or modern Limine).";
     };
-  };
 
-  config = lib.mkIf cfg.enable {
-    boot.loader = {
-      efi = {
-        canTouchEfiVariables = true;
-        efiSysMountPoint = "/boot/efi";
+    secureBoot = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Enable UEFI Secure Boot support using Lanzaboote.";
       };
 
-      grub = lib.mkIf (cfg.loader == "grub") {
-        enable = true;
-        useOSProber = true;
-        efiSupport = true;
-        device = "nodev";
+      pkiBundle = lib.mkOption {
+        type = lib.types.str;
+        default = "/etc/secureboot";
+        description = "Path to the Lanzaboote Secure Boot PKI keys and certificates directory.";
+      };
+    };
+  };
 
-        dedsec-theme = {
-          enable = true;
-          style = "sitedown";
-          icon = "color";
-          resolution = "1080p";
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      boot.loader = {
+        efi = {
+          canTouchEfiVariables = true;
+          efiSysMountPoint = "/boot/efi";
         };
+
+        grub = lib.mkIf (cfg.loader == "grub" && !cfg.secureBoot.enable) {
+          enable = true;
+          useOSProber = true;
+          efiSupport = true;
+          device = "nodev";
+
+          dedsec-theme = {
+            enable = true;
+            style = "sitedown";
+            icon = "color";
+            resolution = "1080p";
+          };
+        };
+
+        limine = lib.mkIf (cfg.loader == "limine" && !cfg.secureBoot.enable) {
+          enable = true;
+        };
+
+        systemd-boot.enable = lib.mkIf cfg.secureBoot.enable (lib.mkForce false);
       };
 
-      limine = lib.mkIf (cfg.loader == "limine") {
-        enable = true;
-      };
-    };
-
-    boot.plymouth = {
-      enable = true;
-      theme = "dedsec";
-
-      themePackages = [
-        (pkgs.stdenv.mkDerivation {
-          pname = "dedsec-plymouth";
-          version = "1.0";
-
-          src = ../../../assets/dedsec-plymouth;
-
-          installPhase = ''
-            mkdir -p $out/share/plymouth/themes/dedsec
-            cp * $out/share/plymouth/themes/dedsec/
-          '';
-        })
+      environment.systemPackages = lib.optionals cfg.secureBoot.enable [
+        pkgs.sbctl
       ];
-    };
-    boot.initrd.systemd.enable = true;
-    boot.kernelParams = [
-      "quiet"
-      "udev.log_priority=3"
-    ];
-    boot.kernelPackages = pkgs.linuxPackages_latest;
-  };
+
+      boot.plymouth = {
+        enable = true;
+        theme = "dedsec";
+
+        themePackages = [
+          (pkgs.stdenv.mkDerivation {
+            pname = "dedsec-plymouth";
+            version = "1.0";
+
+            src = ../../../assets/dedsec-plymouth;
+
+            installPhase = ''
+              mkdir -p $out/share/plymouth/themes/dedsec
+              cp * $out/share/plymouth/themes/dedsec/
+            '';
+          })
+        ];
+      };
+      boot.initrd.systemd.enable = true;
+      boot.kernelParams = [
+        "quiet"
+        "udev.log_priority=3"
+      ];
+      boot.kernelPackages = pkgs.linuxPackages_latest;
+    }
+    (lib.optionalAttrs (inputs != null && inputs ? lanzaboote) {
+      boot.lanzaboote = lib.mkIf cfg.secureBoot.enable {
+        enable = true;
+        pkiBundle = cfg.secureBoot.pkiBundle;
+      };
+    })
+  ]);
 }
