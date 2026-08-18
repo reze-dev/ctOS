@@ -7,6 +7,10 @@ authors = ["reze-dev"]
 repository = "https://github.com/reze-dev/northstar"
 license = "MIT"
 
+[lib]
+name = "northstar_installer"
+path = "src/lib.rs"
+
 [[bin]]
 name = "northstar-installer"
 path = "src/main.rs"
