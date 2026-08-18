@@ -3,6 +3,7 @@
 let
   cfg = config.northstar.profiles.workstation;
   features = [
+    "aiml"
     "dev"
     "devtools"
     "direnv"
