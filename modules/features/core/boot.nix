@@ -8,7 +8,18 @@ let
   cfg = config.northstar.features.boot;
 in
 {
-  options.northstar.features.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
+  options.northstar.features.boot = {
+    enable = lib.mkEnableOption "system bootloader and Plymouth splash";
+
+    loader = lib.mkOption {
+      type = lib.types.enum [
+        "grub"
+        "limine"
+      ];
+      default = "grub";
+      description = "The bootloader to use (grub with DedSec theme, or modern Limine).";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     boot.loader = {
@@ -16,7 +27,8 @@ in
         canTouchEfiVariables = true;
         efiSysMountPoint = "/boot/efi";
       };
-      grub = {
+
+      grub = lib.mkIf (cfg.loader == "grub") {
         enable = true;
         useOSProber = true;
         efiSupport = true;
@@ -28,16 +40,13 @@ in
           icon = "color";
           resolution = "1080p";
         };
-        # theme =
-        #   pkgs.fetchFromGitHub {
-        #     owner = "semimqmo";
-        #     repo = "sekiro_grub_theme";
-        #     rev = "1affe05f7257b72b69404cfc0a60e88aa19f54a6";
-        #     sha256 = "02gdihkd2w33qy86vs8g0pfljp919ah9c13cj4bh9fvvzm5zjfn1";
-        #   }
-        #   + "/Sekiro";
+      };
+
+      limine = lib.mkIf (cfg.loader == "limine") {
+        enable = true;
       };
     };
+
     boot.plymouth = {
       enable = true;
       theme = "dedsec";
