@@ -380,7 +380,10 @@ fn draw_summary(f: &mut Frame, area: Rect, app: &App) {
     let mode_str = cfg.mode.to_string();
     let swap_label = if !cfg.swap_partition.is_empty() {
         format!("{} (partition: {})", cfg.swap_size, cfg.swap_partition)
-    } else if cfg.mode == InstallMode::PartitionOnly && cfg.fs_type == "btrfs" && cfg.swap_size != "0" {
+    } else if cfg.mode == InstallMode::PartitionOnly
+        && cfg.fs_type == "btrfs"
+        && cfg.swap_size != "0"
+    {
         format!("{} (btrfs swapfile)", cfg.swap_size)
     } else {
         cfg.swap_size.clone()

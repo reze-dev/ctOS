@@ -100,7 +100,8 @@ fn strip_filesystems_from_hardware(hw_text: &str) -> String {
 
         // Track brace depth for multi-line fileSystems blocks
         if skip_depth > 0 {
-            skip_depth += stripped.matches('{').count() as i32 - stripped.matches('}').count() as i32;
+            skip_depth +=
+                stripped.matches('{').count() as i32 - stripped.matches('}').count() as i32;
             if skip_depth <= 0 {
                 skip_depth = 0;
             }
@@ -119,7 +120,11 @@ fn strip_filesystems_from_hardware(hw_text: &str) -> String {
 
 /// Generate disko.nix content for whole-disk mode.
 fn generate_disko_whole_disk(cfg: &InstallConfig) -> String {
-    let template = if cfg.fs_type == "ext4" { "ext4" } else { "btrfs" };
+    let template = if cfg.fs_type == "ext4" {
+        "ext4"
+    } else {
+        "btrfs"
+    };
     let mut disko = format!(
         "# Auto-generated disko config for {}\n{{ lib, ... }}:\n{{\n  imports = [ ../../lib/disko/{template}.nix ];\n\n  disko.devices.disk.main.device = \"/dev/{}\";\n",
         cfg.hostname, cfg.disk_dev
@@ -156,7 +161,10 @@ async fn generate_disko_partition_only(cfg: &InstallConfig) -> String {
         .unwrap_or_default();
 
     let mut lines = vec![
-        format!("# Auto-generated disko config for {} (partition-only)", cfg.hostname),
+        format!(
+            "# Auto-generated disko config for {} (partition-only)",
+            cfg.hostname
+        ),
         "{".to_string(),
         format!("  disko.devices.disk.nixos = {{"),
         format!("    type = \"disk\";"),
@@ -421,7 +429,11 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
                 run_silent("chattr +C /mnt/swap").await;
                 let _ = run("truncate -s 0 /mnt/swap/swapfile").await;
                 run_silent("chattr +C /mnt/swap/swapfile").await;
-                let _ = run(&format!("fallocate -l {} /mnt/swap/swapfile", cfg.swap_size)).await;
+                let _ = run(&format!(
+                    "fallocate -l {} /mnt/swap/swapfile",
+                    cfg.swap_size
+                ))
+                .await;
                 let _ = run("chmod 600 /mnt/swap/swapfile").await;
                 let _ = run("mkswap /mnt/swap/swapfile").await;
                 let _ = run("swapon /mnt/swap/swapfile").await;
