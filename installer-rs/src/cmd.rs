@@ -52,6 +52,7 @@ pub async fn is_mounted(path: &str) -> bool {
 }
 
 /// Check if a device has a filesystem.
+#[allow(dead_code)]
 pub async fn has_filesystem(device: &str) -> bool {
     run_capture(&format!("blkid -o value -s TYPE {device}"))
         .await
@@ -60,6 +61,7 @@ pub async fn has_filesystem(device: &str) -> bool {
 }
 
 /// Get filesystem type of a device.
+#[allow(dead_code)]
 pub async fn get_filesystem(device: &str) -> String {
     run_capture(&format!("blkid -o value -s TYPE {device}"))
         .await
@@ -67,6 +69,7 @@ pub async fn get_filesystem(device: &str) -> String {
 }
 
 /// Check if a btrfs subvolume exists.
+#[allow(dead_code)]
 pub async fn subvolume_exists(mount: &str, name: &str) -> bool {
     run_capture(&format!("btrfs subvolume list {mount}"))
         .await
@@ -80,6 +83,7 @@ pub fn path_exists(path: &str) -> bool {
 }
 
 /// Validate a disk device name — reject path traversal attempts.
+#[allow(dead_code)]
 pub fn validate_device_name(name: &str) -> Result<(), String> {
     if name.contains("..") || name.contains('/') {
         return Err("Invalid device name: must not contain '..' or '/'".into());
