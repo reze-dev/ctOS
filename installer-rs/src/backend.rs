@@ -1,5 +1,9 @@
-use crate::app::{GpuChoice, InstallConfig, InstallMode, ProgressUpdate};
+use crate::app::{
+    BootloaderChoice, GpuChoice, InstallConfig, InstallMode, ProfileChoice,
+    ProgressUpdate,
+};
 use crate::cmd::*;
+use crate::detect::{format_grub_extra_entries, format_limine_extra_entries};
 use crate::state::State;
 use std::fs;
 use std::time::Duration;
@@ -8,7 +12,7 @@ use tokio::sync::mpsc;
 
 /// Hash a password securely without shell interpolation.
 pub async fn hash_password(pw: &str) -> Result<String, String> {
-    // Try mkpasswd first (no shell — pass password as argument directly)
+    // Try mkpasswd first
     if let Ok(output) = tokio::process::Command::new("mkpasswd")
         .args(["-m", "sha-512", pw])
         .output()
@@ -22,7 +26,7 @@ pub async fn hash_password(pw: &str) -> Result<String, String> {
         }
     }
 
-    // Fallback: pipe password to openssl via stdin (no shell interpolation)
+    // Fallback: pipe password to openssl via stdin
     let mut child = tokio::process::Command::new("openssl")
         .args(["passwd", "-6", "-stdin"])
         .stdin(std::process::Stdio::piped())
@@ -36,7 +40,6 @@ pub async fn hash_password(pw: &str) -> Result<String, String> {
             .write_all(pw.as_bytes())
             .await
             .map_err(|e| format!("Failed to write password: {e}"))?;
-        // Drop stdin to close it and signal EOF
     }
 
     let output = child
@@ -52,44 +55,88 @@ pub async fn hash_password(pw: &str) -> Result<String, String> {
     }
 }
 
-fn build_gpu_config(cfg: &InstallConfig) -> String {
+pub fn build_gpu_config(cfg: &InstallConfig) -> String {
     match cfg.gpu_choice {
         GpuChoice::None => String::new(),
-        GpuChoice::Nvidia => "\n  # NVIDIA GPU\n  northstar.nvidia.enable = true;".to_string(),
+        GpuChoice::Nvidia => "  # NVIDIA GPU\n  northstar.nvidia.enable = true;".to_string(),
         GpuChoice::NvidiaPrime => {
             let key = cfg.igpu_type.bus_id_key();
             format!(
-                "\n  # NVIDIA GPU\n  northstar.nvidia.enable = true;\n  northstar.nvidia.prime = {{\n    enable = true;\n    nvidiaBusId = \"{}\";\n    {key} = \"{}\";\n  }};",
+                "  # NVIDIA GPU\n  northstar.nvidia.enable = true;\n  northstar.nvidia.prime = {{\n    enable = true;\n    nvidiaBusId = \"{}\";\n    {key} = \"{}\";\n  }};",
                 cfg.nvidia_bus_id, cfg.igpu_bus_id
             )
         }
     }
 }
 
+pub fn build_bootloader_config(cfg: &InstallConfig) -> String {
+    match cfg.bootloader {
+        BootloaderChoice::Grub => {
+            let mut s = "  # Bootloader\n  northstar.features.boot.loader = \"grub\";\n".to_string();
+            let extra = format_grub_extra_entries(&cfg.dual_boot_entries);
+            if !extra.is_empty() {
+                s.push_str(&format!("{extra}\n"));
+            }
+            s
+        }
+        BootloaderChoice::Limine => {
+            let mut s = "  # Bootloader\n  northstar.features.boot.loader = \"limine\";\n".to_string();
+            let extra = format_limine_extra_entries(&cfg.dual_boot_entries);
+            if !extra.is_empty() {
+                s.push_str(&format!("{extra}\n"));
+            }
+            s
+        }
+    }
+}
+
+pub fn build_profile_config(cfg: &InstallConfig) -> String {
+    let mut lines = vec!["  # Northstar profiles".to_string(), "  northstar.profiles = {".to_string()];
+
+    match cfg.profile {
+        ProfileChoice::Base => {
+            lines.push("    base.enable = true;".into());
+        }
+        ProfileChoice::Desktop => {
+            lines.push("    desktop.enable = true;".into());
+        }
+        ProfileChoice::Workstation => {
+            lines.push("    desktop.enable = true;".into());
+            lines.push("    workstation.enable = true;".into());
+        }
+    }
+    lines.push("  };".into());
+    lines.join("\n")
+}
+
+pub fn build_features_override(cfg: &InstallConfig) -> String {
+    let defaults = crate::app::default_features(cfg.profile);
+    let mut overrides = Vec::new();
+
+    for custom in &cfg.features {
+        if let Some(def) = defaults.iter().find(|d| d.id == custom.id) {
+            if def.enabled != custom.enabled {
+                overrides.push(format!("    {}.enable = {};", custom.id, custom.enabled));
+            }
+        }
+    }
+
+    if overrides.is_empty() {
+        return String::new();
+    }
+
+    format!("  # Custom feature overrides\n  northstar.features = {{\n{}\n  }};", overrides.join("\n"))
+}
+
 /// Strip fileSystems and swapDevices entries from hardware.nix output.
-/// Disko is the single source of truth for filesystem declarations.
-fn strip_filesystems_from_hardware(hw_text: &str) -> String {
+pub fn strip_filesystems_from_hardware(hw_text: &str) -> String {
     let mut cleaned_lines = Vec::new();
-    let mut skip_depth: i32 = 0;
+    let mut in_fs_block = false;
+    let mut fs_depth: i32 = 0;
     let mut in_swap_devices = false;
 
     for line in hw_text.lines() {
         let stripped = line.trim();
-
-        // Detect fileSystems."..." = { blocks
-        if stripped.starts_with("fileSystems.\"") && stripped.contains("= {") {
-            skip_depth = 1;
-            continue;
-        }
-
-        // Detect swapDevices = [ ... ];
-        if stripped.starts_with("swapDevices") {
-            in_swap_devices = true;
-            if stripped.contains(';') {
-                in_swap_devices = false;
-            }
-            continue;
-        }
 
         if in_swap_devices {
             if stripped.contains(';') {
@@ -98,12 +145,28 @@ fn strip_filesystems_from_hardware(hw_text: &str) -> String {
             continue;
         }
 
-        // Track brace depth for multi-line fileSystems blocks
-        if skip_depth > 0 {
-            skip_depth +=
-                stripped.matches('{').count() as i32 - stripped.matches('}').count() as i32;
-            if skip_depth <= 0 {
-                skip_depth = 0;
+        if stripped.starts_with("swapDevices") {
+            if !stripped.contains(';') {
+                in_swap_devices = true;
+            }
+            continue;
+        }
+
+        if stripped.starts_with("fileSystems.") || stripped.starts_with("fileSystems =") {
+            in_fs_block = true;
+            fs_depth += stripped.matches('{').count() as i32 - stripped.matches('}').count() as i32;
+            if stripped.contains(';') || (fs_depth == 0 && stripped.contains('}')) {
+                in_fs_block = false;
+                fs_depth = 0;
+            }
+            continue;
+        }
+
+        if in_fs_block {
+            fs_depth += stripped.matches('{').count() as i32 - stripped.matches('}').count() as i32;
+            if fs_depth <= 0 && (stripped.contains('}') || stripped.contains(';')) {
+                in_fs_block = false;
+                fs_depth = 0;
             }
             continue;
         }
@@ -115,11 +178,11 @@ fn strip_filesystems_from_hardware(hw_text: &str) -> String {
     while result.contains("\n\n\n") {
         result = result.replace("\n\n\n", "\n\n");
     }
-    result
+    result.trim().to_string()
 }
 
 /// Generate disko.nix content for whole-disk mode.
-fn generate_disko_whole_disk(cfg: &InstallConfig) -> String {
+pub fn generate_disko_whole_disk(cfg: &InstallConfig) -> String {
     let template = if cfg.fs_type == "ext4" {
         "ext4"
     } else {
@@ -151,11 +214,10 @@ fn generate_disko_whole_disk(cfg: &InstallConfig) -> String {
 }
 
 /// Generate disko.nix content for partition-only mode.
-async fn generate_disko_partition_only(cfg: &InstallConfig) -> String {
+pub async fn generate_disko_partition_only(cfg: &InstallConfig) -> String {
     let np = &cfg.nixos_part;
     let ep = &cfg.efi_part;
 
-    // Get EFI UUID
     let efi_uuid = run_capture(&format!("blkid -s UUID -o value {ep}"))
         .await
         .unwrap_or_default();
@@ -207,7 +269,6 @@ async fn generate_disko_partition_only(cfg: &InstallConfig) -> String {
     lines.push("    };".into());
     lines.push("  };".into());
 
-    // Swap partition for ext4 (managed by disko)
     if cfg.swap_size != "0" && cfg.fs_type == "ext4" && !cfg.swap_partition.is_empty() {
         lines.push(String::new());
         lines.push("  disko.devices.disk.swap = {".into());
@@ -238,7 +299,6 @@ async fn generate_disko_partition_only(cfg: &InstallConfig) -> String {
         lines.push("  };".into());
     }
 
-    // Swap devices declaration (for btrfs swapfile only — ext4 swap is managed by disko)
     if cfg.swap_size != "0" && cfg.fs_type == "btrfs" {
         lines.push(String::new());
         lines.push("  swapDevices = [".into());
@@ -250,6 +310,102 @@ async fn generate_disko_partition_only(cfg: &InstallConfig) -> String {
     lines.push(String::new());
 
     lines.join("\n")
+}
+
+pub fn generate_host_default_nix(cfg: &InstallConfig) -> String {
+    let bootloader_config = build_bootloader_config(cfg);
+    let profiles_config = build_profile_config(cfg);
+    let features_config = build_features_override(cfg);
+    let gpu_config = build_gpu_config(cfg);
+
+    let mut blocks = Vec::new();
+    if !bootloader_config.is_empty() {
+        blocks.push(bootloader_config.trim_end().to_string());
+    }
+
+    let user_block = format!(
+        r#"  users.users.{user} = {{
+    isNormalUser = true;
+    description = "{user}";
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "libvirtd"
+      "docker"
+    ];
+    shell = pkgs.{shell};
+    hashedPassword = "{pw}";
+  }};"#,
+        user = cfg.username,
+        shell = cfg.shell,
+        pw = cfg.hashed_pw,
+    );
+    blocks.push(user_block);
+
+    blocks.push(profiles_config);
+
+    if !features_config.is_empty() {
+        blocks.push(features_config);
+    }
+
+    if !gpu_config.is_empty() {
+        blocks.push(gpu_config);
+    }
+
+    let body = blocks.join("\n\n");
+
+    format!(
+        r#"{{
+  config,
+  lib,
+  pkgs,
+  ...
+}}:
+
+{{
+  imports = [
+    ./disko.nix
+  ];
+
+  home-manager.users.{user} = {{
+    imports = [ ../../home ];
+    home.username = lib.mkForce "{user}";
+    home.homeDirectory = lib.mkForce "/home/{user}";
+  }};
+
+{body}
+
+  networking.hostName = "{host}";
+  system.stateVersion = "26.11";
+}}
+"#,
+        user = cfg.username,
+        body = body,
+        host = cfg.hostname,
+    )
+}
+
+pub async fn generate_config(cfg: &InstallConfig, work_dir: &str) -> Result<(), String> {
+    let host_dir = format!("{work_dir}/hosts/{}", cfg.hostname);
+    let _ = fs::create_dir_all(&host_dir);
+
+    // Write disko.nix
+    let disko_content = if cfg.mode == InstallMode::WholeDisk {
+        generate_disko_whole_disk(cfg)
+    } else {
+        generate_disko_partition_only(cfg).await
+    };
+    fs::write(format!("{host_dir}/disko.nix"), &disko_content)
+        .map_err(|e| format!("Failed to write disko.nix: {e}"))?;
+
+    // Write default.nix
+    let default_content = generate_host_default_nix(cfg);
+    fs::write(format!("{host_dir}/default.nix"), &default_content)
+        .map_err(|e| format!("Failed to write default.nix: {e}"))?;
+
+    // Track files in git for Nix flakes
+    run_silent("git add -A").await;
+    Ok(())
 }
 
 /// Run all installation steps, sending progress updates through the channel.
@@ -285,7 +441,7 @@ pub async fn run_installation(
     };
 
     // Step 1: Generate config
-    send("generate_config", "Generating configuration...");
+    send("generate_config", "Generating system configuration...");
     if !state.should_skip("generate_config") {
         if let Err(e) = generate_config(&cfg, work_dir).await {
             fail("generate_config", e);
@@ -296,7 +452,7 @@ pub async fn run_installation(
     done("generate_config", "Configuration generated");
 
     // Step 2: Partition
-    send("partition", "Partitioning disk...");
+    send("partition", "Partitioning disk with Disko...");
     if !state.should_skip("partition") {
         if let Err(e) = do_partition(&cfg, work_dir).await {
             fail("partition", e);
@@ -304,13 +460,10 @@ pub async fn run_installation(
         }
         state.set_step("install_nixos");
     }
-    done("partition", "Disk partitioned");
+    done("partition", "Disk partitioned & formatted");
 
     // Step 3: Install NixOS
-    send(
-        "install_nixos",
-        "Installing NixOS (this may take a while)...",
-    );
+    send("install_nixos", "Building & installing NixOS system...");
     if !state.should_skip("install_nixos") {
         if let Err(e) = do_install_nixos(&cfg).await {
             fail("install_nixos", e);
@@ -318,10 +471,10 @@ pub async fn run_installation(
         }
         state.set_step("copy_flake");
     }
-    done("install_nixos", "NixOS installed");
+    done("install_nixos", "NixOS system installed");
 
-    // Step 4: Copy flake
-    send("copy_flake", "Copying flake to installed system...");
+    // Step 4: Copy Flake
+    send("copy_flake", "Copying configuration flake to target user...");
     if !state.should_skip("copy_flake") {
         if let Err(e) = do_copy_flake(&cfg, work_dir).await {
             fail("copy_flake", e);
@@ -329,79 +482,9 @@ pub async fn run_installation(
         }
         state.set_step("done");
     }
-    done("copy_flake", "Flake copied");
-}
+    done("copy_flake", "Flake copied to target user home");
 
-async fn generate_config(cfg: &InstallConfig, work_dir: &str) -> Result<(), String> {
-    let host_dir = format!("{work_dir}/hosts/{}", cfg.hostname);
-    fs::create_dir_all(&host_dir).map_err(|e| e.to_string())?;
-
-    let gpu_config = build_gpu_config(cfg);
-
-    match cfg.mode {
-        InstallMode::WholeDisk => {
-            let hw = run_capture("nixos-generate-config --show-hardware-config")
-                .await
-                .map_err(|e| format!("hardware config: {e}"))?;
-            let hw = strip_filesystems_from_hardware(&hw);
-            fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"))
-                .map_err(|e| e.to_string())?;
-
-            let disko = generate_disko_whole_disk(cfg);
-            fs::write(format!("{host_dir}/disko.nix"), &disko).map_err(|e| e.to_string())?;
-        }
-        InstallMode::PartitionOnly => {
-            let disko = generate_disko_partition_only(cfg).await;
-            fs::write(format!("{host_dir}/disko.nix"), &disko).map_err(|e| e.to_string())?;
-        }
-    }
-
-    // Both modes use the same default.nix shape
-    write_host_config(&host_dir, cfg, &gpu_config);
-
-    run_silent("git add .").await;
-    Ok(())
-}
-
-fn write_host_config(host_dir: &str, cfg: &InstallConfig, gpu_config: &str) {
-    let content = format!(
-        r#"{{
-  config,
-  lib,
-  pkgs,
-  ...
-}}:
-
-{{
-  imports = [
-    ./disko.nix
-  ];
-
-  home-manager.users.{user} = {{
-    imports = [ ../../home ];
-    home.username = lib.mkForce "{user}";
-    home.homeDirectory = lib.mkForce "/home/{user}";
-  }};
-
-  users.users.{user} = {{
-    isNormalUser = true;
-    description = "{user}";
-    extraGroups = [ "networkmanager" "wheel" "libvirtd" "docker" ];
-    shell = pkgs.zsh;
-    hashedPassword = "{pw}";
-  }};
-{gpu}
-
-  networking.hostName = "{host}";
-  system.stateVersion = "26.05";
-}}
-"#,
-        user = cfg.username,
-        pw = cfg.hashed_pw,
-        gpu = gpu_config,
-        host = cfg.hostname,
-    );
-    let _ = fs::write(format!("{host_dir}/default.nix"), content);
+    state.clear();
 }
 
 async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String> {
@@ -417,13 +500,11 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
     .await?;
 
     if cfg.mode == InstallMode::PartitionOnly {
-        // Mount EFI partition (not managed by disko)
         let _ = fs::create_dir_all("/mnt/boot/efi");
         if !is_mounted("/mnt/boot/efi").await {
             run(&format!("mount {} /mnt/boot/efi", cfg.efi_part)).await?;
         }
 
-        // Create btrfs swapfile (disko creates the subvolume, but not the file)
         if cfg.swap_size != "0" && cfg.fs_type == "btrfs" {
             if !path_exists("/mnt/swap/swapfile") {
                 run_silent("chattr +C /mnt/swap").await;
@@ -439,13 +520,11 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
                 let _ = run("swapon /mnt/swap/swapfile").await;
             }
         }
-        // ext4 swap: handled by disko (dedicated swap partition), no manual setup needed
 
-        // Generate hardware.nix from the mounted system
         let hw = run_capture("nixos-generate-config --root /mnt --show-hardware-config").await?;
         let hw = strip_filesystems_from_hardware(&hw);
         let _ = fs::write(format!("{host_dir}/hardware.nix"), format!("{hw}\n"));
-        run_silent("git add .").await;
+        run_silent("git add -A").await;
     }
 
     Ok(())
@@ -480,7 +559,7 @@ async fn do_copy_flake(cfg: &InstallConfig, work_dir: &str) -> Result<(), String
             run(&format!("cp -a {wd}/. {dest}/")).await?;
             let _ = fs::remove_dir_all(format!("{dest}/.git"));
             run(&format!(
-                r#"cd {dest} && git init && git add . && git commit -m "Initial Northstar configuration for {hostname}""#
+                r#"cd {dest} && git init && git config user.name "Northstar Installer" && git config user.email "installer@northstar.local" && git add -A && git commit -m "Initial Northstar configuration for {hostname}""#
             )).await?;
 
             // Fix ownership
