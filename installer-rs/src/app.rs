@@ -481,7 +481,11 @@ impl App {
                     "Whole Disk (Disko wipes disk & partitions automatically)".into(),
                     "Partition Only (Install alongside existing OS / custom partitions)".into(),
                 ];
-                self.cursor = if self.config.mode == InstallMode::PartitionOnly { 1 } else { 0 };
+                self.cursor = if self.config.mode == InstallMode::PartitionOnly {
+                    1
+                } else {
+                    0
+                };
             }
             Page::Disk => {
                 if !self.detected_disks.is_empty() {
@@ -490,7 +494,11 @@ impl App {
                         .iter()
                         .map(|d| format!("{} - {} ({}, {})", d.name, d.size, d.drive_type, d.model))
                         .collect();
-                    if let Some(pos) = self.detected_disks.iter().position(|d| d.name == self.config.disk_dev) {
+                    if let Some(pos) = self
+                        .detected_disks
+                        .iter()
+                        .position(|d| d.name == self.config.disk_dev)
+                    {
                         self.cursor = pos;
                     }
                 } else {
@@ -533,7 +541,8 @@ impl App {
                         .iter()
                         .map(|(dev, size, uuid)| format!("{dev} ({size}) [UUID: {uuid}]"))
                         .collect();
-                    self.choices.push("Enter custom EFI partition manually".into());
+                    self.choices
+                        .push("Enter custom EFI partition manually".into());
                 } else {
                     self.input = self.config.efi_part.clone();
                     self.cursor_pos = self.input.len();
@@ -632,13 +641,7 @@ impl App {
             }
             Page::Fs => Page::Efi,
             Page::RootSize => Page::Fs,
-            Page::Swap => {
-                if self.config.mode == InstallMode::WholeDisk {
-                    Page::Fs
-                } else {
-                    Page::Fs
-                }
-            }
+            Page::Swap => Page::Fs,
             Page::SwapPartition => Page::Swap,
             Page::Gpu => {
                 if self.config.mode == InstallMode::WholeDisk && self.config.fs_type == "ext4" {
@@ -652,13 +655,11 @@ impl App {
             Page::GpuNvBus => Page::Gpu,
             Page::GpuIgpuType => Page::GpuNvBus,
             Page::GpuIgpuBus => Page::GpuIgpuType,
-            Page::DualBoot => {
-                match self.config.gpu_choice {
-                    GpuChoice::None => Page::Gpu,
-                    GpuChoice::Nvidia => Page::GpuNvBus,
-                    GpuChoice::NvidiaPrime => Page::GpuIgpuBus,
-                }
-            }
+            Page::DualBoot => match self.config.gpu_choice {
+                GpuChoice::None => Page::Gpu,
+                GpuChoice::Nvidia => Page::GpuNvBus,
+                GpuChoice::NvidiaPrime => Page::GpuIgpuBus,
+            },
             Page::Summary => {
                 if !self.config.dual_boot_entries.is_empty() {
                     Page::DualBoot

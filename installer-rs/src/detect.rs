@@ -54,7 +54,7 @@ pub fn format_pci_bus_id(raw: &str) -> Option<String> {
 
     // Strip domain if present (e.g., "0000:01:00.0" -> "01:00.0")
     let after_domain = if clean.matches(':').count() >= 2 {
-        clean.splitn(2, ':').nth(1)?
+        clean.split_once(':')?.1
     } else {
         clean
     };
@@ -81,14 +81,7 @@ pub fn format_pci_bus_id(raw: &str) -> Option<String> {
 }
 
 /// Parse lspci output lines and extract GPU bus IDs and vendors.
-pub fn parse_lspci_output(
-    output: &str,
-) -> (
-    GpuChoice,
-    Option<String>,
-    Option<String>,
-    IgpuType,
-) {
+pub fn parse_lspci_output(output: &str) -> (GpuChoice, Option<String>, Option<String>, IgpuType) {
     let mut nvidia_bus = None;
     let mut intel_bus = None;
     let mut amd_bus = None;
@@ -120,7 +113,12 @@ pub fn parse_lspci_output(
         if let Some(amd) = amd_bus {
             (GpuChoice::NvidiaPrime, Some(nv), Some(amd), IgpuType::Amd)
         } else if let Some(intel) = intel_bus {
-            (GpuChoice::NvidiaPrime, Some(nv), Some(intel), IgpuType::Intel)
+            (
+                GpuChoice::NvidiaPrime,
+                Some(nv),
+                Some(intel),
+                IgpuType::Intel,
+            )
         } else {
             (GpuChoice::Nvidia, Some(nv), None, IgpuType::Intel)
         }
@@ -146,7 +144,11 @@ pub fn parse_lsblk_json(json_str: &str) -> Vec<DiskInfo> {
             continue;
         }
 
-        let model = dev.model.unwrap_or_else(|| "Unknown Disk".into()).trim().to_string();
+        let model = dev
+            .model
+            .unwrap_or_else(|| "Unknown Disk".into())
+            .trim()
+            .to_string();
         let tran = dev.tran.unwrap_or_default().to_uppercase();
         let drive_type = if dev.name.starts_with("nvme") {
             "NVMe".to_string()
@@ -187,30 +189,12 @@ pub fn scan_esp_for_os(esp_mount_path: &Path, esp_uuid: &str) -> Vec<DualBootEnt
     let mut entries = Vec::new();
 
     let candidates = [
-        (
-            "EFI/Microsoft/Boot/bootmgfw.efi",
-            "Windows Boot Manager",
-        ),
-        (
-            "EFI/fedora/shimx64.efi",
-            "Fedora Linux",
-        ),
-        (
-            "EFI/ubuntu/shimx64.efi",
-            "Ubuntu",
-        ),
-        (
-            "EFI/arch/grubx64.efi",
-            "Arch Linux",
-        ),
-        (
-            "EFI/debian/shimx64.efi",
-            "Debian",
-        ),
-        (
-            "EFI/opensuse/shim.efi",
-            "openSUSE",
-        ),
+        ("EFI/Microsoft/Boot/bootmgfw.efi", "Windows Boot Manager"),
+        ("EFI/fedora/shimx64.efi", "Fedora Linux"),
+        ("EFI/ubuntu/shimx64.efi", "Ubuntu"),
+        ("EFI/arch/grubx64.efi", "Arch Linux"),
+        ("EFI/debian/shimx64.efi", "Debian"),
+        ("EFI/opensuse/shim.efi", "openSUSE"),
     ];
 
     for (rel_path, name) in candidates {
@@ -278,7 +262,11 @@ pub async fn detect_all() -> DetectedHardware {
     }
 
     // 2. Detect Disks via lsblk JSON
-    if let Ok(lsblk_out) = run_capture("lsblk -J -o NAME,SIZE,TYPE,MODEL,TRAN,MOUNTPOINT,FSTYPE,LABEL,UUID 2>/dev/null").await {
+    if let Ok(lsblk_out) = run_capture(
+        "lsblk -J -o NAME,SIZE,TYPE,MODEL,TRAN,MOUNTPOINT,FSTYPE,LABEL,UUID 2>/dev/null",
+    )
+    .await
+    {
         detected.disks = parse_lsblk_json(&lsblk_out);
         if let Some(first) = detected.disks.first() {
             detected.recommended_disk = Some(first.name.clone());
@@ -287,10 +275,13 @@ pub async fn detect_all() -> DetectedHardware {
         // Collect EFI partitions
         for disk in &detected.disks {
             for part in &disk.partitions {
-                if part.fs_type.to_lowercase() == "vfat" || part.name.to_lowercase().contains("efi") {
+                if part.fs_type.to_lowercase() == "vfat" || part.name.to_lowercase().contains("efi")
+                {
                     let dev_path = format!("/dev/{}", part.name);
                     let uuid = part.uuid.clone().unwrap_or_default();
-                    detected.efi_partitions.push((dev_path, part.size.clone(), uuid));
+                    detected
+                        .efi_partitions
+                        .push((dev_path, part.size.clone(), uuid));
                 }
             }
         }
@@ -302,7 +293,10 @@ pub async fn detect_all() -> DetectedHardware {
 
     for (dev, _, uuid) in &detected.efi_partitions {
         // Try mounting read-only
-        if crate::cmd::run(&format!("mount -o ro {dev} /tmp/northstar-esp-scan")).await.is_ok() {
+        if crate::cmd::run(&format!("mount -o ro {dev} /tmp/northstar-esp-scan"))
+            .await
+            .is_ok()
+        {
             let entries = scan_esp_for_os(temp_esp, uuid);
             detected.detected_os.extend(entries);
             let _ = crate::cmd::run("umount /tmp/northstar-esp-scan").await;

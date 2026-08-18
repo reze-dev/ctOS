@@ -1,6 +1,5 @@
 use crate::app::{
-    BootloaderChoice, GpuChoice, InstallConfig, InstallMode, ProfileChoice,
-    ProgressUpdate,
+    BootloaderChoice, GpuChoice, InstallConfig, InstallMode, ProfileChoice, ProgressUpdate,
 };
 use crate::cmd::*;
 use crate::detect::{format_grub_extra_entries, format_limine_extra_entries};
@@ -72,7 +71,8 @@ pub fn build_gpu_config(cfg: &InstallConfig) -> String {
 pub fn build_bootloader_config(cfg: &InstallConfig) -> String {
     match cfg.bootloader {
         BootloaderChoice::Grub => {
-            let mut s = "  # Bootloader\n  northstar.features.boot.loader = \"grub\";\n".to_string();
+            let mut s =
+                "  # Bootloader\n  northstar.features.boot.loader = \"grub\";\n".to_string();
             let extra = format_grub_extra_entries(&cfg.dual_boot_entries);
             if !extra.is_empty() {
                 s.push_str(&format!("{extra}\n"));
@@ -80,7 +80,8 @@ pub fn build_bootloader_config(cfg: &InstallConfig) -> String {
             s
         }
         BootloaderChoice::Limine => {
-            let mut s = "  # Bootloader\n  northstar.features.boot.loader = \"limine\";\n".to_string();
+            let mut s =
+                "  # Bootloader\n  northstar.features.boot.loader = \"limine\";\n".to_string();
             let extra = format_limine_extra_entries(&cfg.dual_boot_entries);
             if !extra.is_empty() {
                 s.push_str(&format!("{extra}\n"));
@@ -91,7 +92,10 @@ pub fn build_bootloader_config(cfg: &InstallConfig) -> String {
 }
 
 pub fn build_profile_config(cfg: &InstallConfig) -> String {
-    let mut lines = vec!["  # Northstar profiles".to_string(), "  northstar.profiles = {".to_string()];
+    let mut lines = vec![
+        "  # Northstar profiles".to_string(),
+        "  northstar.profiles = {".to_string(),
+    ];
 
     match cfg.profile {
         ProfileChoice::Base => {
@@ -125,7 +129,10 @@ pub fn build_features_override(cfg: &InstallConfig) -> String {
         return String::new();
     }
 
-    format!("  # Custom feature overrides\n  northstar.features = {{\n{}\n  }};", overrides.join("\n"))
+    format!(
+        "  # Custom feature overrides\n  northstar.features = {{\n{}\n  }};",
+        overrides.join("\n")
+    )
 }
 
 /// Strip fileSystems and swapDevices entries from hardware.nix output.
@@ -474,7 +481,10 @@ pub async fn run_installation(
     done("install_nixos", "NixOS system installed");
 
     // Step 4: Copy Flake
-    send("copy_flake", "Copying configuration flake to target user...");
+    send(
+        "copy_flake",
+        "Copying configuration flake to target user...",
+    );
     if !state.should_skip("copy_flake") {
         if let Err(e) = do_copy_flake(&cfg, work_dir).await {
             fail("copy_flake", e);
@@ -505,20 +515,18 @@ async fn do_partition(cfg: &InstallConfig, work_dir: &str) -> Result<(), String>
             run(&format!("mount {} /mnt/boot/efi", cfg.efi_part)).await?;
         }
 
-        if cfg.swap_size != "0" && cfg.fs_type == "btrfs" {
-            if !path_exists("/mnt/swap/swapfile") {
-                run_silent("chattr +C /mnt/swap").await;
-                let _ = run("truncate -s 0 /mnt/swap/swapfile").await;
-                run_silent("chattr +C /mnt/swap/swapfile").await;
-                let _ = run(&format!(
-                    "fallocate -l {} /mnt/swap/swapfile",
-                    cfg.swap_size
-                ))
-                .await;
-                let _ = run("chmod 600 /mnt/swap/swapfile").await;
-                let _ = run("mkswap /mnt/swap/swapfile").await;
-                let _ = run("swapon /mnt/swap/swapfile").await;
-            }
+        if cfg.swap_size != "0" && cfg.fs_type == "btrfs" && !path_exists("/mnt/swap/swapfile") {
+            run_silent("chattr +C /mnt/swap").await;
+            let _ = run("truncate -s 0 /mnt/swap/swapfile").await;
+            run_silent("chattr +C /mnt/swap/swapfile").await;
+            let _ = run(&format!(
+                "fallocate -l {} /mnt/swap/swapfile",
+                cfg.swap_size
+            ))
+            .await;
+            let _ = run("chmod 600 /mnt/swap/swapfile").await;
+            let _ = run("mkswap /mnt/swap/swapfile").await;
+            let _ = run("swapon /mnt/swap/swapfile").await;
         }
 
         let hw = run_capture("nixos-generate-config --root /mnt --show-hardware-config").await?;
