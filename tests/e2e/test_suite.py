@@ -1147,8 +1147,8 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
     def test_t1_f06_05_disko_whole_disk_btrfs_subvolumes_generation(self) -> None:
         cfg = InstallConfig(disk_dev="nvme0n1", fs_type="btrfs", swap_size="16G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/btrfs.nix ];", out)
-        self.assertIn('disko.devices.disk.main.device = "/dev/nvme0n1";', out)
+        self.assertIn("northstar.mkDisko {", out)
+        self.assertIn('device = "/dev/nvme0n1";', out)
 
     def test_t1_f11_06_multi_user_host_isolation_trusted_users(self) -> None:
         common_nix = (PROJECT_ROOT / "hosts/common.nix").read_text()
@@ -1164,7 +1164,8 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
     def test_t1_f06_08_disko_whole_disk_ext4_generation(self) -> None:
         cfg = InstallConfig(disk_dev="sda", fs_type="ext4", swap_size="0", root_size="500G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/ext4.nix ];", out)
+        self.assertIn("northstar.mkDisko {", out)
+        self.assertIn('fsType = "ext4";', out)
 
     def test_t1_f06_09_disko_partition_only_with_dedicated_swap(self) -> None:
         cfg = InstallConfig(
@@ -1289,17 +1290,17 @@ class Tier2BoundaryTests(unittest.TestCase):
     def test_t2_f01_05_swap_size_zero_disables_swap(self) -> None:
         cfg = InstallConfig(swap_size="0")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn('partitions.swap.size = lib.mkForce "0";', out)
+        self.assertIn('swapSize = "0";', out)
 
     def test_t2_f01_06_root_size_percentage_format(self) -> None:
         cfg = InstallConfig(root_size="50%")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn('partitions.root.size = lib.mkForce "50%";', out)
+        self.assertIn('rootSize = "50%";', out)
 
     def test_t2_f01_07_root_size_gigabytes_format(self) -> None:
         cfg = InstallConfig(root_size="250G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn('partitions.root.size = lib.mkForce "250G";', out)
+        self.assertIn('rootSize = "250G";', out)
 
     def test_t2_f01_08_special_chars_in_hashed_pw(self) -> None:
         cfg = InstallConfig(hashed_pw="$6$salt$hash#with%special@chars")
