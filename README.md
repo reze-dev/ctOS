@@ -109,10 +109,12 @@ northstar/
 │       └── hardware.nix       # Hardware scan (from nixos-generate-config)
 │
 ├── lib/                       # Shared Nix helpers
-│   ├── default.nix            # scanModules, discoverHosts, mkProfile, mkUser, mkDisko
-│   └── disko/                 # Dynamic disko configuration generator
+│   ├── core.nix               # scanModules, discoverHosts, mkProfile, mkUser, mkDisko
+│   └── disko/
+│       └── generator.nix      # Dynamic mkDisko partition generator
 │
-├── home/                      # Home Manager entry point
+├── home/
+│   └── home.nix               # Base Home Manager user environment
 │
 ├── modules/                   # Option-based modules (auto-discovered)
 │   ├── features/              # Vertical feature slices

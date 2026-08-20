@@ -36,7 +36,7 @@
 
   # ── Home Manager ──────────────────────────────────────────────────────
   home-manager.users.youruser = {
-    imports = [ ../../home ];
+    imports = [ ../../home/home.nix ];
     home.username = lib.mkForce "youruser";
     home.homeDirectory = lib.mkForce "/home/youruser";
   };

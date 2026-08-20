@@ -6,7 +6,7 @@
 { lib, ... }:
 
 let
-  northstar = import ../../lib { inherit lib; };
+  northstar = import ../../lib/core.nix { inherit lib; };
 in
 northstar.mkDisko {
   mode = "whole-disk";

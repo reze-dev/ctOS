@@ -300,7 +300,7 @@ def generate_host_default_nix(cfg: Any) -> str:
   ];
 
   home-manager.users.{cfg.username} = {{
-    imports = [ ../../home ];
+    imports = [ ../../home/home.nix ];
     home.username = lib.mkForce "{cfg.username}";
     home.homeDirectory = lib.mkForce "/home/{cfg.username}";
   }};
