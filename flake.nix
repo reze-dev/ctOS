@@ -34,6 +34,14 @@
     crane.url = "github:ipetkov/crane";
     dedsec-grub-theme.url = "gitlab:VandalByte/dedsec-grub-theme";
     dedsec-grub-theme.inputs.nixpkgs.follows = "nixpkgs";
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

@@ -12,16 +12,20 @@
         installer = pkgs.writeShellApplication {
           name = "northstar-install";
           runtimeInputs = with pkgs; [
+            nixos-install-tools
+            age
+            ssh-to-age
+            sops
+            util-linux
+            coreutils
             python3
             git
-            coreutils
-            util-linux # lsblk, blkid, mkswap, swapon
-            pciutils # lspci (GPU detection)
-            whois # mkpasswd
-            openssl # fallback password hashing
-            parted # partition creation (dual-boot mode)
-            btrfs-progs # mkfs.btrfs, btrfs subvolume (dual-boot mode)
-            e2fsprogs # chattr
+            pciutils
+            whois
+            openssl
+            parted
+            btrfs-progs
+            e2fsprogs
           ];
           text = ''
             set -e
@@ -33,6 +37,10 @@
             cp -R "${self}" "$TEMP_DIR/northstar"
             chmod -R u+w "$TEMP_DIR/northstar"
             cd "$TEMP_DIR/northstar"
+            git init -q
+            git config user.name "Northstar Installer"
+            git config user.email "installer@northstar.local"
+            git add -A
             export NORTHSTAR_REMOTE="$TEMP_DIR/northstar"
             if [ -n "''${NIX_CONFIG:-}" ]; then
               NIX_CONFIG="$(printf '%s\n%s' "$NIX_CONFIG" "${nixConfigFeatures}")"
@@ -40,7 +48,7 @@
               NIX_CONFIG="${nixConfigFeatures}"
             fi
             export NIX_CONFIG
-            exec python3 installer/install.py
+            exec python3 installer/install.py "$@"
           '';
         };
 

@@ -1,5 +1,6 @@
 {
   config,
+  inputs ? null,
   lib,
   pkgs,
   ...
@@ -8,59 +9,100 @@ let
   cfg = config.northstar.features.boot;
 in
 {
-  options.northstar.features.boot.enable = lib.mkEnableOption "GRUB bootloader with Sekiro theme";
+  imports = lib.optionals (inputs != null && inputs ? lanzaboote) [
+    inputs.lanzaboote.nixosModules.lanzaboote
+  ];
 
-  config = lib.mkIf cfg.enable {
-    boot.loader = {
-      efi = {
-        canTouchEfiVariables = true;
-        efiSysMountPoint = "/boot/efi";
-      };
-      grub = {
-        enable = true;
-        useOSProber = true;
-        efiSupport = true;
-        device = "nodev";
+  options.northstar.features.boot = {
+    enable = lib.mkEnableOption "system bootloader and Plymouth splash";
 
-        dedsec-theme = {
-          enable = true;
-          style = "sitedown";
-          icon = "color";
-          resolution = "1080p";
-        };
-        # theme =
-        #   pkgs.fetchFromGitHub {
-        #     owner = "semimqmo";
-        #     repo = "sekiro_grub_theme";
-        #     rev = "1affe05f7257b72b69404cfc0a60e88aa19f54a6";
-        #     sha256 = "02gdihkd2w33qy86vs8g0pfljp919ah9c13cj4bh9fvvzm5zjfn1";
-        #   }
-        #   + "/Sekiro";
-      };
-    };
-    boot.plymouth = {
-      enable = true;
-      theme = "dedsec";
-
-      themePackages = [
-        (pkgs.stdenv.mkDerivation {
-          pname = "dedsec-plymouth";
-          version = "1.0";
-
-          src = ../../../assets/dedsec-plymouth;
-
-          installPhase = ''
-            mkdir -p $out/share/plymouth/themes/dedsec
-            cp * $out/share/plymouth/themes/dedsec/
-          '';
-        })
+    loader = lib.mkOption {
+      type = lib.types.enum [
+        "grub"
+        "limine"
       ];
+      default = "grub";
+      description = "The bootloader to use (grub with DedSec theme, or modern Limine).";
     };
-    boot.initrd.systemd.enable = true;
-    boot.kernelParams = [
-      "quiet"
-      "udev.log_priority=3"
-    ];
-    boot.kernelPackages = pkgs.linuxPackages_latest;
+
+    secureBoot = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Enable UEFI Secure Boot support using Lanzaboote.";
+      };
+
+      pkiBundle = lib.mkOption {
+        type = lib.types.str;
+        default = "/etc/secureboot";
+        description = "Path to the Lanzaboote Secure Boot PKI keys and certificates directory.";
+      };
+    };
   };
+
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      boot.loader = {
+        efi = {
+          canTouchEfiVariables = true;
+          efiSysMountPoint = "/boot/efi";
+        };
+
+        grub = lib.mkIf (cfg.loader == "grub" && !cfg.secureBoot.enable) {
+          enable = true;
+          useOSProber = true;
+          efiSupport = true;
+          device = "nodev";
+
+          dedsec-theme = {
+            enable = true;
+            style = "sitedown";
+            icon = "color";
+            resolution = "1080p";
+          };
+        };
+
+        limine = lib.mkIf (cfg.loader == "limine" && !cfg.secureBoot.enable) {
+          enable = true;
+        };
+
+        systemd-boot.enable = lib.mkIf cfg.secureBoot.enable (lib.mkForce false);
+      };
+
+      environment.systemPackages = lib.optionals cfg.secureBoot.enable [
+        pkgs.sbctl
+      ];
+
+      boot.plymouth = {
+        enable = true;
+        theme = "dedsec";
+
+        themePackages = [
+          (pkgs.stdenv.mkDerivation {
+            pname = "dedsec-plymouth";
+            version = "1.0";
+
+            src = ../../../assets/dedsec-plymouth;
+
+            installPhase = ''
+              mkdir -p $out/share/plymouth/themes/dedsec
+              cp * $out/share/plymouth/themes/dedsec/
+            '';
+          })
+        ];
+      };
+      boot.initrd.systemd.enable = true;
+      boot.kernelParams = [
+        "quiet"
+        "udev.log_priority=3"
+      ];
+      boot.kernelPackages = pkgs.linuxPackages_latest;
+    }
+    (lib.optionalAttrs (inputs != null && inputs ? lanzaboote) {
+      boot.lanzaboote = lib.mkIf cfg.secureBoot.enable {
+        enable = true;
+        pkiBundle = cfg.secureBoot.pkiBundle;
+      };
+    })
+  ]);
 }

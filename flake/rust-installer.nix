@@ -65,6 +65,19 @@
         e2fsprogs
         nixos-install-tools
       ];
+
+      # Deprecation wrapper: prints prominent notice and invokes the primary python installer
+      deprecatedRustInstall = pkgs.writeShellApplication {
+        name = "northstar-rust-install-deprecated";
+        runtimeInputs = [ self.packages.${system}.installer ];
+        text = ''
+          echo "================================================================================"
+          echo " [WARNING] The Rust-based installer ('installer-rs' / .#rust-install) is DEPRECATED."
+          echo " Redirecting to the primary Northstar Python installer (northstar-install)..."
+          echo "================================================================================"
+          exec northstar-install "$@"
+        '';
+      };
     in
     {
       packages.rust-installer = pkgs.symlinkJoin {
@@ -83,8 +96,8 @@
 
       apps.rust-install = {
         type = "app";
-        program = "${self.packages.${system}.rust-installer}/bin/northstar-installer";
-        meta.description = "Rust-based Northstar installer with ratatui TUI";
+        program = "${deprecatedRustInstall}/bin/northstar-rust-install-deprecated";
+        meta.description = "Rust-based Northstar installer with ratatui TUI (DEPRECATED - redirects to Python installer)";
       };
     };
 }

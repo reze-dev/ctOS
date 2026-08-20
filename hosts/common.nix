@@ -17,7 +17,7 @@
     ];
     trusted-users = [
       "root"
-      "reze"
+      "@wheel"
     ];
   };
 

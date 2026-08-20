@@ -38,10 +38,15 @@ jobs:
           cp -r hosts             installer-rs/flake/hosts
           cp -r home              installer-rs/flake/home
           cp -r modules           installer-rs/flake/modules
-          cp -r parts             installer-rs/flake/parts
+          cp -r lib               installer-rs/flake/lib
+          cp -r flake             installer-rs/flake/flake
           cp -r assets            installer-rs/flake/assets
 
-      - name: Build
+      - name: Run Tests
+        working-directory: installer-rs
+        run: cargo test
+
+      - name: Build Release Binary
         working-directory: installer-rs
         run: cargo build --release
 

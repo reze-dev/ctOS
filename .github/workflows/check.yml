@@ -8,7 +8,7 @@ on:
 
 jobs:
   nixos-build:
-    name: Build NixOS System
+    name: NixOS Flake & System Evaluation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,13 +24,16 @@ jobs:
             extra-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
 
       - name: Check flake
-        run: nix flake check
+        run: nix flake check --impure
 
       - name: Show flake outputs
         run: nix flake show
 
+      - name: Evaluate Makima Host Configuration
+        run: nix eval --impure --expr '(builtins.getFlake (toString ./.)).nixosConfigurations.Makima.config.system.build.toplevel.name'
+
   rust-ci:
-    name: Rust Lint, Format & Build
+    name: Rust TUI Installer Tests & Build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -60,10 +63,28 @@ jobs:
       - name: Clippy (lint)
         run: cargo clippy -- -D warnings
 
-      - name: Build
+      - name: Run Rust unit & integration tests
+        run: cargo test --verbose
+
+      - name: Build binary
         run: cargo build --release
 
       - name: Verify Cargo.lock is up to date
         run: |
           cargo update --dry-run 2>&1
           echo "✅ Cargo.lock is up to date"
+
+  python-ci:
+    name: Python Installer & E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Python unit & E2E tests
+        run: python3 -m unittest discover -s tests -v
