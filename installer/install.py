@@ -1276,7 +1276,7 @@ def generate_disko_whole_disk(cfg: InstallConfig) -> str:
         "{ lib, ... }:",
         "",
         "let",
-        "  northstar = import ../../lib { inherit lib; };",
+        "  northstar = import ../../lib/core.nix { inherit lib; };",
         "in",
         "northstar.mkDisko {",
         '  mode = "whole-disk";',
@@ -1456,7 +1456,7 @@ def generate_host_default_nix(cfg: InstallConfig) -> str:
   ];
 
   home-manager.users.{cfg.username} = {{
-    imports = [ ../../home ];
+    imports = [ ../../home/home.nix ];
     home.username = lib.mkForce "{cfg.username}";
     home.homeDirectory = lib.mkForce "/home/{cfg.username}";
   }};

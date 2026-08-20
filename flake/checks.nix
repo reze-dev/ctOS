@@ -6,7 +6,7 @@
     { pkgs, system, ... }:
     let
       lib = inputs.nixpkgs.lib;
-      northstar = import ../lib { inherit lib; };
+      northstar = import ../lib/core.nix { inherit lib; };
 
       # Collect all .nix files in modules/ for verification
       moduleFiles = northstar.scanModules ../modules;

@@ -18,7 +18,7 @@ let
   hostHasDisko = hostsDir: hostName: (hostsDir + "/${hostName}/disko.nix") |> builtins.pathExists;
 
   # Import the disko configuration generator
-  diskoLib = import ./disko { inherit lib; };
+  diskoLib = import ./disko/generator.nix { inherit lib; };
 in
 rec {
   # Re-export disko generator for use by installer and host configs
@@ -38,7 +38,7 @@ rec {
       groups ? [ "wheel" ],
       shell ? null,
       homeDir ? "/home/${username}",
-      homeConfig ? ../home,
+      homeConfig ? ../home/home.nix,
       extraConfig ? { },
     }:
     { pkgs, ... }:

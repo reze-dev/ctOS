@@ -109,9 +109,12 @@ northstar/
 │   ├── common.nix         # Shared base config
 │   ├── example/           # Template for new hosts
 │   └── <hostname>/        # Per-machine config
-├── home/                  # Home Manager entry point
-├── lib/                   # Shared Nix helpers (scanModules, discoverHosts, mkDisko, mkUser, mkProfile)
-│   └── disko/             # Dynamic disko config generator
+├── home/
+│   └── home.nix           # Base Home Manager user environment
+├── lib/
+│   ├── core.nix           # Shared Nix helpers (scanModules, discoverHosts, mkDisko, mkUser, mkProfile)
+│   └── disko/
+│       └── generator.nix  # Dynamic mkDisko partition generator
 ├── modules/               # Option-based modules (auto-discovered)
 │   ├── features/          # Vertical feature slices (core, desktop, dev, shell, terminals, tools)
 │   ├── hardware/          # Hardware drivers (NVIDIA)
