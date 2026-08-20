@@ -1191,9 +1191,9 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
         self.assertIn("northstar-install", flake_installer)
         self.assertIn("runtimeInputs", flake_installer)
 
-    def test_t1_f03_02_deprecated_rust_installer_redirection(self) -> None:
-        rust_installer = (PROJECT_ROOT / "flake/rust-installer.nix").read_text()
-        self.assertIn("deprecated", rust_installer.lower())
+    def test_t1_f03_02_rust_installer_fully_removed(self) -> None:
+        self.assertFalse((PROJECT_ROOT / "flake/rust-installer.nix").exists())
+        self.assertFalse((PROJECT_ROOT / "installer-rs").exists())
 
     def test_t1_f10_03_temporary_git_repository_staging(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
