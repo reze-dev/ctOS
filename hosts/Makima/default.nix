@@ -51,5 +51,11 @@
   };
 
   networking.hostName = "Makima";
+
+  # Work-specific host entries
+  northstar.features.networking.extraHosts = ''
+    10.250.18.140 console-openshift-console.apps.nonprod.odisha.gov.in oauth-openshift.apps.nonprod.odisha.gov.in
+  '';
+
   system.stateVersion = "26.11";
 }
