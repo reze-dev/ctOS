@@ -16,11 +16,19 @@ let
   hasFile = dir: name: (dir + "/${name}") |> builtins.pathExists;
 
   hostHasDisko = hostsDir: hostName: (hostsDir + "/${hostName}/disko.nix") |> builtins.pathExists;
+
+  # Import the disko configuration generator
+  diskoLib = import ./disko { inherit lib; };
 in
 rec {
+  # Re-export disko generator for use by installer and host configs
+  inherit (diskoLib) mkDisko;
+
   # Functional Feature & Profile Combinator
   mkProfile = features: {
-    northstar.features = lib.genAttrs features (_: { enable = true; });
+    northstar.features = lib.genAttrs features (_: {
+      enable = true;
+    });
   };
 
   # User & Home-Manager Functional Combinator
@@ -39,7 +47,9 @@ rec {
         isNormalUser = true;
         description = username;
         extraGroups = groups;
-      } // (lib.optionalAttrs (shell != null) { inherit shell; }) // extraConfig;
+      }
+      // (lib.optionalAttrs (shell != null) { inherit shell; })
+      // extraConfig;
 
       home-manager.users.${username} = {
         imports = [ homeConfig ];
@@ -74,6 +84,16 @@ rec {
 
   inherit hostHasDisko;
 
+  # mkHostModules: build the module list for a given host.
+  #
+  # CONTRACT:
+  #   - Each host directory MUST contain `default.nix` and `hardware.nix`.
+  #   - The host's `default.nix` MUST NOT import `./hardware.nix` — it is
+  #     auto-imported here. Importing it again would cause a double-import
+  #     conflict with the NixOS module system.
+  #   - If `disko.nix` exists in the host directory, the disko NixOS module
+  #     is automatically added. The host's `default.nix` imports `./disko.nix`
+  #     for the disko configuration itself.
   mkHostModules =
     {
       inputs,
