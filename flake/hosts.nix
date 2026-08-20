@@ -28,7 +28,7 @@ let
 in
 {
   flake = {
-    nixosConfigurations = hosts |> (h: lib.genAttrs h mkHost);
+    nixosConfigurations = lib.genAttrs hosts mkHost;
     nixosModules.default = {
       imports = modulePaths;
     };
