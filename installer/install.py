@@ -1271,28 +1271,33 @@ def strip_filesystems_from_hardware(hw_text: str) -> str:
 
 def generate_disko_whole_disk(cfg: InstallConfig) -> str:
     """Generate disko.nix content for whole-disk mode."""
-    template = "ext4" if cfg.fs_type == "ext4" else "btrfs"
-    disko = (
-        f"# Auto-generated disko config for {cfg.hostname}\n"
-        "{\n"
-        "  lib,\n"
-        "  ...\n"
-        "}:\n\n"
-        "{\n"
-        f"  imports = [ ../../lib/disko/{template}.nix ];\n\n"
-        f'  disko.devices.disk.main.device = "/dev/{cfg.disk_dev}";\n'
-    )
+    lines = [
+        f"# Auto-generated disko config for {cfg.hostname}",
+        "{ lib, ... }:",
+        "",
+        "let",
+        "  northstar = import ../../lib { inherit lib; };",
+        "in",
+        "northstar.mkDisko {",
+        '  mode = "whole-disk";',
+        f'  device = "/dev/{cfg.disk_dev}";',
+        f'  fsType = "{cfg.fs_type}";',
+        '  efiSize = "2G";',
+    ]
 
     if cfg.swap_size == "0":
-        disko += '  # Swap disabled\n  disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "0";\n'
+        lines.append('  swapSize = "0";')
     elif cfg.swap_size != "8G":
-        disko += f'  disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "{cfg.swap_size}";\n'
+        lines.append(f'  swapSize = "{cfg.swap_size}";')
 
     if cfg.root_size != "100%":
-        disko += f'  disko.devices.disk.main.content.partitions.root.size = lib.mkForce "{cfg.root_size}";\n'
+        lines.append(f'  rootSize = "{cfg.root_size}";')
 
-    disko += "}\n"
-    return disko
+    lines.extend([
+        "}",
+        "",
+    ])
+    return "\n".join(lines)
 
 
 def generate_disko_partition_only(

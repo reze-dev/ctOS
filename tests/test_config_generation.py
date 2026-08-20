@@ -507,9 +507,10 @@ class TestConfigGeneration(unittest.TestCase):
         )
 
         disko = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/btrfs.nix ];", disko)
-        self.assertIn('disko.devices.disk.main.device = "/dev/nvme0n1";', disko)
-        self.assertIn('disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "16G";', disko)
+        self.assertIn("northstar.mkDisko {", disko)
+        self.assertIn('device = "/dev/nvme0n1";', disko)
+        self.assertIn('fsType = "btrfs";', disko)
+        self.assertIn('swapSize = "16G";', disko)
 
     def test_generate_disko_whole_disk_ext4(self):
         """Verify Disko whole-disk EXT4 synthesis."""
@@ -522,10 +523,11 @@ class TestConfigGeneration(unittest.TestCase):
         )
 
         disko = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/ext4.nix ];", disko)
-        self.assertIn('disko.devices.disk.main.device = "/dev/sda";', disko)
-        self.assertIn('disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "0";', disko)
-        self.assertIn('disko.devices.disk.main.content.partitions.root.size = lib.mkForce "500G";', disko)
+        self.assertIn("northstar.mkDisko {", disko)
+        self.assertIn('device = "/dev/sda";', disko)
+        self.assertIn('fsType = "ext4";', disko)
+        self.assertIn('swapSize = "0";', disko)
+        self.assertIn('rootSize = "500G";', disko)
 
     def test_generate_disko_partition_only_btrfs(self):
         """Verify Disko partition-only BTRFS synthesis."""
