@@ -16,15 +16,6 @@ in
   options.northstar.features.boot = {
     enable = lib.mkEnableOption "system bootloader and Plymouth splash";
 
-    loader = lib.mkOption {
-      type = lib.types.enum [
-        "grub"
-        "limine"
-      ];
-      default = "grub";
-      description = "The bootloader to use (grub with DedSec theme, or modern Limine).";
-    };
-
     secureBoot = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -49,21 +40,7 @@ in
             efiSysMountPoint = "/boot/efi";
           };
 
-          grub = lib.mkIf (cfg.loader == "grub" && !cfg.secureBoot.enable) {
-            enable = true;
-            useOSProber = true;
-            efiSupport = true;
-            device = "nodev";
-
-            dedsec-theme = {
-              enable = true;
-              style = "sitedown";
-              icon = "color";
-              resolution = "1080p";
-            };
-          };
-
-          limine = lib.mkIf (cfg.loader == "limine" && !cfg.secureBoot.enable) {
+          limine = lib.mkIf (!cfg.secureBoot.enable) {
             enable = true;
           };
 
