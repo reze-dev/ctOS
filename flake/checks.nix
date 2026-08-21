@@ -8,8 +8,6 @@
       lib = inputs.nixpkgs.lib;
       northstar = import ../lib/core.nix { inherit lib; };
 
-      # Collect all .nix files in modules/ for verification
-      moduleFiles = northstar.scanModules ../modules;
     in
     {
       checks = {
@@ -42,7 +40,7 @@
               exit 1
             fi
 
-            # Test: discoverHosts finds Makima
+            # Test: discoverHosts finds example
             HOSTS=$(${pkgs.nix}/bin/nix eval --impure --json --expr '
               let
                 lib = import ${inputs.nixpkgs} { system = "${system}"; };
@@ -50,8 +48,8 @@
               in northstar.discoverHosts ${../hosts}
             ')
             echo "discoverHosts found: $HOSTS"
-            echo "$HOSTS" | jq -e 'index("Makima")' > /dev/null || {
-              echo "FAIL: discoverHosts did not find Makima"
+            echo "$HOSTS" | jq -e 'index("example")' > /dev/null || {
+              echo "FAIL: discoverHosts did not find example"
               exit 1
             }
 
