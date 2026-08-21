@@ -67,8 +67,9 @@
   # ── Optional: Locale Override ─────────────────────────────────────────
   # time.timeZone = "America/New_York";
 
-  # ── Optional: Bootloader ──────────────────────────────────────────────
-  # northstar.features.boot.loader = "limine";  # or "grub" (default)
+  # ── Optional: Bootloader ──────────────────────────────────────────
+  # Limine is the default (and only) bootloader. Secure Boot via Lanzaboote:
+  # northstar.features.boot.secureBoot.enable = true;
 
   networking.hostName = "example";
   system.stateVersion = "26.11";
