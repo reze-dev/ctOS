@@ -20,7 +20,6 @@ from installer.install import (
     GpuChoice,
     IgpuType,
     detect_all,
-    format_grub_extra_entries,
     format_limine_extra_entries,
     format_pci_bus_id,
     parse_lsblk_json,
@@ -424,30 +423,6 @@ class TestHardwareDetection(unittest.TestCase):
         self.assertEqual(parse_lsblk_json('{"blockdevices": [1, null, "foo", {}]}'), [])
 
     # ── 7. Dual-Boot ESP Scanning ───────────────────────────────────
-
-    def test_dual_boot_extra_entries_grub(self):
-        """Verify GRUB dual-boot configuration formatting."""
-        entries = [
-            DualBootEntry(
-                name="Fedora",
-                efi_path="/EFI/fedora/shimx64.efi",
-                disk_uuid="CB41-6695",
-                enabled=True,
-            ),
-            DualBootEntry(
-                name="Windows 11",
-                efi_path="/EFI/Microsoft/Boot/bootmgfw.efi",
-                disk_uuid="CB41-6695",
-                enabled=False,
-            ),
-        ]
-
-        grub_cfg = format_grub_extra_entries(entries)
-        self.assertIn("boot.loader.grub.extraEntries = ''", grub_cfg)
-        self.assertIn('menuentry "Fedora"', grub_cfg)
-        self.assertIn("search --fs-uuid --set=root CB41-6695", grub_cfg)
-        self.assertIn("chainloader /EFI/fedora/shimx64.efi", grub_cfg)
-        self.assertNotIn("Windows 11", grub_cfg)
 
     def test_dual_boot_extra_entries_limine(self):
         """Verify Limine dual-boot configuration formatting."""
