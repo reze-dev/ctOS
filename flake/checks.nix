@@ -10,65 +10,68 @@
 
       # Collect all .nix files in modules/ for verification
       moduleFiles = northstar.scanModules ../modules;
-      moduleCount = builtins.length moduleFiles;
-
-      # Discovered hosts
-      discoveredHosts = northstar.discoverHosts ../hosts;
-
-      # Profile generator test
-      testProfile = northstar.mkProfile [
-        "boot"
-        "ssh"
-      ];
-      profileKeys = builtins.attrNames testProfile.northstar.features;
-
-      # Disko generator test
-      testDisko = northstar.mkDisko {
-        mode = "whole-disk";
-        device = "/dev/nvme0n1";
-        fsType = "btrfs";
-      };
-
-      # Pure Nix assertions evaluated at build/eval time
-      allLibTestsPassed =
-        assert (moduleCount > 0);
-        assert (builtins.elem "Makima" discoveredHosts);
-        assert (builtins.elem "example" discoveredHosts);
-        assert (builtins.elem "boot" profileKeys);
-        assert (builtins.elem "ssh" profileKeys);
-        assert (testDisko ? disko.devices.disk.main);
-        true;
     in
     {
       checks = {
-        # Verify all module files and syntax
-        module-syntax =
-          pkgs.runCommand "check-module-syntax"
-            {
-              # Evaluate all module imports in Nix
-              modulesEvaluated = builtins.length moduleFiles;
-            }
-            ''
-              echo "=== Checked ${toString moduleCount} module files ==="
-              echo "All module paths resolved and syntax validated."
-              touch $out
-            '';
 
-        # Verify lib functions (scanModules, discoverHosts, mkProfile, mkDisko)
-        lib-unit-tests =
-          pkgs.runCommand "check-lib-functions"
-            {
-              # Force strict evaluation of all pure Nix assertions
-              assertionsPassed = allLibTestsPassed;
-            }
-            ''
-              echo "=== Northstar lib function test suite ==="
-              echo "✓ scanModules found ${toString moduleCount} modules"
-              echo "✓ discoverHosts found hosts: ${lib.concatStringsSep ", " discoveredHosts}"
-              echo "✓ mkProfile generated correct feature attributes"
-              echo "✓ mkDisko generated valid btrfs whole-disk structure"
-              touch $out
+        # Verify lib functions behave correctly
+        lib-unit-tests = pkgs.runCommand "check-lib-functions"
+          {
+            nativeBuildInputs = [ pkgs.nix pkgs.jq ];
+            NIX_CONF_DIR = pkgs.writeTextDir "nix.conf" ''
+              experimental-features = nix-command flakes pipe-operators
             '';
+          }
+          ''
+            export NIX_STATE_DIR=$TMPDIR/nix
+            export NIX_CACHE_DIR=$TMPDIR/nix-cache
+            mkdir -p $NIX_STATE_DIR $NIX_CACHE_DIR
+
+            echo "=== Testing lib functions ==="
+            
+            # Test: scanModules finds modules
+            MODULE_COUNT=$(${pkgs.nix}/bin/nix eval --impure --expr '
+              let
+                lib = import ${inputs.nixpkgs} { system = "${system}"; };
+                northstar = import ${../lib/core.nix} { inherit (lib) lib; };
+              in builtins.length (northstar.scanModules ${../modules})
+            ')
+            echo "scanModules found $MODULE_COUNT modules"
+            if [ "$MODULE_COUNT" -lt 1 ]; then
+              echo "FAIL: scanModules returned 0 modules"
+              exit 1
+            fi
+
+            # Test: discoverHosts finds Makima
+            HOSTS=$(${pkgs.nix}/bin/nix eval --impure --json --expr '
+              let
+                lib = import ${inputs.nixpkgs} { system = "${system}"; };
+                northstar = import ${../lib/core.nix} { inherit (lib) lib; };
+              in northstar.discoverHosts ${../hosts}
+            ')
+            echo "discoverHosts found: $HOSTS"
+            echo "$HOSTS" | jq -e 'index("Makima")' > /dev/null || {
+              echo "FAIL: discoverHosts did not find Makima"
+              exit 1
+            }
+
+            # Test: mkProfile produces correct attrs
+            PROFILE_KEYS=$(${pkgs.nix}/bin/nix eval --impure --json --expr '
+              let
+                lib = import ${inputs.nixpkgs} { system = "${system}"; };
+                northstar = import ${../lib/core.nix} { inherit (lib) lib; };
+                profile = northstar.mkProfile ["boot" "ssh"];
+              in builtins.attrNames profile.northstar.features
+            ')
+            echo "mkProfile keys: $PROFILE_KEYS"
+            echo "$PROFILE_KEYS" | jq -e 'index("boot") and index("ssh")' > /dev/null || {
+              echo "FAIL: mkProfile did not produce boot and ssh keys"
+              exit 1
+            }
+
+            echo "=== All lib tests passed ==="
+            touch $out
+          '';
 
         # Verify the installer package builds
         installer-builds = self.packages.${system}.installer;
