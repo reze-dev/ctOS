@@ -47,14 +47,14 @@ class TestNixSyntax(unittest.TestCase):
     def test_generated_default_nix_syntax(self):
         # Matrix of configurations
         configs = [
-            # 1. Base + GRUB + No GPU
+            # 1. Base + Limine + No GPU
             InstallConfig(
                 hostname="server-node",
                 username="rootuser",
                 hashed_pw="$6$12345",
                 profile=ProfileChoice.BASE,
                 shell="zsh",
-                bootloader=BootloaderChoice.GRUB,
+                bootloader=BootloaderChoice.LIMINE,
                 features=default_features(ProfileChoice.BASE),
                 gpu_choice=GpuChoice.NONE,
             ),
@@ -88,14 +88,14 @@ class TestNixSyntax(unittest.TestCase):
                 gpu_choice=GpuChoice.NVIDIA,
                 nvidia_bus_id="PCI:1:0:0",
             ),
-            # 3. Workstation + GRUB + NVIDIA Prime AMD
+            # 3. Workstation + Limine + NVIDIA Prime AMD
             InstallConfig(
                 hostname="workstation-rig",
                 username="alice",
                 hashed_pw="$6$abcdef",
                 profile=ProfileChoice.WORKSTATION,
                 shell="zsh",
-                bootloader=BootloaderChoice.GRUB,
+                bootloader=BootloaderChoice.LIMINE,
                 features=default_features(ProfileChoice.WORKSTATION),
                 gpu_choice=GpuChoice.NVIDIA_PRIME,
                 nvidia_bus_id="PCI:1:0:0",

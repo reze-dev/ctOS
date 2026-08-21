@@ -456,7 +456,7 @@ class TestBootloaderAndSecurityConfig(unittest.TestCase):
             secure_boot=False,
         )
         out = build_bootloader_config(cfg)
-        self.assertIn('northstar.features.boot.loader = "limine";', out)
+        self.assertIn('# Bootloader (Limine)', out)
         self.assertIn('boot.loader.limine.resolution = "2560x1440";', out)
         self.assertNotIn("secureBoot.enable", out)
 
@@ -468,7 +468,7 @@ class TestBootloaderAndSecurityConfig(unittest.TestCase):
             secure_boot=True,
         )
         out = build_bootloader_config(cfg)
-        self.assertIn('northstar.features.boot.loader = "limine";', out)
+        self.assertIn('# Bootloader (Limine)', out)
         self.assertIn('boot.loader.limine.resolution = "1920x1080";', out)
         self.assertIn("northstar.features.boot.secureBoot.enable = true;", out)
 

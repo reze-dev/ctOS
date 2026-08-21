@@ -50,7 +50,6 @@ from installer.install import (
     build_gpu_config,
     build_profile_config,
     default_features as _orig_default_features,
-    format_grub_extra_entries,
     format_limine_extra_entries,
     format_pci_bus_id,
     generate_disko_partition_only,
@@ -208,11 +207,6 @@ def build_bootloader_config(cfg: Any) -> str:
         res = getattr(cfg, "resolution", "1920x1080") or "1920x1080"
         lines.append(f'  boot.loader.limine.resolution = "{res}";')
         extra = format_limine_extra_entries(cfg.dual_boot_entries)
-        if extra:
-            lines.append(extra)
-    elif cfg.bootloader == BootloaderChoice.GRUB:
-        lines.append('  northstar.features.boot.loader = "grub";')
-        extra = format_grub_extra_entries(cfg.dual_boot_entries)
         if extra:
             lines.append(extra)
 
@@ -1156,10 +1150,10 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
         self.assertIn('"root"', common_nix)
         self.assertIn('"@wheel"', common_nix)
 
-    def test_t1_f05_07_grub_isolation_no_limine_resolution(self) -> None:
-        cfg = InstallConfig(bootloader=BootloaderChoice.GRUB, resolution="1920x1080")
+    def test_t1_f05_07_limine_always_emits_resolution(self) -> None:
+        cfg = InstallConfig(bootloader=BootloaderChoice.LIMINE, resolution="1920x1080")
         out = build_bootloader_config(cfg)
-        self.assertNotIn("boot.loader.limine.resolution", out)
+        self.assertIn("boot.loader.limine.resolution", out)
 
     def test_t1_f06_08_disko_whole_disk_ext4_generation(self) -> None:
         cfg = InstallConfig(disk_dev="sda", fs_type="ext4", swap_size="0", root_size="500G")
@@ -1451,8 +1445,8 @@ class Tier2BoundaryTests(unittest.TestCase):
             (Path(tmpdir) / "EFI/Microsoft").mkdir(parents=True)
             self.assertEqual(scan_esp_for_os(Path(tmpdir), "UUID"), [])
 
-    def test_t2_f03_11_grub_extra_entries_empty_list(self) -> None:
-        self.assertEqual(format_grub_extra_entries([]), "")
+    def test_t2_f03_11_limine_extra_entries_empty_list_dup(self) -> None:
+        self.assertEqual(format_limine_extra_entries([]), "")
 
     def test_t2_f03_12_limine_extra_entries_empty_list(self) -> None:
         self.assertEqual(format_limine_extra_entries([]), "")
@@ -1675,9 +1669,9 @@ class Tier3InteractionTests(unittest.TestCase):
                 mock_run.assert_any_call("swapon -p 32767 /dev/zram0")
 
     def test_t3_04_ext4_partition_only_with_dedicated_swap_and_windows_dualboot(self) -> None:
-        """Pair: Partition-only EXT4 + dedicated swap partition + Windows dual-boot + GRUB."""
+        """Pair: Partition-only EXT4 + dedicated swap partition + Windows dual-boot + Limine."""
         cfg = InstallConfig(
-            bootloader=BootloaderChoice.GRUB,
+            bootloader=BootloaderChoice.LIMINE,
             mode=InstallMode.PARTITION_ONLY,
             nixos_part="/dev/nvme0n1p5",
             efi_part="/dev/nvme0n1p1",
@@ -1692,7 +1686,7 @@ class Tier3InteractionTests(unittest.TestCase):
         self.assertIn("disko.devices.disk.swap", disko_out)
         self.assertIn('device = "/dev/nvme0n1p6";', disko_out)
         host_out = generate_host_default_nix(cfg)
-        self.assertIn('menuentry "Windows 11"', host_out)
+        self.assertIn("/Windows 11", host_out)
 
     def test_t3_05_base_profile_fish_shell_custom_deltas_and_sops_secrets(self) -> None:
         """Pair: Base profile + Fish shell + secrets enabled."""
