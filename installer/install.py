@@ -1269,6 +1269,10 @@ def strip_filesystems_from_hardware(hw_text: str) -> str:
     return result.strip()
 
 
+def escape_nix_string(s: str) -> str:
+    if not isinstance(s, str): return str(s)
+    return s.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$')
+
 def generate_disko_whole_disk(cfg: InstallConfig) -> str:
     """Generate disko.nix content for whole-disk mode."""
     lines = [
@@ -1282,8 +1286,10 @@ def generate_disko_whole_disk(cfg: InstallConfig) -> str:
         '  mode = "whole-disk";',
         f'  device = "/dev/{cfg.disk_dev}";',
         f'  fsType = "{cfg.fs_type}";',
-        '  efiSize = "2G";',
+        f'  efiSize = "{"4G" if cfg.bootloader.value.lower() == "limine" else "2G"}";',
     ]
+    if getattr(cfg, "extra_disko_config", ""):
+        lines.append(f"  extraConfig = {cfg.extra_disko_config};")
 
     if cfg.swap_size == "0":
         lines.append('  swapSize = "0";')
@@ -1420,9 +1426,10 @@ def generate_host_default_nix(cfg: InstallConfig) -> str:
     if bootloader_config:
         blocks.append(bootloader_config.rstrip())
 
-    user_block = f"""  users.users.{cfg.username} = {{
+    u = escape_nix_string(cfg.username)
+    user_block = f"""  users.users.{u} = {{
     isNormalUser = true;
-    description = "{cfg.username}";
+    description = "{u}";
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -1430,7 +1437,7 @@ def generate_host_default_nix(cfg: InstallConfig) -> str:
       "docker"
     ];
     shell = pkgs.{cfg.shell};
-    hashedPassword = "{cfg.hashed_pw}";
+    hashedPassword = "{escape_nix_string(cfg.hashed_pw)}";
   }};"""
     blocks.append(user_block)
     blocks.append(profile_config)
@@ -1455,15 +1462,15 @@ def generate_host_default_nix(cfg: InstallConfig) -> str:
     ./disko.nix
   ];
 
-  home-manager.users.{cfg.username} = {{
+  home-manager.users.{u} = {{
     imports = [ ../../home/home.nix ];
-    home.username = lib.mkForce "{cfg.username}";
-    home.homeDirectory = lib.mkForce "/home/{cfg.username}";
+    home.username = lib.mkForce "{u}";
+    home.homeDirectory = lib.mkForce "/home/{u}";
   }};
 
 {body}
 
-  networking.hostName = "{cfg.hostname}";
+  networking.hostName = "{escape_nix_string(cfg.hostname)}";
   system.stateVersion = "26.11";
 }}
 """
@@ -1919,6 +1926,16 @@ def do_generate_config(cfg: InstallConfig, work_dir: Path) -> None:
     if not hw_file.exists():
         hw_file.write_text(hw_stub)
 
+    # Rewrite flake.nix to remove dedsec-grub-theme if not GRUB
+    if cfg.bootloader.value.lower() != "grub":
+        flake_path = work_dir / "flake.nix"
+        if flake_path.exists():
+            msg("Removing dedsec-grub-theme from flake inputs...")
+            ft = flake_path.read_text()
+            import re
+            ft = re.sub(r'\s*dedsec-grub-theme\s*=\s*\{[^\}]*\};', '', ft)
+            flake_path.write_text(ft)
+
     msg("Staging generated files for flake...")
     try:
         run("git add -A", check=False)
@@ -2334,9 +2351,9 @@ def interactive_wizard(script_dir: Path, resume: bool = False, no_root_check: bo
             die("Invalid root size format. Use 200G, 50%, or 100%")
         cfg.root_size = r_size
 
-    swap = input("Swap size [8G] (or 0 to disable): ").strip() or "8G"
+    swap = input("Swap size [16G] (or 0 to disable): ").strip() or "16G"
     if swap != "0" and not re.match(r"^\d+[GMgm]$", swap):
-        die("Invalid swap size format. Use 8G, 16G, or 0")
+        die("Invalid swap size format.")
     cfg.swap_size = swap
 
     if cfg.mode == InstallMode.PARTITION_ONLY and cfg.fs_type == "ext4" and cfg.swap_size != "0":
@@ -2374,9 +2391,14 @@ def interactive_wizard(script_dir: Path, resume: bool = False, no_root_check: bo
         cfg.igpu_type = IgpuType.AMD if ig_type_str == "2" else IgpuType.INTEL
         cfg.igpu_bus_id = input(f"iGPU Bus ID [{hw_info['igpu_bus_id'] or 'PCI:0:2:0'}]: ").strip() or (hw_info["igpu_bus_id"] or "PCI:0:2:0")
 
-    # 11. Dual-Boot OSes
-    step("11/12", "Dual-Boot OS Detection")
-    detected_oses: list[DualBootEntry] = hw_info["detected_os"]
+    # 11. Custom Partitioning & Dual-Boot
+    step("11/12", "Custom Partitioning & Dual-Boot")
+    print("Advanced Custom Partitioning (Disko):")
+    print("  You can optionally provide raw Nix code to merge into your disko config (extraConfig).")
+    print("  Leave blank to use standard generated layouts.")
+    cfg.extra_disko_config = input("  extraConfig [None]: ").strip()
+
+    detected_oses: list[DualBootEntry] = hw_info.get("detected_os", [])
     if detected_oses:
         print("Detected other OSes on ESP:")
         for idx, os_entry in enumerate(detected_oses, 1):
