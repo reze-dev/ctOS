@@ -27,7 +27,7 @@
 - **🎛️ Toggle-based modularity** — every module is behind `northstar.<domain>.<feature>.enable` options
 - **⚡ Pipe Operator Composition** — leverages native `pipe-operators` (`|>`) for clean functional transformations
 - **📁 Auto-discovery** — drop a host directory in `hosts/` or a module in `modules/` and it's automatically wired up
-- **🛡️ UEFI Secure Boot** — first-class Lanzaboote support, plus GRUB (DedSec theme) and Limine bootloaders
+- **🛡️ UEFI Secure Boot** — first-class Lanzaboote support with Limine as the modern UEFI bootloader
 - **💾 Dynamic Disko** — `mkDisko` generates partition configs for whole-disk or dual-boot layouts with Btrfs/Ext4
 - **🤖 AI/ML & Gaming** — out-of-the-box modules for Ollama, PyTorch, CUDA/ROCm, Steam, Gamescope, and more
 - **🔐 Secrets Management** — integrated sops-nix & age key management
@@ -119,9 +119,9 @@ northstar/
 ├── modules/                   # Option-based modules (auto-discovered)
 │   ├── features/              # Vertical feature slices
 │   │   ├── core/              # Boot, env, fonts, locale, networking, packages, shells, secrets
-│   │   ├── desktop/           # Audio, display, browsers, Hyprland, Niri, Noctalia, Gaming
+│   │   ├── desktop/           # Audio, display, browsers, Hyprland, Niri, Noctalia, Gaming, desktop packages
 │   │   ├── development/       # Dev tools, AI/ML, git, Emacs, virtualization
-│   │   ├── shell/             # Fish, Zsh, Starship, Oh My Posh
+│   │   ├── shell/             # Fish, Zsh, Starship
 │   │   ├── terminals/         # Ghostty, Kitty
 │   │   └── tools/             # Eza, Fzf, Tmux, Yazi, Zoxide
 │   ├── hardware/              # Hardware drivers (NVIDIA, Prime)
@@ -159,7 +159,7 @@ northstar.profiles = {
 ### Core & System (`northstar.features.*`)
 | Module | Description |
 | :--- | :--- |
-| `boot` | Bootloader (GRUB/Limine), Plymouth splash, Secure Boot (Lanzaboote) |
+| `boot` | Bootloader (Limine), Plymouth splash, Secure Boot (Lanzaboote) |
 | `networking` | NetworkManager + configurable `/etc/hosts` |
 | `locales` | Timezone, keyboard, i18n |
 | `fonts` | Curated Nerd Fonts |
@@ -181,6 +181,7 @@ northstar.profiles = {
 | `firefox` / `zen-browser` | Web browsers |
 | `gaming` | Steam, Gamemode, Gamescope, Wine, Lutris |
 | `xdg` | XDG portals & MIME associations |
+| `desktopPackages` | Wayland/GUI desktop utilities (polkit, clipboard, screenshot, file manager) |
 
 ### Development (`northstar.features.*`)
 | Module | Description |
@@ -211,7 +212,7 @@ northstar.mkDisko {
   device = "/dev/nvme0n1";
   fsType = "btrfs";         # or "ext4"
   efiSize = "2G";           # 2GB default — safe for Limine + many NixOS generations
-  swapSize = "8G";           # "0" to disable
+  swapSize = "16G";          # default 16G — "0" to disable
 }
 
 # Partition-only (dual-boot safe)
@@ -220,7 +221,7 @@ northstar.mkDisko {
   nixosPart = "/dev/nvme0n1p4";
   efiDevice = "/dev/disk/by-uuid/XXXX-XXXX";
   fsType = "btrfs";
-  swapSize = "8G";
+  swapSize = "16G";
 }
 ```
 
@@ -238,7 +239,7 @@ nix flake check --impure
 python3 -m unittest discover -s tests -v
 
 # Evaluate a host
-nix eval --impure .#nixosConfigurations.Makima.config.system.build.toplevel.name
+nix eval --impure .#nixosConfigurations.example.config.system.build.toplevel.name
 ```
 
 ---
