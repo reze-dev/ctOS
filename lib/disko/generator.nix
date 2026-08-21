@@ -60,9 +60,17 @@ rec {
   #   nixosPart   : NixOS partition device path            (partition-only mode)
   #   efiDevice   : EFI partition device or UUID path      (partition-only: existing EFI)
   #   efiSize     : EFI partition size                     (whole-disk: default "2G")
-  #   swapSize    : swap partition/file size, "0" to skip  (default: "8G")
+  #   swapSize    : swap partition/file size, "0" to skip  (default: "16G")
   #   rootSize    : root partition size                    (default: "100%")
   #   swapPartition : dedicated swap partition device       (partition-only + ext4 only)
+  #
+  # Swap architecture by mode:
+  #   - whole-disk:     Swap is a dedicated GPT partition managed by disko.
+  #                     The btrfs /swap subvolume is NOT created (btrfsSubvolumes false)
+  #                     because the swap lives on its own partition, not as a swapfile.
+  #   - partition-only: Swap is a btrfs swapfile at /swap/swapfile inside a /swap subvolume
+  #                     (btrfsSubvolumes swapEnabled), or for ext4 a separate swap partition
+  #                     specified via swapPartition.
   mkDisko =
     {
       mode ? "whole-disk",
@@ -118,6 +126,7 @@ rec {
                     {
                       type = "btrfs";
                       extraArgs = [ "-f" ];
+                      # false: no /swap subvolume needed — swap is a dedicated GPT partition
                       subvolumes = btrfsSubvolumes false;
                     }
                   else
