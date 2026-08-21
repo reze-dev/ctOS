@@ -3,7 +3,7 @@
 
 {
   perSystem =
-    { pkgs, ... }:
+    { pkgs, system, ... }:
     {
       devShells.default = pkgs.mkShell {
         name = "northstar-dev";
