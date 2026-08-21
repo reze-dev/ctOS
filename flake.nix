@@ -57,10 +57,6 @@
     };
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
     tmux-powerkit.url = "github:fabioluciano/tmux-powerkit";
-    dedsec-grub-theme = {
-      url = "gitlab:VandalByte/dedsec-grub-theme";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =

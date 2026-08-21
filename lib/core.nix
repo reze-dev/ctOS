@@ -105,7 +105,6 @@ rec {
       commonModule
       { nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ]; }
     ]
-    ++ lib.optionals (inputs ? dedsec-grub-theme) [ inputs.dedsec-grub-theme.nixosModule ]
     ++ modulePaths
     ++ lib.optionals (hostHasDisko hostsDir hostName) [ inputs.disko.nixosModules.disko ];
 
@@ -119,7 +118,10 @@ rec {
     }:
     lib.nixosSystem {
       inherit system;
-      specialArgs = { inherit inputs; };
+      specialArgs = {
+        inherit inputs;
+        northstar = import ./core.nix { inherit lib; };
+      };
       modules = (mkHostModules { inherit inputs hostsDir hostName; }) ++ extraModules;
     };
 }
