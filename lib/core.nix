@@ -88,9 +88,7 @@ rec {
   #
   # CONTRACT:
   #   - Each host directory MUST contain `default.nix` and `hardware.nix`.
-  #   - The host's `default.nix` MUST NOT import `./hardware.nix` — it is
-  #     auto-imported here. Importing it again would cause a double-import
-  #     conflict with the NixOS module system.
+  #   - The host's `default.nix` MUST explicitly import `./hardware.nix`.
   #   - If `disko.nix` exists in the host directory, the disko NixOS module
   #     is automatically added. The host's `default.nix` imports `./disko.nix`
   #     for the disko configuration itself.
@@ -103,12 +101,11 @@ rec {
       hostName,
     }:
     [
-      inputs.dedsec-grub-theme.nixosModule
       (hostsDir + "/${hostName}")
-      (hostsDir + "/${hostName}/hardware.nix")
       commonModule
       { nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ]; }
     ]
+    ++ lib.optionals (inputs ? dedsec-grub-theme) [ inputs.dedsec-grub-theme.nixosModule ]
     ++ modulePaths
     ++ lib.optionals (hostHasDisko hostsDir hostName) [ inputs.disko.nixosModules.disko ];
 
