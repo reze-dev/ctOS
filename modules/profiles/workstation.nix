@@ -11,7 +11,6 @@ let
     "fish"
     "fzf"
     "git"
-    "omp"
     "starship"
     "tmux"
     "virtualization"
