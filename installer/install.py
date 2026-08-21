@@ -5,7 +5,7 @@ Northstar NixOS Installer — idempotent, resumable, with retries.
 Provides full feature parity with Northstar Rust installer (installer-rs):
 - Profiles (Base, Desktop, Workstation)
 - 10 toggleable feature options and delta overrides
-- Selectable bootloaders (GRUB with DedSec theme, Limine)
+- Limine bootloader with display resolution detection
 - Automated hardware detection (lspci GPU detection, lsblk -J disks, ESP scanning)
 - Dual-boot detection and chainloader config generation
 - Disko whole-disk and partition-only layout generation
@@ -127,15 +127,10 @@ class ProfileChoice(str, Enum):
 
 
 class BootloaderChoice(str, Enum):
-    GRUB = "grub"
     LIMINE = "limine"
 
     def __str__(self) -> str:
-        if self == BootloaderChoice.GRUB:
-            return "GRUB (Cyberpunk DedSec Theme)"
-        elif self == BootloaderChoice.LIMINE:
-            return "Limine (Modern Ultra-Fast UEFI)"
-        return self.value
+        return "Limine (Modern Ultra-Fast UEFI)"
 
 
 class GpuChoice(str, Enum):
@@ -295,7 +290,7 @@ class InstallConfig:
     hashed_pw: str = ""
     profile: ProfileChoice = ProfileChoice.DESKTOP
     shell: str = "zsh"
-    bootloader: BootloaderChoice = BootloaderChoice.GRUB
+    bootloader: BootloaderChoice = BootloaderChoice.LIMINE
     secure_boot: bool = False
     resolution: str = "1920x1080"
     features: list[FeatureOption] = field(default_factory=lambda: default_features(ProfileChoice.DESKTOP))
@@ -391,8 +386,8 @@ class InstallConfig:
 
         cfg.shell = str(data.get("shell", cfg.shell) or "zsh")
 
-        bl_val = data.get("bootloader", "grub")
-        cfg.bootloader = BootloaderChoice.LIMINE if str(bl_val).lower() == "limine" else BootloaderChoice.GRUB
+        bl_val = data.get("bootloader", "limine")
+        cfg.bootloader = BootloaderChoice.LIMINE
         cfg.secure_boot = bool(data.get("secure_boot", False))
         cfg.resolution = str(data.get("resolution", "1920x1080") or "1920x1080")
 
@@ -1114,19 +1109,7 @@ def detect_all() -> dict[str, Any]:
 
 # ── Extra Entries Formatters ────────────────────────────────────
 
-def format_grub_extra_entries(entries: list[DualBootEntry]) -> str:
-    """Format GRUB extraEntries configuration."""
-    enabled = [e for e in entries if e.enabled]
-    if not enabled:
-        return ""
-    lines = ["  boot.loader.grub.extraEntries = ''"]
-    for entry in enabled:
-        lines.append(f'    menuentry "{entry.name}" {{')
-        lines.append(f"      search --fs-uuid --set=root {entry.disk_uuid}")
-        lines.append(f"      chainloader {entry.efi_path}")
-        lines.append("    }")
-    lines.append("  '';")
-    return "\n".join(lines)
+
 
 
 def format_limine_extra_entries(entries: list[DualBootEntry]) -> str:
@@ -1168,25 +1151,14 @@ def build_gpu_config(cfg: InstallConfig) -> str:
 
 def build_bootloader_config(cfg: InstallConfig) -> str:
     """Build the bootloader configuration block with dual boot, resolution and secure boot."""
-    lines: list[str] = ["  # Bootloader"]
-    if cfg.bootloader == BootloaderChoice.GRUB:
-        lines.append('  northstar.features.boot.loader = "grub";')
-        if getattr(cfg, "secure_boot", False):
-            lines.append("  northstar.features.boot.secureBoot.enable = true;")
-        extra = format_grub_extra_entries(cfg.dual_boot_entries)
-        if extra:
-            lines.append(extra)
-    elif cfg.bootloader == BootloaderChoice.LIMINE:
-        lines.append('  northstar.features.boot.loader = "limine";')
-        res = getattr(cfg, "resolution", "") or "1920x1080"
-        lines.append(f'  boot.loader.limine.resolution = "{res}";')
-        if getattr(cfg, "secure_boot", False):
-            lines.append("  northstar.features.boot.secureBoot.enable = true;")
-        extra = format_limine_extra_entries(cfg.dual_boot_entries)
-        if extra:
-            lines.append(extra)
-    else:
-        return ""
+    lines: list[str] = ["  # Bootloader (Limine)"]
+    res = getattr(cfg, "resolution", "") or "1920x1080"
+    lines.append(f'  boot.loader.limine.resolution = "{res}";')
+    if getattr(cfg, "secure_boot", False):
+        lines.append("  northstar.features.boot.secureBoot.enable = true;")
+    extra = format_limine_extra_entries(cfg.dual_boot_entries)
+    if extra:
+        lines.append(extra)
     return "\n".join(lines) + "\n"
 
 
@@ -1270,8 +1242,17 @@ def strip_filesystems_from_hardware(hw_text: str) -> str:
 
 
 def escape_nix_string(s: str) -> str:
-    if not isinstance(s, str): return str(s)
-    return s.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$')
+    """Escape a string for safe embedding in a Nix double-quoted string literal.
+
+    Only escapes characters that are actually special in Nix string literals:
+    - backslash (\\) — escape character
+    - double-quote (") — string delimiter
+    - dollar-brace (${) — interpolation trigger
+    Bare $ (e.g. in SHA-512 hashes like $6$salt$hash) is NOT special and must NOT be escaped.
+    """
+    if not isinstance(s, str):
+        return str(s)
+    return s.replace('\\', '\\\\').replace('"', '\\"').replace('${', '\\${')
 
 def generate_disko_whole_disk(cfg: InstallConfig) -> str:
     """Generate disko.nix content for whole-disk mode."""
@@ -1286,15 +1267,12 @@ def generate_disko_whole_disk(cfg: InstallConfig) -> str:
         '  mode = "whole-disk";',
         f'  device = "/dev/{cfg.disk_dev}";',
         f'  fsType = "{cfg.fs_type}";',
-        f'  efiSize = "{"4G" if cfg.bootloader.value.lower() == "limine" else "2G"}";',
+        '  efiSize = "4G";',
     ]
     if getattr(cfg, "extra_disko_config", ""):
         lines.append(f"  extraConfig = {cfg.extra_disko_config};")
 
-    if cfg.swap_size == "0":
-        lines.append('  swapSize = "0";')
-    elif cfg.swap_size != "8G":
-        lines.append(f'  swapSize = "{cfg.swap_size}";')
+    lines.append(f'  swapSize = "{cfg.swap_size}";')
 
     if cfg.root_size != "100%":
         lines.append(f'  rootSize = "{cfg.root_size}";')
@@ -1926,16 +1904,6 @@ def do_generate_config(cfg: InstallConfig, work_dir: Path) -> None:
     if not hw_file.exists():
         hw_file.write_text(hw_stub)
 
-    # Rewrite flake.nix to remove dedsec-grub-theme if not GRUB
-    if cfg.bootloader.value.lower() != "grub":
-        flake_path = work_dir / "flake.nix"
-        if flake_path.exists():
-            msg("Removing dedsec-grub-theme from flake inputs...")
-            ft = flake_path.read_text()
-            import re
-            ft = re.sub(r'\s*dedsec-grub-theme\s*=\s*\{[^\}]*\};', '', ft)
-            flake_path.write_text(ft)
-
     msg("Staging generated files for flake...")
     try:
         run("git add -A", check=False)
@@ -2184,30 +2152,25 @@ def interactive_wizard(script_dir: Path, resume: bool = False, no_root_check: bo
     hw_info = detect_all()
 
     # 5. Bootloader & Security Selection
-    step("5/12", "Bootloader & Security Selection")
-    print("Select bootloader:")
-    print("  1) GRUB   — Cyberpunk DedSec Theme (Default)")
-    print("  2) Limine — Modern Ultra-Fast UEFI Bootloader")
-    bl_choice = input("Choice [1]: ").strip() or "1"
-    cfg.bootloader = BootloaderChoice.LIMINE if bl_choice == "2" else BootloaderChoice.GRUB
-    msg(f"Selected Bootloader: {cfg.bootloader}")
+    step("5/12", "Bootloader & Display")
+    cfg.bootloader = BootloaderChoice.LIMINE
+    msg("Bootloader: Limine (Modern Ultra-Fast UEFI)")
 
-    if cfg.bootloader == BootloaderChoice.LIMINE:
-        detected_res = hw_info.get("resolutions") or detect_display_resolutions()
-        print("\nSelect Limine display resolution:")
-        for r_idx, res_str in enumerate(detected_res[:8], 1):
-            tag = " (Detected / Native)" if r_idx == 1 else ""
-            print(f"  {r_idx}) {res_str}{tag}")
-        res_choice = input("Choice [1] or enter custom WIDTHxHEIGHT: ").strip() or "1"
-        try:
-            r_num = int(res_choice) - 1
-            if 0 <= r_num < len(detected_res):
-                cfg.resolution = detected_res[r_num]
-            else:
-                cfg.resolution = res_choice
-        except ValueError:
+    detected_res = hw_info.get("resolutions") or detect_display_resolutions()
+    print("\nSelect Limine display resolution:")
+    for r_idx, res_str in enumerate(detected_res[:8], 1):
+        tag = " (Detected / Native)" if r_idx == 1 else ""
+        print(f"  {r_idx}) {res_str}{tag}")
+    res_choice = input("Choice [1] or enter custom WIDTHxHEIGHT: ").strip() or "1"
+    try:
+        r_num = int(res_choice) - 1
+        if 0 <= r_num < len(detected_res):
+            cfg.resolution = detected_res[r_num]
+        else:
             cfg.resolution = res_choice
-        msg(f"Limine Resolution set to: {cfg.resolution}")
+    except ValueError:
+        cfg.resolution = res_choice
+    msg(f"Limine Resolution set to: {cfg.resolution}")
 
     sb_ans = input("\nEnable UEFI Secure Boot with Lanzaboote? [y/N]: ").strip().lower()
     cfg.secure_boot = sb_ans == "y"
