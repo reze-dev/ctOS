@@ -15,7 +15,9 @@ let
     in
     {
       imports = [
-        (inputs.noctalia.homeModules.default or inputs.noctalia.homeManagerModules.default or inputs.noctalia.homeManagerModule)
+        (inputs.noctalia.homeModules.default or inputs.noctalia.homeManagerModules.default
+          or inputs.noctalia.homeManagerModule
+        )
       ];
 
       config = {

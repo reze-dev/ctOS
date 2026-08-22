@@ -39,17 +39,22 @@ let
 in
 rec {
   # parseSizeToMiB: robustly parse user size strings like "8G", "1024M" into MiB
-  parseSizeToMiB = sizeStr:
+  parseSizeToMiB =
+    sizeStr:
     let
       match = builtins.match "^([0-9]+)([a-zA-Z%]*)$" (lib.strings.toUpper sizeStr);
       numStr = if match != null then builtins.elemAt match 0 else "8";
       suffix = if match != null then builtins.elemAt match 1 else "G";
       val = lib.toInt numStr;
     in
-      if suffix == "G" || suffix == "GB" then val * 1024
-      else if suffix == "M" || suffix == "MB" then val
-      else if suffix == "T" || suffix == "TB" then val * 1024 * 1024
-      else val * 1024;
+    if suffix == "G" || suffix == "GB" then
+      val * 1024
+    else if suffix == "M" || suffix == "MB" then
+      val
+    else if suffix == "T" || suffix == "TB" then
+      val * 1024 * 1024
+    else
+      val * 1024;
 
   # mkDisko: generate a complete disko configuration attrset
   #
@@ -195,7 +200,7 @@ rec {
       };
 
     in
-    lib.recursiveUpdate
-      (if mode == "whole-disk" then wholeDiskConfig else partitionOnlyConfig)
-      extraConfig;
+    lib.recursiveUpdate (
+      if mode == "whole-disk" then wholeDiskConfig else partitionOnlyConfig
+    ) extraConfig;
 }

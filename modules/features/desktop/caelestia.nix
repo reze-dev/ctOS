@@ -12,7 +12,9 @@ let
     }:
     {
       imports = [
-        (inputs.caelestia-shell.homeManagerModules.default or inputs.caelestia-shell.homeModules.default or inputs.caelestia-shell.homeManagerModule)
+        (inputs.caelestia-shell.homeManagerModules.default or inputs.caelestia-shell.homeModules.default
+          or inputs.caelestia-shell.homeManagerModule
+        )
       ];
 
       config = {
