@@ -31,7 +31,7 @@
       "docker"
     ];
     shell = pkgs.zsh;
-    hashedPassword = "$6$YfUG.LRzZA/7Lki7$Le4p6A.Wm8TJvZTMdWHUpeixcQ.fiTeeNfuvAcINk1aG1g6ZDFcR//2KEw6um9/dgOAitIigZZFMo4Ybnxqf40";
+    hashedPassword = "$6$7uVH9VA23imtOFPs$Rx7oc7xoN5gxBqdB6pg1ZG7xqAeX4LIzLuKjPExFOySTdfmVGdDbCD.4K/dtLLbUbdpcNJ8W5OYpeknaij6mM.";
   };
 
   # Northstar profiles

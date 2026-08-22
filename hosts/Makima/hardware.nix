@@ -11,10 +11,9 @@
   boot.extraModulePackages = [ ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
   hardware = {
-    graphics.enable = true;
-    amdgpu.initrd.enable = true;
+    graphics.enable = lib.mkDefault true;
     firmware = [ pkgs.linux-firmware ];
   };
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
