@@ -14,7 +14,9 @@ let
       wallpaper = ../../../assets/wallpapers/rose-pine-fractal.jpg;
     in
     {
-      imports = [ inputs.noctalia.homeModules.default ];
+      imports = [
+        (inputs.noctalia.homeModules.default or inputs.noctalia.homeManagerModules.default or inputs.noctalia.homeManagerModule)
+      ];
 
       config = {
         programs.noctalia = {
