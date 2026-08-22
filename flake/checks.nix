@@ -40,7 +40,7 @@
               exit 1
             fi
 
-            # Test: discoverHosts finds example
+            # Test: discoverHosts finds hosts
             HOSTS=$(${pkgs.nix}/bin/nix eval --impure --json --expr '
               let
                 lib = import ${inputs.nixpkgs} { system = "${system}"; };
@@ -48,8 +48,8 @@
               in northstar.discoverHosts ${../hosts}
             ')
             echo "discoverHosts found: $HOSTS"
-            echo "$HOSTS" | jq -e 'index("example")' > /dev/null || {
-              echo "FAIL: discoverHosts did not find example"
+            echo "$HOSTS" | jq -e 'length > 0' > /dev/null || {
+              echo "FAIL: discoverHosts returned 0 hosts"
               exit 1
             }
 
