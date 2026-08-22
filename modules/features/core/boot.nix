@@ -29,7 +29,10 @@ in
 
       limine = {
         enable = true;
-        secureBoot.enable = cfg.secureBoot.enable;
+        secureBoot = {
+          enable = cfg.secureBoot.enable;
+          autoGenerateKeys = lib.mkDefault true;
+        };
       };
     };
 
