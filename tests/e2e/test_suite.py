@@ -290,6 +290,7 @@ def generate_host_default_nix(cfg: Any) -> str:
 
 {{
   imports = [
+    ./hardware.nix
     ./disko.nix
   ];
 
@@ -1120,7 +1121,7 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
         out = build_bootloader_config(cfg)
         self.assertIn('boot.loader.limine.resolution = "2560x1440";', out)
 
-    def test_t1_f02_02_secure_boot_toggle_lanzaboote_config(self) -> None:
+    def test_t1_f02_02_secure_boot_toggle_limine_config(self) -> None:
         cfg = InstallConfig(secure_boot=True)
         out = build_bootloader_config(cfg)
         self.assertIn("northstar.features.boot.secureBoot.enable = true;", out)
@@ -1427,8 +1428,10 @@ class Tier2BoundaryTests(unittest.TestCase):
         self.assertEqual(strip_filesystems_from_hardware(""), "")
 
     def test_t2_f03_07_strip_filesystems_no_fs_blocks(self) -> None:
-        hw = "boot.kernelModules = [ \"kvm\" ];\n"
-        self.assertEqual(strip_filesystems_from_hardware(hw), hw.strip())
+        hw = 'boot.kernelModules = [ "kvm" ];\n'
+        cleaned = strip_filesystems_from_hardware(hw)
+        self.assertIn('boot.kernelModules = [ "kvm" ];', cleaned)
+        self.assertIn("graphics.enable", cleaned)
 
     def test_t2_f03_08_strip_filesystems_nested_attributes(self) -> None:
         hw = 'fileSystems."/" = {\n  device = "/dev/sda";\n  options = [ "subvol=root" ];\n};\nboot.loader.grub.enable = true;\n'
@@ -1824,8 +1827,8 @@ class Tier4RealWorldTests(unittest.TestCase):
             self.assertTrue((backup_dir / "ssh_host_ed25519_key").exists())
             self.assertTrue((backup_dir / "key.txt").exists())
 
-    def test_t4_04_dual_boot_alongside_windows_with_lanzaboote_secure_boot(self) -> None:
-        """Workload 4: Dual-boot with Windows 11 and Lanzaboote Secure Boot."""
+    def test_t4_04_dual_boot_alongside_windows_with_limine_secure_boot(self) -> None:
+        """Workload 4: Dual-boot with Windows 11 and Limine Secure Boot."""
         with tempfile.TemporaryDirectory() as tmpdir:
             esp = Path(tmpdir) / "boot/efi"
             (esp / "EFI/Microsoft/Boot").mkdir(parents=True)
