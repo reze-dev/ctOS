@@ -969,10 +969,10 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
             self.assertIsNotNone(loaded)
             self.assertEqual(loaded.hostname, "SavedRig")
 
+    @patch("e2e.test_suite.is_mounted_check", return_value=False)
     @patch("installer.install.run")
-    @patch("tests.e2e.test_suite.is_mounted_check", return_value=False)
-    def test_t1_f06_06_idempotent_remount_check_ensure_mounted(self, mock_is_mounted, mock_run) -> None:
-        cfg = InstallConfig(nixos_part="/dev/sda2", efi_part="/dev/sda1", fs_type="ext4")
+    def test_t1_f06_06_idempotent_remount_check_ensure_mounted(self, mock_run, mock_is_mounted) -> None:
+        cfg = InstallConfig(mode=InstallMode.PARTITION_ONLY, nixos_part="/dev/sda2", efi_part="/dev/sda1", fs_type="ext4")
         ensure_mounted(cfg)
         mock_run.assert_any_call("mount /dev/sda2 /mnt")
         mock_run.assert_any_call("mount /dev/sda1 /mnt/boot/efi")
@@ -1644,11 +1644,11 @@ class Tier3InteractionTests(unittest.TestCase):
         self.assertIn('nvidiaBusId = "PCI:1:0:0";', out)
         self.assertIn('amdgpuBusId = "PCI:5:0:0";', out)
 
-    @patch("installer.install.run")
-    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("e2e.test_suite.is_mounted_check", return_value=False)
     @patch("shutil.which", return_value="/usr/bin/zramctl")
-    @patch("tests.e2e.test_suite.is_mounted_check", return_value=False)
-    def test_t3_03_btrfs_whole_disk_with_zram_and_resumed_pipeline(self, mock_mount, mock_which, mock_rc, mock_run) -> None:
+    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("installer.install.run")
+    def test_t3_03_btrfs_whole_disk_with_zram_and_resumed_pipeline(self, mock_run, mock_rc, mock_which, mock_mount) -> None:
         """Pair: BTRFS Whole Disk + ZRAM protection + resumption at install_nixos."""
         with tempfile.TemporaryDirectory() as tmpdir:
             s = State(state_file=Path(tmpdir) / "state.json")
@@ -1774,11 +1774,11 @@ class Tier4RealWorldTests(unittest.TestCase):
             key_path = generate_ssh_key(ssh_dir, cfg.hostname)
             self.assertTrue(key_path.exists())
 
-    @patch("installer.install.run")
-    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("e2e.test_suite.is_mounted_check", return_value=False)
     @patch("shutil.which", return_value="/usr/bin/zramctl")
-    @patch("tests.e2e.test_suite.is_mounted_check", return_value=False)
-    def test_t4_02_resumed_install_after_killed_nixos_install(self, mock_mount, mock_which, mock_rc, mock_run) -> None:
+    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("installer.install.run")
+    def test_t4_02_resumed_install_after_killed_nixos_install(self, mock_run, mock_rc, mock_which, mock_mount) -> None:
         """Workload 2: Resuming state after interrupted nixos-install."""
         with tempfile.TemporaryDirectory() as tmpdir:
             sf = Path(tmpdir) / "state.json"

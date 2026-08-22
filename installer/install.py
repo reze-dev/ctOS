@@ -2212,10 +2212,10 @@ def interactive_wizard(script_dir: Path, resume: bool = False, no_root_check: bo
         cfg.resolution = res_choice
     msg(f"Limine Resolution set to: {cfg.resolution}")
 
-    sb_ans = input("\nEnable UEFI Secure Boot with Lanzaboote? [y/N]: ").strip().lower()
+    sb_ans = input("\nEnable UEFI Secure Boot with Limine? [y/N]: ").strip().lower()
     cfg.secure_boot = sb_ans == "y"
     if cfg.secure_boot:
-        msg("UEFI Secure Boot (Lanzaboote) enabled.")
+        msg("UEFI Secure Boot (Limine) enabled.")
 
     # 6. SSH & Age Key Management
     step("6/12", "SSH & Age Key Management")
