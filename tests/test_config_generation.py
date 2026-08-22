@@ -185,6 +185,7 @@ def generate_host_default_nix(cfg: Any) -> str:
 
 {{
   imports = [
+    ./hardware.nix
     ./disko.nix
   ];
 

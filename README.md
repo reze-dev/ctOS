@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/NixOS-unstable-blue?logo=nixos&logoColor=white" alt="NixOS Unstable"/>
   <img src="https://img.shields.io/badge/flake--parts-modular-5277C3?logo=nixos" alt="flake-parts"/>
   <img src="https://img.shields.io/badge/experimental-pipe--operators-orange" alt="Pipe Operators"/>
-  <img src="https://img.shields.io/badge/secure--boot-lanzaboote-success" alt="Lanzaboote Secure Boot"/>
+  <img src="https://img.shields.io/badge/secure--boot-limine-success" alt="Limine Secure Boot"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -27,7 +27,7 @@
 - **🎛️ Toggle-based modularity** — every module is behind `northstar.<domain>.<feature>.enable` options
 - **⚡ Pipe Operator Composition** — leverages native `pipe-operators` (`|>`) for clean functional transformations
 - **📁 Auto-discovery** — drop a host directory in `hosts/` or a module in `modules/` and it's automatically wired up
-- **🛡️ UEFI Secure Boot** — first-class Lanzaboote support with Limine as the modern UEFI bootloader
+- **🛡️ UEFI Secure Boot** — native Secure Boot via Limine as the sole UEFI bootloader
 - **💾 Dynamic Disko** — `mkDisko` generates partition configs for whole-disk or dual-boot layouts with Btrfs/Ext4
 - **🤖 AI/ML & Gaming** — out-of-the-box modules for Ollama, PyTorch, CUDA/ROCm, Steam, Gamescope, and more
 - **🔐 Secrets Management** — integrated sops-nix & age key management
@@ -47,25 +47,18 @@ export NIX_CONFIG="experimental-features = nix-command flakes pipe-operators"
 nix run github:reze-dev/northstar --impure
 ```
 
-### Using as a Template
+### Adding a Host
 
 ```bash
-# Clone the repo
+# Clone the repo locally
 git clone https://github.com/reze-dev/northstar ~/northstar
 cd ~/northstar
 
-# Copy the example host
-cp -r hosts/example hosts/MyHost
+# Run the interactive installer (creates hosts/<hostname> automatically)
+nix run . --impure
 
-# Generate your hardware config
-sudo nixos-generate-config --show-hardware-config > hosts/MyHost/hardware.nix
-
-# Edit your host config
-$EDITOR hosts/MyHost/default.nix
-$EDITOR hosts/MyHost/disko.nix
-
-# Build and switch
-sudo nixos-rebuild switch --flake .#MyHost
+# Build and switch to your host
+sudo nixos-rebuild switch --flake .#<hostname>
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide on adding hosts and modules.
@@ -102,7 +95,6 @@ northstar/
 │
 ├── hosts/                     # Host machine configurations (auto-discovered)
 │   ├── common.nix             # Shared base config (flakes, HM, nix-index)
-│   ├── example/               # ← Template for new hosts — copy this!
 │   └── <hostname>/            # Per-machine config
 │       ├── default.nix        # Host entry point (users, profiles, GPU)
 │       ├── disko.nix          # Declarative partition scheme
@@ -159,7 +151,7 @@ northstar.profiles = {
 ### Core & System (`northstar.features.*`)
 | Module | Description |
 | :--- | :--- |
-| `boot` | Bootloader (Limine), Plymouth splash, Secure Boot (Lanzaboote) |
+| `boot` | Bootloader (Limine), Plymouth splash, Secure Boot (Limine) |
 | `networking` | NetworkManager + configurable `/etc/hosts` |
 | `locales` | Timezone, keyboard, i18n |
 | `fonts` | Curated Nerd Fonts |
@@ -225,8 +217,6 @@ northstar.mkDisko {
 }
 ```
 
-See `hosts/example/disko.nix` for a documented template.
-
 ---
 
 ## 🧪 Testing
@@ -238,8 +228,8 @@ nix flake check --impure
 # Python installer tests
 python3 -m unittest discover -s tests -v
 
-# Evaluate a host
-nix eval --impure .#nixosConfigurations.example.config.system.build.toplevel.name
+# Evaluate host configuration
+nix eval --impure .#nixosConfigurations.Makima.config.system.build.toplevel.name
 ```
 
 ---

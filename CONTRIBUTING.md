@@ -22,13 +22,14 @@ This provides `nixfmt`, `nil` (Nix LSP), `python3`, `git`, and `jq`.
 
 ## Adding a New Host
 
-1. Copy the example template:
+1. Run the interactive installer (creates `hosts/<hostname>` automatically):
    ```bash
-   cp -r hosts/example hosts/YourHostName
+   nix run . --impure
    ```
 
-2. Generate your hardware config:
+2. Or create a host directory manually (`hosts/YourHostName` containing `default.nix`, `disko.nix`, and `hardware.nix`):
    ```bash
+   mkdir -p hosts/YourHostName
    sudo nixos-generate-config --show-hardware-config > hosts/YourHostName/hardware.nix
    ```
 
@@ -107,7 +108,6 @@ northstar/
 ├── flake/                 # flake-parts modules (hosts, installer, checks, devshell, formatter)
 ├── hosts/                 # Host machine configs (auto-discovered)
 │   ├── common.nix         # Shared base config
-│   ├── example/           # Template for new hosts
 │   └── <hostname>/        # Per-machine config
 ├── home/
 │   └── home.nix           # Base Home Manager user environment
