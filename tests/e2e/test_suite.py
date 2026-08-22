@@ -50,7 +50,6 @@ from installer.install import (
     build_gpu_config,
     build_profile_config,
     default_features as _orig_default_features,
-    format_grub_extra_entries,
     format_limine_extra_entries,
     format_pci_bus_id,
     generate_disko_partition_only,
@@ -80,7 +79,7 @@ class InstallConfig:
     shell: str = "zsh"
     bootloader: BootloaderChoice = BootloaderChoice.LIMINE
     secure_boot: bool = False
-    secure_boot_pki: str = "/etc/secureboot"
+    secure_boot_pki: str = "/var/lib/sbctl"
     resolution: str = "1920x1080"
     gpu_choice: GpuChoice = GpuChoice.NONE
     nvidia_bus_id: str = ""
@@ -210,11 +209,6 @@ def build_bootloader_config(cfg: Any) -> str:
         extra = format_limine_extra_entries(cfg.dual_boot_entries)
         if extra:
             lines.append(extra)
-    elif cfg.bootloader == BootloaderChoice.GRUB:
-        lines.append('  northstar.features.boot.loader = "grub";')
-        extra = format_grub_extra_entries(cfg.dual_boot_entries)
-        if extra:
-            lines.append(extra)
 
     if getattr(cfg, "secure_boot", False):
         lines.append("  northstar.features.boot.secureBoot.enable = true;")
@@ -296,11 +290,12 @@ def generate_host_default_nix(cfg: Any) -> str:
 
 {{
   imports = [
+    ./hardware.nix
     ./disko.nix
   ];
 
   home-manager.users.{cfg.username} = {{
-    imports = [ ../../home ];
+    imports = [ ../../home/home.nix ];
     home.username = lib.mkForce "{cfg.username}";
     home.homeDirectory = lib.mkForce "/home/{cfg.username}";
   }};
@@ -974,10 +969,10 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
             self.assertIsNotNone(loaded)
             self.assertEqual(loaded.hostname, "SavedRig")
 
+    @patch("e2e.test_suite.is_mounted_check", return_value=False)
     @patch("installer.install.run")
-    @patch("tests.e2e.test_suite.is_mounted_check", return_value=False)
-    def test_t1_f06_06_idempotent_remount_check_ensure_mounted(self, mock_is_mounted, mock_run) -> None:
-        cfg = InstallConfig(nixos_part="/dev/sda2", efi_part="/dev/sda1", fs_type="ext4")
+    def test_t1_f06_06_idempotent_remount_check_ensure_mounted(self, mock_run, mock_is_mounted) -> None:
+        cfg = InstallConfig(mode=InstallMode.PARTITION_ONLY, nixos_part="/dev/sda2", efi_part="/dev/sda1", fs_type="ext4")
         ensure_mounted(cfg)
         mock_run.assert_any_call("mount /dev/sda2 /mnt")
         mock_run.assert_any_call("mount /dev/sda1 /mnt/boot/efi")
@@ -1126,7 +1121,7 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
         out = build_bootloader_config(cfg)
         self.assertIn('boot.loader.limine.resolution = "2560x1440";', out)
 
-    def test_t1_f02_02_secure_boot_toggle_lanzaboote_config(self) -> None:
+    def test_t1_f02_02_secure_boot_toggle_limine_config(self) -> None:
         cfg = InstallConfig(secure_boot=True)
         out = build_bootloader_config(cfg)
         self.assertIn("northstar.features.boot.secureBoot.enable = true;", out)
@@ -1147,8 +1142,8 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
     def test_t1_f06_05_disko_whole_disk_btrfs_subvolumes_generation(self) -> None:
         cfg = InstallConfig(disk_dev="nvme0n1", fs_type="btrfs", swap_size="16G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/btrfs.nix ];", out)
-        self.assertIn('disko.devices.disk.main.device = "/dev/nvme0n1";', out)
+        self.assertIn("northstar.mkDisko {", out)
+        self.assertIn('device = "/dev/nvme0n1";', out)
 
     def test_t1_f11_06_multi_user_host_isolation_trusted_users(self) -> None:
         common_nix = (PROJECT_ROOT / "hosts/common.nix").read_text()
@@ -1156,15 +1151,16 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
         self.assertIn('"root"', common_nix)
         self.assertIn('"@wheel"', common_nix)
 
-    def test_t1_f05_07_grub_isolation_no_limine_resolution(self) -> None:
-        cfg = InstallConfig(bootloader=BootloaderChoice.GRUB, resolution="1920x1080")
+    def test_t1_f05_07_limine_always_emits_resolution(self) -> None:
+        cfg = InstallConfig(bootloader=BootloaderChoice.LIMINE, resolution="1920x1080")
         out = build_bootloader_config(cfg)
-        self.assertNotIn("boot.loader.limine.resolution", out)
+        self.assertIn("boot.loader.limine.resolution", out)
 
     def test_t1_f06_08_disko_whole_disk_ext4_generation(self) -> None:
         cfg = InstallConfig(disk_dev="sda", fs_type="ext4", swap_size="0", root_size="500G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/ext4.nix ];", out)
+        self.assertIn("northstar.mkDisko {", out)
+        self.assertIn('fsType = "ext4";', out)
 
     def test_t1_f06_09_disko_partition_only_with_dedicated_swap(self) -> None:
         cfg = InstallConfig(
@@ -1191,9 +1187,9 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
         self.assertIn("northstar-install", flake_installer)
         self.assertIn("runtimeInputs", flake_installer)
 
-    def test_t1_f03_02_deprecated_rust_installer_redirection(self) -> None:
-        rust_installer = (PROJECT_ROOT / "flake/rust-installer.nix").read_text()
-        self.assertIn("deprecated", rust_installer.lower())
+    def test_t1_f03_02_rust_installer_fully_removed(self) -> None:
+        self.assertFalse((PROJECT_ROOT / "flake/rust-installer.nix").exists())
+        self.assertFalse((PROJECT_ROOT / "installer-rs").exists())
 
     def test_t1_f10_03_temporary_git_repository_staging(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1289,17 +1285,17 @@ class Tier2BoundaryTests(unittest.TestCase):
     def test_t2_f01_05_swap_size_zero_disables_swap(self) -> None:
         cfg = InstallConfig(swap_size="0")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn('partitions.swap.size = lib.mkForce "0";', out)
+        self.assertIn('swapSize = "0";', out)
 
     def test_t2_f01_06_root_size_percentage_format(self) -> None:
         cfg = InstallConfig(root_size="50%")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn('partitions.root.size = lib.mkForce "50%";', out)
+        self.assertIn('rootSize = "50%";', out)
 
     def test_t2_f01_07_root_size_gigabytes_format(self) -> None:
         cfg = InstallConfig(root_size="250G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn('partitions.root.size = lib.mkForce "250G";', out)
+        self.assertIn('rootSize = "250G";', out)
 
     def test_t2_f01_08_special_chars_in_hashed_pw(self) -> None:
         cfg = InstallConfig(hashed_pw="$6$salt$hash#with%special@chars")
@@ -1432,8 +1428,10 @@ class Tier2BoundaryTests(unittest.TestCase):
         self.assertEqual(strip_filesystems_from_hardware(""), "")
 
     def test_t2_f03_07_strip_filesystems_no_fs_blocks(self) -> None:
-        hw = "boot.kernelModules = [ \"kvm\" ];\n"
-        self.assertEqual(strip_filesystems_from_hardware(hw), hw.strip())
+        hw = 'boot.kernelModules = [ "kvm" ];\n'
+        cleaned = strip_filesystems_from_hardware(hw)
+        self.assertIn('boot.kernelModules = [ "kvm" ];', cleaned)
+        self.assertIn("graphics.enable", cleaned)
 
     def test_t2_f03_08_strip_filesystems_nested_attributes(self) -> None:
         hw = 'fileSystems."/" = {\n  device = "/dev/sda";\n  options = [ "subvol=root" ];\n};\nboot.loader.grub.enable = true;\n'
@@ -1450,8 +1448,8 @@ class Tier2BoundaryTests(unittest.TestCase):
             (Path(tmpdir) / "EFI/Microsoft").mkdir(parents=True)
             self.assertEqual(scan_esp_for_os(Path(tmpdir), "UUID"), [])
 
-    def test_t2_f03_11_grub_extra_entries_empty_list(self) -> None:
-        self.assertEqual(format_grub_extra_entries([]), "")
+    def test_t2_f03_11_limine_extra_entries_empty_list_dup(self) -> None:
+        self.assertEqual(format_limine_extra_entries([]), "")
 
     def test_t2_f03_12_limine_extra_entries_empty_list(self) -> None:
         self.assertEqual(format_limine_extra_entries([]), "")
@@ -1646,11 +1644,11 @@ class Tier3InteractionTests(unittest.TestCase):
         self.assertIn('nvidiaBusId = "PCI:1:0:0";', out)
         self.assertIn('amdgpuBusId = "PCI:5:0:0";', out)
 
-    @patch("installer.install.run")
-    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("e2e.test_suite.is_mounted_check", return_value=False)
     @patch("shutil.which", return_value="/usr/bin/zramctl")
-    @patch("tests.e2e.test_suite.is_mounted_check", return_value=False)
-    def test_t3_03_btrfs_whole_disk_with_zram_and_resumed_pipeline(self, mock_mount, mock_which, mock_rc, mock_run) -> None:
+    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("installer.install.run")
+    def test_t3_03_btrfs_whole_disk_with_zram_and_resumed_pipeline(self, mock_run, mock_rc, mock_which, mock_mount) -> None:
         """Pair: BTRFS Whole Disk + ZRAM protection + resumption at install_nixos."""
         with tempfile.TemporaryDirectory() as tmpdir:
             s = State(state_file=Path(tmpdir) / "state.json")
@@ -1674,9 +1672,9 @@ class Tier3InteractionTests(unittest.TestCase):
                 mock_run.assert_any_call("swapon -p 32767 /dev/zram0")
 
     def test_t3_04_ext4_partition_only_with_dedicated_swap_and_windows_dualboot(self) -> None:
-        """Pair: Partition-only EXT4 + dedicated swap partition + Windows dual-boot + GRUB."""
+        """Pair: Partition-only EXT4 + dedicated swap partition + Windows dual-boot + Limine."""
         cfg = InstallConfig(
-            bootloader=BootloaderChoice.GRUB,
+            bootloader=BootloaderChoice.LIMINE,
             mode=InstallMode.PARTITION_ONLY,
             nixos_part="/dev/nvme0n1p5",
             efi_part="/dev/nvme0n1p1",
@@ -1691,7 +1689,7 @@ class Tier3InteractionTests(unittest.TestCase):
         self.assertIn("disko.devices.disk.swap", disko_out)
         self.assertIn('device = "/dev/nvme0n1p6";', disko_out)
         host_out = generate_host_default_nix(cfg)
-        self.assertIn('menuentry "Windows 11"', host_out)
+        self.assertIn("/Windows 11", host_out)
 
     def test_t3_05_base_profile_fish_shell_custom_deltas_and_sops_secrets(self) -> None:
         """Pair: Base profile + Fish shell + secrets enabled."""
@@ -1776,11 +1774,11 @@ class Tier4RealWorldTests(unittest.TestCase):
             key_path = generate_ssh_key(ssh_dir, cfg.hostname)
             self.assertTrue(key_path.exists())
 
-    @patch("installer.install.run")
-    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("e2e.test_suite.is_mounted_check", return_value=False)
     @patch("shutil.which", return_value="/usr/bin/zramctl")
-    @patch("tests.e2e.test_suite.is_mounted_check", return_value=False)
-    def test_t4_02_resumed_install_after_killed_nixos_install(self, mock_mount, mock_which, mock_rc, mock_run) -> None:
+    @patch("installer.install.run_capture", return_value="/dev/zram0")
+    @patch("installer.install.run")
+    def test_t4_02_resumed_install_after_killed_nixos_install(self, mock_run, mock_rc, mock_which, mock_mount) -> None:
         """Workload 2: Resuming state after interrupted nixos-install."""
         with tempfile.TemporaryDirectory() as tmpdir:
             sf = Path(tmpdir) / "state.json"
@@ -1829,8 +1827,8 @@ class Tier4RealWorldTests(unittest.TestCase):
             self.assertTrue((backup_dir / "ssh_host_ed25519_key").exists())
             self.assertTrue((backup_dir / "key.txt").exists())
 
-    def test_t4_04_dual_boot_alongside_windows_with_lanzaboote_secure_boot(self) -> None:
-        """Workload 4: Dual-boot with Windows 11 and Lanzaboote Secure Boot."""
+    def test_t4_04_dual_boot_alongside_windows_with_limine_secure_boot(self) -> None:
+        """Workload 4: Dual-boot with Windows 11 and Limine Secure Boot."""
         with tempfile.TemporaryDirectory() as tmpdir:
             esp = Path(tmpdir) / "boot/efi"
             (esp / "EFI/Microsoft/Boot").mkdir(parents=True)

@@ -7,7 +7,19 @@
 let
   cfg = config.northstar.features.display;
   tuigreet = "${pkgs.tuigreet}/bin/tuigreet";
-  hyprland-session = "${config.programs.hyprland.package}/share/wayland-sessions";
+
+  # Dynamically discover available Wayland session directories
+  waylandSessionDirs =
+    lib.optional (config.programs.hyprland.enable or false
+    ) "${config.programs.hyprland.package}/share/wayland-sessions"
+    ++ lib.optional (config.programs.niri.enable or false
+    ) "${config.programs.niri.package}/share/wayland-sessions";
+
+  sessionDirs =
+    if waylandSessionDirs != [ ] then
+      lib.concatStringsSep ":" waylandSessionDirs
+    else
+      "/run/current-system/sw/share/wayland-sessions";
 in
 {
   options.northstar.features.display.enable =
@@ -20,7 +32,7 @@ in
       enable = true;
       settings = {
         default_session = {
-          command = "${tuigreet} --time --remember --remember-session --sessions ${hyprland-session}";
+          command = "${tuigreet} --time --remember --remember-session --sessions ${sessionDirs}";
           user = "greeter";
         };
       };

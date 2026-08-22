@@ -26,7 +26,7 @@ in
               prefix = "C-Space";
               keyMode = "vi";
               sensibleOnTop = true;
-              shell = "~/.nix-profile/bin/fish";
+              shell = lib.mkDefault "${pkgs.fish}/bin/fish";
               extraConfig = ''
                 set-option -sa terminal-overrides ",xterm*:Tc"
                 set-option -g focus-events on

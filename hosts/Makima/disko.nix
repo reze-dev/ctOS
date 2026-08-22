@@ -1,36 +1,14 @@
-# Auto-generated disko config for Makima (partition-only)
-{
-  disko.devices.disk.nixos = {
-    type = "disk";
-    device = "/dev/nvme0n1p4";
-    content = {
-      type = "btrfs";
-      extraArgs = [ "-f" ];
-      subvolumes = {
-        "/root" = {
-          mountpoint = "/";
-          mountOptions = [ "compress=zstd" ];
-        };
-        "/home" = {
-          mountpoint = "/home";
-          mountOptions = [ "compress=zstd" ];
-        };
-        "/nix" = {
-          mountpoint = "/nix";
-          mountOptions = [ "compress=zstd" "noatime" ];
-        };
-        "/log" = {
-          mountpoint = "/var/log";
-          mountOptions = [ "compress=zstd" ];
-        };
-      };
-    };
-  };
+# Auto-generated disko config for Makima
+{ lib, ... }:
 
-  # Existing EFI partition — not managed by disko
-  fileSystems."/boot/efi" = {
-    device = "/dev/disk/by-uuid/CB41-6695";
-    fsType = "vfat";
-    options = [ "fmask=0022" "dmask=0022" ];
-  };
+let
+  northstar = import ../../lib/core.nix { inherit lib; };
+in
+northstar.mkDisko {
+  mode = "whole-disk";
+  device = "/dev/nvme0n1";
+  fsType = "btrfs";
+  efiSize = "4G";
+  swapSize = "16G";
+  rootSize = "270G";
 }
