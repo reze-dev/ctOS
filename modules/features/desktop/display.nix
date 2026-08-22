@@ -9,12 +9,15 @@ let
   tuigreet = "${pkgs.tuigreet}/bin/tuigreet";
 
   # Dynamically discover available Wayland session directories
-  sessionDirs = lib.concatStringsSep ":" (
-    lib.optional (config.programs.hyprland.enable or false
-    ) "${config.programs.hyprland.package}/share/wayland-sessions"
-    ++ lib.optional (config.programs.niri.enable or false
-    ) "${config.programs.niri.package}/share/wayland-sessions"
-  );
+  waylandSessionDirs =
+    lib.optional (config.programs.hyprland.enable or false) "${config.programs.hyprland.package}/share/wayland-sessions"
+    ++ lib.optional (config.programs.niri.enable or false) "${config.programs.niri.package}/share/wayland-sessions";
+
+  sessionDirs =
+    if waylandSessionDirs != [ ] then
+      lib.concatStringsSep ":" waylandSessionDirs
+    else
+      "/run/current-system/sw/share/wayland-sessions";
 in
 {
   options.northstar.features.display.enable =
