@@ -44,7 +44,7 @@ class InstallConfig:
     shell: str = "zsh"
     bootloader: BootloaderChoice = BootloaderChoice.LIMINE
     secure_boot: bool = False
-    secure_boot_pki: str = "/etc/secureboot"
+    secure_boot_pki: str = "/var/lib/sbctl"
     resolution: str = "1920x1080"
     features: list[FeatureOption] = field(default_factory=list)
     dual_boot_entries: list[DualBootEntry] = field(default_factory=list)
