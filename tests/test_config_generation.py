@@ -24,7 +24,6 @@ from installer.install import (
     build_gpu_config,
     build_profile_config,
     default_features as _orig_default_features,
-    format_grub_extra_entries,
     format_limine_extra_entries,
     generate_disko_partition_only,
     generate_disko_whole_disk,
@@ -45,7 +44,7 @@ class InstallConfig:
     shell: str = "zsh"
     bootloader: BootloaderChoice = BootloaderChoice.LIMINE
     secure_boot: bool = False
-    secure_boot_pki: str = "/etc/secureboot"
+    secure_boot_pki: str = "/var/lib/sbctl"
     resolution: str = "1920x1080"
     features: list[FeatureOption] = field(default_factory=list)
     dual_boot_entries: list[DualBootEntry] = field(default_factory=list)
@@ -103,11 +102,6 @@ def build_bootloader_config(cfg: Any) -> str:
         res = getattr(cfg, "resolution", "1920x1080") or "1920x1080"
         lines.append(f'  boot.loader.limine.resolution = "{res}";')
         extra = format_limine_extra_entries(cfg.dual_boot_entries)
-        if extra:
-            lines.append(extra)
-    elif cfg.bootloader == BootloaderChoice.GRUB:
-        lines.append('  northstar.features.boot.loader = "grub";')
-        extra = format_grub_extra_entries(cfg.dual_boot_entries)
         if extra:
             lines.append(extra)
 
@@ -191,11 +185,12 @@ def generate_host_default_nix(cfg: Any) -> str:
 
 {{
   imports = [
+    ./hardware.nix
     ./disko.nix
   ];
 
   home-manager.users.{cfg.username} = {{
-    imports = [ ../../home ];
+    imports = [ ../../home/home.nix ];
     home.username = lib.mkForce "{cfg.username}";
     home.homeDirectory = lib.mkForce "/home/{cfg.username}";
   }};
@@ -259,17 +254,17 @@ class TestConfigGeneration(unittest.TestCase):
         self.assertIn("/Windows 11", content)
         self.assertIn("path: boot():/EFI/Microsoft/Boot/bootmgfw.efi", content)
 
-    def test_grub_does_not_emit_limine_resolution(self):
-        """GRUB bootloader does not emit boot.loader.limine.resolution."""
+    def test_limine_always_emits_resolution(self):
+        """Limine bootloader always emits boot.loader.limine.resolution."""
         cfg = InstallConfig(
-            bootloader=BootloaderChoice.GRUB,
+            bootloader=BootloaderChoice.LIMINE,
             resolution="1920x1080",
             ssh_key_action="none",
             age_key_action="none",
         )
         content = generate_host_default_nix(cfg)
-        self.assertIn('northstar.features.boot.loader = "grub";', content)
-        self.assertNotIn("boot.loader.limine.resolution", content)
+        self.assertIn('northstar.features.boot.loader = "limine";', content)
+        self.assertIn('boot.loader.limine.resolution = "1920x1080";', content)
 
     def test_limine_empty_resolution_fallback(self):
         """Empty resolution defaults safely to 1920x1080."""
@@ -294,7 +289,7 @@ class TestConfigGeneration(unittest.TestCase):
     def test_secure_boot_disabled_omission(self):
         """When secure_boot is False, secureBoot.enable is not emitted as true."""
         cfg = InstallConfig(
-            bootloader=BootloaderChoice.GRUB,
+            bootloader=BootloaderChoice.LIMINE,
             secure_boot=False,
             ssh_key_action="none",
             age_key_action="none",
@@ -398,15 +393,15 @@ class TestConfigGeneration(unittest.TestCase):
 
     # ── 5. Disko & Host Config Synthesis ────────────────────────────
 
-    def test_generate_host_default_nix_base_grub(self):
-        """Verify host default.nix for Base profile with GRUB."""
+    def test_generate_host_default_nix_base_limine(self):
+        """Verify host default.nix for Base profile with Limine."""
         cfg = InstallConfig(
             hostname="TestServer",
             username="admin",
             hashed_pw="$6$testhash",
             profile=ProfileChoice.BASE,
             shell="zsh",
-            bootloader=BootloaderChoice.GRUB,
+            bootloader=BootloaderChoice.LIMINE,
             features=default_features(ProfileChoice.BASE),
             dual_boot_entries=[],
             mode=InstallMode.WHOLE_DISK,
@@ -424,7 +419,7 @@ class TestConfigGeneration(unittest.TestCase):
         self.assertIn("home-manager.users.admin = {", content)
         self.assertIn("users.users.admin = {", content)
         self.assertIn('hashedPassword = "$6$testhash";', content)
-        self.assertIn('northstar.features.boot.loader = "grub";', content)
+        self.assertIn('northstar.features.boot.loader = "limine";', content)
         self.assertIn("base.enable = true;", content)
         self.assertNotIn("desktop.enable = true;", content)
         self.assertIn('system.stateVersion = "26.11";', content)
@@ -474,7 +469,7 @@ class TestConfigGeneration(unittest.TestCase):
             hashed_pw="$6$rezehash",
             profile=ProfileChoice.WORKSTATION,
             shell="zsh",
-            bootloader=BootloaderChoice.GRUB,
+            bootloader=BootloaderChoice.LIMINE,
             features=default_features(ProfileChoice.WORKSTATION),
             dual_boot_entries=[],
             mode=InstallMode.WHOLE_DISK,
@@ -507,9 +502,10 @@ class TestConfigGeneration(unittest.TestCase):
         )
 
         disko = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/btrfs.nix ];", disko)
-        self.assertIn('disko.devices.disk.main.device = "/dev/nvme0n1";', disko)
-        self.assertIn('disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "16G";', disko)
+        self.assertIn("northstar.mkDisko {", disko)
+        self.assertIn('device = "/dev/nvme0n1";', disko)
+        self.assertIn('fsType = "btrfs";', disko)
+        self.assertIn('swapSize = "16G";', disko)
 
     def test_generate_disko_whole_disk_ext4(self):
         """Verify Disko whole-disk EXT4 synthesis."""
@@ -522,10 +518,11 @@ class TestConfigGeneration(unittest.TestCase):
         )
 
         disko = generate_disko_whole_disk(cfg)
-        self.assertIn("imports = [ ../../lib/disko/ext4.nix ];", disko)
-        self.assertIn('disko.devices.disk.main.device = "/dev/sda";', disko)
-        self.assertIn('disko.devices.disk.main.content.partitions.swap.size = lib.mkForce "0";', disko)
-        self.assertIn('disko.devices.disk.main.content.partitions.root.size = lib.mkForce "500G";', disko)
+        self.assertIn("northstar.mkDisko {", disko)
+        self.assertIn('device = "/dev/sda";', disko)
+        self.assertIn('fsType = "ext4";', disko)
+        self.assertIn('swapSize = "0";', disko)
+        self.assertIn('rootSize = "500G";', disko)
 
     def test_generate_disko_partition_only_btrfs(self):
         """Verify Disko partition-only BTRFS synthesis."""

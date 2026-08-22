@@ -6,9 +6,9 @@ in
   options.northstar.features.locales.enable = lib.mkEnableOption "timezone and locale settings";
 
   config = lib.mkIf cfg.enable {
-    time.timeZone = "Asia/Kolkata";
+    time.timeZone = lib.mkDefault "Asia/Kolkata";
 
-    i18n.defaultLocale = "en_US.UTF-8";
+    i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
 
     i18n.extraLocaleSettings = {
       LC_ADDRESS = "en_IN";

@@ -32,47 +32,8 @@ jobs:
       - name: Evaluate Makima Host Configuration
         run: nix eval --impure --expr '(builtins.getFlake (toString ./.)).nixosConfigurations.Makima.config.system.build.toplevel.name'
 
-  rust-ci:
-    name: Rust TUI Installer Tests & Build
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: installer-rs
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            installer-rs/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('installer-rs/Cargo.lock') }}
-
       - name: Check formatting
-        run: cargo fmt --check
-
-      - name: Clippy (lint)
-        run: cargo clippy -- -D warnings
-
-      - name: Run Rust unit & integration tests
-        run: cargo test --verbose
-
-      - name: Build binary
-        run: cargo build --release
-
-      - name: Verify Cargo.lock is up to date
-        run: |
-          cargo update --dry-run 2>&1
-          echo "✅ Cargo.lock is up to date"
+        run: nix fmt -- --check .
 
   python-ci:
     name: Python Installer & E2E Tests

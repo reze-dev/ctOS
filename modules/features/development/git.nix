@@ -15,7 +15,7 @@ in
             enable = true;
             settings = {
               user.name = "reze-dev";
-              user.email = "25588579+reze-dev@users.noreply.github.com ";
+              user.email = "25588579+reze-dev@users.noreply.github.com";
               init.defaultBranch = "main";
             };
           };

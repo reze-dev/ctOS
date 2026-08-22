@@ -12,6 +12,7 @@
         installer = pkgs.writeShellApplication {
           name = "northstar-install";
           runtimeInputs = with pkgs; [
+            inputs.determinate.packages.${system}.default
             nixos-install-tools
             age
             ssh-to-age

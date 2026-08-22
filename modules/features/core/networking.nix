@@ -3,13 +3,18 @@ let
   cfg = config.northstar.features.networking;
 in
 {
-  options.northstar.features.networking.enable = lib.mkEnableOption "NetworkManager and host entries";
+  options.northstar.features.networking = {
+    enable = lib.mkEnableOption "NetworkManager and host entries";
+
+    extraHosts = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      description = "Extra entries appended to /etc/hosts.";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
-    networking.extraHosts = ''
-      10.250.18.140 console-openshift-console.apps.nonprod.odisha.gov.in oauth-openshift.apps.nonprod.odisha.gov.in
-    '';
-
+    networking.extraHosts = cfg.extraHosts;
     networking.networkmanager.enable = true;
   };
 }

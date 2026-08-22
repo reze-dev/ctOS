@@ -2,6 +2,7 @@
 
 {
   imports = [
+    inputs.determinate.nixosModules.default
     inputs.home-manager.nixosModules.home-manager
     inputs.nix-index-database.nixosModules.nix-index
   ];

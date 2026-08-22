@@ -3,10 +3,10 @@
 
 let
   lib = inputs.nixpkgs.lib;
-  northstar = import ../lib { inherit lib; };
-  modulePaths = ../modules |> northstar.scanModules;
+  northstar = import ../lib/core.nix { inherit lib; };
+  modulePaths = northstar.scanModules ../modules;
   hostsDir = ../hosts;
-  hosts = hostsDir |> northstar.discoverHosts;
+  hosts = northstar.discoverHosts hostsDir;
 
   mkHost =
     hostName:
@@ -28,10 +28,10 @@ let
 in
 {
   flake = {
-    nixosConfigurations = hosts |> (h: lib.genAttrs h mkHost);
+    nixosConfigurations = lib.genAttrs hosts mkHost;
     nixosModules.default = {
       imports = modulePaths;
     };
-    homeManagerModules.default = import ../home;
+    homeManagerModules.default = import ../home/home.nix;
   };
 }

@@ -15,7 +15,8 @@ in
       [ "northstar" "features" "core" "secrets" ]
       [ "northstar" "features" "secrets" ]
     )
-  ] ++ lib.optionals (inputs != null && inputs ? sops-nix) [
+  ]
+  ++ lib.optionals (inputs != null && inputs ? sops-nix) [
     inputs.sops-nix.nixosModules.sops
   ];
 
@@ -65,25 +66,27 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    {
-      environment.systemPackages = [
-        pkgs.sops
-        pkgs.age
-        pkgs.ssh-to-age
-      ];
-    }
-    (lib.optionalAttrs (inputs != null && inputs ? sops-nix) {
-      sops = {
-        defaultSopsFile = lib.mkIf (cfg.defaultSopsFile != null) cfg.defaultSopsFile;
-        defaultSopsFormat = cfg.defaultSopsFormat;
-        age = {
-          keyFile = lib.mkIf (cfg.ageKeyFile != null) cfg.ageKeyFile;
-          sshKeyPaths = cfg.sshKeyPaths;
-          generateKey = cfg.generateKey;
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        environment.systemPackages = [
+          pkgs.sops
+          pkgs.age
+          pkgs.ssh-to-age
+        ];
+      }
+      (lib.optionalAttrs (inputs != null && inputs ? sops-nix) {
+        sops = {
+          defaultSopsFile = lib.mkIf (cfg.defaultSopsFile != null) cfg.defaultSopsFile;
+          defaultSopsFormat = cfg.defaultSopsFormat;
+          age = {
+            keyFile = lib.mkIf (cfg.ageKeyFile != null) cfg.ageKeyFile;
+            sshKeyPaths = cfg.sshKeyPaths;
+            generateKey = cfg.generateKey;
+          };
+          secrets = lib.mkIf (cfg.secrets != { }) cfg.secrets;
         };
-        secrets = lib.mkIf (cfg.secrets != { }) cfg.secrets;
-      };
-    })
-  ]);
+      })
+    ]
+  );
 }

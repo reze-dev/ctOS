@@ -11,14 +11,16 @@ let
       ...
     }:
     {
-      imports = [ inputs.caelestia-shell.homeManagerModules.default ];
+      imports = [
+        (inputs.caelestia-shell.homeManagerModules.default or inputs.caelestia-shell.homeModules.default
+          or inputs.caelestia-shell.homeManagerModule
+        )
+      ];
 
       config = {
         programs.caelestia = {
-          enable = false;
+          enable = true;
           systemd.enable = false; # Autostarted by compositor
-
-          cli.enable = false;
         };
       };
     };

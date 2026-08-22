@@ -7,21 +7,19 @@
 
 {
   imports = [
+    ./hardware.nix
     ./disko.nix
   ];
 
   home-manager.users.reze = {
-    imports = [ ../../home ];
+    imports = [ ../../home/home.nix ];
     home.username = lib.mkForce "reze";
     home.homeDirectory = lib.mkForce "/home/reze";
   };
 
-  boot.loader.grub.extraEntries = ''
-    menuentry "Fedora" {
-      search --fs-uuid --set=root CB41-6695
-      chainloader /EFI/fedora/shimx64.efi
-    }
-  '';
+  # Bootloader (Limine)
+  boot.loader.limine.resolution = "1920x1080";
+  northstar.features.boot.secureBoot.enable = true;
 
   users.users.reze = {
     isNormalUser = true;
@@ -33,13 +31,20 @@
       "docker"
     ];
     shell = pkgs.zsh;
-    hashedPassword = "$6$oXzrheHsEVSMJyV3$KzMdb2T8CHzGwcAlJqE3khEVfH/b5jFs/n5vNriwifcJ9mlgbsB221oILkizsjSYcFVJ5/kkYfjt8M2QFkkNl0";
+    hashedPassword = "$6$7uVH9VA23imtOFPs$Rx7oc7xoN5gxBqdB6pg1ZG7xqAeX4LIzLuKjPExFOySTdfmVGdDbCD.4K/dtLLbUbdpcNJ8W5OYpeknaij6mM.";
   };
 
-  #Northstar profiles
+  # Northstar profiles
   northstar.profiles = {
     desktop.enable = true;
     workstation.enable = true;
+  };
+
+  # Custom feature overrides
+  northstar.features = {
+    niri.enable = true;
+    fish.enable = true;
+    emacs.enable = true;
   };
 
   # NVIDIA GPU
