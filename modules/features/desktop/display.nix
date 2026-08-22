@@ -10,8 +10,10 @@ let
 
   # Dynamically discover available Wayland session directories
   waylandSessionDirs =
-    lib.optional (config.programs.hyprland.enable or false) "${config.programs.hyprland.package}/share/wayland-sessions"
-    ++ lib.optional (config.programs.niri.enable or false) "${config.programs.niri.package}/share/wayland-sessions";
+    lib.optional (config.programs.hyprland.enable or false
+    ) "${config.programs.hyprland.package}/share/wayland-sessions"
+    ++ lib.optional (config.programs.niri.enable or false
+    ) "${config.programs.niri.package}/share/wayland-sessions";
 
   sessionDirs =
     if waylandSessionDirs != [ ] then
