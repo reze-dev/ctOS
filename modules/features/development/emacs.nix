@@ -171,7 +171,7 @@ in
 
     environment.systemPackages = [
       wrappedEmacsPackage
-    ] ++ lib.optional cfg.doomEmacs.enable doomWrapper;
+    ]
+    ++ lib.optional cfg.doomEmacs.enable doomWrapper;
   };
 }
-
