@@ -144,7 +144,7 @@ in
       tools = lib.mkOption {
         type = lib.types.listOf lib.types.package;
         default = with pkgs; [
-          nixfmt-rfc-style
+          nixfmt
           prettier
           ruff
           uv
