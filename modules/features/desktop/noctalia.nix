@@ -6,6 +6,7 @@ let
   hmNoctaliaModule =
     {
       config,
+      pkgs,
       lib,
       inputs,
       ...
@@ -14,15 +15,10 @@ let
       wallpaper = ../../../assets/wallpapers/rose-pine-fractal.jpg;
     in
     {
-      imports = [
-        (inputs.noctalia.homeModules.default or inputs.noctalia.homeManagerModules.default
-          or inputs.noctalia.homeManagerModule
-        )
-      ];
-
       config = {
         programs.noctalia = {
           enable = true;
+          package = inputs.noctalia.packages.${pkgs.system}.default or pkgs.noctalia;
           systemd.enable = false;
 
           settings = {
