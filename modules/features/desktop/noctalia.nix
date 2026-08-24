@@ -18,7 +18,7 @@ let
       config = {
         programs.noctalia = {
           enable = true;
-          package = inputs.noctalia.packages.${pkgs.system}.default or pkgs.noctalia;
+          package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default or pkgs.noctalia;
           systemd.enable = false;
 
           settings = {
