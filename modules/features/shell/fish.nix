@@ -36,6 +36,13 @@ in
                 set -gx PATH (go env GOPATH)/bin $PATH
                 set -gx PATH $HOME/.config/emacs/bin $PATH
                 set -gx PATH $HOME/.local/share/coursier/bin $PATH
+                if test -n "$EMACS_ISOLATED_PATH"
+                  for p in (string split : $EMACS_ISOLATED_PATH)
+                    if not contains $p $PATH
+                      set -gx PATH $p $PATH
+                    end
+                  end
+                end
                 set -gx DIRENV_LOG_FORMAT ""
                 fish_config theme choose "Rosé Pine Auto"
               '';

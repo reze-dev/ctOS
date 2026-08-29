@@ -24,6 +24,7 @@ let
       pkgs.gnutar
       pkgs.gcc
       pkgs.fontconfig
+      pkgs.zig
     ])
     ++ (lib.optionals cfg.lsp.enable cfg.lsp.servers)
     ++ (lib.optionals cfg.dap.enable cfg.dap.debuggers)
@@ -40,7 +41,8 @@ let
       for bin in $out/bin/*; do
         if [ -f "$bin" ] && [ -x "$bin" ]; then
           wrapProgram "$bin" \
-            --prefix PATH : "${emacsToolsBinPath}"
+            --prefix PATH : "${emacsToolsBinPath}" \
+            --set EMACS_ISOLATED_PATH "${emacsToolsBinPath}"
         fi
       done
     '';
@@ -56,7 +58,7 @@ let
       echo "  doom install"
       exit 1
     fi
-    exec env PATH="${emacsToolsBinPath}:$PATH" "$DOOM_BIN" "$@"
+    exec env PATH="${emacsToolsBinPath}:$PATH" EMACS_ISOLATED_PATH="${emacsToolsBinPath}" "$DOOM_BIN" "$@"
   '';
 in
 {
@@ -102,6 +104,7 @@ in
         type = lib.types.listOf lib.types.package;
         default = with pkgs; [
           nixd
+          nil
           pyright
           rust-analyzer
           gopls
@@ -111,6 +114,10 @@ in
           yaml-language-server
           marksman
           bash-language-server
+          zls
+          jdt-language-server
+          taplo
+          emacs-lsp-booster
         ];
         description = "List of LSP server packages included exclusively in Emacs PATH.";
       };
@@ -129,6 +136,7 @@ in
           gdb
           lldb
           delve
+          python3Packages.debugpy
         ];
         description = "List of debugger packages included exclusively in Emacs PATH.";
       };
@@ -149,8 +157,10 @@ in
           ruff
           uv
           shfmt
+          shellcheck
           rustfmt
           gofumpt
+          taplo
         ];
         description = "List of code formatter and environment management tools included exclusively in Emacs PATH.";
       };

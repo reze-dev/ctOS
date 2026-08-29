@@ -36,6 +36,9 @@ in
                   export PATH=$HOME/.config/emacs/bin:$PATH
                   export PATH=$(go env GOPATH)/bin:$PATH
                   export PATH=$HOME/.local/share/coursier/bin:$PATH
+                  if [[ -n "$EMACS_ISOLATED_PATH" ]]; then
+                    export PATH="$EMACS_ISOLATED_PATH:$PATH"
+                  fi
                   export DIRENV_LOG_FORMAT=""
                   export STARSHIP_CONFIG=~/.cache/starship.toml
                 '')
