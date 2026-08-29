@@ -15,7 +15,7 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       codecrafters-cli
-      go
+      go_latest
       rustup
       tree-sitter
       zed-editor
