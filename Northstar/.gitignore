@@ -1,0 +1,9 @@
+result/
+__pycache__/
+*.pyc
+.direnv/
+*report.json
+
+# Ignore all wallpapers except rose pine fractal
+assets/wallpapers/*
+!assets/wallpapers/rose-pine-fractal.jpg
