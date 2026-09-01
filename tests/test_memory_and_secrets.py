@@ -121,7 +121,7 @@ class MemoryProtector:
         self.disable()
 
 
-def generate_ssh_key(target_dir: Path, hostname: str = "northstar") -> Path:
+def generate_ssh_key(target_dir: Path, hostname: str = "ctos") -> Path:
     """Generate Ed25519 host key for target system with 0600 permissions."""
     from installer.install import run
 
@@ -470,7 +470,7 @@ class TestBootloaderAndSecurityConfig(unittest.TestCase):
         out = build_bootloader_config(cfg)
         self.assertIn('# Bootloader (Limine)', out)
         self.assertIn('boot.loader.limine.resolution = "1920x1080";', out)
-        self.assertIn("northstar.features.boot.secureBoot.enable = true;", out)
+        self.assertIn("ctos.features.boot.secureBoot.enable = true;", out)
 
 
 class TestAIMLAndHardwareStub(unittest.TestCase):
@@ -490,7 +490,7 @@ class TestAIMLAndHardwareStub(unittest.TestCase):
                 f.enabled = True
 
         out = build_features_override(cfg)
-        self.assertIn("northstar.features = {", out)
+        self.assertIn("ctos.features = {", out)
         self.assertIn("development.aiml.enable = true;", out)
 
     @patch("installer.install.run")

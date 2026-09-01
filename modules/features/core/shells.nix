@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.shells;
+  cfg = config.ctos.features.shells;
 in
 {
-  options.northstar.features.shells.enable =
+  options.ctos.features.shells.enable =
     lib.mkEnableOption "system-level shell support (fish, zsh)";
 
   config = lib.mkIf cfg.enable {

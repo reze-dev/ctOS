@@ -6,7 +6,7 @@
 }:
 
 let
-  cfg = config.northstar.features.xdg;
+  cfg = config.ctos.features.xdg;
 
   hmXdgModule =
     {
@@ -192,7 +192,7 @@ let
     };
 in
 {
-  options.northstar.features.xdg.enable =
+  options.ctos.features.xdg.enable =
     lib.mkEnableOption "XDG desktop portals and MIME default application associations";
 
   config = lib.mkIf cfg.enable {

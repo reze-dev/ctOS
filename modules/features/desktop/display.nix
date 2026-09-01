@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = config.northstar.features.display;
+  cfg = config.ctos.features.display;
   tuigreet = "${pkgs.tuigreet}/bin/tuigreet";
 
   # Dynamically discover available Wayland session directories
@@ -22,7 +22,7 @@ let
       "/run/current-system/sw/share/wayland-sessions";
 in
 {
-  options.northstar.features.display.enable =
+  options.ctos.features.display.enable =
     lib.mkEnableOption "display manager and desktop environment";
 
   config = lib.mkIf cfg.enable {

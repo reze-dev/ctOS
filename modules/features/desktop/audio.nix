@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.audio;
+  cfg = config.ctos.features.audio;
 in
 {
-  options.northstar.features.audio.enable = lib.mkEnableOption "PipeWire audio";
+  options.ctos.features.audio.enable = lib.mkEnableOption "PipeWire audio";
 
   config = lib.mkIf cfg.enable {
     services.pulseaudio.enable = false;

@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.firefox;
+  cfg = config.ctos.features.firefox;
 in
 {
-  options.northstar.features.firefox.enable = lib.mkEnableOption "Firefox browser";
+  options.ctos.features.firefox.enable = lib.mkEnableOption "Firefox browser";
 
   config = lib.mkIf cfg.enable { programs.firefox.enable = true; };
 }

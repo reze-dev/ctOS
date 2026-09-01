@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.direnv;
+  cfg = config.ctos.features.direnv;
 in
 {
-  options.northstar.features.direnv.enable = lib.mkEnableOption "Direnv integration";
+  options.ctos.features.direnv.enable = lib.mkEnableOption "Direnv integration";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

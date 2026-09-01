@@ -6,10 +6,10 @@
 }:
 
 let
-  cfg = config.northstar.nvidia;
+  cfg = config.ctos.nvidia;
 in
 {
-  options.northstar.nvidia = {
+  options.ctos.nvidia = {
     enable = lib.mkEnableOption "NVIDIA GPU drivers";
 
     prime = {

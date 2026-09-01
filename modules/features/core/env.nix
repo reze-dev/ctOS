@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.env;
+  cfg = config.ctos.features.env;
 in
 {
-  options.northstar.features.env.enable = lib.mkEnableOption "environment variables (EDITOR, VISUAL)";
+  options.ctos.features.env.enable = lib.mkEnableOption "environment variables (EDITOR, VISUAL)";
 
   config = lib.mkIf cfg.enable {
     environment.variables.EDITOR = lib.mkForce "nvim";

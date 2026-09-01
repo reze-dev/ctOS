@@ -6,7 +6,7 @@
 }:
 
 let
-  cfg = config.northstar.features.emacs;
+  cfg = config.ctos.features.emacs;
 
   # Build the isolated toolkit path exclusively for Emacs and Doom
   emacsTools =
@@ -62,7 +62,7 @@ let
   '';
 in
 {
-  options.northstar.features.emacs = {
+  options.ctos.features.emacs = {
     enable = lib.mkEnableOption "Self-contained Emacs development environment";
 
     package = lib.mkOption {

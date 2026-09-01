@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.networking;
+  cfg = config.ctos.features.networking;
 in
 {
-  options.northstar.features.networking = {
+  options.ctos.features.networking = {
     enable = lib.mkEnableOption "NetworkManager and host entries";
 
     extraHosts = lib.mkOption {

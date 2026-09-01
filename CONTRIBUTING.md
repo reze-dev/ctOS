@@ -1,4 +1,4 @@
-# Contributing to Northstar
+# Contributing to ctOS
 
 Thanks for your interest in contributing! This guide covers the development workflow.
 
@@ -52,10 +52,10 @@ The host is **auto-discovered** — any directory in `hosts/` with both `default
    ```nix
    { config, lib, ... }:
    let
-     cfg = config.northstar.features.yourfeature;
+     cfg = config.ctos.features.yourfeature;
    in
    {
-     options.northstar.features.yourfeature.enable =
+     options.ctos.features.yourfeature.enable =
        lib.mkEnableOption "description of your feature";
 
      config = lib.mkIf cfg.enable {
@@ -103,7 +103,7 @@ We use `nixfmt-rfc-style` (the RFC 166 formatter).
 ## Directory Structure
 
 ```
-northstar/
+ctos/
 ├── flake.nix              # Flake entry point
 ├── flake/                 # flake-parts modules (hosts, installer, checks, devshell, formatter)
 ├── hosts/                 # Host machine configs (auto-discovered)

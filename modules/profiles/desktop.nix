@@ -1,12 +1,11 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.profiles.desktop;
+  cfg = config.ctos.profiles.desktop;
   features = [
     "audio"
     "bluetooth"
     "desktopPackages"
-    "noctalia"
     "cups"
     "display"
     "firefox"
@@ -21,10 +20,10 @@ let
   ];
 in
 {
-  options.northstar.profiles.desktop.enable = lib.mkEnableOption "desktop Northstar profile";
+  options.ctos.profiles.desktop.enable = lib.mkEnableOption "desktop ctOS profile";
 
   config = lib.mkIf cfg.enable {
-    northstar.features =
+    ctos.features =
       features
       |> (
         f:

@@ -6,7 +6,7 @@
     { pkgs, system, ... }:
     {
       devShells.default = pkgs.mkShell {
-        name = "northstar-dev";
+        name = "ctos-dev";
         packages = with pkgs; [
           # Nix tooling
           inputs.determinate.packages.${system}.default
@@ -23,7 +23,7 @@
         ];
 
         shellHook = ''
-          echo "❄️  Northstar development shell"
+          echo "❄️  ctOS development shell"
           echo ""
           echo "  nix flake check --impure   — run all checks"
           echo "  nix fmt                    — format all Nix files"

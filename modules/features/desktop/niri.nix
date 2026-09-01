@@ -7,7 +7,7 @@
 }:
 
 let
-  cfg = config.northstar.features.niri;
+  cfg = config.ctos.features.niri;
 
   hmNiriModule =
     {
@@ -18,8 +18,7 @@ let
       ...
     }:
     let
-      niriEnabled = osConfig.northstar.features.niri.enable or false;
-      noctaliaEnabled = osConfig.northstar.features.noctalia.enable or false;
+      niriEnabled = osConfig.ctos.features.niri.enable or false;
       actions = config.lib.niri.actions;
     in
     {
@@ -53,9 +52,6 @@ let
                   "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL && systemctl --user start nixos-fake-graphical-session.target"
                 ];
               }
-            ]
-            ++ lib.optionals noctaliaEnabled [
-              { command = [ "noctalia" ]; }
             ];
 
             # Input configuration
@@ -173,7 +169,6 @@ let
             layer-rules = [
               {
                 matches = [
-                  { namespace = "^noctalia.*$"; }
                   { namespace = "^waybar$"; }
                 ];
                 shadow.enable = false;
@@ -301,7 +296,7 @@ in
 {
   imports = [ inputs.niri.nixosModules.niri ];
 
-  options.northstar.features.niri.enable =
+  options.ctos.features.niri.enable =
     lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
 
   config = lib.mkIf cfg.enable {

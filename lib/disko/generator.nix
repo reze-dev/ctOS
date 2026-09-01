@@ -7,7 +7,7 @@
 { lib }:
 
 let
-  # Btrfs subvolume layout — standard Northstar layout with compress=zstd
+  # Btrfs subvolume layout — standard ctOS layout with compress=zstd
   btrfsSubvolumes =
     swapEnabled:
     {

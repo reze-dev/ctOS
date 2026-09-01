@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.tmux;
+  cfg = config.ctos.features.tmux;
 in
 {
-  options.northstar.features.tmux.enable = lib.mkEnableOption "Tmux terminal multiplexer";
+  options.ctos.features.tmux.enable = lib.mkEnableOption "Tmux terminal multiplexer";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

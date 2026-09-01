@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.zoxide;
+  cfg = config.ctos.features.zoxide;
 in
 {
-  options.northstar.features.zoxide.enable = lib.mkEnableOption "Zoxide (cd replacement)";
+  options.ctos.features.zoxide.enable = lib.mkEnableOption "Zoxide (cd replacement)";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

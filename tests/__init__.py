@@ -1,3 +1,3 @@
 """
-Northstar Installer Unit Test Suite
+ctOS Installer Unit Test Suite
 """

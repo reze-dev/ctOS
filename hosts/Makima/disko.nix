@@ -2,9 +2,9 @@
 { lib, ... }:
 
 let
-  northstar = import ../../lib/core.nix { inherit lib; };
+  ctos = import ../../lib/core.nix { inherit lib; };
 in
-northstar.mkDisko {
+ctos.mkDisko {
   mode = "whole-disk";
   device = "/dev/nvme0n1";
   fsType = "btrfs";

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Northstar NixOS Installer — idempotent, resumable, with retries.
+ctOS NixOS Installer — idempotent, resumable, with retries.
 
-Provides full feature parity with Northstar Rust installer (installer-rs):
+Provides full feature parity with ctOS Rust installer (installer-rs):
 - Profiles (Base, Desktop, Workstation)
 - 10 toggleable feature options and delta overrides
 - Limine bootloader with display resolution detection
@@ -10,7 +10,7 @@ Provides full feature parity with Northstar Rust installer (installer-rs):
 - Dual-boot detection and chainloader config generation
 - Disko whole-disk and partition-only layout generation
 - Host default.nix generation targeting NixOS 26.11
-- Checkpoint-based state resume (/tmp/northstar-install-state.json)
+- Checkpoint-based state resume (/tmp/ctos-install-state.json)
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from typing import Any, Callable, Optional
 
 
 # ── Constants ────────────────────────────────────────────────────
-STATE_FILE = Path("/tmp/northstar-install-state.json")
+STATE_FILE = Path("/tmp/ctos-install-state.json")
 MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds, doubles each attempt
 NIX_CONFIG_FEATURES = "experimental-features = nix-command flakes pipe-operators"
@@ -221,12 +221,6 @@ def default_features(profile: ProfileChoice | str) -> list[FeatureOption]:
             label="Niri (Scrollable-tiling Wayland WM)",
             category="Desktop / Compositor",
             enabled=False,
-        ),
-        FeatureOption(
-            id="noctalia",
-            label="Noctalia (Custom Desktop Environment)",
-            category="Desktop / Compositor",
-            enabled=is_desktop,
         ),
         # Shell & Terminal
         FeatureOption(
@@ -603,9 +597,9 @@ class Page(str, Enum):
 
 
 class App:
-    """State and UI interaction controller for Northstar installer."""
+    """State and UI interaction controller for ctOS installer."""
 
-    def __init__(self, work_dir: str = "/tmp/test-northstar-workdir") -> None:
+    def __init__(self, work_dir: str = "/tmp/test-ctos-workdir") -> None:
         self.work_dir = work_dir
         self.page = Page.WELCOME
         self.should_quit = False
@@ -1082,14 +1076,14 @@ def detect_all() -> dict[str, Any]:
         pass
 
     # 3. Detect Dual-Boot OSes
-    temp_esp = Path("/tmp/northstar-esp-scan")
+    temp_esp = Path("/tmp/ctos-esp-scan")
     temp_esp.mkdir(parents=True, exist_ok=True)
     for dev, _, uuid in detected["efi_partitions"]:
         try:
-            if run(f"mount -o ro {dev} /tmp/northstar-esp-scan", check=False).returncode == 0:
+            if run(f"mount -o ro {dev} /tmp/ctos-esp-scan", check=False).returncode == 0:
                 entries = scan_esp_for_os(temp_esp, uuid)
                 detected["detected_os"].extend(entries)
-                run("umount /tmp/northstar-esp-scan", check=False)
+                run("umount /tmp/ctos-esp-scan", check=False)
         except Exception:
             pass
 
@@ -1134,13 +1128,13 @@ def build_gpu_config(cfg: InstallConfig) -> str:
     if cfg.gpu_choice == GpuChoice.NONE:
         return ""
     elif cfg.gpu_choice == GpuChoice.NVIDIA:
-        return "  # NVIDIA GPU\n  northstar.nvidia.enable = true;"
+        return "  # NVIDIA GPU\n  ctos.nvidia.enable = true;"
     elif cfg.gpu_choice == GpuChoice.NVIDIA_PRIME:
         key = cfg.igpu_type.bus_id_key
         return (
             "  # NVIDIA GPU\n"
-            "  northstar.nvidia.enable = true;\n"
-            "  northstar.nvidia.prime = {\n"
+            "  ctos.nvidia.enable = true;\n"
+            "  ctos.nvidia.prime = {\n"
             "    enable = true;\n"
             f'    nvidiaBusId = "{cfg.nvidia_bus_id}";\n'
             f'    {key} = "{cfg.igpu_bus_id}";\n'
@@ -1155,7 +1149,7 @@ def build_bootloader_config(cfg: InstallConfig) -> str:
     res = getattr(cfg, "resolution", "") or "1920x1080"
     lines.append(f'  boot.loader.limine.resolution = "{res}";')
     if getattr(cfg, "secure_boot", False):
-        lines.append("  northstar.features.boot.secureBoot.enable = true;")
+        lines.append("  ctos.features.boot.secureBoot.enable = true;")
     extra = format_limine_extra_entries(cfg.dual_boot_entries)
     if extra:
         lines.append(extra)
@@ -1163,8 +1157,8 @@ def build_bootloader_config(cfg: InstallConfig) -> str:
 
 
 def build_profile_config(cfg: InstallConfig) -> str:
-    """Build the northstar.profiles configuration block."""
-    lines = ["  # Northstar profiles", "  northstar.profiles = {"]
+    """Build the ctos.profiles configuration block."""
+    lines = ["  # ctOS profiles", "  ctos.profiles = {"]
     if cfg.profile == ProfileChoice.BASE:
         lines.append("    base.enable = true;")
     elif cfg.profile == ProfileChoice.DESKTOP:
@@ -1191,7 +1185,7 @@ def build_features_override(cfg: InstallConfig) -> str:
     if not overrides:
         return ""
 
-    return "  # Custom feature overrides\n  northstar.features = {\n" + "\n".join(overrides) + "\n  };"
+    return "  # Custom feature overrides\n  ctos.features = {\n" + "\n".join(overrides) + "\n  };"
 
 
 def strip_filesystems_from_hardware(hw_text: str) -> str:
@@ -1279,9 +1273,9 @@ def generate_disko_whole_disk(cfg: InstallConfig) -> str:
         "{ lib, ... }:",
         "",
         "let",
-        "  northstar = import ../../lib/core.nix { inherit lib; };",
+        "  ctos = import ../../lib/core.nix { inherit lib; };",
         "in",
-        "northstar.mkDisko {",
+        "ctos.mkDisko {",
         '  mode = "whole-disk";',
         f'  device = "/dev/{cfg.disk_dev}";',
         f'  fsType = "{cfg.fs_type}";',
@@ -1635,7 +1629,7 @@ class MemoryProtector:
 
         # 3. Fallback: Temporary swapfile in /tmp
         try:
-            swap_path = Path(f"/tmp/northstar-temp-swap-{os.getpid()}.swap")
+            swap_path = Path(f"/tmp/ctos-temp-swap-{os.getpid()}.swap")
             msg(f"  Creating temporary fallback swapfile at {swap_path}...")
             alloc_res = run(f"fallocate -l 2G {swap_path}", check=False)
             if alloc_res.returncode != 0:
@@ -1879,7 +1873,7 @@ def export_keys_backup(cfg: InstallConfig, target_root: Path = Path("/mnt")) -> 
         return
 
     try:
-        backup_dir = Path(dest_path) / f"northstar-keys-{cfg.hostname}"
+        backup_dir = Path(dest_path) / f"ctos-keys-{cfg.hostname}"
         backup_dir.mkdir(parents=True, exist_ok=True)
 
         host_ssh_dir = target_root / "etc" / "ssh"
@@ -2005,8 +1999,8 @@ def do_install_nixos(cfg: InstallConfig) -> None:
 @retry(max_attempts=3, delay=5)
 def do_copy_flake(cfg: InstallConfig, work_dir: Path) -> None:
     """Copy flake to installed system. Idempotent — overwrites."""
-    msg("\nCopying Northstar flake to installed system...")
-    dest = Path(f"/mnt/home/{cfg.username}/northstar")
+    msg("\nCopying ctOS flake to installed system...")
+    dest = Path(f"/mnt/home/{cfg.username}/ctos")
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(work_dir, dest, dirs_exist_ok=True)
@@ -2016,9 +2010,9 @@ def do_copy_flake(cfg: InstallConfig, work_dir: Path) -> None:
     if git_dir.exists():
         shutil.rmtree(git_dir)
     run(
-        f'cd {dest} && git init && git config user.name "Northstar Installer" '
-        f'&& git config user.email "installer@northstar.local" && git add -A '
-        f'&& git commit -m "Initial Northstar configuration for {cfg.hostname}"'
+        f'cd {dest} && git init && git config user.name "ctOS Installer" '
+        f'&& git config user.email "installer@ctos.local" && git add -A '
+        f'&& git commit -m "Initial ctOS configuration for {cfg.hostname}"'
     )
 
     # Fix ownership
@@ -2029,11 +2023,11 @@ def do_copy_flake(cfg: InstallConfig, work_dir: Path) -> None:
             if fields[0] == cfg.username:
                 uid, gid = fields[2], fields[3]
                 run(f"chown -R {uid}:{gid} {dest}")
-                msg(f"Flake saved to /home/{cfg.username}/northstar (UID {uid})")
+                msg(f"Flake saved to /home/{cfg.username}/ctos (UID {uid})")
                 break
         else:
             warn(f"Could not find UID for {cfg.username}. After boot, run:")
-            warn(f"  sudo chown -R {cfg.username}:{cfg.username} ~/northstar")
+            warn(f"  sudo chown -R {cfg.username}:{cfg.username} ~/ctos")
     except Exception:
         warn("Could not fix ownership. Fix after first boot.")
 
@@ -2061,9 +2055,9 @@ def _execute_install_steps(cfg: InstallConfig, state: State, script_dir: Path) -
     state.clear()
 
     print(f"\n{GREEN}✅ Installation Complete!{NC}")
-    print(f"Your configuration has been saved to: {CYAN}/home/{cfg.username}/northstar{NC}")
-    print("You can now reboot into your new Northstar system.")
-    print(f"After rebooting, run: {CYAN}cd ~/northstar && sudo nixos-rebuild switch --flake .#{cfg.hostname}{NC}")
+    print(f"Your configuration has been saved to: {CYAN}/home/{cfg.username}/ctos{NC}")
+    print("You can now reboot into your new ctOS system.")
+    print(f"After rebooting, run: {CYAN}cd ~/ctos && sudo nixos-rebuild switch --flake .#{cfg.hostname}{NC}")
     print(f"Run: {CYAN}reboot{NC}")
 
 
@@ -2075,7 +2069,7 @@ def interactive_wizard(script_dir: Path, resume: bool = False, no_root_check: bo
     ensure_nix_config()
 
     print(f"{CYAN}")
-    print("  ❄️  Northstar NixOS Installer  ❄️")
+    print("  ❄️  ctOS NixOS Installer  ❄️")
     print("  =================================")
     print(f"{NC}")
 
@@ -2443,7 +2437,7 @@ def interactive_wizard(script_dir: Path, resume: bool = False, no_root_check: bo
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Northstar NixOS Installer")
+    parser = argparse.ArgumentParser(description="ctOS NixOS Installer")
     parser.add_argument(
         "--resume",
         action="store_true",
@@ -2457,13 +2451,13 @@ def main() -> None:
     args, _ = parser.parse_known_args()
 
     script_dir = Path(
-        os.environ.get("NORTHSTAR_REMOTE", Path(__file__).resolve().parent.parent)
+        os.environ.get("CTOS_REMOTE", Path(__file__).resolve().parent.parent)
     )
     os.chdir(script_dir)
     interactive_wizard(
         script_dir,
         resume=args.resume,
-        no_root_check=args.no_root_check or bool(os.environ.get("NORTHSTAR_TEST")),
+        no_root_check=args.no_root_check or bool(os.environ.get("CTOS_TEST")),
     )
 
 

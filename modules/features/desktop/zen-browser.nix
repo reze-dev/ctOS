@@ -6,10 +6,10 @@
   ...
 }:
 let
-  cfg = config.northstar.features.zen-browser;
+  cfg = config.ctos.features.zen-browser;
 in
 {
-  options.northstar.features.zen-browser.enable = lib.mkEnableOption "Zen Browser";
+  options.ctos.features.zen-browser.enable = lib.mkEnableOption "Zen Browser";
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [

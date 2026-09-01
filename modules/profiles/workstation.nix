@@ -1,7 +1,7 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.profiles.workstation;
+  cfg = config.ctos.profiles.workstation;
   features = [
     "dev"
     "devtools"
@@ -20,11 +20,11 @@ let
   ];
 in
 {
-  options.northstar.profiles.workstation.enable =
-    lib.mkEnableOption "development workstation Northstar profile";
+  options.ctos.profiles.workstation.enable =
+    lib.mkEnableOption "development workstation ctOS profile";
 
   config = lib.mkIf cfg.enable {
-    northstar.features =
+    ctos.features =
       features
       |> (
         f:

@@ -5,10 +5,10 @@
   ...
 }:
 let
-  cfg = config.northstar.features.desktopPackages;
+  cfg = config.ctos.features.desktopPackages;
 in
 {
-  options.northstar.features.desktopPackages.enable =
+  options.ctos.features.desktopPackages.enable =
     lib.mkEnableOption "desktop/Wayland packages and services";
 
   config = lib.mkIf cfg.enable {
