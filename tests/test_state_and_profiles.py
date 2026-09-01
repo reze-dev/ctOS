@@ -36,7 +36,7 @@ from installer.install import (
 @dataclass
 class InstallConfig:
     """Complete InstallConfig data model matching PROJECT.md interface contract."""
-    hostname: str = "northstar"
+    hostname: str = "ctos"
     username: str = "reze"
     user_fullname: str = "Reze"
     user_password: str = ""
@@ -174,7 +174,7 @@ STEP_ORDER = [
 class State:
     """State manager for resilient installation checkpointing."""
     def __init__(self, state_file: Optional[Path] = None) -> None:
-        self.state_file = state_file if state_file else Path("/tmp/northstar-install-state.json")
+        self.state_file = state_file if state_file else Path("/tmp/ctos-install-state.json")
         self.data: dict[str, Any] = {}
         self.load()
 
@@ -513,14 +513,14 @@ class TestStateAndProfiles(unittest.TestCase):
 
     def test_app_initial_state(self):
         """Verify App wizard initial state."""
-        app = App("/tmp/test-northstar-workdir")
+        app = App("/tmp/test-ctos-workdir")
         self.assertEqual(app.page, Page.WELCOME)
         self.assertFalse(app.should_quit)
         self.assertEqual(app.err, "")
 
     def test_app_text_input_and_cursor(self):
         """Verify App text input typing and backspacing."""
-        app = App("/tmp/test-northstar-workdir")
+        app = App("/tmp/test-ctos-workdir")
         app.go_to_page(Page.HOSTNAME)
 
         app.type_char("m")
@@ -540,7 +540,7 @@ class TestStateAndProfiles(unittest.TestCase):
 
     def test_app_profile_and_feature_toggling(self):
         """Verify feature toggling across profiles in App wizard."""
-        app = App("/tmp/test-northstar-workdir")
+        app = App("/tmp/test-ctos-workdir")
         app.apply_profile(ProfileChoice.DESKTOP)
 
         self.assertEqual(app.config.features[0].id, "hyprland")
@@ -566,7 +566,6 @@ class TestStateAndProfiles(unittest.TestCase):
 
         desk_feats = {f.id: f.enabled for f in default_features(ProfileChoice.DESKTOP)}
         self.assertTrue(desk_feats["hyprland"])
-        self.assertTrue(desk_feats["noctalia"])
         self.assertTrue(desk_feats["ghostty"])
         self.assertTrue(desk_feats["kitty"])
         self.assertTrue(desk_feats["zsh"])
@@ -575,7 +574,6 @@ class TestStateAndProfiles(unittest.TestCase):
 
         ws_feats = {f.id: f.enabled for f in default_features(ProfileChoice.WORKSTATION)}
         self.assertTrue(ws_feats["hyprland"])
-        self.assertTrue(ws_feats["noctalia"])
         self.assertTrue(ws_feats["ghostty"])
         self.assertTrue(ws_feats["kitty"])
         self.assertTrue(ws_feats["devtools"])

@@ -5,10 +5,10 @@
   ...
 }:
 let
-  cfg = config.northstar.features.boot;
+  cfg = config.ctos.features.boot;
 in
 {
-  options.northstar.features.boot = {
+  options.ctos.features.boot = {
     enable = lib.mkEnableOption "system bootloader and Plymouth splash";
 
     secureBoot = {

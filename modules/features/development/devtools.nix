@@ -5,11 +5,11 @@
   ...
 }:
 let
-  cfg = config.northstar.features.devtools;
+  cfg = config.ctos.features.devtools;
   hs = pkgs.haskell.packages.ghc910;
 in
 {
-  options.northstar.features.devtools.enable =
+  options.ctos.features.devtools.enable =
     lib.mkEnableOption "developer tools and programming languages";
 
   config = lib.mkIf cfg.enable {

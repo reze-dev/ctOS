@@ -10,7 +10,7 @@
     {
       packages = {
         installer = pkgs.writeShellApplication {
-          name = "northstar-install";
+          name = "ctos-install";
           runtimeInputs = with pkgs; [
             inputs.determinate.packages.${system}.default
             nixos-install-tools
@@ -30,19 +30,19 @@
           ];
           text = ''
             set -e
-            TEMP_DIR=$(mktemp -d -t northstar-install.XXXXXX)
+            TEMP_DIR=$(mktemp -d -t ctos-install.XXXXXX)
             cleanup() { rm -rf "$TEMP_DIR"; }
             trap cleanup EXIT
 
-            echo "Preparing Northstar source..."
-            cp -R "${self}" "$TEMP_DIR/northstar"
-            chmod -R u+w "$TEMP_DIR/northstar"
-            cd "$TEMP_DIR/northstar"
+            echo "Preparing ctOS source..."
+            cp -R "${self}" "$TEMP_DIR/ctos"
+            chmod -R u+w "$TEMP_DIR/ctos"
+            cd "$TEMP_DIR/ctos"
             git init -q
-            git config user.name "Northstar Installer"
-            git config user.email "installer@northstar.local"
+            git config user.name "ctOS Installer"
+            git config user.email "installer@ctos.local"
             git add -A
-            export NORTHSTAR_REMOTE="$TEMP_DIR/northstar"
+            export CTOS_REMOTE="$TEMP_DIR/ctos"
             if [ -n "''${NIX_CONFIG:-}" ]; then
               NIX_CONFIG="$(printf '%s\n%s' "$NIX_CONFIG" "${nixConfigFeatures}")"
             else
@@ -59,12 +59,12 @@
       apps = {
         install = {
           type = "app";
-          program = "${self.packages.${system}.installer}/bin/northstar-install";
-          meta.description = "Interactive Northstar installer";
+          program = "${self.packages.${system}.installer}/bin/ctos-install";
+          meta.description = "Interactive ctOS installer";
         };
 
         default = self.apps.${system}.install // {
-          meta.description = "Default Northstar app (installer)";
+          meta.description = "Default ctOS app (installer)";
         };
       };
     };

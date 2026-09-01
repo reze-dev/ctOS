@@ -4,7 +4,7 @@
 
 ctOS is delivered as a flake organized with `flake-parts`. The flake exports a Quickshell package and `homeManagerModules.default`. `flake-parts` is internal flake organization, not a runtime plugin system.
 
-The Home Manager module is the primary public interface because ctOS is a user-session application: it owns Quickshell startup, user configuration, wallpapers/assets, and optional Hyprland bindings. A system-wide NixOS module is deferred. NixOS services such as PipeWire, NetworkManager, UPower, and power-profiles-daemon remain configuration responsibilities of the northstar host and are documented prerequisites.
+The Home Manager module is the primary public interface because ctOS is a user-session application: it owns Quickshell startup, user configuration, wallpapers/assets, and optional Hyprland bindings. A system-wide NixOS module is deferred. NixOS services such as PipeWire, NetworkManager, UPower, and power-profiles-daemon remain configuration responsibilities of the ctos host and are documented prerequisites.
 
 ## Public configuration contract
 

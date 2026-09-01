@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.yazi;
+  cfg = config.ctos.features.yazi;
 in
 {
-  options.northstar.features.yazi.enable = lib.mkEnableOption "Yazi TUI file manager";
+  options.ctos.features.yazi.enable = lib.mkEnableOption "Yazi TUI file manager";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

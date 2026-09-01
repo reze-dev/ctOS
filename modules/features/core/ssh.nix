@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.ssh;
+  cfg = config.ctos.features.ssh;
 in
 {
-  options.northstar.features.ssh.enable = lib.mkEnableOption "OpenSSH daemon";
+  options.ctos.features.ssh.enable = lib.mkEnableOption "OpenSSH daemon";
 
   config = lib.mkIf cfg.enable { services.openssh.enable = true; };
 }

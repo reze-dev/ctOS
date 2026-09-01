@@ -6,17 +6,17 @@
 }:
 
 let
-  cfg = config.northstar.features.desktop.gaming;
+  cfg = config.ctos.features.desktop.gaming;
 in
 {
   imports = [
     (lib.mkAliasOptionModule
-      [ "northstar" "features" "gaming" ]
-      [ "northstar" "features" "desktop" "gaming" ]
+      [ "ctos" "features" "gaming" ]
+      [ "ctos" "features" "desktop" "gaming" ]
     )
   ];
 
-  options.northstar.features.desktop.gaming = {
+  options.ctos.features.desktop.gaming = {
     enable = lib.mkEnableOption "gaming workstation feature suite";
 
     steam = {

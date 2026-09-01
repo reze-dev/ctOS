@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.fzf;
+  cfg = config.ctos.features.fzf;
 in
 {
-  options.northstar.features.fzf.enable = lib.mkEnableOption "FZF fuzzy finder";
+  options.ctos.features.fzf.enable = lib.mkEnableOption "FZF fuzzy finder";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

@@ -7,20 +7,20 @@
 }:
 
 let
-  cfg = config.northstar.features.secrets;
+  cfg = config.ctos.features.secrets;
 in
 {
   imports = [
     (lib.mkAliasOptionModule
-      [ "northstar" "features" "core" "secrets" ]
-      [ "northstar" "features" "secrets" ]
+      [ "ctos" "features" "core" "secrets" ]
+      [ "ctos" "features" "secrets" ]
     )
   ]
   ++ lib.optionals (inputs != null && inputs ? sops-nix) [
     inputs.sops-nix.nixosModules.sops
   ];
 
-  options.northstar.features.secrets = {
+  options.ctos.features.secrets = {
     enable = lib.mkEnableOption "sops-nix and age secret management";
 
     defaultSopsFile = lib.mkOption {

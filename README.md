@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/NixOS/nixos-artwork/master/logo/nix-snowflake-colours.svg" width="120" alt="NixOS Logo"/>
 </p>
 
-<h1 align="center">❄️ Northstar</h1>
+<h1 align="center">❄️ ctOS</h1>
 
 <p align="center">
   A modular, option-driven NixOS & Home Manager configuration built on
@@ -24,7 +24,7 @@
 
 ## ✨ Key Features
 
-- **🎛️ Toggle-based modularity** — every module is behind `northstar.<domain>.<feature>.enable` options
+- **🎛️ Toggle-based modularity** — every module is behind `ctos.<domain>.<feature>.enable` options
 - **⚡ Pipe Operator Composition** — leverages native `pipe-operators` (`|>`) for clean functional transformations
 - **📁 Auto-discovery** — drop a host directory in `hosts/` or a module in `modules/` and it's automatically wired up
 - **🛡️ UEFI Secure Boot** — native Secure Boot via Limine as the sole UEFI bootloader
@@ -44,15 +44,15 @@
 export NIX_CONFIG="experimental-features = nix-command flakes pipe-operators"
 
 # Run the installer
-nix run github:reze-dev/northstar --impure
+nix run github:reze-dev/ctos --impure
 ```
 
 ### Adding a Host
 
 ```bash
 # Clone the repo locally
-git clone https://github.com/reze-dev/northstar ~/northstar
-cd ~/northstar
+git clone https://github.com/reze-dev/ctos ~/ctos
+cd ~/ctos
 
 # Run the interactive installer (creates hosts/<hostname> automatically)
 nix run . --impure
@@ -84,7 +84,7 @@ nix flake check --impure
 ## 📂 Directory Structure
 
 ```
-northstar/
+ctos/
 ├── flake.nix                  # Flake entry point (inputs + flake-parts wire-up)
 ├── flake/                     # flake-parts modules
 │   ├── hosts.nix              # Host discovery & nixosConfigurations
@@ -111,7 +111,7 @@ northstar/
 ├── modules/                   # Option-based modules (auto-discovered)
 │   ├── features/              # Vertical feature slices
 │   │   ├── core/              # Boot, env, fonts, locale, networking, packages, shells, secrets
-│   │   ├── desktop/           # Audio, display, browsers, Hyprland, Niri, Noctalia, Gaming, desktop packages
+│   │   ├── desktop/           # Audio, display, browsers, Hyprland, Niri, gaming, desktop packages
 │   │   ├── development/       # Dev tools, AI/ML, git, Emacs, virtualization
 │   │   ├── shell/             # Fish, Zsh, Starship
 │   │   ├── terminals/         # Ghostty, Kitty
@@ -131,7 +131,7 @@ northstar/
 Profiles are composable feature bundles. Enable them in your host config:
 
 ```nix
-northstar.profiles = {
+ctos.profiles = {
   desktop.enable = true;
   workstation.enable = true;
 };
@@ -140,7 +140,7 @@ northstar.profiles = {
 | Profile | Description |
 | :--- | :--- |
 | **Base** | Minimal system (boot, networking, SSH, neovim, shells, fonts, locales) — always enabled |
-| **Desktop** | Full graphical workstation (Audio, Bluetooth, Hyprland, Niri, Noctalia, browsers, etc.) |
+| **Desktop** | Full graphical workstation (Audio, Bluetooth, Hyprland, Niri, browsers, etc.) |
 | **Workstation** | Developer tools, shells, editors, containers, virtualization |
 | **Gaming** | Steam, Gamemode, Gamescope, MangoHud, Wine/Proton, Lutris, controllers |
 
@@ -148,7 +148,7 @@ northstar.profiles = {
 
 ## 🔧 Module Reference
 
-### Core & System (`northstar.features.*`)
+### Core & System (`ctos.features.*`)
 | Module | Description |
 | :--- | :--- |
 | `boot` | Bootloader (Limine), Plymouth splash, Secure Boot (Limine) |
@@ -160,13 +160,11 @@ northstar.profiles = {
 | `env` | Environment variables (EDITOR, VISUAL, BROWSER) |
 | `secrets` | sops-nix & age secret management |
 
-### Desktop (`northstar.features.*`)
+### Desktop (`ctos.features.*`)
 | Module | Description |
 | :--- | :--- |
 | `hyprland` | Dynamic tiling Wayland compositor |
 | `niri` | Scrollable-tiling Wayland compositor |
-| `noctalia` | Noctalia Wayland shell |
-| `caelestia` | Caelestia desktop shell |
 | `display` | Greetd login manager with tuigreet |
 | `audio` | PipeWire audio stack |
 | `bluetooth` | BlueZ + Blueman |
@@ -175,7 +173,7 @@ northstar.profiles = {
 | `xdg` | XDG portals & MIME associations |
 | `desktopPackages` | Wayland/GUI desktop utilities (polkit, clipboard, screenshot, file manager) |
 
-### Development (`northstar.features.*`)
+### Development (`ctos.features.*`)
 | Module | Description |
 | :--- | :--- |
 | `dev` | direnv, git, gpg, nix-ld |
@@ -184,7 +182,7 @@ northstar.profiles = {
 | `virtualization` | Docker, Libvirtd, QEMU/KVM |
 | `emacs` | Emacs daemon |
 
-### Hardware (`northstar.nvidia.*`)
+### Hardware (`ctos.nvidia.*`)
 | Option | Description |
 | :--- | :--- |
 | `enable` | Proprietary NVIDIA drivers |
@@ -195,11 +193,11 @@ northstar.profiles = {
 
 ## 💾 Disk Configuration (mkDisko)
 
-Northstar provides `mkDisko` for declarative disk layouts:
+ctOS provides `mkDisko` for declarative disk layouts:
 
 ```nix
 # Whole-disk (wipes entire drive)
-northstar.mkDisko {
+ctos.mkDisko {
   mode = "whole-disk";
   device = "/dev/nvme0n1";
   fsType = "btrfs";         # or "ext4"
@@ -208,7 +206,7 @@ northstar.mkDisko {
 }
 
 # Partition-only (dual-boot safe)
-northstar.mkDisko {
+ctos.mkDisko {
   mode = "partition-only";
   nixosPart = "/dev/nvme0n1p4";
   efiDevice = "/dev/disk/by-uuid/XXXX-XXXX";

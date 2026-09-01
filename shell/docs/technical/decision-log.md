@@ -6,7 +6,7 @@
 | --- | --- | --- | --- |
 | TD-001 | Use a `flake-parts`-organized flake. | Keeps a growing Nix project organized while exporting normal Nix interfaces. | Add `flake.nix` and modular Nix files before desktop implementation. |
 | TD-002 | Export a Home Manager module as the primary public interface. | ctOS is a per-user Wayland session application with user-owned settings and keybindings. | Public options live under `programs.ctOS`; a NixOS module is deferred. |
-| TD-003 | Support Hyprland only in v1. | The existing prototype already imports Quickshell Hyprland and the target northstar uses Hyprland. | Compositor access is isolated behind a Hyprland adapter so Niri can follow later. |
+| TD-003 | Support Hyprland only in v1. | The existing prototype already imports Quickshell Hyprland and the target ctos uses Hyprland. | Compositor access is isolated behind a Hyprland adapter so Niri can follow later. |
 | TD-004 | Replace the prototype bar with `shell.qml` and isolated surfaces. | The current bar mixes UI, polling, and compositor policy. | `bar.qml` is not the v1 integration point. |
 | TD-005 | Own primary overlay state centrally. | Prevents overlapping panels and inconsistent focus behavior. | A single OverlayController routes Command Deck, System Rail, and Event Log requests. |
 | TD-006 | Use native ctOS notifications in v1. | Event Log and toast behavior are core to the intended desktop language. | ctOS must be the only active notification server when enabled. |

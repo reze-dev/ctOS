@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Northstar NixOS Modernization — Comprehensive End-to-End Test Suite.
+ctOS NixOS Modernization — Comprehensive End-to-End Test Suite.
 
 4-Tier Opaque-Box Test Harness validating:
 - Tier 1: Feature Coverage (≥5 tests per category for all 6 core subsystem domains, 60 tests total)
@@ -70,7 +70,7 @@ from installer.install import (
 @dataclass
 class InstallConfig:
     """Full InstallConfig data model matching PROJECT.md interface contract."""
-    hostname: str = "northstar"
+    hostname: str = "ctos"
     username: str = "reze"
     user_fullname: str = "Reze"
     user_password: str = ""
@@ -203,7 +203,7 @@ def build_bootloader_config(cfg: Any) -> str:
     """Synthesize bootloader configuration with resolution and Secure Boot support."""
     lines = ["  # Bootloader"]
     if cfg.bootloader == BootloaderChoice.LIMINE:
-        lines.append('  northstar.features.boot.loader = "limine";')
+        lines.append('  ctos.features.boot.loader = "limine";')
         res = getattr(cfg, "resolution", "1920x1080") or "1920x1080"
         lines.append(f'  boot.loader.limine.resolution = "{res}";')
         extra = format_limine_extra_entries(cfg.dual_boot_entries)
@@ -211,7 +211,7 @@ def build_bootloader_config(cfg: Any) -> str:
             lines.append(extra)
 
     if getattr(cfg, "secure_boot", False):
-        lines.append("  northstar.features.boot.secureBoot.enable = true;")
+        lines.append("  ctos.features.boot.secureBoot.enable = true;")
 
     return "\n".join(lines) + "\n"
 
@@ -244,7 +244,7 @@ def build_features_override(cfg: Any) -> str:
     if not overrides:
         return ""
 
-    return "  # Custom feature overrides\n  northstar.features = {\n" + "\n".join(overrides) + "\n  };"
+    return "  # Custom feature overrides\n  ctos.features = {\n" + "\n".join(overrides) + "\n  };"
 
 
 def generate_host_default_nix(cfg: Any) -> str:
@@ -320,7 +320,7 @@ STEP_ORDER = [
 class State:
     """State manager for resilient installation checkpointing."""
     def __init__(self, state_file: Optional[Path] = None) -> None:
-        self.state_file = state_file if state_file else Path("/tmp/northstar-install-state.json")
+        self.state_file = state_file if state_file else Path("/tmp/ctos-install-state.json")
         self.data: dict[str, Any] = {}
         self.load()
 
@@ -568,7 +568,7 @@ def resolve_active_resolution(sysfs_root: Optional[Path] = None, default: str = 
     return default
 
 
-def generate_ssh_key(target_dir: Path, hostname: str = "northstar") -> Path:
+def generate_ssh_key(target_dir: Path, hostname: str = "ctos") -> Path:
     from installer.install import run
 
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -696,7 +696,7 @@ class MockFileSystemManager:
         self.base_dir = base_dir
         self.drm_dir = base_dir / "sys/class/drm"
         self.meminfo_file = base_dir / "proc/meminfo"
-        self.state_file = base_dir / "tmp/northstar-install-state.json"
+        self.state_file = base_dir / "tmp/ctos-install-state.json"
         self.mnt_dir = base_dir / "mnt"
 
     def setup_drm_modes(self, connector: str = "card0-DP-1", modes: Optional[list[str]] = None) -> None:
@@ -1124,7 +1124,7 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
     def test_t1_f02_02_secure_boot_toggle_limine_config(self) -> None:
         cfg = InstallConfig(secure_boot=True)
         out = build_bootloader_config(cfg)
-        self.assertIn("northstar.features.boot.secureBoot.enable = true;", out)
+        self.assertIn("ctos.features.boot.secureBoot.enable = true;", out)
 
     def test_t1_f01_03_aiml_module_opt_in_disabled_by_default(self) -> None:
         cfg = InstallConfig(profile=ProfileChoice.WORKSTATION, ssh_key_action="none")
@@ -1142,7 +1142,7 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
     def test_t1_f06_05_disko_whole_disk_btrfs_subvolumes_generation(self) -> None:
         cfg = InstallConfig(disk_dev="nvme0n1", fs_type="btrfs", swap_size="16G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn("northstar.mkDisko {", out)
+        self.assertIn("ctos.mkDisko {", out)
         self.assertIn('device = "/dev/nvme0n1";', out)
 
     def test_t1_f11_06_multi_user_host_isolation_trusted_users(self) -> None:
@@ -1159,7 +1159,7 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
     def test_t1_f06_08_disko_whole_disk_ext4_generation(self) -> None:
         cfg = InstallConfig(disk_dev="sda", fs_type="ext4", swap_size="0", root_size="500G")
         out = generate_disko_whole_disk(cfg)
-        self.assertIn("northstar.mkDisko {", out)
+        self.assertIn("ctos.mkDisko {", out)
         self.assertIn('fsType = "ext4";', out)
 
     def test_t1_f06_09_disko_partition_only_with_dedicated_swap(self) -> None:
@@ -1184,7 +1184,7 @@ class Tier1FeatureCoverageTests(unittest.TestCase):
 
     def test_t1_f10_01_turnkey_flake_app_install_entrypoint(self) -> None:
         flake_installer = (PROJECT_ROOT / "flake/installer.nix").read_text()
-        self.assertIn("northstar-install", flake_installer)
+        self.assertIn("ctos-install", flake_installer)
         self.assertIn("runtimeInputs", flake_installer)
 
     def test_t1_f03_02_rust_installer_fully_removed(self) -> None:
@@ -1520,11 +1520,11 @@ class Tier2BoundaryTests(unittest.TestCase):
     def test_t2_f04_11_install_config_from_dict_with_invalid_types(self) -> None:
         cfg = InstallConfig.from_dict("invalid string"  # type: ignore
         )
-        self.assertEqual(cfg.hostname, "northstar")
+        self.assertEqual(cfg.hostname, "ctos")
 
     def test_t2_f04_12_install_config_from_dict_with_null_features(self) -> None:
         cfg = InstallConfig.from_dict({"features": None})
-        self.assertEqual(cfg.hostname, "northstar")
+        self.assertEqual(cfg.hostname, "ctos")
 
     # ── T2.5 Cryptography, Passwords & Secrets Boundaries (12 tests) 
 
@@ -1621,9 +1621,9 @@ class Tier3InteractionTests(unittest.TestCase):
             resolution="2560x1440",
         )
         out = generate_host_default_nix(cfg)
-        self.assertIn('northstar.features.boot.loader = "limine";', out)
+        self.assertIn('ctos.features.boot.loader = "limine";', out)
         self.assertIn('boot.loader.limine.resolution = "2560x1440";', out)
-        self.assertIn("northstar.features.boot.secureBoot.enable = true;", out)
+        self.assertIn("ctos.features.boot.secureBoot.enable = true;", out)
 
     def test_t3_02_workstation_profile_with_aiml_opt_in_and_nvidia_prime(self) -> None:
         """Pair: Workstation profile + AI/ML explicit opt-in + NVIDIA Prime."""
@@ -1640,7 +1640,7 @@ class Tier3InteractionTests(unittest.TestCase):
         out = generate_host_default_nix(cfg)
         self.assertIn("workstation.enable = true;", out)
         self.assertIn("development.aiml.enable = true;", out)
-        self.assertIn("northstar.nvidia.enable = true;", out)
+        self.assertIn("ctos.nvidia.enable = true;", out)
         self.assertIn('nvidiaBusId = "PCI:1:0:0";', out)
         self.assertIn('amdgpuBusId = "PCI:5:0:0";', out)
 
@@ -1718,7 +1718,7 @@ class Tier3InteractionTests(unittest.TestCase):
             )
             out = generate_host_default_nix(cfg)
             self.assertIn('boot.loader.limine.resolution = "1920x1080";', out)
-            self.assertNotIn("northstar.nvidia", out)
+            self.assertNotIn("ctos.nvidia", out)
 
 
 # ════════════════════════════════════════════════════════════════
@@ -1735,7 +1735,7 @@ class Tier4RealWorldTests(unittest.TestCase):
         """Workload 1: Clean fresh installation on 1TB NVMe with 1440p monitor."""
         mock_rc.return_value = "/dev/zram0"
         with tempfile.TemporaryDirectory() as tmpdir:
-            workdir = Path(tmpdir) / "northstar"
+            workdir = Path(tmpdir) / "ctos"
             workdir.mkdir()
             (workdir / "hosts").mkdir()
 
@@ -1850,7 +1850,7 @@ class Tier4RealWorldTests(unittest.TestCase):
             disko_content = generate_disko_partition_only(cfg, efi_uuid="UUID-WIN11")
             host_content = generate_host_default_nix(cfg)
 
-            self.assertIn("northstar.features.boot.secureBoot.enable = true;", host_content)
+            self.assertIn("ctos.features.boot.secureBoot.enable = true;", host_content)
             self.assertIn("/Windows Boot Manager", host_content)
             self.assertIn("UUID-WIN11", disko_content)
 
@@ -1914,7 +1914,7 @@ def filter_suite(suite: unittest.TestSuite, pattern: str) -> unittest.TestSuite:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Northstar E2E Test Suite Runner")
+    parser = argparse.ArgumentParser(description="ctOS E2E Test Suite Runner")
     parser.add_argument("--tier", type=int, choices=[1, 2, 3, 4], help="Run a specific test tier (1, 2, 3, or 4)")
     parser.add_argument("--all", action="store_true", help="Run all test tiers (default)")
     parser.add_argument("--filter", "-f", type=str, help="Filter test cases matching a pattern")
@@ -1937,7 +1937,7 @@ def main() -> int:
     verbosity = 2 if args.verbose else 1
 
     print("\033[1;36m=======================================================\033[0m")
-    print(f"\033[1;32m Northstar E2E Test Runner — {tier_label}\033[0m")
+    print(f"\033[1;32m ctOS E2E Test Runner — {tier_label}\033[0m")
     print(f"\033[1;36m Total Test Cases Selected: {total_tests}\033[0m")
     print("\033[1;36m=======================================================\033[0m\n")
 

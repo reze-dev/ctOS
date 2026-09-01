@@ -6,7 +6,7 @@
     { pkgs, system, ... }:
     let
       lib = inputs.nixpkgs.lib;
-      northstar = import ../lib/core.nix { inherit lib; };
+      ctos = import ../lib/core.nix { inherit lib; };
 
     in
     {
@@ -35,8 +35,8 @@
               MODULE_COUNT=$(${pkgs.nix}/bin/nix eval --impure --expr '
                 let
                   lib = import ${inputs.nixpkgs} { system = "${system}"; };
-                  northstar = import ${../lib/core.nix} { inherit (lib) lib; };
-                in builtins.length (northstar.scanModules ${../modules})
+                  ctos = import ${../lib/core.nix} { inherit (lib) lib; };
+                in builtins.length (ctos.scanModules ${../modules})
               ')
               echo "scanModules found $MODULE_COUNT modules"
               if [ "$MODULE_COUNT" -lt 1 ]; then
@@ -48,8 +48,8 @@
               HOSTS=$(${pkgs.nix}/bin/nix eval --impure --json --expr '
                 let
                   lib = import ${inputs.nixpkgs} { system = "${system}"; };
-                  northstar = import ${../lib/core.nix} { inherit (lib) lib; };
-                in northstar.discoverHosts ${../hosts}
+                  ctos = import ${../lib/core.nix} { inherit (lib) lib; };
+                in ctos.discoverHosts ${../hosts}
               ')
               echo "discoverHosts found: $HOSTS"
               echo "$HOSTS" | jq -e 'length > 0' > /dev/null || {
@@ -61,9 +61,9 @@
               PROFILE_KEYS=$(${pkgs.nix}/bin/nix eval --impure --json --expr '
                 let
                   lib = import ${inputs.nixpkgs} { system = "${system}"; };
-                  northstar = import ${../lib/core.nix} { inherit (lib) lib; };
-                  profile = northstar.mkProfile ["boot" "ssh"];
-                in builtins.attrNames profile.northstar.features
+                  ctos = import ${../lib/core.nix} { inherit (lib) lib; };
+                  profile = ctos.mkProfile ["boot" "ssh"];
+                in builtins.attrNames profile.ctos.features
               ')
               echo "mkProfile keys: $PROFILE_KEYS"
               echo "$PROFILE_KEYS" | jq -e 'index("boot") and index("ssh")' > /dev/null || {

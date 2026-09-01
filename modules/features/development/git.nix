@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.git;
+  cfg = config.ctos.features.git;
 in
 {
-  options.northstar.features.git.enable = lib.mkEnableOption "Git user configuration";
+  options.ctos.features.git.enable = lib.mkEnableOption "Git user configuration";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

@@ -19,7 +19,7 @@
 
   # Bootloader (Limine)
   boot.loader.limine.resolution = "1920x1080";
-  northstar.features.boot.secureBoot.enable = true;
+  ctos.features.boot.secureBoot.enable = true;
 
   users.users.reze = {
     isNormalUser = true;
@@ -34,22 +34,22 @@
     hashedPassword = "$6$7uVH9VA23imtOFPs$Rx7oc7xoN5gxBqdB6pg1ZG7xqAeX4LIzLuKjPExFOySTdfmVGdDbCD.4K/dtLLbUbdpcNJ8W5OYpeknaij6mM.";
   };
 
-  # Northstar profiles
-  northstar.profiles = {
+  # ctOS profiles
+  ctos.profiles = {
     desktop.enable = true;
     workstation.enable = true;
   };
 
   # Custom feature overrides
-  northstar.features = {
+  ctos.features = {
     niri.enable = true;
     fish.enable = true;
     emacs.enable = true;
   };
 
   # NVIDIA GPU
-  northstar.nvidia.enable = true;
-  northstar.nvidia.prime = {
+  ctos.nvidia.enable = true;
+  ctos.nvidia.prime = {
     enable = true;
     nvidiaBusId = "PCI:1:0:0";
     amdgpuBusId = "PCI:5:0:0";

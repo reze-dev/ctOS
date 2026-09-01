@@ -3,19 +3,19 @@
 
 let
   lib = inputs.nixpkgs.lib;
-  northstar = import ../lib/core.nix { inherit lib; };
-  modulePaths = northstar.scanModules ../modules;
+  ctos = import ../lib/core.nix { inherit lib; };
+  modulePaths = ctos.scanModules ../modules;
   hostsDir = ../hosts;
-  hosts = northstar.discoverHosts hostsDir;
+  hosts = ctos.discoverHosts hostsDir;
 
   mkHost =
     hostName:
     lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = {
-        inherit inputs northstar;
+        inherit inputs ctos;
       };
-      modules = northstar.mkHostModules {
+      modules = ctos.mkHostModules {
         inherit
           inputs
           modulePaths

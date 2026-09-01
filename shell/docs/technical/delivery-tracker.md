@@ -12,7 +12,7 @@
 | T5 — System Rail and OSDs | todo | Audio, mic, brightness, network, battery/power, and session confirmation work or degrade safely. |
 | T6 — Notifications and Event Log | todo | ctOS owns notification delivery, toast behavior, history, and do-not-disturb. |
 | T7 — Greeter packaging and documentation | todo | Existing greeter is opt-in packageable and docs describe Nix activation/recovery without changing auth behavior. |
-| T8 — V1 acceptance | todo | All validation gates pass in the northstar NixOS/Hyprland configuration. |
+| T8 — V1 acceptance | todo | All validation gates pass in the ctos NixOS/Hyprland configuration. |
 
 ## T1 — Nix package and module
 

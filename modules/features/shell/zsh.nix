@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.zsh;
+  cfg = config.ctos.features.zsh;
 in
 {
-  options.northstar.features.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
+  options.ctos.features.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

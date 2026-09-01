@@ -26,7 +26,7 @@ rec {
 
   # Functional Feature & Profile Combinator
   mkProfile = features: {
-    northstar.features = lib.genAttrs features (_: {
+    ctos.features = lib.genAttrs features (_: {
       enable = true;
     });
   };
@@ -120,7 +120,7 @@ rec {
       inherit system;
       specialArgs = {
         inherit inputs;
-        northstar = import ./core.nix { inherit lib; };
+        ctos = import ./core.nix { inherit lib; };
       };
       modules = (mkHostModules { inherit inputs hostsDir hostName; }) ++ extraModules;
     };

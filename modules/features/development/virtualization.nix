@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.virtualization;
+  cfg = config.ctos.features.virtualization;
 in
 {
-  options.northstar.features.virtualization.enable =
+  options.ctos.features.virtualization.enable =
     lib.mkEnableOption "virtualization (libvirtd, Docker)";
 
   config = lib.mkIf cfg.enable {

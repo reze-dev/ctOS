@@ -22,5 +22,5 @@
     ];
   };
 
-  northstar.profiles.base.enable = true;
+  ctos.profiles.base.enable = true;
 }

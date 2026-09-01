@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.eza;
+  cfg = config.ctos.features.eza;
 in
 {
-  options.northstar.features.eza.enable = lib.mkEnableOption "Eza (ls replacement)";
+  options.ctos.features.eza.enable = lib.mkEnableOption "Eza (ls replacement)";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

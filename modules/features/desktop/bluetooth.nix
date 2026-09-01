@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.bluetooth;
+  cfg = config.ctos.features.bluetooth;
 in
 {
-  options.northstar.features.bluetooth.enable = lib.mkEnableOption "Bluetooth support";
+  options.ctos.features.bluetooth.enable = lib.mkEnableOption "Bluetooth support";
 
   config = lib.mkIf cfg.enable {
     hardware.bluetooth.enable = true;

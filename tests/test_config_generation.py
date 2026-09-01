@@ -35,7 +35,7 @@ from installer.install import (
 @dataclass
 class InstallConfig:
     """Enhanced InstallConfig supporting all M1-M5 fields and interface contracts."""
-    hostname: str = "northstar"
+    hostname: str = "ctos"
     username: str = "reze"
     user_fullname: str = "Reze"
     user_password: str = ""
@@ -98,7 +98,7 @@ def build_bootloader_config(cfg: Any) -> str:
     lines = []
     lines.append("  # Bootloader")
     if cfg.bootloader == BootloaderChoice.LIMINE:
-        lines.append('  northstar.features.boot.loader = "limine";')
+        lines.append('  ctos.features.boot.loader = "limine";')
         res = getattr(cfg, "resolution", "1920x1080") or "1920x1080"
         lines.append(f'  boot.loader.limine.resolution = "{res}";')
         extra = format_limine_extra_entries(cfg.dual_boot_entries)
@@ -106,7 +106,7 @@ def build_bootloader_config(cfg: Any) -> str:
             lines.append(extra)
 
     if getattr(cfg, "secure_boot", False):
-        lines.append("  northstar.features.boot.secureBoot.enable = true;")
+        lines.append("  ctos.features.boot.secureBoot.enable = true;")
 
     return "\n".join(lines) + "\n"
 
@@ -139,7 +139,7 @@ def build_features_override(cfg: Any) -> str:
     if not overrides:
         return ""
 
-    return "  # Custom feature overrides\n  northstar.features = {\n" + "\n".join(overrides) + "\n  };"
+    return "  # Custom feature overrides\n  ctos.features = {\n" + "\n".join(overrides) + "\n  };"
 
 
 def generate_host_default_nix(cfg: Any) -> str:
@@ -213,7 +213,7 @@ class TestConfigGeneration(unittest.TestCase):
             resolution="1920x1080",
         )
         content = generate_host_default_nix(cfg)
-        self.assertIn('northstar.features.boot.loader = "limine";', content)
+        self.assertIn('ctos.features.boot.loader = "limine";', content)
         self.assertIn('boot.loader.limine.resolution = "1920x1080";', content)
 
     def test_limine_resolution_4k(self):
@@ -263,7 +263,7 @@ class TestConfigGeneration(unittest.TestCase):
             age_key_action="none",
         )
         content = generate_host_default_nix(cfg)
-        self.assertIn('northstar.features.boot.loader = "limine";', content)
+        self.assertIn('ctos.features.boot.loader = "limine";', content)
         self.assertIn('boot.loader.limine.resolution = "1920x1080";', content)
 
     def test_limine_empty_resolution_fallback(self):
@@ -278,13 +278,13 @@ class TestConfigGeneration(unittest.TestCase):
     # ── 2. Secure Boot Lanzaboote Flag Generation ───────────────────
 
     def test_secure_boot_enabled_emission(self):
-        """When secure_boot is True, emits northstar.features.boot.secureBoot.enable = true."""
+        """When secure_boot is True, emits ctos.features.boot.secureBoot.enable = true."""
         cfg = InstallConfig(
             bootloader=BootloaderChoice.LIMINE,
             secure_boot=True,
         )
         content = generate_host_default_nix(cfg)
-        self.assertIn("northstar.features.boot.secureBoot.enable = true;", content)
+        self.assertIn("ctos.features.boot.secureBoot.enable = true;", content)
 
     def test_secure_boot_disabled_omission(self):
         """When secure_boot is False, secureBoot.enable is not emitted as true."""
@@ -295,7 +295,7 @@ class TestConfigGeneration(unittest.TestCase):
             age_key_action="none",
         )
         content = generate_host_default_nix(cfg)
-        self.assertNotIn("northstar.features.boot.secureBoot.enable = true;", content)
+        self.assertNotIn("ctos.features.boot.secureBoot.enable = true;", content)
 
     def test_secure_boot_with_workstation_profile(self):
         """Secure Boot flag integrates cleanly with Workstation profile."""
@@ -307,7 +307,7 @@ class TestConfigGeneration(unittest.TestCase):
         )
         content = generate_host_default_nix(cfg)
         self.assertIn("workstation.enable = true;", content)
-        self.assertIn("northstar.features.boot.secureBoot.enable = true;", content)
+        self.assertIn("ctos.features.boot.secureBoot.enable = true;", content)
 
     def test_secure_boot_with_base_profile(self):
         """Secure Boot flag integrates cleanly with Base profile."""
@@ -319,7 +319,7 @@ class TestConfigGeneration(unittest.TestCase):
         )
         content = generate_host_default_nix(cfg)
         self.assertIn("base.enable = true;", content)
-        self.assertIn("northstar.features.boot.secureBoot.enable = true;", content)
+        self.assertIn("ctos.features.boot.secureBoot.enable = true;", content)
 
     # ── 3. AI/ML Opt-In Flag Generation ─────────────────────────────
 
@@ -352,7 +352,7 @@ class TestConfigGeneration(unittest.TestCase):
                 FeatureOption(id="aiml", label="AI/ML Suite", category="Development & Virt", enabled=True)
             )
         overrides = build_features_override(cfg)
-        self.assertIn("northstar.features = {", overrides)
+        self.assertIn("ctos.features = {", overrides)
         self.assertTrue(
             "aiml.enable = true;" in overrides or "development.aiml.enable = true;" in overrides
         )
@@ -370,7 +370,7 @@ class TestConfigGeneration(unittest.TestCase):
     # ── 4. Secrets Module Generation ────────────────────────────────
 
     def test_secrets_module_enabled_emission(self):
-        """When secrets management is active, emits northstar.features.secrets.enable = true."""
+        """When secrets management is active, emits ctos.features.secrets.enable = true."""
         cfg = InstallConfig(
             hostname="SecureHost",
             username="reze",
@@ -419,7 +419,7 @@ class TestConfigGeneration(unittest.TestCase):
         self.assertIn("home-manager.users.admin = {", content)
         self.assertIn("users.users.admin = {", content)
         self.assertIn('hashedPassword = "$6$testhash";', content)
-        self.assertIn('northstar.features.boot.loader = "limine";', content)
+        self.assertIn('ctos.features.boot.loader = "limine";', content)
         self.assertIn("base.enable = true;", content)
         self.assertNotIn("desktop.enable = true;", content)
         self.assertIn('system.stateVersion = "26.11";', content)
@@ -453,7 +453,7 @@ class TestConfigGeneration(unittest.TestCase):
 
         content = generate_host_default_nix(cfg)
         self.assertIn('networking.hostName = "DesktopHost";', content)
-        self.assertIn('northstar.features.boot.loader = "limine";', content)
+        self.assertIn('ctos.features.boot.loader = "limine";', content)
         self.assertIn('boot.loader.limine.resolution = "1920x1080";', content)
         self.assertIn("boot.loader.limine.extraEntries = ''", content)
         self.assertIn("/Windows 11", content)
@@ -486,8 +486,8 @@ class TestConfigGeneration(unittest.TestCase):
         content = generate_host_default_nix(cfg)
         self.assertIn("desktop.enable = true;", content)
         self.assertIn("workstation.enable = true;", content)
-        self.assertIn("northstar.nvidia.enable = true;", content)
-        self.assertIn("northstar.nvidia.prime = {", content)
+        self.assertIn("ctos.nvidia.enable = true;", content)
+        self.assertIn("ctos.nvidia.prime = {", content)
         self.assertIn('nvidiaBusId = "PCI:1:0:0";', content)
         self.assertIn('amdgpuBusId = "PCI:5:0:0";', content)
 
@@ -502,7 +502,7 @@ class TestConfigGeneration(unittest.TestCase):
         )
 
         disko = generate_disko_whole_disk(cfg)
-        self.assertIn("northstar.mkDisko {", disko)
+        self.assertIn("ctos.mkDisko {", disko)
         self.assertIn('device = "/dev/nvme0n1";', disko)
         self.assertIn('fsType = "btrfs";', disko)
         self.assertIn('swapSize = "16G";', disko)
@@ -518,7 +518,7 @@ class TestConfigGeneration(unittest.TestCase):
         )
 
         disko = generate_disko_whole_disk(cfg)
-        self.assertIn("northstar.mkDisko {", disko)
+        self.assertIn("ctos.mkDisko {", disko)
         self.assertIn('device = "/dev/sda";', disko)
         self.assertIn('fsType = "ext4";', disko)
         self.assertIn('swapSize = "0";', disko)
@@ -639,7 +639,7 @@ class TestConfigGeneration(unittest.TestCase):
                 f.enabled = True
 
         override_block = build_features_override(cfg)
-        self.assertIn("northstar.features = {", override_block)
+        self.assertIn("ctos.features = {", override_block)
         self.assertIn("hyprland.enable = false;", override_block)
         self.assertIn("fish.enable = true;", override_block)
         self.assertNotIn("zsh.enable", override_block)

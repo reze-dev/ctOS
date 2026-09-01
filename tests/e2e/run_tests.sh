@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Northstar E2E Test Suite Runner
+# ctOS E2E Test Suite Runner
 # ==============================================================================
 set -euo pipefail
 
@@ -17,7 +17,7 @@ NC='\033[0m'
 
 show_help() {
   cat << EOF
-${BOLD}Northstar E2E Test Suite Runner${NC}
+${BOLD}ctOS E2E Test Suite Runner${NC}
 
 ${BOLD}USAGE:${NC}
   ./tests/e2e/run_tests.sh [OPTIONS]

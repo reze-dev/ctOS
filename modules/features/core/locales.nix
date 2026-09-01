@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.northstar.features.locales;
+  cfg = config.ctos.features.locales;
 in
 {
-  options.northstar.features.locales.enable = lib.mkEnableOption "timezone and locale settings";
+  options.ctos.features.locales.enable = lib.mkEnableOption "timezone and locale settings";
 
   config = lib.mkIf cfg.enable {
     time.timeZone = lib.mkDefault "Asia/Kolkata";

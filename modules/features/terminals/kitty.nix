@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.kitty;
+  cfg = config.ctos.features.kitty;
 in
 {
-  options.northstar.features.kitty.enable = lib.mkEnableOption "Kitty terminal";
+  options.ctos.features.kitty.enable = lib.mkEnableOption "Kitty terminal";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

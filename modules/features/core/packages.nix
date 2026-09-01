@@ -5,10 +5,10 @@
   ...
 }:
 let
-  cfg = config.northstar.features.packages;
+  cfg = config.ctos.features.packages;
 in
 {
-  options.northstar.features.packages.enable =
+  options.ctos.features.packages.enable =
     lib.mkEnableOption "core system packages and unfree config";
 
   config = lib.mkIf cfg.enable {

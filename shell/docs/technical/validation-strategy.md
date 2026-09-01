@@ -32,7 +32,7 @@ Exact commands are added alongside the flake when its package names and supporte
 
 ## Test environments
 
-- **Primary acceptance:** the maintainer’s northstar NixOS + Hyprland configuration.
+- **Primary acceptance:** the maintainer’s ctos NixOS + Hyprland configuration.
 - **Package evaluation:** a clean Nix evaluation independent of host-specific paths.
 - **Greeter safety:** a non-production/test configuration only; do not use a live display-manager session as the first verification target.
 
