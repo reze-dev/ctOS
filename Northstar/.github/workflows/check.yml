@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  nixos-build:
+    name: NixOS Flake & System Evaluation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes pipe-operators
+            extra-substituters = https://cache.nixos.org/ https://noctalia.cachix.org
+            extra-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+
+      - name: Check flake
+        run: nix flake check --impure
+
+      - name: Show flake outputs
+        run: nix flake show
+
+      - name: Evaluate Makima Host Configuration
+        run: nix eval --impure --expr '(builtins.getFlake (toString ./.)).nixosConfigurations.Makima.config.system.build.toplevel.name'
+
+      - name: Check formatting
+        run: nix fmt -- --check .
+
+  python-ci:
+    name: Python Installer & E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Python unit & E2E tests
+        run: python3 -m unittest discover -s tests -v

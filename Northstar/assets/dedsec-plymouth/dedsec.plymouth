@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=DeadSec
+Description=Animated WatchDogs / DeadSec hacker splash
+ModuleName=script
+
+[script]
+ImageDir=/etc/plymouth/themes/dedsec
+ScriptFile=/etc/plymouth/themes/dedsec/dedsec.script
