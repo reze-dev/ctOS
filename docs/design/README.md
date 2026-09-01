@@ -9,6 +9,8 @@ This directory is the source of truth for the ctOS desktop-shell redesign. It de
 | [Architecture](architecture.md) | Runtime boundaries, data flow, services, and failure behavior. |
 | [Nix integration](nix-module.md) | Flake/Home Manager packaging and configuration contract. |
 
+Implementation-facing material lives in the sibling [technical package](../technical/README.md).
+
 ## Locked v1 decisions
 
 - ctOS is a personal, NixOS-first Quickshell rice.
