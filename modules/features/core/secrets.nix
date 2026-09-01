@@ -11,10 +11,7 @@ let
 in
 {
   imports = [
-    (lib.mkAliasOptionModule
-      [ "ctos" "features" "core" "secrets" ]
-      [ "ctos" "features" "secrets" ]
-    )
+    (lib.mkAliasOptionModule [ "ctos" "features" "core" "secrets" ] [ "ctos" "features" "secrets" ])
   ]
   ++ lib.optionals (inputs != null && inputs ? sops-nix) [
     inputs.sops-nix.nixosModules.sops
