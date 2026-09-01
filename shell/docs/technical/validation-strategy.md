@@ -15,7 +15,7 @@ Each tracker item is complete only when its implementation is reviewed and the r
 | Shell smoke test | T1 | User service starts the empty shell and exits/restarts predictably. |
 | Regression checks | T7 | Existing greeter test mode remains launchable independently. |
 
-Exact commands are added alongside the flake when its package names and supported systems are real. This avoids documenting commands that cannot yet execute in the current repository.
+Current T1 commands are `nix flake check --no-build` and `nix build .#ctos-shell`. The latter is also checked for the packaged `share/ctos/shell.qml` smoke entry. Graphical service startup is validated manually on the Hyprland acceptance host.
 
 ## Manual acceptance matrix
 

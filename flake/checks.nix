@@ -12,6 +12,8 @@
     {
       checks = {
 
+        ctos-package = self.packages.${system}.ctos-shell;
+
         # Verify lib functions behave correctly
         lib-unit-tests =
           pkgs.runCommand "check-lib-functions"
