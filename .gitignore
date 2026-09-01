@@ -1,6 +1,7 @@
 /.agents/
 /.codex/
 /codex-session-01a05bf9-38cf-7b63-b44e-5c193e5c079f.md
+**/codex-session-*.md
 
 result/
 __pycache__/

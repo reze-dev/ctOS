@@ -32,6 +32,6 @@ in
     nixosModules.default = {
       imports = modulePaths;
     };
-    homeManagerModules.default = import ../home/home.nix;
+    homeManagerModules.default = import ../shell/nix/home-manager.nix;
   };
 }
