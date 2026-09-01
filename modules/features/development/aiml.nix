@@ -99,10 +99,7 @@ let
 in
 {
   imports = [
-    (lib.mkAliasOptionModule
-      [ "ctos" "features" "aiml" ]
-      [ "ctos" "features" "development" "aiml" ]
-    )
+    (lib.mkAliasOptionModule [ "ctos" "features" "aiml" ] [ "ctos" "features" "development" "aiml" ])
   ];
 
   options.ctos.features.development.aiml = {

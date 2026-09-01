@@ -296,8 +296,7 @@ in
 {
   imports = [ inputs.niri.nixosModules.niri ];
 
-  options.ctos.features.niri.enable =
-    lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
+  options.ctos.features.niri.enable = lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
 
   config = lib.mkIf cfg.enable {
     # Disable the niri-flake binary cache — we use nixpkgs's niri instead

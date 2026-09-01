@@ -10,10 +10,7 @@ let
 in
 {
   imports = [
-    (lib.mkAliasOptionModule
-      [ "ctos" "features" "gaming" ]
-      [ "ctos" "features" "desktop" "gaming" ]
-    )
+    (lib.mkAliasOptionModule [ "ctos" "features" "gaming" ] [ "ctos" "features" "desktop" "gaming" ])
   ];
 
   options.ctos.features.desktop.gaming = {

@@ -22,8 +22,7 @@ let
       "/run/current-system/sw/share/wayland-sessions";
 in
 {
-  options.ctos.features.display.enable =
-    lib.mkEnableOption "display manager and desktop environment";
+  options.ctos.features.display.enable = lib.mkEnableOption "display manager and desktop environment";
 
   config = lib.mkIf cfg.enable {
 
