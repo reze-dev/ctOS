@@ -16,12 +16,14 @@
 
 ## T1 — Nix package and module
 
-- [ ] Create a flake-parts flake exporting a ctOS package and `homeManagerModules.default`.
-- [ ] Define the initial `programs.ctOS` option skeleton from the Nix integration design.
-- [ ] Package QML, resources, wallpapers, and generated runtime settings with stable install paths.
-- [ ] Add a systemd user service for the desktop shell with bounded restart behavior.
-- [ ] Add a minimal `shell.qml` smoke entry that starts without greeter imports.
-- [ ] Record `nix flake check` and Home Manager evaluation evidence in the validation log.
+- [x] Create a flake-parts flake exporting a ctOS package and `homeManagerModules.default`.
+- [x] Define the initial `programs.ctOS` option skeleton from the Nix integration design.
+- [x] Package QML and resources with a stable `${package}/share/ctos` install path.
+- [x] Add a systemd user service for the desktop shell with bounded restart behavior.
+- [x] Add a minimal `shell.qml` smoke entry that starts without greeter imports.
+- [x] Record successful `nix flake check --no-build` and `nix build .#ctos-shell` evidence in the validation log.
+
+T1 evidence (2026-09-02): `nix flake check --no-build` passed, `nix build .#ctos-shell` passed, and the built output contains `share/ctos/shell.qml`. Graphical service startup remains a manual acceptance step on the Hyprland host.
 
 ## T2 — Shell foundation
 

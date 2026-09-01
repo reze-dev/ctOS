@@ -6,5 +6,6 @@
     ./checks.nix
     ./devshell.nix
     ./formatter.nix
+    ./shell.nix
   ];
 }

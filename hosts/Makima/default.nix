@@ -12,7 +12,11 @@
   ];
 
   home-manager.users.reze = {
-    imports = [ ../../home/home.nix ];
+    imports = [
+      ../../home/home.nix
+      ../../shell/nix/home-manager.nix
+    ];
+    programs.ctOS.enable = true;
     home.username = lib.mkForce "reze";
     home.homeDirectory = lib.mkForce "/home/reze";
   };
