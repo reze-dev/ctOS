@@ -1,14 +1,14 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.profiles.gaming;
+  cfg = config.ctos.profiles.gaming;
 in
 {
-  options.northstar.profiles.gaming.enable =
-    lib.mkEnableOption "gaming workstation Northstar profile";
+  options.ctos.profiles.gaming.enable =
+    lib.mkEnableOption "gaming workstation ctOS profile";
 
   config = lib.mkIf cfg.enable {
-    northstar.profiles.desktop.enable = true;
-    northstar.features.gaming.enable = true;
+    ctos.profiles.desktop.enable = true;
+    ctos.features.gaming.enable = true;
   };
 }

@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.udiskie;
+  cfg = config.ctos.features.udiskie;
 in
 {
-  options.northstar.features.udiskie.enable = lib.mkEnableOption "udiskie automounter";
+  options.ctos.features.udiskie.enable = lib.mkEnableOption "udiskie automounter";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

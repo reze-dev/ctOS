@@ -1,7 +1,7 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.profiles.base;
+  cfg = config.ctos.profiles.base;
   features = [
     "boot"
     "env"
@@ -15,10 +15,10 @@ let
   ];
 in
 {
-  options.northstar.profiles.base.enable = lib.mkEnableOption "base Northstar system profile";
+  options.ctos.profiles.base.enable = lib.mkEnableOption "base ctOS system profile";
 
   config = lib.mkIf cfg.enable {
-    northstar.features =
+    ctos.features =
       features
       |> (
         f:

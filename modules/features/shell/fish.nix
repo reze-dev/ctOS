@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.fish;
+  cfg = config.ctos.features.fish;
 in
 {
-  options.northstar.features.fish.enable = lib.mkEnableOption "Fish shell configuration";
+  options.ctos.features.fish.enable = lib.mkEnableOption "Fish shell configuration";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

@@ -5,10 +5,10 @@
   ...
 }:
 let
-  cfg = config.northstar.features.fonts;
+  cfg = config.ctos.features.fonts;
 in
 {
-  options.northstar.features.fonts.enable = lib.mkEnableOption "Nerd Fonts and system fonts";
+  options.ctos.features.fonts.enable = lib.mkEnableOption "Nerd Fonts and system fonts";
 
   config = lib.mkIf cfg.enable {
     fonts.packages = with pkgs; [

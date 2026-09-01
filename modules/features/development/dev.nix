@@ -5,10 +5,10 @@
   ...
 }:
 let
-  cfg = config.northstar.features.dev;
+  cfg = config.ctos.features.dev;
 in
 {
-  options.northstar.features.dev.enable =
+  options.ctos.features.dev.enable =
     lib.mkEnableOption "development tools (direnv, git, gpg, nix-ld)";
 
   config = lib.mkIf cfg.enable {

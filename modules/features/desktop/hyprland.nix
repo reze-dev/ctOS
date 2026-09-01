@@ -6,7 +6,7 @@
   ...
 }:
 let
-  cfg = config.northstar.features.hyprland;
+  cfg = config.ctos.features.hyprland;
 
   hmHyprlandModule =
     {
@@ -16,11 +16,6 @@ let
       ...
     }:
     let
-      noctaliaAutostart = lib.optionalString config.programs.noctalia.enable ''
-        hl.on("hyprland.start", function()
-            hl.exec_cmd("noctalia")
-        end)
-      '';
     in
     {
       config = {
@@ -30,8 +25,7 @@ let
         ];
 
         xdg.configFile."hypr/hyprland.lua".text = ''
-          -- Managed by Northstar. Hyprland 0.55+ loads this before hyprland.conf.
-          -- Based on Hyprland's default Lua example, with Noctalia owning shell and wallpapers.
+          -- Managed by ctOS. Hyprland 0.55+ loads this before hyprland.conf.
 
           hl.monitor({
               output = "",
@@ -54,8 +48,6 @@ let
               hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target")
               hl.exec_cmd("systemctl --user start hyprpolkitagent")
           end)
-
-          ${noctaliaAutostart}
 
           hl.config({
               general = {
@@ -208,7 +200,7 @@ let
     };
 in
 {
-  options.northstar.features.hyprland.enable = lib.mkEnableOption "Hyprland window manager";
+  options.ctos.features.hyprland.enable = lib.mkEnableOption "Hyprland window manager";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [ hmHyprlandModule ];

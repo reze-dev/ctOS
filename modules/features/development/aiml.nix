@@ -6,12 +6,12 @@
 }:
 
 let
-  cfg = config.northstar.features.development.aiml;
+  cfg = config.ctos.features.development.aiml;
 
   # Hardware acceleration resolution
   effectiveBackend =
     if cfg.acceleration == "auto" then
-      (if config.northstar.nvidia.enable or false then "cuda" else "none")
+      (if config.ctos.nvidia.enable or false then "cuda" else "none")
     else
       cfg.acceleration;
 
@@ -100,12 +100,12 @@ in
 {
   imports = [
     (lib.mkAliasOptionModule
-      [ "northstar" "features" "aiml" ]
-      [ "northstar" "features" "development" "aiml" ]
+      [ "ctos" "features" "aiml" ]
+      [ "ctos" "features" "development" "aiml" ]
     )
   ];
 
-  options.northstar.features.development.aiml = {
+  options.ctos.features.development.aiml = {
     enable = lib.mkEnableOption "AI/ML development suite (PyTorch, Ollama, Llama.cpp, JupyterLab, acceleration toolchains)";
 
     acceleration = lib.mkOption {
@@ -116,7 +116,7 @@ in
         "none"
       ];
       default = "auto";
-      description = "Hardware acceleration backend for AI/ML workloads. 'auto' detects NVIDIA GPU via northstar.nvidia.enable.";
+      description = "Hardware acceleration backend for AI/ML workloads. 'auto' detects NVIDIA GPU via ctos.nvidia.enable.";
     };
 
     ollama = {

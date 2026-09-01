@@ -1,10 +1,10 @@
 { config, lib, ... }:
 
 let
-  cfg = config.northstar.features.ghostty;
+  cfg = config.ctos.features.ghostty;
 in
 {
-  options.northstar.features.ghostty.enable = lib.mkEnableOption "Ghostty terminal";
+  options.ctos.features.ghostty.enable = lib.mkEnableOption "Ghostty terminal";
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [

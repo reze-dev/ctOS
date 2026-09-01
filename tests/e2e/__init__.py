@@ -1,3 +1,3 @@
 """
-Northstar E2E Test Suite Package.
+ctOS E2E Test Suite Package.
 """
