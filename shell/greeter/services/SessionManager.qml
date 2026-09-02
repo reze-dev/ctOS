@@ -117,7 +117,7 @@ Singleton {
             return ["uwsm", "stop"];
         }
 
-        const currentDesktop = Quickshell.env("XDG_CURRENT_DESKTOP").toLowerCase() || "";
+        const currentDesktop = (Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase();
 
         if (currentDesktop.includes("hyprland")) {
             return ["hyprctl", "dispatch", "exit"];
