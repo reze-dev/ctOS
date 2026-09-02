@@ -70,6 +70,13 @@ in
       };
     };
 
+    # Settings persists the last greeter state here. greetd's built-in
+    # greeter account has /var/empty as its home, so provision this directory
+    # explicitly instead of allowing the first write to fail at runtime.
+    systemd.tmpfiles.rules = [
+      "d /var/lib/ctos 0755 greeter greeter -"
+    ];
+
     services.greetd.settings.default_session = {
       command = lib.mkForce greeterCommand;
       user = "greeter";
