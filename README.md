@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/NixOS/nixos-artwork/master/logo/nix-snowflake-colours.svg" width="120" alt="NixOS Logo"/>
+  <img src="shell/.assets/Logo.png" width="180" alt="ctOS Logo"/>
 </p>
 
 <h1 align="center">❄️ ctOS</h1>
