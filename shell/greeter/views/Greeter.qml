@@ -10,24 +10,19 @@ Variants {
 
     delegate: Component {
         // qmllint disable
-        PanelWindow {
+        // Cage is a kiosk compositor and does not expose the layer-shell
+        // protocol required by PanelWindow. Use a regular fullscreen window
+        // so the greeter can render under Cage.
+        FloatingWindow {
             id: window
 
             required property var modelData
             screen: modelData
 
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
-            }
-
             color: Theme.background
-
-            exclusionMode: ExclusionMode.Ignore
-
-            focusable: screen.name === Settings.monitor
+            visible: screen.name === Settings.monitor
+            visibility: Window.FullScreen
+            flags: Qt.FramelessWindowHint
 
             Loader {
                 active: window.screen.name === Settings.monitor
