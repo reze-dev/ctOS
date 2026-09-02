@@ -34,6 +34,7 @@ let
 
     export CTOS_MODE=greetd
     export CTOS_DEBUG=1
+    export CTOS_LAUNCH_COMMAND=${desktopCommand}
     export QT_QPA_PLATFORM=wayland
     export XDG_SESSION_TYPE=wayland
     export XDG_RUNTIME_DIR=/run/user/999
