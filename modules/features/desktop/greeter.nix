@@ -27,7 +27,6 @@ let
     # otherwise effectively lost. Keep a readable copy for troubleshooting
     # from a TTY while retaining the normal VT output.
     log=/tmp/ctos-greeter.log
-    : > "$log"
     exec >>"$log" 2>&1
 
     echo "ctOS greeter launcher: $(${pkgs.coreutils}/bin/date --iso-8601=seconds)"

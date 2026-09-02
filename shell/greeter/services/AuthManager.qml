@@ -30,6 +30,7 @@ Singleton {
     }
 
     property int state: AuthManager.State.Inactive
+    property bool _finishing: false
 
     property string _username: SessionManager.activeUser?.username || ""
 
@@ -63,6 +64,7 @@ Singleton {
         }
 
         authManager.state = AuthManager.State.Success;
+        finishTimer.restart();
     }
 
     function onFailed() {
@@ -104,7 +106,19 @@ Singleton {
         }
     }
 
+    Timer {
+        id: finishTimer
+        interval: 1500
+        onTriggered: authManager.finish()
+    }
+
     function finish() {
+        if (authManager._finishing) {
+            return;
+        }
+
+        authManager._finishing = true;
+        logger.info("Launching authenticated desktop session.");
         authManager.state = AuthManager.State.Finish;
         authManager._handler.finish();
     }
