@@ -21,7 +21,7 @@ Variants {
 
             color: Theme.background
             visible: screen.name === Settings.monitor
-            visibility: Window.FullScreen
+            fullscreen: true
 
             Loader {
                 active: window.screen.name === Settings.monitor
