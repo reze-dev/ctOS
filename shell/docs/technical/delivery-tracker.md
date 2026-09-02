@@ -11,7 +11,7 @@
 | T4 — Command Deck | todo | Keyboard/mouse application and action search satisfies the interaction specification. |
 | T5 — System Rail and OSDs | todo | Audio, mic, brightness, network, battery/power, and session confirmation work or degrade safely. |
 | T6 — Notifications and Event Log | todo | ctOS owns notification delivery, toast behavior, history, and do-not-disturb. |
-| T7 — Greeter packaging and documentation | todo | Existing greeter is opt-in packageable and docs describe Nix activation/recovery without changing auth behavior. |
+| T7 — Greeter packaging and documentation | active | Existing greeter is opt-in packageable and docs describe Nix activation/recovery without changing auth behavior. |
 | T8 — V1 acceptance | todo | All validation gates pass in the ctos NixOS/Hyprland configuration. |
 
 ## T1 — Nix package and module
@@ -24,6 +24,8 @@
 - [x] Record successful `nix flake check --no-build` and `nix build .#ctos-shell` evidence in the validation log.
 
 T1 evidence (2026-09-02): `nix flake check --no-build` passed, `nix build .#ctos-shell` passed, and the built output contains `share/ctos/shell.qml`. Graphical service startup remains a manual acceptance step on the Hyprland host.
+
+T7 progress (2026-09-02): the Makima host now opts into `ctos.features.greeter.enable`; evaluation confirms Greetd launches Cage and the packaged `greeter.qml`, with `/etc/ctos/greeter.config.json` generated declaratively. Live PAM login and session handoff remain manual acceptance steps.
 
 ## T2 — Shell foundation
 
@@ -66,7 +68,7 @@ T1 evidence (2026-09-02): `nix flake check --no-build` passed, `nix build .#ctos
 
 ## T7–T8 — Release readiness
 
-- [ ] Package the preserved greeter only behind its opt-in feature.
+- [x] Package the preserved greeter only behind its opt-in feature.
 - [ ] Update user-facing README/install guidance after the Nix path is proven.
 - [ ] Exercise all manual acceptance scenarios in the validation strategy.
 - [ ] Record known limitations and deferred features for the first usable release.
