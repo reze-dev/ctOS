@@ -8,6 +8,18 @@
 let
   cfg = config.ctos.features.greeter;
   ctosPackage = pkgs.callPackage ../../../shell/nix/package.nix { };
+  desktopCommand = pkgs.writeShellScript "ctos-start-hyprland" ''
+    set -u
+
+    log=/tmp/ctos-desktop-session.log
+    exec >>"$log" 2>&1
+
+    echo "ctOS desktop launcher: $(${pkgs.coreutils}/bin/date --iso-8601=seconds)"
+    echo "uid=$(${pkgs.coreutils}/bin/id -u) gid=$(${pkgs.coreutils}/bin/id -g) runtime=''${XDG_RUNTIME_DIR-<unset>}"
+    ${pkgs.coreutils}/bin/env
+
+    exec ${config.programs.hyprland.package}/bin/start-hyprland
+  '';
   greeterCommand = pkgs.writeShellScript "ctos-greeter-launch" ''
     set -u
 
@@ -44,6 +56,10 @@ in
         assertion = config.ctos.features.display.enable;
         message = "ctos.features.greeter.enable requires ctos.features.display.enable";
       }
+      {
+        assertion = config.programs.hyprland.enable;
+        message = "ctos.features.greeter.enable requires Hyprland for its desktop session";
+      }
     ];
 
     environment.etc."ctos/greeter.config.json".text = builtins.toJSON {
@@ -52,7 +68,7 @@ in
         animations = "all";
         monitor = "";
         exitOverride = [ ];
-        launchOverride = [ ];
+        launchOverride = [ "${desktopCommand}" ];
         modes = {
           greetd = {
             animations = "all";
