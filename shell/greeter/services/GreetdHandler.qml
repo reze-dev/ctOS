@@ -86,11 +86,16 @@ Singleton {
     }
 
     function finish() {
-        const launchCommand = SessionManager.getLaunchCommand();
+        const launchCommand = Settings.launchCommand?.length ? Settings.launchCommand : Env.getArray("LAUNCH_COMMAND");
         const exitCommand = SessionManager.getExitCommand();
 
         logger.info(`Launching: ${launchCommand.join(" ")}`);
         logger.info(`Exiting Greeter: ${exitCommand.join(" ") || "<none>"}`);
+
+        if (!launchCommand.length) {
+            logger.critical("No desktop launch command is configured.");
+            return;
+        }
 
         Greetd.launch(launchCommand);
 
