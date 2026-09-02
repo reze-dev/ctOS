@@ -11,12 +11,16 @@ let
   greeterCommand = lib.concatStringsSep " " [
     "${pkgs.coreutils}/bin/env"
     "CTOS_MODE=greetd"
+    "QT_QPA_PLATFORM=wayland"
     "${pkgs.cage}/bin/cage"
-    "-ds"
+    "-D"
+    "-d"
+    "-s"
     "-m"
     "last"
     "--"
     "${pkgs.quickshell}/bin/qs"
+    "-vv"
     "--path"
     "${ctosPackage}/share/ctos/greeter.qml"
   ];
