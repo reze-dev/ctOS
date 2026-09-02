@@ -250,7 +250,8 @@ Singleton {
                 return nameMatch && uwsmMatch;
             });
 
-            _firstDesktop = detectedDesktop || (desktops.length > 0 ? desktops[0] : null);
+            const compatibleDesktop = desktops.find(desktop => desktop._uwsmManaged === _isUsingUwsm);
+            _firstDesktop = detectedDesktop || compatibleDesktop || (desktops.length > 0 ? desktops[0] : null);
         }
 
         function commit() {
