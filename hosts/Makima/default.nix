@@ -47,6 +47,7 @@
   # Custom feature overrides
   ctos.features = {
     niri.enable = true;
+    greeter.enable = true;
     fish.enable = true;
     emacs.enable = true;
   };
