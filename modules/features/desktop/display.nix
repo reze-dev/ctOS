@@ -50,6 +50,11 @@ in
       TTYVTDisallocate = true;
     };
 
+    # Restarting greetd during `nixos-rebuild switch` revokes the active
+    # graphical seat and terminates the running desktop session. Apply a new
+    # greeter only on the next boot instead.
+    systemd.services.greetd.restartIfChanged = false;
+
     # Keymap
     services.xserver.xkb = {
       layout = "us";
