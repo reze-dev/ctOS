@@ -15,6 +15,7 @@ let
     "niri"
     "power"
     "udiskie"
+    "wallpaper"
     "xdg"
     "zen-browser"
   ];
