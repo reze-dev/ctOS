@@ -11,7 +11,6 @@ in
 {
   options.ctos.features.devtools.enable =
     lib.mkEnableOption "developer tools and programming languages";
-
   config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       codecrafters-cli
@@ -36,6 +35,7 @@ in
       clang-tools
       cmake
       gnumake
+      xmake
 
       # JavaScript
       nodejs
