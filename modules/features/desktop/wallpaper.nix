@@ -42,7 +42,6 @@ in
           systemd.user.services.ctos-awww-daemon = {
             Unit = {
               Description = "ctOS awww wallpaper daemon";
-              After = [ "graphical-session.target" ];
               PartOf = [ "graphical-session.target" ];
             };
 
