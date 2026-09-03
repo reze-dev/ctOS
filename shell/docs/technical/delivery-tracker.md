@@ -5,7 +5,7 @@
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
 | T0 — Design baseline | done | Product, interaction, architecture, Nix, audit, technical decisions, and validation documents exist. |
-| T1 — Nix package and module | active | Flake evaluates; package builds; Home Manager module installs and starts an empty shell service. |
+| T1 — Nix package and module | done | Flake evaluates; package builds; Home Manager module installs and starts the shell service. |
 | T2 — Shell foundation | todo | `shell.qml`, generated settings, design tokens, OverlayController, and per-output window lifecycle work. |
 | T3 — Hyprland ambient bar | todo | Reactive workspace/focused-window state and compact system state render on each output without UI-owned polling. |
 | T4 — Command Deck | todo | Keyboard/mouse application and action search satisfies the interaction specification. |
@@ -22,10 +22,13 @@
 - [x] Add a systemd user service for the desktop shell with bounded restart behavior.
 - [x] Add a minimal `shell.qml` smoke entry that starts without greeter imports.
 - [x] Record successful `nix flake check --no-build` and `nix build .#ctos-shell` evidence in the validation log.
+- [x] Add the declarative `awww` daemon and default bundled wallpaper service to the desktop profile.
 
 T1 evidence (2026-09-02): `nix flake check --no-build` passed, `nix build .#ctos-shell` passed, and the built output contains `share/ctos/shell.qml`. Graphical service startup remains a manual acceptance step on the Hyprland host.
 
-T7 progress (2026-09-02): the Makima host now opts into `ctos.features.greeter.enable`; evaluation confirms Greetd launches Cage and the packaged `greeter.qml`, with `/etc/ctos/greeter.config.json` generated declaratively. Live PAM login and session handoff remain manual acceptance steps.
+T7 progress (2026-09-02): the Makima host now opts into `ctos.features.greeter.enable`; evaluation confirms Greetd launches Cage and the packaged `greeter.qml`, with `/etc/ctos/greeter.config.json` generated declaratively. Live PAM authentication and Hyprland handoff were verified on the host (2026-09-03); recovery/documentation work remains.
+
+Wallpaper progress (2026-09-03): the desktop profile starts `awww-daemon` and applies the bundled `wallpaper-v1.png` through a retrying user service. The initial systemd ordering cycle was fixed and the units now require a live host acceptance check.
 
 ## T2 — Shell foundation
 
