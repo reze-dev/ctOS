@@ -33,7 +33,8 @@ in
 
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [
-      ({ ... }:
+      (
+        { ... }:
         {
           home.packages = [ pkgs.awww ];
 
@@ -70,7 +71,8 @@ in
 
             Install.WantedBy = [ "graphical-session.target" ];
           };
-        })
+        }
+      )
     ];
   };
 }

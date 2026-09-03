@@ -14,14 +14,14 @@ in
     enable = lib.mkEnableOption "ctOS Quickshell desktop shell";
   };
 
-    config = lib.mkIf cfg.enable {
-        home.activation.ctosRemoveLegacyNoctalia = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            if command -v systemctl >/dev/null 2>&1; then
-                systemctl --user disable --now noctalia.service noctalia-shell.service 2>/dev/null || true
-            fi
-        '';
+  config = lib.mkIf cfg.enable {
+    home.activation.ctosRemoveLegacyNoctalia = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if command -v systemctl >/dev/null 2>&1; then
+          systemctl --user disable --now noctalia.service noctalia-shell.service 2>/dev/null || true
+      fi
+    '';
 
-        systemd.user.services.ctos = {
+    systemd.user.services.ctos = {
       Unit = {
         Description = "ctOS Quickshell desktop shell";
         After = [ "graphical-session.target" ];
