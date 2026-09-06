@@ -113,6 +113,13 @@ Scope {
             onActivated: OverlayController.close()
         }
 
+        Rectangle {
+            id: scrimVisual
+
+            anchors.fill: parent
+            color: Qt.rgba(8 / 255, 8 / 255, 8 / 255, 0.75)
+        }
+
         MouseArea {
             id: scrimBackdrop
 
@@ -131,7 +138,9 @@ Scope {
 
                 anchors.centerIn: parent
                 asynchronous: false
-                visible: OverlayController.activeSurface === OverlayController.Surface.CommandDeck
+                active: OverlayController.activeSurface === OverlayController.Surface.CommandDeck
+                visible: active
+                source: "desktop/surfaces/CommandDeck.qml"
             }
 
             Loader {
@@ -141,6 +150,7 @@ Scope {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 asynchronous: false
+                source: "desktop/surfaces/PlaceholderSurface.qml"
                 visible: OverlayController.activeSurface === OverlayController.Surface.SystemRail
             }
 
@@ -151,6 +161,7 @@ Scope {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 asynchronous: false
+                source: "desktop/surfaces/PlaceholderSurface.qml"
                 visible: OverlayController.activeSurface === OverlayController.Surface.EventLog
             }
         }
