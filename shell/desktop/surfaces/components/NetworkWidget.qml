@@ -45,23 +45,21 @@ Item {
             anchors.centerIn: parent
             spacing: Theme.spacingXs
 
-            Rectangle {
+            CtosIcon {
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredHeight: 6
-                Layout.preferredWidth: 6
-                color: root.isOnline ? Theme.connected : Theme.unavailable
-                radius: 3
-            }
-
-            Text {
-                color: root.isOnline ? Theme.textSecondary : Theme.textMuted
-                elide: Text.ElideRight
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                font.weight: Theme.fontWeightDemiBold
-                maximumLineCount: 1
-                text: root.prefixTag
-                wrapMode: Text.NoWrap
+                size: 14
+                name: {
+                    if (!root.isOnline) return "wifi-slash";
+                    if (NetworkService.isEthernet) return "network";
+                    return "wifi";
+                }
+                active: root.isOnline
+                destructive: !root.isOnline && NetworkService.available
+                color: {
+                    if (!NetworkService.available) return Theme.unavailable;
+                    if (!root.isOnline) return Theme.destructive;
+                    return mouseArea.containsMouse ? Theme.accent : Theme.textSecondary;
+                }
             }
 
             Text {

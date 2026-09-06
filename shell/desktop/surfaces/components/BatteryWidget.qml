@@ -37,24 +37,22 @@ Item {
             anchors.centerIn: parent
             spacing: Theme.spacingXs
 
-            Text {
-                color: Theme.textSecondary
-                elide: Text.ElideRight
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                font.weight: Theme.fontWeightDemiBold
-                maximumLineCount: 1
-                text: "BAT"
-                wrapMode: Text.NoWrap
-            }
-
-            Text {
-                color: Theme.accent
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Theme.fontWeightBold
-                text: "+"
-                visible: root.isCharging
+            CtosIcon {
+                Layout.alignment: Qt.AlignVCenter
+                size: 14
+                name: {
+                    if (root.isCharging) return "battery-charging";
+                    if (root.isLow) return "battery-low";
+                    return "battery";
+                }
+                active: root.isCharging
+                destructive: root.isLow
+                color: {
+                    if (root.isLow) return Theme.destructive;
+                    if (root.isCharging) return Theme.acidGreen;
+                    if (mouseArea.containsMouse) return Theme.accent;
+                    return Theme.textSecondary;
+                }
             }
 
             Text {
