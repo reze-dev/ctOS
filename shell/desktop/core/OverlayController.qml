@@ -39,6 +39,8 @@ Singleton {
     readonly property int surfaceSystemRail: 2
 
     property string pendingSessionAction: ""
+    property string pendingRailView: ""
+    property alias pendingRailSubmenu: root.pendingRailView
 
     signal focusReleased
     signal focusRequested(int activeSurface)
@@ -130,6 +132,14 @@ Singleton {
     }
     function openSystemRailWithAction(action: string): void {
         pendingSessionAction = action;
+        openSystemRail();
+    }
+    function openWifiSubmenu(): void {
+        pendingRailView = "wifi";
+        openSystemRail();
+    }
+    function openSystemRailWithSubmenu(submenu: string): void {
+        pendingRailView = submenu;
         openSystemRail();
     }
 
