@@ -67,14 +67,14 @@ PanelWindow {
                     text: "ctOS"
                 }
 
-                HoverHandler {
-                    id: nodeHover
+                MouseArea {
+                    id: nodeMouseArea
 
+                    anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                }
+                    hoverEnabled: true
 
-                TapHandler {
-                    onTapped: OverlayController.openCommandDeck()
+                    onClicked: OverlayController.openCommandDeck()
                 }
             }
 
@@ -182,28 +182,28 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredHeight: 20
                 Layout.preferredWidth: 20
-                border.color: railHover.hovered ? Theme.ctosGray : Theme.borderMuted
+                border.color: railMouseArea.containsMouse ? Theme.ctosGray : Theme.borderMuted
                 border.width: Theme.borderWidth
-                color: railHover.hovered ? Theme.surfaceHover : "transparent"
+                color: railMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
                 radius: Theme.radiusSmall
 
                 Text {
                     anchors.centerIn: parent
-                    color: railHover.hovered ? Theme.accent : Theme.textSecondary
+                    color: railMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeSmall
                     font.weight: Theme.fontWeightBold
                     text: "="
                 }
 
-                HoverHandler {
-                    id: railHover
+                MouseArea {
+                    id: railMouseArea
 
+                    anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                }
+                    hoverEnabled: true
 
-                TapHandler {
-                    onTapped: OverlayController.toggleSystemRail()
+                    onClicked: OverlayController.toggleSystemRail()
                 }
             }
         }

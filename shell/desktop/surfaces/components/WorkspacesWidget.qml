@@ -47,9 +47,9 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredHeight: 22
                 Layout.preferredWidth: 24
-                border.color: isUrgent ? Theme.accentRed : (isFocused ? Theme.accent : (hoverHandler.hovered ? Theme.ctosGray : Theme.borderMuted))
+                border.color: isUrgent ? Theme.accentRed : (isFocused ? Theme.accent : (mouseArea.containsMouse ? Theme.ctosGray : Theme.borderMuted))
                 border.width: Theme.borderWidth
-                color: isFocused ? Theme.surfaceSelected : (hoverHandler.hovered ? Theme.surfaceHover : "transparent")
+                color: isFocused ? Theme.surfaceSelected : (mouseArea.containsMouse ? Theme.surfaceHover : "transparent")
                 radius: Theme.radiusSmall
 
                 Text {
@@ -61,14 +61,14 @@ Item {
                     text: wsCell.modelData.name || String(wsCell.modelData.id)
                 }
 
-                HoverHandler {
-                    id: hoverHandler
+                MouseArea {
+                    id: mouseArea
 
+                    anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                }
+                    hoverEnabled: true
 
-                TapHandler {
-                    onTapped: {
+                    onClicked: {
                         CompositorService.switchToWorkspace(wsCell.modelData.id);
                     }
                 }
