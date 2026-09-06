@@ -38,6 +38,8 @@ Singleton {
     readonly property int surfaceNone: 0
     readonly property int surfaceSystemRail: 2
 
+    property string pendingSessionAction: ""
+
     signal focusReleased
     signal focusRequested(int activeSurface)
 
@@ -125,6 +127,10 @@ Singleton {
     }
     function openSystemRail(): void {
         _setSurface(OverlayController.Surface.SystemRail);
+    }
+    function openSystemRailWithAction(action: string): void {
+        pendingSessionAction = action;
+        openSystemRail();
     }
 
     // Keyboard Focus Management Contract:

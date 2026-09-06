@@ -113,11 +113,13 @@ Singleton {
             description: "End current desktop session",
             desc: "End current desktop session",
             icon: "system-log-out",
-            enabled: false,
+            enabled: true,
             destructive: true,
-            disabledNote: "requires System Rail",
+            disabledNote: "",
             keywords: ["logout", "log", "out", "exit", "quit", "session"],
-            execute: function () {}
+            execute: function () {
+                OverlayController.openSystemRailWithAction("logout");
+            }
         },
         {
             category: "Actions",
@@ -128,11 +130,13 @@ Singleton {
             description: "Restart computer",
             desc: "Restart computer",
             icon: "system-reboot",
-            enabled: false,
+            enabled: true,
             destructive: true,
-            disabledNote: "requires System Rail",
+            disabledNote: "",
             keywords: ["reboot", "restart", "system"],
-            execute: function () {}
+            execute: function () {
+                OverlayController.openSystemRailWithAction("reboot");
+            }
         },
         {
             category: "Actions",
@@ -143,11 +147,13 @@ Singleton {
             description: "Shut down computer",
             desc: "Shut down computer",
             icon: "system-shutdown",
-            enabled: false,
+            enabled: true,
             destructive: true,
-            disabledNote: "requires System Rail",
+            disabledNote: "",
             keywords: ["power", "off", "poweroff", "shutdown", "halt"],
-            execute: function () {}
+            execute: function () {
+                OverlayController.openSystemRailWithAction("poweroff");
+            }
         }
     ]
 
