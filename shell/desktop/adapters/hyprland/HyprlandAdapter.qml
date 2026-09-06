@@ -18,6 +18,9 @@ Singleton {
         return Boolean(sig && sig.length > 0 && Hyprland.requestSocketPath && Hyprland.requestSocketPath.length > 0);
     }
 
+    // Declarative binding for Hyprland Lua syntax mode (Qt 6 bindable property reactivity)
+    readonly property bool usingLua: Boolean(Hyprland.usingLua)
+
     // =========================================================================
     // Public Reactive Properties
     // =========================================================================
@@ -123,7 +126,19 @@ Singleton {
         }
 
         // Dispatch Hyprland compositor command via native IPC
-        Hyprland.dispatch("workspace " + id);
+        if (root.usingLua) {
+            Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })");
+        } else {
+            Hyprland.dispatch("workspace " + id);
+        }
+    }
+
+    // Retain compatibility check for Hyprland Lua mode
+    function isUsingLua(): bool {
+        if (Hyprland.usingLua) {
+            return true;
+        }
+        return root.usingLua;
     }
 
     // =========================================================================
