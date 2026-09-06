@@ -15,6 +15,27 @@ FocusScope {
     focus: true
 
     // =========================================================================
+    // View Routing State Machine (Milestone T6)
+    // =========================================================================
+
+    property string currentView: "main" // "main" | "wifi"
+    property alias currentSubmenu: root.currentView
+    property string selectedSsid: ""
+    readonly property bool reducedMotion: Settings.reducedMotion
+
+    function navigateToMain(): void {
+        currentView = "main";
+        selectedSsid = "";
+        root.forceActiveFocus();
+    }
+
+    function navigateToWifi(): void {
+        currentView = "wifi";
+        selectedSsid = "";
+        root.forceActiveFocus();
+    }
+
+    // =========================================================================
     // Session Safety Confirmation State Machine
     // =========================================================================
 
@@ -44,10 +65,13 @@ FocusScope {
         }
     }
 
-    // Keyboard navigation focus & Escape trapping
+    // Keyboard navigation focus & Tiered Escape trapping
     Keys.onEscapePressed: function (event) {
         if (root.isConfirming) {
             root.cancelConfirmation();
+            event.accepted = true;
+        } else if (root.currentView === "wifi") {
+            root.navigateToMain();
             event.accepted = true;
         } else {
             OverlayController.close();
@@ -55,9 +79,17 @@ FocusScope {
         }
     }
 
-    // Synchronize pending session action from OverlayController
+    // Synchronize pending session action & pending rail view from OverlayController
     Connections {
         target: OverlayController
+
+        function onPendingRailViewChanged(): void {
+            if (OverlayController.pendingRailView && OverlayController.pendingRailView !== "") {
+                root.currentView = OverlayController.pendingRailView;
+                OverlayController.pendingRailView = "";
+                root.forceActiveFocus();
+            }
+        }
 
         function onPendingSessionActionChanged(): void {
             if (OverlayController.pendingSessionAction && OverlayController.pendingSessionAction !== "") {
@@ -70,6 +102,10 @@ FocusScope {
         function onOverlayOpened(surface: int): void {
             if (surface === OverlayController.Surface.SystemRail) {
                 root.forceActiveFocus();
+                if (OverlayController.pendingRailView && OverlayController.pendingRailView !== "") {
+                    root.currentView = OverlayController.pendingRailView;
+                    OverlayController.pendingRailView = "";
+                }
                 if (OverlayController.pendingSessionAction && OverlayController.pendingSessionAction !== "") {
                     root.confirmationAction = OverlayController.pendingSessionAction;
                     OverlayController.pendingSessionAction = "";
@@ -80,11 +116,17 @@ FocusScope {
         function onOverlayClosed(surface: int): void {
             if (surface === OverlayController.Surface.SystemRail) {
                 root.confirmationAction = "";
+                root.currentView = "main";
+                root.selectedSsid = "";
             }
         }
     }
 
     Component.onCompleted: {
+        if (OverlayController.pendingRailView && OverlayController.pendingRailView !== "") {
+            root.currentView = OverlayController.pendingRailView;
+            OverlayController.pendingRailView = "";
+        }
         if (OverlayController.pendingSessionAction && OverlayController.pendingSessionAction !== "") {
             root.confirmationAction = OverlayController.pendingSessionAction;
             OverlayController.pendingSessionAction = "";
@@ -190,7 +232,7 @@ FocusScope {
         anchors.fill: parent
         anchors.margins: Theme.paddingXl
         spacing: Theme.spacingLarge
-        visible: !root.isConfirming
+        visible: !root.isConfirming && root.currentView === "main"
 
         // Header Row
         RowLayout {
@@ -467,7 +509,7 @@ FocusScope {
             }
         }
 
-        // Section: Wi-Fi Controls (Feature 10)
+        // Section: Wi-Fi Summary / Submenu Router (Milestone T6)
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Theme.spacingSmall
@@ -476,7 +518,7 @@ FocusScope {
                 Layout.fillWidth: true
 
                 CtosIcon {
-                    active: NetworkService.wifiEnabled && NetworkService.networkName !== "--N/A--"
+                    active: NetworkService.wifiEnabled && NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== ""
                     destructive: !NetworkService.wifiEnabled
                     name: NetworkService.wifiEnabled ? "wifi" : "wifi-slash"
                     size: 16
@@ -504,9 +546,9 @@ FocusScope {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 32
-                border.color: wifiToggleArea.containsMouse ? Theme.accent : Theme.borderMuted
+                border.color: wifiNavArea.containsMouse ? Theme.accent : Theme.borderMuted
                 border.width: Theme.borderWidth
-                color: wifiToggleArea.containsMouse ? Theme.surfaceHover : Theme.surface
+                color: wifiNavArea.containsMouse ? Theme.surfaceHover : Theme.surface
                 radius: Theme.radiusSmall
 
                 RowLayout {
@@ -518,34 +560,35 @@ FocusScope {
                         color: Theme.textPrimary
                         font.family: Theme.fontFamilyMonospace
                         font.pixelSize: Theme.fontSizeCaption
-                        text: NetworkService.wifiEnabled ? "WI-FI ADAPTER ENABLED" : "WI-FI ADAPTER DISABLED"
+                        text: NetworkService.wifiEnabled ? (NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "" ? NetworkService.networkName : "WI-FI ADAPTER ENABLED") : "WI-FI ADAPTER DISABLED"
+                        elide: Text.ElideRight
                     }
 
                     Rectangle {
                         Layout.preferredHeight: 18
-                        Layout.preferredWidth: 64
-                        border.color: NetworkService.wifiEnabled ? Theme.accent : Theme.borderMuted
+                        Layout.preferredWidth: 72
+                        border.color: wifiNavArea.containsMouse ? Theme.accent : Theme.borderMuted
                         border.width: Theme.borderWidth
-                        color: NetworkService.wifiEnabled ? Theme.surfaceSelected : Theme.surfaceActive
+                        color: wifiNavArea.containsMouse ? Theme.surfaceSelected : Theme.surfaceActive
                         radius: Theme.radiusSmall
 
                         Text {
                             anchors.centerIn: parent
-                            color: NetworkService.wifiEnabled ? Theme.accent : Theme.textSecondary
+                            color: wifiNavArea.containsMouse ? Theme.accent : Theme.textSecondary
                             font.family: Theme.fontFamilyMonospace
                             font.pixelSize: Theme.fontSizeCaption
                             font.weight: Theme.fontWeightBold
-                            text: NetworkService.wifiEnabled ? "DISABLE" : "ENABLE"
+                            text: "MANAGE >"
                         }
                     }
                 }
 
                 MouseArea {
-                    id: wifiToggleArea
+                    id: wifiNavArea
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
-                    onClicked: NetworkService.toggleWifi()
+                    onClicked: root.navigateToWifi()
                 }
             }
         }
@@ -785,6 +828,417 @@ FocusScope {
                         cursorShape: Qt.PointingHandCursor
                         hoverEnabled: true
                         onClicked: root.triggerConfirmation("poweroff")
+                    }
+                }
+            }
+        }
+    }
+
+    // =========================================================================
+    // Wi-Fi Submenu View (Milestone T6)
+    // =========================================================================
+    ColumnLayout {
+        id: wifiSubmenuLayout
+        anchors.fill: parent
+        anchors.margins: Theme.paddingXl
+        spacing: Theme.spacingMedium
+        visible: !root.isConfirming && root.currentView === "wifi"
+
+        // Submenu Header Row
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spacingSmall
+
+            // Back Button
+            Rectangle {
+                id: btnBack
+                Layout.preferredHeight: 24
+                Layout.preferredWidth: 64
+                border.color: backMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
+                border.width: Theme.borderWidth
+                color: backMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                radius: Theme.radiusSmall
+
+                Text {
+                    anchors.centerIn: parent
+                    color: backMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeCaption
+                    font.weight: Theme.fontWeightBold
+                    text: "< BACK"
+                }
+
+                MouseArea {
+                    id: backMouseArea
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: root.navigateToMain()
+                }
+            }
+
+            Rectangle {
+                Layout.preferredHeight: 8
+                Layout.preferredWidth: 8
+                color: Theme.accent
+                radius: 4
+            }
+
+            Text {
+                Layout.fillWidth: true
+                color: Theme.accent
+                font.family: Theme.fontFamilyMonospace
+                font.pixelSize: Theme.fontSizeSegment
+                font.weight: Theme.fontWeightBold
+                text: "// WI-FI"
+            }
+
+            // Close Button
+            Rectangle {
+                Layout.preferredHeight: 24
+                Layout.preferredWidth: 24
+                border.color: wifiCloseMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
+                border.width: Theme.borderWidth
+                color: wifiCloseMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                radius: Theme.radiusSmall
+
+                Text {
+                    anchors.centerIn: parent
+                    color: wifiCloseMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeCaption
+                    font.weight: Theme.fontWeightBold
+                    text: "x"
+                }
+
+                MouseArea {
+                    id: wifiCloseMouseArea
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: OverlayController.close()
+                }
+            }
+        }
+
+        // Divider
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Theme.borderWidth
+            color: Theme.borderMuted
+        }
+
+        // Dedicated Prominent Toggle Button: [DISABLE WI-FI] / [ENABLE WI-FI]
+        // Requirement R2: Styled in Theme.acidGreen. ONLY this button toggles radio.
+        Rectangle {
+            id: btnDisableWifi
+            readonly property bool btnEnableWifi: !NetworkService.wifiEnabled
+            readonly property string _labelEnableWifi: "ENABLE WI-FI"
+            readonly property string _labelDisableWifi: "DISABLE WI-FI"
+            Layout.fillWidth: true
+            Layout.preferredHeight: 38
+            color: NetworkService.wifiEnabled ? (wifiRadioMouseArea.containsMouse ? "#17df89" : Theme.acidGreen) : (wifiRadioMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
+            border.color: Theme.acidGreen
+            border.width: Theme.borderWidth
+            radius: Theme.radiusSmall
+
+            RowLayout {
+                anchors.centerIn: parent
+                spacing: Theme.spacingSmall
+
+                CtosIcon {
+                    name: NetworkService.wifiEnabled ? "wifi" : "wifi-slash"
+                    size: 14
+                    color: NetworkService.wifiEnabled ? Theme.gray900 : Theme.acidGreen
+                }
+
+                Text {
+                    color: NetworkService.wifiEnabled ? Theme.gray900 : Theme.acidGreen
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Theme.fontWeightBold
+                    text: NetworkService.wifiEnabled ? "[DISABLE WI-FI]" : "[ENABLE WI-FI]"
+                }
+            }
+
+            MouseArea {
+                id: wifiRadioMouseArea
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: NetworkService.toggleWifi()
+            }
+        }
+
+        // Status Subheader
+        RowLayout {
+            Layout.fillWidth: true
+
+            Text {
+                Layout.fillWidth: true
+                color: Theme.textSecondary
+                font.family: Theme.fontFamilyMonospace
+                font.pixelSize: Theme.fontSizeCaption
+                font.weight: Theme.fontWeightBold
+                text: NetworkService.wifiEnabled ? "// AVAILABLE NETWORKS" : "// WI-FI ADAPTER OFF"
+            }
+
+            Text {
+                color: Theme.textSecondary
+                font.family: Theme.fontFamilyMonospace
+                font.pixelSize: Theme.fontSizeCaption
+                text: NetworkService.wifiEnabled ? (NetworkService.availableNetworks ? NetworkService.availableNetworks.length + " FOUND" : "SCANNING...") : "STANDBY"
+            }
+        }
+
+        // Scrollable List of Available SSIDs
+        Rectangle {
+            id: networkListContainer
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: Theme.gray800 // Near-black #0E0E0E
+            border.color: Theme.borderMuted
+            border.width: Theme.borderWidth
+            radius: Theme.radiusSmall
+            clip: true
+
+            // Placeholder when disabled or empty
+            Text {
+                anchors.centerIn: parent
+                visible: !NetworkService.wifiEnabled || !NetworkService.availableNetworks || NetworkService.availableNetworks.length === 0
+                color: Theme.textSecondary
+                font.family: Theme.fontFamilyMonospace
+                font.pixelSize: Theme.fontSizeSmall
+                horizontalAlignment: Text.AlignHCenter
+                text: !NetworkService.wifiEnabled ? "WI-FI IS DISABLED\nUSE [ENABLE WI-FI] ABOVE" : "SCANNING NETWORKS..."
+            }
+
+            ListView {
+                id: networkListView
+                anchors.fill: parent
+                anchors.margins: Theme.paddingSmall
+                spacing: Theme.spacingSmall
+                clip: true
+                model: NetworkService.wifiEnabled ? NetworkService.availableNetworks : []
+
+                delegate: ColumnLayout {
+                    id: networkItemDelegate
+                    width: networkListView.width
+                    spacing: 2
+
+                    readonly property var netData: modelData
+                    readonly property string itemSsid: (netData && netData.ssid) ? netData.ssid : ""
+                    readonly property real itemStrength: (netData && typeof netData.signalStrength === "number") ? netData.signalStrength : 0.0
+                    readonly property bool itemIsKnown: Boolean(netData && (netData.known || netData.isKnown || netData.saved))
+                    readonly property bool itemIsConnected: Boolean(netData && (netData.connected || netData.isConnected)) || (NetworkService.networkName === itemSsid && NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "")
+                    readonly property bool isExpanded: root.selectedSsid === itemSsid && !itemIsKnown && !itemIsConnected
+
+                    // Main Network Entry Tile
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        border.color: itemIsConnected ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.borderMuted)
+                        border.width: Theme.borderWidth
+                        color: itemIsConnected ? Theme.surfaceSelected : (itemMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
+                        radius: Theme.radiusSmall
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: Theme.paddingSmall
+                            spacing: Theme.spacingSmall
+
+                            CtosIcon {
+                                active: itemIsConnected
+                                name: "wifi"
+                                size: 14
+                                color: itemIsConnected ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                color: itemIsConnected ? Theme.acidGreen : Theme.textPrimary
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeSmall
+                                font.weight: itemIsConnected ? Theme.fontWeightBold : Theme.fontWeightNormal
+                                text: itemSsid !== "" ? itemSsid : "[HIDDEN NETWORK]"
+                            }
+
+                            // Saved Badge
+                            Rectangle {
+                                visible: itemIsKnown && !itemIsConnected
+                                Layout.preferredHeight: 16
+                                Layout.preferredWidth: 46
+                                color: "transparent"
+                                border.color: Theme.accent
+                                border.width: 1
+                                radius: Theme.radiusSmall
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Theme.accent
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: "SAVED"
+                                }
+                            }
+
+                            // Signal Strength Percentage
+                            Text {
+                                color: Theme.textSecondary
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeCaption
+                                text: Math.round(itemStrength <= 1.0 ? itemStrength * 100 : itemStrength) + "%"
+                            }
+
+                            // Connected Badge
+                            Text {
+                                visible: itemIsConnected
+                                color: Theme.acidGreen
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeCaption
+                                font.weight: Theme.fontWeightBold
+                                text: "[CONNECTED]"
+                            }
+                        }
+
+                        MouseArea {
+                            id: itemMouseArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+
+                            onClicked: {
+                                if (itemIsConnected) {
+                                    return;
+                                }
+                                if (itemIsKnown) {
+                                    root.selectedSsid = "";
+                                    NetworkService.connectToNetwork(itemSsid);
+                                } else {
+                                    if (root.selectedSsid === itemSsid) {
+                                        root.selectedSsid = "";
+                                    } else {
+                                        root.selectedSsid = itemSsid;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Inline Password Prompt (Terminal Prompt directly in the Rail)
+                    Rectangle {
+                        id: passwordPromptBox
+                        visible: isExpanded
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 64
+                        color: Theme.gray900
+                        border.color: Theme.acidGreen
+                        border.width: Theme.borderWidth
+                        radius: Theme.radiusSmall
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: Theme.paddingSmall
+                            spacing: Theme.spacingSmall
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Theme.spacingSmall
+
+                                Text {
+                                    color: Theme.acidGreen
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.weight: Theme.fontWeightBold
+                                    text: "PASSWORD >_"
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 22
+                                    color: Theme.gray800
+                                    border.color: pwInput.activeFocus ? Theme.acidGreen : Theme.borderMuted
+                                    border.width: Theme.borderWidth
+                                    radius: Theme.radiusSmall
+
+                                    TextInput {
+                                        id: pwInput
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 4
+                                        anchors.rightMargin: 4
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: Theme.textPrimary
+                                        echoMode: TextInput.Password
+                                        font.family: Theme.fontFamilyMonospace
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        focus: isExpanded
+                                        selectByMouse: true
+
+                                        onAccepted: {
+                                            if (pwInput.text.trim() === "" || pwInput.text.length === 0) {
+                                                return;
+                                            }
+                                            NetworkService.connectToNetwork(itemSsid, pwInput.text);
+                                            root.selectedSsid = "";
+                                            pwInput.text = "";
+                                        }
+
+                                        Keys.onEscapePressed: function (event) {
+                                            root.selectedSsid = "";
+                                            pwInput.text = "";
+                                            event.accepted = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    text: "[ENTER] Connect  [ESC] Cancel"
+                                }
+
+                                Rectangle {
+                                    Layout.preferredHeight: 18
+                                    Layout.preferredWidth: 62
+                                    border.color: Theme.acidGreen
+                                    border.width: Theme.borderWidth
+                                    color: pwConnectArea.containsMouse ? Theme.surfaceSelected : "transparent"
+                                    radius: Theme.radiusSmall
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        color: Theme.acidGreen
+                                        font.family: Theme.fontFamilyMonospace
+                                        font.pixelSize: 9
+                                        font.weight: Theme.fontWeightBold
+                                        text: "CONNECT"
+                                    }
+
+                                    MouseArea {
+                                        id: pwConnectArea
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        hoverEnabled: true
+                                        onClicked: {
+                                            if (pwInput.text.trim() === "" || pwInput.text.length === 0) {
+                                                return;
+                                            }
+                                            NetworkService.connectToNetwork(itemSsid, pwInput.text);
+                                            root.selectedSsid = "";
+                                            pwInput.text = "";
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
