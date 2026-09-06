@@ -38,15 +38,22 @@ Item {
             anchors.centerIn: parent
             spacing: Theme.spacingXs
 
-            Text {
-                color: root.isAvail && !root.isMuted ? Theme.textSecondary : Theme.textMuted
-                elide: Text.ElideRight
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                font.weight: Theme.fontWeightDemiBold
-                maximumLineCount: 1
-                text: "VOL"
-                wrapMode: Text.NoWrap
+            CtosIcon {
+                Layout.alignment: Qt.AlignVCenter
+                size: 14
+                name: {
+                    if (!root.isAvail) return "volume-slash";
+                    if (root.isMuted) return "volume-slash";
+                    return "volume";
+                }
+                active: mouseArea.containsMouse && root.isAvail && !root.isMuted
+                destructive: root.isMuted
+                color: {
+                    if (!root.isAvail) return Theme.unavailable;
+                    if (root.isMuted) return Theme.destructive;
+                    if (mouseArea.containsMouse) return Theme.accent;
+                    return Theme.textSecondary;
+                }
             }
 
             Text {
