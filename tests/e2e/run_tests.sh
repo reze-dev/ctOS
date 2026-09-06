@@ -107,10 +107,10 @@ PASS_COUNT=0
 FAIL_COUNT=0
 SKIP_COUNT=0
 
-TIER1_TOTAL=0; TIER1_PASS=0; TIER1_FAIL=0
-TIER2_TOTAL=0; TIER2_PASS=0; TIER2_FAIL=0
-TIER3_TOTAL=0; TIER3_PASS=0; TIER3_FAIL=0
-TIER4_TOTAL=0; TIER4_PASS=0; TIER4_FAIL=0
+TIER1_TOTAL=0; TIER1_PASS=0; TIER1_FAIL=0; TIER1_SKIP=0
+TIER2_TOTAL=0; TIER2_PASS=0; TIER2_FAIL=0; TIER2_SKIP=0
+TIER3_TOTAL=0; TIER3_PASS=0; TIER3_FAIL=0; TIER3_SKIP=0
+TIER4_TOTAL=0; TIER4_PASS=0; TIER4_FAIL=0; TIER4_SKIP=0
 
 run_tier_script() {
     local tier_num="$1"
@@ -168,6 +168,12 @@ run_tier_script() {
                     ;;
                 SKIP)
                     SKIP_COUNT=$((SKIP_COUNT + 1))
+                    case "${tier_num}" in
+                        1) TIER1_SKIP=$((TIER1_SKIP + 1)); TIER1_TOTAL=$((TIER1_TOTAL + 1)) ;;
+                        2) TIER2_SKIP=$((TIER2_SKIP + 1)); TIER2_TOTAL=$((TIER2_TOTAL + 1)) ;;
+                        3) TIER3_SKIP=$((TIER3_SKIP + 1)); TIER3_TOTAL=$((TIER3_TOTAL + 1)) ;;
+                        4) TIER4_SKIP=$((TIER4_SKIP + 1)); TIER4_TOTAL=$((TIER4_TOTAL + 1)) ;;
+                    esac
                     echo -e "${COLOR_YELLOW}[SKIP]${COLOR_RESET} ${test_id}: ${test_desc}"
                     echo "SKIP|${test_id}|${test_desc}|" >> "${GLOBAL_RESULTS_TMP}"
                     ;;
@@ -230,16 +236,16 @@ echo -e "${COLOR_BOLD}==========================================================
 printf "%-30s | %8s | %8s | %8s | %8s\n" "Tier" "Total" "Passed" "Failed" "Skipped"
 echo "----------------------------------------------------------------------"
 if [[ "${TARGET_TIER}" == "1" || "${TARGET_TIER}" == "all" ]]; then
-    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 1 (Feature Coverage)" "${TIER1_TOTAL}" "${TIER1_PASS}" "${TIER1_FAIL}" 0
+    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 1 (Feature Coverage)" "${TIER1_TOTAL}" "${TIER1_PASS}" "${TIER1_FAIL}" "${TIER1_SKIP}"
 fi
 if [[ "${TARGET_TIER}" == "2" || "${TARGET_TIER}" == "all" ]]; then
-    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 2 (Boundaries & Edge)" "${TIER2_TOTAL}" "${TIER2_PASS}" "${TIER2_FAIL}" 0
+    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 2 (Boundaries & Edge)" "${TIER2_TOTAL}" "${TIER2_PASS}" "${TIER2_FAIL}" "${TIER2_SKIP}"
 fi
 if [[ "${TARGET_TIER}" == "3" || "${TARGET_TIER}" == "all" ]]; then
-    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 3 (Pairwise Interactions)" "${TIER3_TOTAL}" "${TIER3_PASS}" "${TIER3_FAIL}" 0
+    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 3 (Pairwise Interactions)" "${TIER3_TOTAL}" "${TIER3_PASS}" "${TIER3_FAIL}" "${TIER3_SKIP}"
 fi
 if [[ "${TARGET_TIER}" == "4" || "${TARGET_TIER}" == "all" ]]; then
-    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 4 (Real-World Scenarios)" "${TIER4_TOTAL}" "${TIER4_PASS}" "${TIER4_FAIL}" 0
+    printf "%-30s | %8d | %8d | %8d | %8d\n" "Tier 4 (Real-World Scenarios)" "${TIER4_TOTAL}" "${TIER4_PASS}" "${TIER4_FAIL}" "${TIER4_SKIP}"
 fi
 echo "----------------------------------------------------------------------"
 printf "%-30s | %8d | %8d | %8d | %8d\n" "TOTAL" "${TOTAL_COUNT}" "${PASS_COUNT}" "${FAIL_COUNT}" "${SKIP_COUNT}"
@@ -271,10 +277,10 @@ report = {
     'passed': ${PASS_COUNT},
     'failed': ${FAIL_COUNT},
     'skipped': ${SKIP_COUNT},
-    'tier1': {'total': ${TIER1_TOTAL}, 'passed': ${TIER1_PASS}, 'failed': ${TIER1_FAIL}},
-    'tier2': {'total': ${TIER2_TOTAL}, 'passed': ${TIER2_PASS}, 'failed': ${TIER2_FAIL}},
-    'tier3': {'total': ${TIER3_TOTAL}, 'passed': ${TIER3_PASS}, 'failed': ${TIER3_FAIL}},
-    'tier4': {'total': ${TIER4_TOTAL}, 'passed': ${TIER4_PASS}, 'failed': ${TIER4_FAIL}},
+    'tier1': {'total': ${TIER1_TOTAL}, 'passed': ${TIER1_PASS}, 'failed': ${TIER1_FAIL}, 'skipped': ${TIER1_SKIP}},
+    'tier2': {'total': ${TIER2_TOTAL}, 'passed': ${TIER2_PASS}, 'failed': ${TIER2_FAIL}, 'skipped': ${TIER2_SKIP}},
+    'tier3': {'total': ${TIER3_TOTAL}, 'passed': ${TIER3_PASS}, 'failed': ${TIER3_FAIL}, 'skipped': ${TIER3_SKIP}},
+    'tier4': {'total': ${TIER4_TOTAL}, 'passed': ${TIER4_PASS}, 'failed': ${TIER4_FAIL}, 'skipped': ${TIER4_SKIP}},
     'results': results
 }
 with open('${JSON_OUTPUT}', 'w') as f:
