@@ -25,9 +25,32 @@ Singleton {
     // Human-readable audio sink name/description
     readonly property string sinkName: available ? (_sink?.description || _sink?.name || "") : ""
 
+    // =========================================================================
+    // PipeWire Source Tracking & Availability (Microphone)
+    // =========================================================================
+
+    readonly property var _source: Pipewire.defaultAudioSource
+
+    // True only when PipeWire daemon is ready, source is resolved, and audio controls are active
+    readonly property bool micAvailable: Boolean(Pipewire.ready && _source !== null && _source.ready && _source.audio !== null)
+
+    // Current linear mic volume normalized strictly in [0.0, 1.0]; 0.0 if unavailable
+    readonly property real micVolume: micAvailable ? (_source?.audio?.volume ?? 0.0) : 0.0
+
+    // Mic mute state; false if unavailable
+    readonly property bool micMuted: micAvailable ? (_source?.audio?.muted ?? false) : false
+
+    // Human-readable audio source name/description
+    readonly property string sourceName: micAvailable ? (_source?.description || _source?.name || "") : ""
+
     // Track default audio sink properties reactively via Quickshell PipeWire tracker
     PwObjectTracker {
         objects: Pipewire.defaultAudioSink ? [Pipewire.defaultAudioSink] : []
+    }
+
+    // Track default audio source properties reactively via Quickshell PipeWire tracker
+    PwObjectTracker {
+        objects: Pipewire.defaultAudioSource ? [Pipewire.defaultAudioSource] : []
     }
 
     // =========================================================================
@@ -62,4 +85,38 @@ Singleton {
         }
         root._sink.audio.muted = !root._sink.audio.muted;
     }
+
+    // =========================================================================
+    // Public Microphone Methods
+    // =========================================================================
+
+    // Sets microphone volume with strict boundary clamping [0.0, 1.0]
+    function setMicVolume(target: real): void {
+        if (!root.micAvailable || !root._source || !root._source.audio) {
+            return;
+        }
+        const clamped = Math.max(0.0, Math.min(1.0, target));
+        root._source.audio.volume = clamped;
+    }
+
+    // Relative mic volume adjustment (e.g. from mouse wheel scroll events).
+    // Safely delegates to clamped setMicVolume; un-mutes automatically on positive delta.
+    function stepMicVolume(delta: real): void {
+        if (!root.micAvailable) {
+            return;
+        }
+        if (root.micMuted && delta > 0 && root._source && root._source.audio) {
+            root._source.audio.muted = false;
+        }
+        root.setMicVolume(root.micVolume + delta);
+    }
+
+    // Inverts mute state on the default audio source
+    function toggleMicMute(): void {
+        if (!root.micAvailable || !root._source || !root._source.audio) {
+            return;
+        }
+        root._source.audio.muted = !root._source.audio.muted;
+    }
 }
+

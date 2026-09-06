@@ -150,9 +150,11 @@ Scope {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 asynchronous: false
-                source: "desktop/surfaces/PlaceholderSurface.qml"
-                visible: OverlayController.activeSurface === OverlayController.Surface.SystemRail
+                active: OverlayController.activeSurface === OverlayController.Surface.SystemRail
+                visible: active
+                source: "desktop/surfaces/SystemRail.qml"
             }
+
 
             Loader {
                 id: eventLogLoader
