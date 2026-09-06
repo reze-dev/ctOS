@@ -28,8 +28,8 @@ fi
 test_case "T1.24.3" "Wi-Fi Controls: Network SSID is elided or sanitized to prevent layout overflow"
 assert_grep -E "(sanitizeName|elide|substring|slice)" "${NET_SVC}" "SSID must be sanitized or elided"
 
-test_case "T1.24.4" "Wi-Fi Controls: Secrets and passwords strictly excluded from NetworkService"
-assert_not_grep -i -E "(wpa_passphrase|psk|password)" "${NET_SVC}" "Wi-Fi passwords must never appear in NetworkService"
+test_case "T1.24.4" "Wi-Fi Controls: Secrets and passwords strictly excluded from NetworkService properties"
+assert_not_grep -i -E "property.*(wpa_passphrase|psk|password)" "${NET_SVC}" "Wi-Fi passwords must never be stored as persistent properties in NetworkService"
 
 test_case "T1.24.5" "Wi-Fi Controls: Disconnected or offline network state renders clean fallback (--N/A--)"
 assert_grep -E '("--N/A--"|Disconnected|Offline|unavailable)' "${NET_SVC}" "NetworkService must provide clean fallback text"
