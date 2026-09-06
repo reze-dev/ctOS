@@ -137,6 +137,8 @@ FocusScope {
         RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 36
+            Layout.maximumHeight: 36
+            Layout.fillHeight: false
             spacing: Theme.spacingMedium
 
             Text {
