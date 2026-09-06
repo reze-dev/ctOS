@@ -30,7 +30,7 @@ Item {
     RowLayout {
         id: layout
 
-        anchors.fill: parent
+        anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spacingXs
 
         Repeater {

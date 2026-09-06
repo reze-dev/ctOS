@@ -8,9 +8,8 @@ import "./components"
 PanelWindow {
     id: root
 
-    property var screen: null
-
     color: Theme.background
+    focusable: true
     implicitHeight: Theme.barHeight
     height: Theme.barHeight
 
@@ -51,9 +50,9 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredHeight: 20
                 Layout.preferredWidth: nodeLabel.implicitWidth + Theme.paddingSmall * 2
-                border.color: Theme.accent
+                border.color: nodeMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
                 border.width: Theme.borderWidth
-                color: Theme.surfaceSelected
+                color: nodeMouseArea.containsMouse ? Theme.surfaceActive : Theme.surfaceSelected
                 radius: Theme.radiusSmall
 
                 Text {
@@ -182,7 +181,7 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredHeight: 20
                 Layout.preferredWidth: 20
-                border.color: railMouseArea.containsMouse ? Theme.ctosGray : Theme.borderMuted
+                border.color: railMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
                 border.width: Theme.borderWidth
                 color: railMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
                 radius: Theme.radiusSmall
