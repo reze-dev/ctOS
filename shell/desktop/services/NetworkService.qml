@@ -35,6 +35,9 @@ Singleton {
     // Wireless signal strength normalized [0.0, 1.0]; -1.0 if not connected to Wi-Fi
     property real signalStrength: -1.0
 
+    // True if Wi-Fi subsystem radio is enabled; tracks Networking.wifiEnabled
+    readonly property bool wifiEnabled: Boolean(Networking.wifiEnabled)
+
     // Signals
     signal networkStateChanged(bool connected, string connType, string name)
 
@@ -136,12 +139,35 @@ Singleton {
     }
 
     // =========================================================================
+    // Public Wi-Fi Controls
+    // =========================================================================
+
+    // Toggles the Wi-Fi subsystem radio state via NetworkManager
+    function toggleWifi(): void {
+        if (!root.available) {
+            return;
+        }
+        Networking.wifiEnabled = !Networking.wifiEnabled;
+    }
+
+    // Explicitly sets the Wi-Fi subsystem state
+    function setWifiEnabled(enabled: bool): void {
+        if (!root.available) {
+            return;
+        }
+        Networking.wifiEnabled = enabled;
+    }
+
+    // =========================================================================
     // Declarative Reactive Bindings
     // =========================================================================
 
     Connections {
         target: Networking
         function onConnectivityChanged() {
+            root._evaluateNetworkState();
+        }
+        function onWifiEnabledChanged() {
             root._evaluateNetworkState();
         }
     }
