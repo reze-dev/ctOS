@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import "../core"
+import "./components"
 
 FocusScope {
     id: root
@@ -302,11 +303,15 @@ FocusScope {
                         anchors.rightMargin: Theme.paddingMedium
                         spacing: Theme.spacingMedium
 
-                        IconImage {
+                        CtosIcon {
                             Layout.preferredWidth: 24
                             Layout.preferredHeight: 24
                             Layout.alignment: Qt.AlignVCenter
-                            source: Quickshell.iconPath(modelData.icon, "application-x-executable")
+                            name: (modelData.icon && modelData.icon !== "" && modelData.icon !== "application-x-executable") ? modelData.icon : (modelData.id || modelData.name || "")
+                            size: 24
+                            active: delegateItem.isCurrent
+                            destructive: Boolean(modelData.destructive)
+                            fallbackIcon: "application-x-executable"
                         }
 
                         ColumnLayout {

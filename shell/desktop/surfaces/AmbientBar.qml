@@ -178,17 +178,19 @@ PanelWindow {
             Rectangle {
                 id: railBtn
 
+                readonly property bool isRailOpen: OverlayController.activeSurface === OverlayController.Surface.SystemRail
+
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredHeight: 20
                 Layout.preferredWidth: 20
-                border.color: railMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
+                border.color: (isRailOpen || railMouseArea.containsMouse) ? Theme.accent : Theme.borderMuted
                 border.width: Theme.borderWidth
-                color: railMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                color: isRailOpen ? Theme.surfaceSelected : (railMouseArea.containsMouse ? Theme.surfaceHover : "transparent")
                 radius: Theme.radiusSmall
 
                 Text {
                     anchors.centerIn: parent
-                    color: railMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
+                    color: (railBtn.isRailOpen || railMouseArea.containsMouse) ? Theme.accent : Theme.textSecondary
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeSmall
                     font.weight: Theme.fontWeightBold
