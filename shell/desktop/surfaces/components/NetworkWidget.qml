@@ -85,7 +85,7 @@ Item {
             hoverEnabled: true
 
             onClicked: {
-                OverlayController.toggleSystemRail();
+                OverlayController.openWifiSubmenu();
             }
         }
     }
