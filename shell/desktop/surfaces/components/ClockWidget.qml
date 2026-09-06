@@ -24,9 +24,9 @@ Item {
 
         anchors.fill: parent
         anchors.margins: Theme.paddingXs
-        border.color: hoverHandler.hovered ? Theme.ctosGray : "transparent"
+        border.color: mouseArea.containsMouse ? Theme.ctosGray : "transparent"
         border.width: Theme.borderWidth
-        color: hoverHandler.hovered ? Theme.surfaceHover : "transparent"
+        color: mouseArea.containsMouse ? Theme.surfaceHover : "transparent"
         radius: Theme.radiusSmall
 
         RowLayout {
@@ -58,16 +58,14 @@ Item {
             }
         }
 
-        HoverHandler {
-            id: hoverHandler
+        MouseArea {
+            id: mouseArea
 
+            anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-        }
+            hoverEnabled: true
 
-        TapHandler {
-            onTapped: {
-                OverlayController.toggleEventLog();
-            }
+            onClicked: OverlayController.toggleEventLog()
         }
     }
 }
