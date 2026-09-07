@@ -37,7 +37,7 @@ in
           autoGenerateKeys = lib.mkDefault true;
         };
         style = {
-          wallpapers = [ ../../../shell/extras/wallpapers/wallpaper-v1.png ];
+          wallpapers = [ ../../../shell/extras/wallpapers/wallpaper-v2.png ];
           wallpaperStyle = "stretched";
         };
       };
