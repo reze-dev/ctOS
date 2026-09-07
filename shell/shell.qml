@@ -7,6 +7,7 @@ import "desktop/adapters/hyprland"
 import "desktop/core"
 import "desktop/services"
 import "desktop/surfaces"
+import "desktop/surfaces/widgets"
 
 Scope {
     id: root
@@ -33,6 +34,128 @@ Scope {
             }
         }
         return null;
+    }
+
+    Variants {
+        id: cpuHexGridVariants
+
+        model: Quickshell.screens
+
+        delegate: Component {
+            PanelWindow {
+                id: cpuHexGridWindow
+
+                required property var modelData
+
+                screen: modelData
+                color: "transparent"
+                visible: Settings.widgetCpuHexGridVisible
+                exclusionMode: ExclusionMode.Ignore
+
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.namespace: "ctos-widgets"
+
+                anchors {
+                    top: true
+                    right: true
+                }
+                margins {
+                    top: Theme.barHeight + Theme.spacingXl
+                    right: Theme.spacing2Xl
+                }
+
+                implicitWidth: cpuHexGrid.implicitWidth
+                implicitHeight: cpuHexGrid.implicitHeight
+
+                CpuHexGrid {
+                    id: cpuHexGrid
+                    anchors.fill: parent
+                }
+            }
+        }
+    }
+
+    Variants {
+        id: ramBlockBarVariants
+
+        model: Quickshell.screens
+
+        delegate: Component {
+            PanelWindow {
+                id: ramBlockBarWindow
+
+                required property var modelData
+
+                screen: modelData
+                color: "transparent"
+                visible: Settings.widgetRamBlockBarVisible
+                exclusionMode: ExclusionMode.Ignore
+
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.namespace: "ctos-widgets"
+
+                anchors {
+                    top: true
+                    right: true
+                }
+                margins {
+                    top: Settings.widgetCpuHexGridVisible
+                        ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl)
+                        : (Theme.barHeight + Theme.spacingXl)
+                    right: Theme.spacing2Xl
+                }
+
+                implicitWidth: ramBlockBar.implicitWidth
+                implicitHeight: ramBlockBar.implicitHeight
+
+                RamBlockBar {
+                    id: ramBlockBar
+                    anchors.fill: parent
+                }
+            }
+        }
+    }
+
+    Variants {
+        id: networkFlowVariants
+
+        model: Quickshell.screens
+
+        delegate: Component {
+            PanelWindow {
+                id: networkFlowWindow
+
+                required property var modelData
+
+                screen: modelData
+                color: "transparent"
+                visible: Settings.widgetNetworkFlowVisible
+                exclusionMode: ExclusionMode.Ignore
+
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.namespace: "ctos-widgets"
+
+                anchors {
+                    bottom: true
+                    right: true
+                }
+                margins {
+                    bottom: Theme.spacing2Xl
+                    right: Theme.spacing2Xl
+                }
+
+                implicitWidth: networkFlowMatrix.implicitWidth
+                implicitHeight: networkFlowMatrix.implicitHeight
+
+                NetworkFlowMatrix {
+                    id: networkFlowMatrix
+                    anchors.fill: parent
+                }
+            }
+        }
     }
 
     Variants {
