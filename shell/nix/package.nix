@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC }:
+{ lib, pkgs, stdenvNoCC }:
 
 stdenvNoCC.mkDerivation {
   pname = "ctos-shell";
@@ -19,14 +19,14 @@ stdenvNoCC.mkDerivation {
     mkdir -p "$out/bin"
     cat << BIN > "$out/bin/ctos-shell"
 #!/bin/sh
-exec quickshell "$out/share/ctos/shell.qml" "\$@"
+exec ${pkgs.quickshell}/bin/quickshell "$out/share/ctos/shell.qml" "\$@"
 BIN
     chmod +x "$out/bin/ctos-shell"
 
     # Create IPC message wrapper
     cat << BIN > "$out/bin/ctos-shell-msg"
 #!/bin/sh
-exec quickshell ipc -p "$out/share/ctos/shell.qml" call ctos "\$@"
+exec ${pkgs.quickshell}/bin/quickshell ipc -p "$out/share/ctos/shell.qml" call ctos "\$@"
 BIN
     chmod +x "$out/bin/ctos-shell-msg"
     
