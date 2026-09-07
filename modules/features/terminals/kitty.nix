@@ -32,7 +32,7 @@ in
                 shell = "fish";
               };
               extraConfig = ''
-                include ${../shell/config/kitty/themes/monoglow_z.conf}
+                include ${../../../shell/config/kitty/themes/monoglow.conf}
                 
                 font_family family='VictorMono Nerd Font' style=SemiBold
                 bold_font        auto

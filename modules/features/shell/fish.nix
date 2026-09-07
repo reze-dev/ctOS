@@ -18,14 +18,7 @@ in
         {
 
           config = {
-            xdg.configFile."fish/themes/Rosé Pine Auto.theme".source = "${
-              pkgs.fetchFromGitHub {
-                owner = "rose-pine";
-                repo = "fish";
-                rev = "127a990e5ad4688118c950123787fb0686afa4c8";
-                sha256 = "3heI6nhItw5WfKGQT1FRQKfv+lONyn+DzwYjYqJjzLE=";
-              }
-            }/themes/Rosé Pine Auto.theme";
+            xdg.configFile."fish/themes/Monoglow.theme".source = ../../../../shell/config/Monoglow.theme;
 
             programs.fish = {
               enable = true;
@@ -44,7 +37,7 @@ in
                   end
                 end
                 set -gx DIRENV_LOG_FORMAT ""
-                fish_config theme choose "Rosé Pine Auto"
+                fish_config theme choose "Monoglow"
               '';
               interactiveShellInit = ''
                 set -x TERM xterm-256color
