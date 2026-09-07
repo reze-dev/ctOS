@@ -20,7 +20,7 @@ in
       fd
       fzf
       jq
-      nitch
+      fastfetch
       ripgrep
       tmux
       unzip

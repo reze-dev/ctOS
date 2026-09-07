@@ -22,6 +22,13 @@ stdenvNoCC.mkDerivation {
 exec quickshell "$out/share/ctos/shell.qml" "\$@"
 BIN
     chmod +x "$out/bin/ctos-shell"
+
+    # Create IPC message wrapper
+    cat << BIN > "$out/bin/ctos-shell-msg"
+#!/bin/sh
+exec quickshell ipc -p "$out/share/ctos/shell.qml" call ctos "\$@"
+BIN
+    chmod +x "$out/bin/ctos-shell-msg"
     
     runHook postInstall
   '';
