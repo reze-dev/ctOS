@@ -12,6 +12,8 @@ INSPECTOR="${HARNESS_DIR}/qml_inspector.py"
 QUICKSHELL_BIN=""
 if command -v qs >/dev/null 2>&1; then
     QUICKSHELL_BIN="$(command -v qs)"
+elif command -v quickshell >/dev/null 2>&1; then
+    QUICKSHELL_BIN="$(command -v quickshell)"
 else
     for candidate in /nix/store/*quickshell*/bin/quickshell /nix/store/*quickshell*/bin/qs; do
         if [[ -x "${candidate}" ]]; then
@@ -54,34 +56,121 @@ check_qml_property() {
     local file_path="$1"
     local prop_name="$2"
     shift 2
-    python3 "${INSPECTOR}" has-property "${file_path}" "${prop_name}" "$@"
+    if ! python3 "${INSPECTOR}" has-property "${file_path}" "${prop_name}" "$@"; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="Contract violation: property '${prop_name}' missing or invalid in ${file_path}"
+        return 1
+    fi
+    return 0
 }
 
 check_qml_method() {
     local file_path="$1"
     local method_name="$2"
-    python3 "${INSPECTOR}" has-method "${file_path}" "${method_name}"
+    if ! python3 "${INSPECTOR}" has-method "${file_path}" "${method_name}"; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="Contract violation: method '${method_name}' missing in ${file_path}"
+        return 1
+    fi
+    return 0
 }
 
 check_qml_signal() {
     local file_path="$1"
     local signal_name="$2"
-    python3 "${INSPECTOR}" has-signal "${file_path}" "${signal_name}"
+    if ! python3 "${INSPECTOR}" has-signal "${file_path}" "${signal_name}"; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="Contract violation: signal '${signal_name}' missing in ${file_path}"
+        return 1
+    fi
+    return 0
 }
 
 check_no_greeter_imports() {
     local target_path="$1"
-    python3 "${INSPECTOR}" check-greeter "${target_path}"
+    if ! python3 "${INSPECTOR}" check-greeter "${target_path}"; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="Greeter isolation violation in ${target_path}"
+        return 1
+    fi
+    return 0
 }
 
 check_no_polling_loops() {
     local target_path="$1"
-    python3 "${INSPECTOR}" check-polling "${target_path}"
+    if ! python3 "${INSPECTOR}" check-polling "${target_path}"; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="Zero-polling policy violation in ${target_path}"
+        return 1
+    fi
+    return 0
 }
 
 check_qml_format() {
     local target_path="$1"
-    python3 "${INSPECTOR}" check-format "${target_path}"
+    if ! python3 "${INSPECTOR}" check-format "${target_path}"; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="QML formatting check failed for ${target_path}"
+        return 1
+    fi
+    return 0
+}
+
+# ------------------------------------------------------------------------------
+# Assertion Aliases (conforming to mock_environment.sh assert_* convention)
+# ------------------------------------------------------------------------------
+assert_qml_property() { check_qml_property "$@"; }
+assert_qml_method()   { check_qml_method "$@"; }
+assert_qml_signal()   { check_qml_signal "$@"; }
+
+# ------------------------------------------------------------------------------
+# QML Runtime Test Harness Execution
+# ------------------------------------------------------------------------------
+run_qml_test_harness() {
+    local harness_path="$1"
+    local desc="${2:-QML Runtime Harness}"
+    local timeout_secs="${3:-8}"
+
+    if [[ -z "${QUICKSHELL_BIN}" || ! -x "${QUICKSHELL_BIN}" ]]; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="QUICKSHELL_BIN not found for ${desc}"
+        echo "Error: QUICKSHELL_BIN not found for ${desc}"
+        return 1
+    fi
+
+    local tmp_settings
+    tmp_settings="$(mktemp /tmp/ctos_test_settings_XXXXXX.json)"
+
+    local output
+    output=$(CTOS_SETTINGS_PATH="${tmp_settings}" QML_IMPORT_PATH="${PROJECT_ROOT}/shell" timeout "${timeout_secs}" "${QUICKSHELL_BIN}" -p "${harness_path}" 2>&1)
+    local ret=$?
+    rm -f "${tmp_settings}"
+
+    if [[ "${ret}" -ne 0 ]]; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="Quickshell exited with code ${ret} for ${desc}"
+        echo "${output}"
+        return 1
+    fi
+
+    if echo "${output}" | grep -q "ASSERTION_FAILED"; then
+        CURRENT_TEST_FAILED=1
+        local reason
+        reason=$(echo "${output}" | grep -m1 "ASSERTION_FAILED" | sed 's/.*ASSERTION_FAILED: //')
+        CURRENT_TEST_REASON="QML Assertion Failed: ${reason}"
+        echo "${output}"
+        return 1
+    fi
+
+    if ! echo "${output}" | grep -qE "(PASS|SUCCESS)"; then
+        CURRENT_TEST_FAILED=1
+        CURRENT_TEST_REASON="QML harness did not output PASS/SUCCESS indicator for ${desc}"
+        echo "${output}"
+        return 1
+    fi
+
+    echo "${output}"
+    return 0
 }
 
 # Run smoke execution of a QML file using Quickshell (if available) with timeout
