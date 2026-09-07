@@ -16,7 +16,7 @@
   "modules": [
     {
       "type": "title",
-      "format": "{#white}tom-smith{#}{#blue}@{#}{#green}au-south-east-2-014-493{#}"
+      "format": "{#white}{1}{#}{#blue}@{}{#green}{2}{#}"
     },
     "separator",
     {
