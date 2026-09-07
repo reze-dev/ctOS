@@ -18,7 +18,7 @@ in
         {
 
           config = {
-            xdg.configFile."fish/themes/Monoglow.theme".source = ../../../../shell/config/Monoglow.theme;
+            xdg.configFile."fish/themes/Monoglow.theme".source = ../../../shell/config/Monoglow.theme;
 
             programs.fish = {
               enable = true;
