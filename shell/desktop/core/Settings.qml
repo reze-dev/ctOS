@@ -30,6 +30,9 @@ Singleton {
     readonly property bool defaultReducedMotion: false
     readonly property string defaultTheme: "ctos-dark"
     readonly property string defaultWallpaper: ""
+    readonly property bool defaultWidgetCpuHexGridVisible: true
+    readonly property bool defaultWidgetNetworkFlowVisible: true
+    readonly property bool defaultWidgetRamBlockBarVisible: true
     property bool featuresCommandDeck: true
     property bool featuresNotifications: true
     property bool featuresSystemRail: true
@@ -42,6 +45,9 @@ Singleton {
     // =========================================================================
 
     property bool reducedMotion: false
+    property bool widgetCpuHexGridVisible: true
+    property bool widgetNetworkFlowVisible: true
+    property bool widgetRamBlockBarVisible: true
 
     // Resolved path expanding leading "~/" to user HOME and honoring CTOS_SETTINGS_PATH override
     readonly property string resolvedConfigPath: {
@@ -58,6 +64,8 @@ Singleton {
     property string wallpaper: ""
 
     signal settingsLoadFailed(int error)
+    signal settingsSaved
+    signal settingsSaveFailed(int error)
 
     // =========================================================================
     // Signals
@@ -144,6 +152,39 @@ Singleton {
                 compositor = defaultCompositor;
             }
 
+            // widgetCpuHexGridVisible: supports flat key or nested widgets.cpuHexGridVisible / widgets.cpuHexGrid
+            if (typeof data.widgetCpuHexGridVisible === "boolean") {
+                widgetCpuHexGridVisible = data.widgetCpuHexGridVisible;
+            } else if (data.widgets && typeof data.widgets.cpuHexGridVisible === "boolean") {
+                widgetCpuHexGridVisible = data.widgets.cpuHexGridVisible;
+            } else if (data.widgets && typeof data.widgets.cpuHexGrid === "boolean") {
+                widgetCpuHexGridVisible = data.widgets.cpuHexGrid;
+            } else {
+                widgetCpuHexGridVisible = defaultWidgetCpuHexGridVisible;
+            }
+
+            // widgetNetworkFlowVisible: supports flat key or nested widgets.networkFlowVisible / widgets.networkFlow
+            if (typeof data.widgetNetworkFlowVisible === "boolean") {
+                widgetNetworkFlowVisible = data.widgetNetworkFlowVisible;
+            } else if (data.widgets && typeof data.widgets.networkFlowVisible === "boolean") {
+                widgetNetworkFlowVisible = data.widgets.networkFlowVisible;
+            } else if (data.widgets && typeof data.widgets.networkFlow === "boolean") {
+                widgetNetworkFlowVisible = data.widgets.networkFlow;
+            } else {
+                widgetNetworkFlowVisible = defaultWidgetNetworkFlowVisible;
+            }
+
+            // widgetRamBlockBarVisible: supports flat key or nested widgets.ramBlockBarVisible / widgets.ramBlockBar
+            if (typeof data.widgetRamBlockBarVisible === "boolean") {
+                widgetRamBlockBarVisible = data.widgetRamBlockBarVisible;
+            } else if (data.widgets && typeof data.widgets.ramBlockBarVisible === "boolean") {
+                widgetRamBlockBarVisible = data.widgets.ramBlockBarVisible;
+            } else if (data.widgets && typeof data.widgets.ramBlockBar === "boolean") {
+                widgetRamBlockBarVisible = data.widgets.ramBlockBar;
+            } else {
+                widgetRamBlockBarVisible = defaultWidgetRamBlockBarVisible;
+            }
+
             isLoaded = true;
             settingsLoaded();
         } catch (err) {
@@ -151,6 +192,48 @@ Singleton {
             resetToDefaults();
         }
     }
+
+    function save(): void {
+        let data = {};
+        try {
+            const raw = fileView.text();
+            if (raw && raw.trim() !== "") {
+                const parsed = JSON.parse(raw);
+                if (typeof parsed === "object" && parsed !== null) {
+                    data = parsed;
+                }
+            }
+        } catch (e) {
+            data = {};
+        }
+
+        data.reducedMotion = root.reducedMotion;
+        data.featuresCommandDeck = root.featuresCommandDeck;
+        data.featuresSystemRail = root.featuresSystemRail;
+        data.featuresNotifications = root.featuresNotifications;
+        data.barHeight = root.barHeight;
+        data.theme = root.theme;
+        data.wallpaper = root.wallpaper;
+        data.compositor = root.compositor;
+
+        data.widgetCpuHexGridVisible = root.widgetCpuHexGridVisible;
+        data.widgetNetworkFlowVisible = root.widgetNetworkFlowVisible;
+        data.widgetRamBlockBarVisible = root.widgetRamBlockBarVisible;
+
+        if (typeof data.widgets === "object" && data.widgets !== null) {
+            data.widgets.cpuHexGridVisible = root.widgetCpuHexGridVisible;
+            data.widgets.networkFlowVisible = root.widgetNetworkFlowVisible;
+            data.widgets.ramBlockBarVisible = root.widgetRamBlockBarVisible;
+        }
+
+        try {
+            fileView.setText(JSON.stringify(data, null, 2) + "\n");
+        } catch (err) {
+            console.warn("[Settings] Failed to save configuration to disk:", err);
+            root.settingsSaveFailed(-1);
+        }
+    }
+
     function reload(): void {
         fileView.reload();
     }
@@ -168,6 +251,9 @@ Singleton {
         theme = defaultTheme;
         wallpaper = defaultWallpaper;
         compositor = defaultCompositor;
+        widgetCpuHexGridVisible = defaultWidgetCpuHexGridVisible;
+        widgetNetworkFlowVisible = defaultWidgetNetworkFlowVisible;
+        widgetRamBlockBarVisible = defaultWidgetRamBlockBarVisible;
         isLoaded = false;
     }
 
@@ -184,6 +270,13 @@ Singleton {
 
         onFileChanged: {
             fileView.reload();
+        }
+        onSaved: {
+            root.settingsSaved();
+        }
+        onSaveFailed: function (error) {
+            console.warn(`[Settings] Configuration save failed for '${root.resolvedConfigPath}' (error code: ${error})`);
+            root.settingsSaveFailed(error);
         }
         onLoadFailed: function (error) {
             // Missing or unreadable configuration is handled gracefully without terminating the shell.

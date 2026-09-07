@@ -55,6 +55,82 @@ Singleton {
         {
             category: "Actions",
             isApp: false,
+            id: "action-toggle-cpu-hex",
+            name: "Toggle CPU Hex-Grid",
+            title: "Toggle CPU Hex-Grid",
+            description: "Show or hide CPU Hex-Grid telemetry widget",
+            desc: "Show or hide CPU Hex-Grid telemetry widget",
+            icon: "preferences-system",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["cpu", "hex", "grid", "core", "load", "utilization", "telemetry", "widget", "toggle"],
+            execute: function () {
+                Settings.widgetCpuHexGridVisible = !Settings.widgetCpuHexGridVisible;
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
+            id: "action-toggle-network-flow",
+            name: "Toggle Network Flow Matrix",
+            title: "Toggle Network Flow Matrix",
+            description: "Show or hide Network Flow Matrix telemetry widget",
+            desc: "Show or hide Network Flow Matrix telemetry widget",
+            icon: "network",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["network", "flow", "matrix", "bandwidth", "rx", "tx", "traffic", "telemetry", "widget", "toggle"],
+            execute: function () {
+                Settings.widgetNetworkFlowVisible = !Settings.widgetNetworkFlowVisible;
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
+            id: "action-toggle-ram-block",
+            name: "Toggle RAM Block Bar",
+            title: "Toggle RAM Block Bar",
+            description: "Show or hide RAM/Swap Block Bar telemetry widget",
+            desc: "Show or hide RAM/Swap Block Bar telemetry widget",
+            icon: "drive-harddisk",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["ram", "memory", "swap", "block", "bar", "telemetry", "widget", "toggle"],
+            execute: function () {
+                Settings.widgetRamBlockBarVisible = !Settings.widgetRamBlockBarVisible;
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
+            id: "action-toggle-all-widgets",
+            name: "Toggle All Desktop Widgets",
+            title: "Toggle All Desktop Widgets",
+            description: "Show or hide all desktop telemetry widgets",
+            desc: "Show or hide all desktop telemetry widgets",
+            icon: "preferences-system",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["all", "widgets", "telemetry", "desktop", "toggle", "cpu", "ram", "network"],
+            execute: function () {
+                const anyVisible = Settings.widgetCpuHexGridVisible || Settings.widgetNetworkFlowVisible || Settings.widgetRamBlockBarVisible;
+                const nextState = !anyVisible;
+                Settings.widgetCpuHexGridVisible = nextState;
+                Settings.widgetNetworkFlowVisible = nextState;
+                Settings.widgetRamBlockBarVisible = nextState;
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
             id: "action-lock",
             name: "Lock Session",
             title: "Lock Session",
