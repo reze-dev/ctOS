@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import Quickshell.Io
 
 import "desktop/adapters/hyprland"
 import "desktop/core"
@@ -11,6 +12,22 @@ import "desktop/surfaces/widgets"
 
 Scope {
     id: root
+
+    IpcHandler {
+        target: "ctos"
+
+        function toggleCommandDeck(): void {
+            OverlayController.toggleCommandDeck();
+        }
+
+        function toggleSystemRail(): void {
+            OverlayController.toggle(OverlayController.Surface.SystemRail);
+        }
+
+        function closeOverlay(): void {
+            OverlayController.close();
+        }
+    }
 
     function resolveTargetScreen(): var {
         const screenList = Quickshell.screens;

@@ -25,7 +25,6 @@ let
       config = lib.mkIf niriEnabled {
         home.packages = with pkgs; [
           brightnessctl
-          fuzzel
           playerctl
           swappy
           xwayland-satellite
@@ -180,8 +179,8 @@ let
               # Application Launchers
               "Mod+Return".action = actions.spawn "kitty";
               "Mod+Shift+Return".action = actions.spawn "ghostty";
-              "Mod+D".action = actions.spawn "fuzzel";
-              "Mod+Space".action = actions.spawn "fuzzel";
+              "Mod+D".action = actions.spawn "ctos-shell-msg toggleCommandDeck";
+              "Mod+Space".action = actions.spawn "ctos-shell-msg toggleCommandDeck";
               "Mod+E".action = actions.spawn "kitty" "-e" "yazi";
               "Mod+B".action = actions.spawn "zen";
               "Mod+Shift+Slash".action = actions.show-hotkey-overlay;

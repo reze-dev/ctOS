@@ -18,7 +18,6 @@ in
     environment.systemPackages = with pkgs; [
       cliphist
       easyeffects
-      fuzzel
       grim
       hyprcursor
       hyprpolkitagent

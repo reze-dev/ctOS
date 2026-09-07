@@ -36,7 +36,7 @@ let
 
           local terminal = "kitty"
           local fileManager = "kitty -e yazi"
-          local menu = "fuzzel"
+          local menu = "ctos-shell-msg toggleCommandDeck"
           local mainMod = "SUPER"
 
           hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
@@ -55,8 +55,8 @@ let
                   gaps_out = 10,
                   border_size = 2,
                   col = {
-                      active_border = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
-                      inactive_border = "rgba(595959aa)",
+                      active_border = { colors = { "rgba(1bfd9cee)", "rgba(66b2b2ee)" }, angle = 45 },
+                      inactive_border = "rgba(2a2a2aaa)",
                   },
                   resize_on_border = false,
                   allow_tearing = false,
