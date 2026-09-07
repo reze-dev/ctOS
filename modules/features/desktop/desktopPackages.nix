@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -33,6 +34,7 @@ in
       slurp
       wl-clipboard
       zathura
+      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.ctos-shell
     ];
   };
 }
