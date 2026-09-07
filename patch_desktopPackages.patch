@@ -1,0 +1,24 @@
+--- modules/features/desktop/desktopPackages.nix
++++ modules/features/desktop/desktopPackages.nix
+@@ -1,6 +1,7 @@
+ {
+   config,
++  inputs,
+   lib,
+   pkgs,
+   ...
+ }:
+@@ -21,6 +22,7 @@
+       hyprcursor
+       hyprpolkitagent
+       kdePackages.dolphin
+       kdePackages.okular
+       libnotify
+       mpv
+@@ -32,5 +34,6 @@
+       wl-clipboard
+       zathura
++      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.ctos-shell
+     ];
+   };
+ }
