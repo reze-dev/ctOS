@@ -20,6 +20,9 @@ in
     };
   };
 
+  disabledModules = [ "system/boot/loader/limine/limine.nix" ];
+  imports = [ ./limine/limine.nix ];
+
   config = lib.mkIf cfg.enable {
     boot.loader = {
       efi = {
@@ -32,6 +35,10 @@ in
         secureBoot = {
           enable = cfg.secureBoot.enable;
           autoGenerateKeys = lib.mkDefault true;
+        };
+        style = {
+          wallpapers = [ ../../../shell/extras/wallpapers/wallpaper-v1.png ];
+          wallpaperStyle = "stretched";
         };
       };
     };
