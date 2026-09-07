@@ -9,9 +9,20 @@ stdenvNoCC.mkDerivation {
 
   installPhase = ''
     runHook preInstall
+    
+    # Copy assets
     mkdir -p "$out/share/ctos"
     cp -R . "$out/share/ctos/"
     rm -rf "$out/share/ctos/.git" "$out/share/ctos/nix"
+    
+    # Create executable wrapper
+    mkdir -p "$out/bin"
+    cat << BIN > "$out/bin/ctos-shell"
+#!/bin/sh
+exec quickshell "$out/share/ctos/shell.qml" "\$@"
+BIN
+    chmod +x "$out/bin/ctos-shell"
+    
     runHook postInstall
   '';
 
