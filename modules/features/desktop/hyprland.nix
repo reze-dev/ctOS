@@ -147,6 +147,11 @@ let
           hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
           hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 
+          -- Screenshot bindings
+          hl.bind("Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | satty --filename -'))
+          hl.bind("CTRL + Print", hl.dsp.exec_cmd('grim - | satty --filename -'))
+          hl.bind("ALT + Print", hl.dsp.exec_cmd('grim -g "$(hyprctl activewindow -j | jq -r \'"\\(.at[0]),\\(.at[1]) \\(.size[0])x\\(.size[1])"\')" - | satty --filename -'))
+
           hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))
           hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
           hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }))
