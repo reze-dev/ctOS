@@ -36,7 +36,7 @@ let
 
           local terminal = "kitty"
           local fileManager = "kitty -e yazi"
-          local menu = "fuzzel"
+          local menu = "ctos-shell-msg toggleCommandDeck"
           local mainMod = "SUPER"
 
           hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
@@ -47,6 +47,7 @@ let
           hl.on("hyprland.start", function()
               hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target")
               hl.exec_cmd("systemctl --user start hyprpolkitagent")
+              hl.exec_cmd("ctos-shell")
           end)
 
           hl.config({
@@ -55,8 +56,8 @@ let
                   gaps_out = 10,
                   border_size = 2,
                   col = {
-                      active_border = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
-                      inactive_border = "rgba(595959aa)",
+                      active_border = { colors = { "rgba(1bfd9cee)", "rgba(66b2b2ee)" }, angle = 45 },
+                      inactive_border = "rgba(2a2a2aaa)",
                   },
                   resize_on_border = false,
                   allow_tearing = false,
@@ -146,6 +147,11 @@ let
           hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
           hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
           hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
+
+          -- Screenshot bindings
+          hl.bind("Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | satty --filename -'))
+          hl.bind("CTRL + Print", hl.dsp.exec_cmd('grim - | satty --filename -'))
+          hl.bind("ALT + Print", hl.dsp.exec_cmd('grim -g "$(hyprctl activewindow -j | jq -r \'"\\(.at[0]),\\(.at[1]) \\(.size[0])x\\(.size[1])"\')" - | satty --filename -'))
 
           hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))
           hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))

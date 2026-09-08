@@ -15,7 +15,7 @@ in
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Enable UEFI Secure Boot support using Limine native Secure Boot.";
+        description = "Enable UEFI Secure Boot support.";
       };
     };
   };
@@ -27,11 +27,14 @@ in
         efiSysMountPoint = "/boot/efi";
       };
 
-      limine = {
+      grub = {
         enable = true;
-        secureBoot = {
-          enable = cfg.secureBoot.enable;
-          autoGenerateKeys = lib.mkDefault true;
+        efiSupport = true;
+        device = "nodev";
+        dedsec-theme = {
+          enable = true;
+          style = "legion";
+          icon = "color";
         };
       };
     };
@@ -61,8 +64,15 @@ in
     boot.initrd.systemd.enable = true;
     boot.kernelParams = [
       "quiet"
+      "splash"
+      "boot.shell_on_fail"
+      "loglevel=3"
+      "rd.systemd.show_status=false"
+      "rd.udev.log_level=3"
       "udev.log_priority=3"
     ];
+    boot.consoleLogLevel = 0;
+    boot.initrd.verbose = false;
     boot.kernelPackages = pkgs.linuxPackages_latest;
   };
 }

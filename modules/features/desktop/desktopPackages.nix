@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -18,7 +19,6 @@ in
     environment.systemPackages = with pkgs; [
       cliphist
       easyeffects
-      fuzzel
       grim
       hyprcursor
       hyprpolkitagent
@@ -34,6 +34,7 @@ in
       slurp
       wl-clipboard
       zathura
+      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.ctos-shell
     ];
   };
 }
