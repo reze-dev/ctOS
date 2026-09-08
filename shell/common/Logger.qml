@@ -8,7 +8,7 @@ Item {
 
     required property string name
 
-    property int level: Logger.Level.Warn
+    property int level: Quickshell.env("CTOS_DEBUG") === "1" ? Logger.Level.Debug : Logger.Level.Warn
     property bool writeToFile: Quickshell.env("CTOS_DEBUG") === "1"
     property string filePath: "/tmp/ctos.log"
 
