@@ -51,9 +51,6 @@ let
                   "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL && systemctl --user start nixos-fake-graphical-session.target"
                 ];
               }
-              {
-                command = [ "ctos-shell" ];
-              }
             ];
 
             # Input configuration

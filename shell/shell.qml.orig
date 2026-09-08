@@ -278,8 +278,8 @@ Scope {
 
                 anchors.centerIn: parent
                 asynchronous: false
-                active: true
-                visible: OverlayController.activeSurface === OverlayController.Surface.CommandDeck
+                active: OverlayController.activeSurface === OverlayController.Surface.CommandDeck
+                visible: active
                 source: "desktop/surfaces/CommandDeck.qml"
             }
 
@@ -290,8 +290,8 @@ Scope {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 asynchronous: false
-                active: true
-                visible: OverlayController.activeSurface === OverlayController.Surface.SystemRail
+                active: OverlayController.activeSurface === OverlayController.Surface.SystemRail
+                visible: active
                 source: "desktop/surfaces/SystemRail.qml"
             }
 
