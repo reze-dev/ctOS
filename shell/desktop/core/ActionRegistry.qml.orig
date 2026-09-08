@@ -29,9 +29,6 @@ Singleton {
                 id: entry.id || "",
                 name: entry.name || "",
                 title: entry.name || "",
-                nameLower: (entry.name || "").toLowerCase(),
-                genericNameLower: (entry.genericName || "").toLowerCase(),
-                commentLower: (entry.comment || "").toLowerCase(),
                 genericName: entry.genericName || "",
                 comment: entry.comment || "",
                 description: entry.genericName || entry.comment || "",
@@ -255,9 +252,9 @@ Singleton {
         const allApps = root.applications;
         for (let i = 0; i < allApps.length; ++i) {
             const app = allApps[i];
-            const name = app.nameLower;
-            const generic = app.genericNameLower;
-            const comment = app.commentLower;
+            const name = (app.name || "").toLowerCase();
+            const generic = (app.genericName || "").toLowerCase();
+            const comment = (app.comment || "").toLowerCase();
 
             let score = -1;
             if (q === "") {
@@ -343,6 +340,6 @@ Singleton {
         });
 
         // Return grouped results: Applications first, then Actions
-        return appResults.concat(actResults).slice(0, 50);
+        return appResults.concat(actResults);
     }
 }
