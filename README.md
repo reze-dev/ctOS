@@ -14,26 +14,26 @@
 
 ---
 
-## ⚡ Overview
+## // OVERVIEW
 
 ctOS is a complete, declarative NixOS flake that provisions a hyper-lean, visually immersive desktop experience inspired by the Watch Dogs universe. 
 
 Instead of relying on bloated desktop environments or a mishmash of uncoordinated shell scripts, ctOS uses a completely bespoke graphical shell written in **QML / Quickshell**. It features native Wayland integrations, dynamic tiling compositors, and aggressive performance optimizations.
 
-### ✨ Key Features
+### // KEY FEATURES
 
-- **Custom Quickshell Desktop** — Includes a massive `SystemRail` for hardware/session controls, an `AmbientBar`, and an instantaneous `CommandDeck` runner.
-- **Immersive Greetd Login** — A fully custom graphical login screen featuring a hacker boot sequence and glitch shaders.
-- **Wayland Compositors** — Highly-tuned, modular integrations for both **Hyprland** and **Niri**.
-- **Performance Optimized** — The QML shell is heavily optimized: surfaces are kept in RAM, Javascript search models are pre-computed, and aggressive background logging is disabled for a "snappy as f***" UX.
-- **GRUB DedSec Theme** — Native NixOS GRUB bootloader integration sporting the DedSec theme.
-- **Modular Flake Architecture** — Every component (audio, bluetooth, gaming, AI/ML) is isolated in `modules/features/` and can be toggled via `ctos.<domain>.<feature>.enable`.
+- `[+]` **Custom Quickshell Desktop** — Includes a massive `SystemRail` for hardware/session controls, an `AmbientBar`, and an instantaneous `CommandDeck` runner.
+- `[+]` **Immersive Greetd Login** — A fully custom graphical login screen featuring a hacker boot sequence and glitch shaders.
+- `[+]` **Wayland Compositors** — Highly-tuned, modular integrations for both **Hyprland** and **Niri**.
+- `[+]` **Performance Optimized** — The QML shell is heavily optimized: surfaces are kept in RAM, Javascript search models are pre-computed, and aggressive background logging is disabled for a snappy UX.
+- `[+]` **GRUB DedSec Theme** — Native NixOS GRUB bootloader integration sporting the DedSec theme.
+- `[+]` **Modular Flake Architecture** — Every component (audio, bluetooth, gaming, AI/ML) is isolated in `modules/features/` and can be toggled via `ctos.<domain>.<feature>.enable`.
 
 ---
 
-## 🚀 Quick Start
+## // QUICK START
 
-### Installation
+### [INSTALLATION]
 
 Clone the repository and build your host configuration. By default, the `Makima` host serves as the primary desktop blueprint.
 
@@ -47,7 +47,7 @@ sudo nixos-rebuild switch --flake .#Makima
 
 > **Note:** Make sure you have Nix flakes and experimental features enabled on your system.
 
-### Debugging
+### [DEBUGGING]
 
 The system is configured to run silently to save CPU cycles and I/O. If you are developing or modifying the shell and need to trace errors, you can enable the global debug toggle in your host config (`hosts/Makima/default.nix`):
 
@@ -58,7 +58,7 @@ This restores verbose compositor logs, QML debug output, and routes them to `/tm
 
 ---
 
-## 📂 Architecture
+## // ARCHITECTURE
 
 ```text
 ctOS/
@@ -86,7 +86,7 @@ ctOS/
 
 ---
 
-## 🎛️ Composable Profiles
+## // COMPOSABLE PROFILES
 
 Features are grouped into profiles for easy host configuration:
 
@@ -99,5 +99,5 @@ Features are grouped into profiles for easy host configuration:
 
 ---
 
-## 📝 License
+## // LICENSE
 This project is licensed under the [MIT License](LICENSE).
