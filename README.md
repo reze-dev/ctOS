@@ -1,234 +1,101 @@
-<p align="center">
-  <img src="shell/.assets/Logo.png" width="180" alt="ctOS Logo"/>
-</p>
+<div align="center">
+  <img src="shell/.assets/Logo.png" alt="ctOS Logo" width="400"/>
 
-<h1 align="center">❄️ ctOS</h1>
+  <h1>ctOS</h1>
+  <p>A highly-optimized, immersive Watch Dogs-inspired Wayland desktop environment built natively for NixOS.</p>
 
-<p align="center">
-  A modular, option-driven NixOS & Home Manager configuration built on
-  <a href="https://flake.parts">flake-parts</a>,
-  <a href="https://github.com/nix-community/home-manager">Home Manager</a>,
-  <a href="https://github.com/nix-community/disko">disko</a>, and modern
-  <b>Pipe Operators</b> (<code>|&gt;</code>).
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/NixOS-unstable-blue?logo=nixos&logoColor=white" alt="NixOS Unstable"/>
-  <img src="https://img.shields.io/badge/flake--parts-modular-5277C3?logo=nixos" alt="flake-parts"/>
-  <img src="https://img.shields.io/badge/experimental-pipe--operators-orange" alt="Pipe Operators"/>
-  <img src="https://img.shields.io/badge/secure--boot-limine-success" alt="Limine Secure Boot"/>
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
-</p>
+  <p>
+    <img src="https://img.shields.io/badge/NixOS-unstable-blue?logo=nixos&logoColor=white" alt="NixOS Unstable"/>
+    <img src="https://img.shields.io/badge/Wayland-Hyprland%20%7C%20Niri-orange" alt="Wayland"/>
+    <img src="https://img.shields.io/badge/Shell-Quickshell-5277C3" alt="Quickshell"/>
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
+  </p>
+</div>
 
 ---
 
-## ✨ Key Features
+## ⚡ Overview
 
-- **🎛️ Toggle-based modularity** — every module is behind `ctos.<domain>.<feature>.enable` options
-- **⚡ Pipe Operator Composition** — leverages native `pipe-operators` (`|>`) for clean functional transformations
-- **📁 Auto-discovery** — drop a host directory in `hosts/` or a module in `modules/` and it's automatically wired up
-- **🛡️ UEFI Secure Boot** — native Secure Boot via Limine as the sole UEFI bootloader
-- **💾 Dynamic Disko** — `mkDisko` generates partition configs for whole-disk or dual-boot layouts with Btrfs/Ext4
-- **🤖 AI/ML & Gaming** — out-of-the-box modules for Ollama, PyTorch, CUDA/ROCm, Steam, Gamescope, and more
-- **🔐 Secrets Management** — integrated sops-nix & age key management
-- **🚀 Interactive Installer** — Python-based installer with hardware detection and guided setup
+ctOS is a complete, declarative NixOS flake that provisions a hyper-lean, visually immersive desktop experience inspired by the Watch Dogs universe. 
+
+Instead of relying on bloated desktop environments or a mishmash of uncoordinated shell scripts, ctOS uses a completely bespoke graphical shell written in **QML / Quickshell**. It features native Wayland integrations, dynamic tiling compositors, and aggressive performance optimizations.
+
+### ✨ Key Features
+
+- **Custom Quickshell Desktop** — Includes a massive `SystemRail` for hardware/session controls, an `AmbientBar`, and an instantaneous `CommandDeck` runner.
+- **Immersive Greetd Login** — A fully custom graphical login screen featuring a hacker boot sequence and glitch shaders.
+- **Wayland Compositors** — Highly-tuned, modular integrations for both **Hyprland** and **Niri**.
+- **Performance Optimized** — The QML shell is heavily optimized: surfaces are kept in RAM, Javascript search models are pre-computed, and aggressive background logging is disabled for a "snappy as f***" UX.
+- **GRUB DedSec Theme** — Native NixOS GRUB bootloader integration sporting the DedSec theme.
+- **Modular Flake Architecture** — Every component (audio, bluetooth, gaming, AI/ML) is isolated in `modules/features/` and can be toggled via `ctos.<domain>.<feature>.enable`.
 
 ---
 
 ## 🚀 Quick Start
 
-### Fresh Install from NixOS Live USB
+### Installation
+
+Clone the repository and build your host configuration. By default, the `Makima` host serves as the primary desktop blueprint.
 
 ```bash
-# Enable experimental features
-export NIX_CONFIG="experimental-features = nix-command flakes pipe-operators"
+git clone https://github.com/reze-dev/ctOS ~/.config/ctOS
+cd ~/.config/ctOS
 
-# Run the installer
-nix run github:reze-dev/ctos --impure
+# Build and apply the configuration
+sudo nixos-rebuild switch --flake .#Makima
 ```
 
-### Adding a Host
+> **Note:** Make sure you have Nix flakes and experimental features enabled on your system.
 
-```bash
-# Clone the repo locally
-git clone https://github.com/reze-dev/ctos ~/ctos
-cd ~/ctos
+### Debugging
 
-# Run the interactive installer (creates hosts/<hostname> automatically)
-nix run . --impure
-
-# Build and switch to your host
-sudo nixos-rebuild switch --flake .#<hostname>
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide on adding hosts and modules.
-
-### Day-to-Day Workflow
-
-```bash
-# Apply configuration changes
-sudo nixos-rebuild switch --flake .#<hostname>
-
-# Update all flake inputs
-nix flake update
-
-# Format code
-nix fmt
-
-# Run checks
-nix flake check --impure
-```
-
----
-
-## 📂 Directory Structure
-
-```
-ctos/
-├── flake.nix                  # Flake entry point (inputs + flake-parts wire-up)
-├── flake/                     # flake-parts modules
-│   ├── hosts.nix              # Host discovery & nixosConfigurations
-│   ├── installer.nix          # Python installer package
-│   ├── checks.nix             # Nix-native test checks
-│   ├── devshell.nix           # Development shell
-│   └── formatter.nix          # Code formatter (nixfmt-rfc-style)
-│
-├── hosts/                     # Host machine configurations (auto-discovered)
-│   ├── common.nix             # Shared base config (flakes, HM, nix-index)
-│   └── <hostname>/            # Per-machine config
-│       ├── default.nix        # Host entry point (users, profiles, GPU)
-│       ├── disko.nix          # Declarative partition scheme
-│       └── hardware.nix       # Hardware scan (from nixos-generate-config)
-│
-├── lib/                       # Shared Nix helpers
-│   ├── core.nix               # scanModules, discoverHosts, mkProfile, mkUser, mkDisko
-│   └── disko/
-│       └── generator.nix      # Dynamic mkDisko partition generator
-│
-├── home/
-│   └── home.nix               # Base Home Manager user environment
-│
-├── modules/                   # Option-based modules (auto-discovered)
-│   ├── features/              # Vertical feature slices
-│   │   ├── core/              # Boot, env, fonts, locale, networking, packages, shells, secrets
-│   │   ├── desktop/           # Audio, display, browsers, Hyprland, Niri, gaming, desktop packages
-│   │   ├── development/       # Dev tools, AI/ML, git, Emacs, virtualization
-│   │   ├── shell/             # Fish, Zsh, Starship
-│   │   ├── terminals/         # Ghostty, Kitty
-│   │   └── tools/             # Eza, Fzf, Tmux, Yazi, Zoxide
-│   ├── hardware/              # Hardware drivers (NVIDIA, Prime)
-│   └── profiles/              # Composable feature bundles
-│
-├── installer/                 # Python interactive installer
-├── tests/                     # Python test suites
-└── assets/                    # DedSec Plymouth splash, wallpapers
-```
-
----
-
-## 🎛️ Profiles & Feature Bundles
-
-Profiles are composable feature bundles. Enable them in your host config:
+The system is configured to run silently to save CPU cycles and I/O. If you are developing or modifying the shell and need to trace errors, you can enable the global debug toggle in your host config (`hosts/Makima/default.nix`):
 
 ```nix
-ctos.profiles = {
-  desktop.enable = true;
-  workstation.enable = true;
-};
+ctos.debug.enable = true;
 ```
+This restores verbose compositor logs, QML debug output, and routes them to `/tmp/ctos-desktop-session.log` and `/tmp/ctos-greeter.log`.
+
+---
+
+## 📂 Architecture
+
+```text
+ctOS/
+├── flake.nix                  # Flake entry point
+├── flake/                     # Core flake-parts (hosts, checks, devshell, formatter)
+│
+├── hosts/                     # Machine-specific configurations
+│   ├── common.nix             # Shared system baseline
+│   └── Makima/                # Example primary host
+│
+├── modules/features/          # Isolated, toggle-able system features
+│   ├── core/                  # Boot (GRUB), networking, fonts, secrets
+│   ├── desktop/               # Hyprland, Niri, Audio, Gaming, Browsers, Greetd
+│   ├── development/           # AI/ML, DevTools, Emacs
+│   ├── shell/                 # CLI shell config (Fish, Starship)
+│   └── terminals/             # Kitty, Ghostty
+│
+├── shell/                     # The ctOS Quickshell Desktop Environment
+│   ├── desktop/               # QML Surfaces (CommandDeck, SystemRail, AmbientBar)
+│   ├── greeter/               # Custom Greetd login screen
+│   └── common/                # Shared QML singletons, loggers, and services
+│
+└── assets/                    # GRUB themes, Plymouth splashes, SVG iconography
+```
+
+---
+
+## 🎛️ Composable Profiles
+
+Features are grouped into profiles for easy host configuration:
 
 | Profile | Description |
 | :--- | :--- |
 | **Base** | Minimal system (boot, networking, SSH, neovim, shells, fonts, locales) — always enabled |
-| **Desktop** | Full graphical workstation (Audio, Bluetooth, Hyprland, Niri, browsers, etc.) |
-| **Workstation** | Developer tools, shells, editors, containers, virtualization |
-| **Gaming** | Steam, Gamemode, Gamescope, MangoHud, Wine/Proton, Lutris, controllers |
-
----
-
-## 🔧 Module Reference
-
-### Core & System (`ctos.features.*`)
-| Module | Description |
-| :--- | :--- |
-| `boot` | Bootloader (Limine), Plymouth splash, Secure Boot (Limine) |
-| `networking` | NetworkManager + configurable `/etc/hosts` |
-| `locales` | Timezone, keyboard, i18n |
-| `fonts` | Curated Nerd Fonts |
-| `packages` | Base system utilities |
-| `ssh` | OpenSSH daemon |
-| `env` | Environment variables (EDITOR, VISUAL, BROWSER) |
-| `secrets` | sops-nix & age secret management |
-
-### Desktop (`ctos.features.*`)
-| Module | Description |
-| :--- | :--- |
-| `hyprland` | Dynamic tiling Wayland compositor |
-| `niri` | Scrollable-tiling Wayland compositor |
-| `display` | Greetd login manager with tuigreet |
-| `audio` | PipeWire audio stack |
-| `bluetooth` | BlueZ + Blueman |
-| `firefox` / `zen-browser` | Web browsers |
-| `gaming` | Steam, Gamemode, Gamescope, Wine, Lutris |
-| `xdg` | XDG portals & MIME associations |
-| `desktopPackages` | Wayland/GUI desktop utilities (polkit, clipboard, screenshot, file manager) |
-
-### Development (`ctos.features.*`)
-| Module | Description |
-| :--- | :--- |
-| `dev` | direnv, git, gpg, nix-ld |
-| `devtools` | Compilers (GCC, Clang, Go, Rust, Zig, JDK, Haskell) & LSPs |
-| `development.aiml` | Ollama, PyTorch, Llama.cpp, JupyterLab, CUDA/ROCm |
-| `virtualization` | Docker, Libvirtd, QEMU/KVM |
-| `emacs` | Emacs daemon |
-
-### Hardware (`ctos.nvidia.*`)
-| Option | Description |
-| :--- | :--- |
-| `enable` | Proprietary NVIDIA drivers |
-| `prime.enable` | Hybrid GPU (NVIDIA + Intel/AMD) |
-| `prime.nvidiaBusId` / `intelBusId` / `amdgpuBusId` | PCI bus IDs |
-
----
-
-## 💾 Disk Configuration (mkDisko)
-
-ctOS provides `mkDisko` for declarative disk layouts:
-
-```nix
-# Whole-disk (wipes entire drive)
-ctos.mkDisko {
-  mode = "whole-disk";
-  device = "/dev/nvme0n1";
-  fsType = "btrfs";         # or "ext4"
-  efiSize = "2G";           # 2GB default — safe for Limine + many NixOS generations
-  swapSize = "16G";          # default 16G — "0" to disable
-}
-
-# Partition-only (dual-boot safe)
-ctos.mkDisko {
-  mode = "partition-only";
-  nixosPart = "/dev/nvme0n1p4";
-  efiDevice = "/dev/disk/by-uuid/XXXX-XXXX";
-  fsType = "btrfs";
-  swapSize = "16G";
-}
-```
-
----
-
-## 🧪 Testing
-
-```bash
-# Nix-native checks (module syntax, lib tests, eval tests)
-nix flake check --impure
-
-# Python installer tests
-python3 -m unittest discover -s tests -v
-
-# Evaluate host configuration
-nix eval --impure .#nixosConfigurations.Makima.config.system.build.toplevel.name
-```
+| **Desktop** | Full Wayland graphical environment (Hyprland, Niri, Audio, ctOS Shell) |
+| **Workstation** | Developer tools, AI/ML, containers, virtualization |
+| **Gaming** | Steam, Gamemode, Gamescope, MangoHud, Wine/Proton |
 
 ---
 
