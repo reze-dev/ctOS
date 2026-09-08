@@ -1,0 +1,4 @@
+singleton Theme 1.0 Theme.qml
+singleton Settings 1.0 Settings.qml
+singleton OverlayController 1.0 OverlayController.qml
+singleton ActionRegistry 1.0 ActionRegistry.qml

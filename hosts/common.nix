@@ -5,6 +5,7 @@
     inputs.determinate.nixosModules.default
     inputs.home-manager.nixosModules.home-manager
     inputs.nix-index-database.nixosModules.nix-index
+    inputs.dedsec-grub-theme.nixosModule
   ];
 
   home-manager.extraSpecialArgs = { inherit inputs; };

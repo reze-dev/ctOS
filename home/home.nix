@@ -20,4 +20,7 @@
   };
 
   programs.home-manager.enable = true;
+
+  xdg.configFile."fastfetch/config.jsonc".source = ../shell/config/fastfetch/config.jsonc;
+  xdg.configFile."fastfetch/dedsec.txt".source = ../shell/config/fastfetch/dedsec.txt;
 }

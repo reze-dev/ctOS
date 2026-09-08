@@ -14,9 +14,6 @@
           nil
           nix-diff
 
-          # Python (for installer tests)
-          python3
-
           # General
           git
           jq
@@ -27,7 +24,6 @@
           echo ""
           echo "  nix flake check --impure   — run all checks"
           echo "  nix fmt                    — format all Nix files"
-          echo "  python3 -m unittest discover -s tests -v — run Python tests"
           echo ""
         '';
       };
