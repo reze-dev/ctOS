@@ -605,7 +605,7 @@ def install_bootloader() -> None:
         if len(gens_sorted) > 1:
             # Create a submenu for older generations
             group_name = "default profile" if profile == "system" else f"profile '{profile}'"
-            config_file += f"/+Previous Generations ({group_name})\n"
+            config_file += f"/Previous Generations\n"
             
             for gen in gens_sorted[1:]:
                 config_file += generate_config_entry(profile, gen, False)

@@ -39,6 +39,7 @@ in
         style = {
           wallpapers = [ ../../../shell/extras/wallpapers/wallpaper-v2.png ];
           wallpaperStyle = "stretched";
+          backdrop = "000000";
         };
       };
     };
