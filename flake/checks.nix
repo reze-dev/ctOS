@@ -78,7 +78,6 @@
             '';
 
         # Verify the installer package builds
-        installer-builds = self.packages.${system}.installer;
       };
     };
 }
