@@ -1,0 +1,15 @@
+--- modules/features/desktop/niri.nix
++++ modules/features/desktop/niri.nix
+@@ -191,9 +191,9 @@
+               "XF86AudioPrev".action = actions.spawn "playerctl" "previous";
+ 
+               # Screenshot & Overview
+-              "Print".action.screenshot = [ ];
+-              "Ctrl+Print".action.screenshot-screen = [ ];
+-              "Alt+Print".action.screenshot-window = [ ];
++              "Print".action = actions.spawn "sh" "-c" ''grim -g "$(slurp)" - | satty --filename -'';
++              "Ctrl+Print".action = actions.spawn "sh" "-c" "grim - | satty --filename -";
++              "Alt+Print".action = actions.spawn "sh" "-c" ''grim -g "$(niri msg -j action screenshot-window | jq -r \\"\\\\(.at[0]),\\\\(.at[1]) \\\\(.size[0])x\\\\(.size[1])\\")" - | satty --filename -'';
+               "Mod+O".action = actions.toggle-overview;
+ 
+               # Quit & Monitors
