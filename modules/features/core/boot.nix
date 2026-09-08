@@ -45,18 +45,18 @@ in
 
     boot.plymouth = {
       enable = true;
-      theme = "dedsec";
+      theme = "ctos";
 
       themePackages = [
         (pkgs.stdenv.mkDerivation {
-          pname = "dedsec-plymouth";
+          pname = "ctos-plymouth";
           version = "1.0";
 
-          src = ../../../assets/dedsec-plymouth;
+          src = ../../../assets/ctos-plymouth;
 
           installPhase = ''
-            mkdir -p $out/share/plymouth/themes/dedsec
-            cp * $out/share/plymouth/themes/dedsec/
+            mkdir -p $out/share/plymouth/themes/ctos
+            cp * $out/share/plymouth/themes/ctos/
           '';
         })
       ];
