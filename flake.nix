@@ -56,6 +56,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+    dedsec-grub-theme = {
+      url = "github:ihadouken/dedsec-grub-theme";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     tmux-powerkit = {
       url = "github:fabioluciano/tmux-powerkit";
       inputs.nixpkgs.follows = "nixpkgs";

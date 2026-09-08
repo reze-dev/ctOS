@@ -2,7 +2,6 @@
 {
   imports = [
     ./hosts.nix
-    ./installer.nix
     ./checks.nix
     ./devshell.nix
     ./formatter.nix
