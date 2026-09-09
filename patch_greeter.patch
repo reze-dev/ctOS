@@ -1,0 +1,24 @@
+--- modules/features/desktop/greeter.nix
++++ modules/features/desktop/greeter.nix
+@@ -12,6 +12,10 @@
+     ${pkgs.coreutils}/bin/env
+     ''}
+ 
++    ${lib.optionalString (!config.ctos.debug.enable) ''
++    exec >/dev/null 2>&1
++    ''}
++
+     exec ${config.programs.hyprland.package}/bin/start-hyprland
+   '';
+   greeterCommand = pkgs.writeShellScript "ctos-greeter-launch" ''
+@@ -25,6 +29,10 @@
+     export CTOS_DEBUG=1
+     ''}
+ 
++    ${lib.optionalString (!config.ctos.debug.enable) ''
++    exec >/dev/null 2>&1
++    ''}
++
+     export CTOS_MODE=greetd
+     export CTOS_LAUNCH_COMMAND=${desktopCommand}
+     export QT_QPA_PLATFORM=wayland

@@ -1,0 +1,18 @@
+--- assets/ctos-plymouth/ctos.script
++++ assets/ctos-plymouth/ctos.script
+@@ -48,7 +48,6 @@
+ log_lines[11] = "> Synchronizing clock...";
+ log_lines[12] = "> Handshake OK. Welcome.";
+ 
+-empty_image = Image.Text(" ", 1, 1, 1, 0, "Monospace 11", "left");
+ 
+ log_images = [];
+ for (i = 0; i < 13; i++) {
+@@ -128,7 +127,6 @@
+             log_sprites[i].SetY(Window.GetY() + screen_h - 130 + (i * 18));
+             log_sprites[i].SetOpacity(0.3 + (i * 0.15));
+         } else {
+-            log_sprites[i].SetImage(empty_image);
+             log_sprites[i].SetOpacity(0.0);
+         }
+     }
