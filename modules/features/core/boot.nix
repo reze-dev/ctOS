@@ -46,6 +46,7 @@ in
     boot.plymouth = {
       enable = true;
       theme = "ctos";
+      font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
 
       themePackages = [
         (pkgs.stdenv.mkDerivation {
