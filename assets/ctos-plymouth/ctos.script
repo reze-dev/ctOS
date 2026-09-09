@@ -48,6 +48,11 @@ log_lines[12] = "> Handshake OK. Welcome.";
 
 empty_image = Image.Text(" ", 1, 1, 1, 0, "Monospace 11", "left");
 
+log_images = [];
+for (i = 0; i < 13; i++) {
+    log_images[i] = Image.Text(log_lines[i], 1, 1, 1, 0.8, "Monospace 11", "left");
+}
+
 log_sprites = [];
 for (i = 0; i < 5; i++) {
     log_sprites[i] = Sprite();
@@ -130,8 +135,7 @@ fun refresh_callback() {
         }
         
         if (show_line == 1) {
-            img = Image.Text(log_lines[line_idx], 1, 1, 1, 0.8, "Monospace 11", "left");
-            log_sprites[i].SetImage(img);
+            log_sprites[i].SetImage(log_images[line_idx]);
             log_sprites[i].SetY(Window.GetY() + screen_h - 130 + (i * 18));
             log_sprites[i].SetOpacity(0.3 + (i * 0.15));
         } else {

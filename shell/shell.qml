@@ -74,12 +74,16 @@ Scope {
                 WlrLayershell.namespace: "ctos-widgets"
 
                 anchors {
-                    top: true
-                    right: true
+                    top: Settings.getWidgetAnchor("cpuHexGrid", "top", true)
+                    bottom: Settings.getWidgetAnchor("cpuHexGrid", "bottom", false)
+                    left: Settings.getWidgetAnchor("cpuHexGrid", "left", false)
+                    right: Settings.getWidgetAnchor("cpuHexGrid", "right", true)
                 }
                 margins {
-                    top: Theme.barHeight + Theme.spacingXl
-                    right: Theme.spacing2Xl
+                    top: Settings.getWidgetMargin("cpuHexGrid", "top", Theme.barHeight + Theme.spacingXl)
+                    bottom: Settings.getWidgetMargin("cpuHexGrid", "bottom", 0)
+                    left: Settings.getWidgetMargin("cpuHexGrid", "left", 0)
+                    right: Settings.getWidgetMargin("cpuHexGrid", "right", Theme.spacing2Xl)
                 }
 
                 implicitWidth: cpuHexGrid.implicitWidth
@@ -114,14 +118,17 @@ Scope {
                 WlrLayershell.namespace: "ctos-widgets"
 
                 anchors {
-                    top: true
-                    right: true
+                    top: Settings.getWidgetAnchor("ramBlockBar", "top", true)
+                    bottom: Settings.getWidgetAnchor("ramBlockBar", "bottom", false)
+                    left: Settings.getWidgetAnchor("ramBlockBar", "left", false)
+                    right: Settings.getWidgetAnchor("ramBlockBar", "right", true)
                 }
                 margins {
-                    top: Settings.widgetCpuHexGridVisible
-                        ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl)
-                        : (Theme.barHeight + Theme.spacingXl)
-                    right: Theme.spacing2Xl
+                    // Default fallback: top: Settings.widgetCpuHexGridVisible ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl)
+                    top: Settings.hasWidgetMargin("ramBlockBar", "top") ? Settings.getWidgetMargin("ramBlockBar", "top", 0) : (Settings.widgetCpuHexGridVisible ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl))
+                    bottom: Settings.getWidgetMargin("ramBlockBar", "bottom", 0)
+                    left: Settings.getWidgetMargin("ramBlockBar", "left", 0)
+                    right: Settings.getWidgetMargin("ramBlockBar", "right", Theme.spacing2Xl)
                 }
 
                 implicitWidth: ramBlockBar.implicitWidth
@@ -155,13 +162,18 @@ Scope {
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 WlrLayershell.namespace: "ctos-widgets"
 
+                // Default anchor fallback: anchors { bottom: true right: true }
                 anchors {
-                    bottom: true
-                    right: true
+                    top: Settings.getWidgetAnchor("networkFlow", "top", false)
+                    bottom: Settings.getWidgetAnchor("networkFlow", "bottom", true)
+                    left: Settings.getWidgetAnchor("networkFlow", "left", false)
+                    right: Settings.getWidgetAnchor("networkFlow", "right", true)
                 }
                 margins {
-                    bottom: Theme.spacing2Xl
-                    right: Theme.spacing2Xl
+                    top: Settings.getWidgetMargin("networkFlow", "top", 0)
+                    bottom: Settings.getWidgetMargin("networkFlow", "bottom", Theme.spacing2Xl)
+                    left: Settings.getWidgetMargin("networkFlow", "left", 0)
+                    right: Settings.getWidgetMargin("networkFlow", "right", Theme.spacing2Xl)
                 }
 
                 implicitWidth: networkFlowMatrix.implicitWidth
@@ -169,6 +181,138 @@ Scope {
 
                 NetworkFlowMatrix {
                     id: networkFlowMatrix
+                    anchors.fill: parent
+                }
+            }
+        }
+    }
+
+    Variants {
+        id: targetProfilerVariants
+
+        model: Quickshell.screens
+
+        delegate: Component {
+            PanelWindow {
+                id: targetProfilerWindow
+
+                required property var modelData
+
+                screen: modelData
+                color: "transparent"
+                visible: Settings.widgetTargetProfilerVisible
+                exclusionMode: ExclusionMode.Ignore
+
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.namespace: "ctos-widgets"
+
+                anchors {
+                    top: Settings.getWidgetAnchor("targetProfiler", "top", true)
+                    bottom: Settings.getWidgetAnchor("targetProfiler", "bottom", false)
+                    left: Settings.getWidgetAnchor("targetProfiler", "left", true)
+                    right: Settings.getWidgetAnchor("targetProfiler", "right", false)
+                }
+                margins {
+                    top: Settings.getWidgetMargin("targetProfiler", "top", Theme.barHeight + Theme.spacingXl)
+                    bottom: Settings.getWidgetMargin("targetProfiler", "bottom", 0)
+                    left: Settings.getWidgetMargin("targetProfiler", "left", Theme.spacing2Xl)
+                    right: Settings.getWidgetMargin("targetProfiler", "right", 0)
+                }
+
+                implicitWidth: targetProfilerWidget.implicitWidth
+                implicitHeight: targetProfilerWidget.implicitHeight
+
+                TargetProfilerWidget {
+                    id: targetProfilerWidget
+                    anchors.fill: parent
+                }
+            }
+        }
+    }
+
+    Variants {
+        id: networkTracerVariants
+
+        model: Quickshell.screens
+
+        delegate: Component {
+            PanelWindow {
+                id: networkTracerWindow
+
+                required property var modelData
+
+                screen: modelData
+                color: "transparent"
+                visible: Settings.widgetNetworkTracerVisible
+                exclusionMode: ExclusionMode.Ignore
+
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.namespace: "ctos-widgets"
+
+                anchors {
+                    top: Settings.getWidgetAnchor("networkTracer", "top", true)
+                    bottom: Settings.getWidgetAnchor("networkTracer", "bottom", false)
+                    left: Settings.getWidgetAnchor("networkTracer", "left", true)
+                    right: Settings.getWidgetAnchor("networkTracer", "right", false)
+                }
+                margins {
+                    top: Settings.getWidgetMargin("networkTracer", "top", Theme.barHeight + Theme.spacingXl + 230 + Theme.spacingXl)
+                    bottom: Settings.getWidgetMargin("networkTracer", "bottom", 0)
+                    left: Settings.getWidgetMargin("networkTracer", "left", Theme.spacing2Xl)
+                    right: Settings.getWidgetMargin("networkTracer", "right", 0)
+                }
+
+                implicitWidth: networkTracerWidget.implicitWidth
+                implicitHeight: networkTracerWidget.implicitHeight
+
+                NetworkTracerWidget {
+                    id: networkTracerWidget
+                    anchors.fill: parent
+                }
+            }
+        }
+    }
+
+    Variants {
+        id: audioSurveillanceVariants
+
+        model: Quickshell.screens
+
+        delegate: Component {
+            PanelWindow {
+                id: audioSurveillanceWindow
+
+                required property var modelData
+
+                screen: modelData
+                color: "transparent"
+                visible: Settings.widgetAudioSurveillanceVisible
+                exclusionMode: ExclusionMode.Ignore
+
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.namespace: "ctos-widgets"
+
+                anchors {
+                    top: Settings.getWidgetAnchor("audioSurveillance", "top", false)
+                    bottom: Settings.getWidgetAnchor("audioSurveillance", "bottom", true)
+                    left: Settings.getWidgetAnchor("audioSurveillance", "left", true)
+                    right: Settings.getWidgetAnchor("audioSurveillance", "right", false)
+                }
+                margins {
+                    top: Settings.getWidgetMargin("audioSurveillance", "top", 0)
+                    bottom: Settings.getWidgetMargin("audioSurveillance", "bottom", Theme.spacing2Xl)
+                    left: Settings.getWidgetMargin("audioSurveillance", "left", Theme.spacing2Xl)
+                    right: Settings.getWidgetMargin("audioSurveillance", "right", 0)
+                }
+
+                implicitWidth: audioSurveillanceWidget.implicitWidth
+                implicitHeight: audioSurveillanceWidget.implicitHeight
+
+                AudioSurveillanceWidget {
+                    id: audioSurveillanceWidget
                     anchors.fill: parent
                 }
             }
