@@ -11,12 +11,12 @@ background_image = background_source.Scale(screen_w, screen_h);
 background = Sprite(background_image);
 background.SetPosition(Window.GetX(), Window.GetY(), 0);
 
-scan_image = Image.Text("_________________________________________________________________________________________________________________________________________________________________", 0.81, 1.0, 0.0, 0.15, "Monospace 14", "center");
+scan_image = Image.Text(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", 0.81, 1.0, 0.0, 0.15, "Monospace 14", "left");
 scan = Sprite(scan_image);
 scan.SetZ(30);
 
-title_image = Image.Text("ctOS", 1, 1, 1, 1, "Monospace Bold 48", "center");
-title_shadow_image = Image.Text("ctOS", 0.81, 1.0, 0.0, 0.5, "Monospace Bold 48", "center");
+title_image = Image.Text("ctOS", 1, 1, 1, 1, "Monospace Bold 48", "left");
+title_shadow_image = Image.Text("ctOS", 0.81, 1.0, 0.0, 0.5, "Monospace Bold 48", "left");
 title = Sprite(title_image);
 title_shadow = Sprite(title_shadow_image);
 title.SetZ(50);
@@ -25,7 +25,7 @@ title_shadow.SetZ(49);
 title_w = title_image.GetWidth();
 title_h = title_image.GetHeight();
 
-sub_image = Image.Text("CENTRAL OPERATING SYSTEM", 0.81, 1.0, 0.0, 1, "Monospace 14", "center");
+sub_image = Image.Text("CENTRAL OPERATING SYSTEM", 0.81, 1.0, 0.0, 1, "Monospace 14", "left");
 sub = Sprite(sub_image);
 sub.SetZ(50);
 sub.SetX(center_x - (sub_image.GetWidth() / 2));
@@ -46,8 +46,6 @@ log_lines[10] = "> Connecting to telemetry servers...";
 log_lines[11] = "> Synchronizing clock...";
 log_lines[12] = "> Handshake OK. Welcome.";
 
-empty_image = Image.Text(" ", 1, 1, 1, 0, "Monospace 11", "left");
-
 log_images = [];
 for (i = 0; i < 13; i++) {
     log_images[i] = Image.Text(log_lines[i], 1, 1, 1, 0.8, "Monospace 11", "left");
@@ -58,6 +56,7 @@ for (i = 0; i < 5; i++) {
     log_sprites[i] = Sprite();
     log_sprites[i].SetZ(60);
     log_sprites[i].SetX(Window.GetX() + 40);
+    log_sprites[i].SetOpacity(0);
 }
 
 progress_text = [];
@@ -73,10 +72,10 @@ progress_text[8] = "[########################]";
 
 progress_sprites = [];
 for (i = 0; i < 9; i++) {
-    progress_sprites[i] = Image.Text(progress_text[i], 0.81, 1.0, 0.0, 1, "Monospace Bold 16", "center");
+    progress_sprites[i] = Image.Text(progress_text[i], 0.81, 1.0, 0.0, 1, "Monospace Bold 16", "left");
 }
 
-progress = Sprite();
+progress = Sprite(progress_sprites[0]);
 progress.SetZ(60);
 progress.SetX(center_x - (progress_sprites[0].GetWidth() / 2));
 progress.SetY(Window.GetY() + screen_h - 60);
@@ -88,10 +87,13 @@ fun refresh_callback() {
     frame++;
     
     pulse = (Math.Sin(frame / 10) + 1) / 2;
-    glitch_active = (frame % 60) < 5;
+    flicker = (Math.Sin(frame * 3) + 1) / 2;
     jitter_x = 0;
     jitter_y = 0;
-    if (glitch_active) {
+    
+    glitch_active = 0;
+    if ((frame % 60) < 5) {
+        glitch_active = 1;
         jitter_x = Math.Int(Math.Sin(frame * 13) * 6);
         jitter_y = Math.Int(Math.Sin(frame * 17) * 4);
     }
@@ -99,7 +101,7 @@ fun refresh_callback() {
     background.SetOpacity(0.5);
 
     scan_y = Window.GetY() + ((frame * 15) % screen_h);
-    scan.SetX(Window.GetX() + (screen_w / 2) - (scan_image.GetWidth() / 2));
+    scan.SetX(Window.GetX());
     scan.SetY(scan_y);
 
     title.SetX(center_x - (title_w / 2) + jitter_x);
@@ -107,7 +109,7 @@ fun refresh_callback() {
     title_shadow.SetX(center_x - (title_w / 2) - 4 + jitter_x);
     title_shadow.SetY(center_y - (title_h / 2) - 18 + jitter_y);
     
-    if (glitch_active) {
+    if (glitch_active == 1) {
         title_shadow.SetOpacity(0.9);
         title.SetOpacity(0.7);
     } else {
@@ -126,23 +128,18 @@ fun refresh_callback() {
     
     for (i = 0; i < 5; i++) {
         line_idx = log_index + i - 4;
-        
-        show_line = 0;
         if (line_idx >= 0) {
             if (line_idx < 13) {
-                show_line = 1;
+                log_sprites[i].SetImage(log_images[line_idx]);
+                log_sprites[i].SetY(Window.GetY() + screen_h - 130 + (i * 18));
+                log_sprites[i].SetOpacity(0.3 + (i * 0.15));
+            } else {
+                log_sprites[i].SetOpacity(0);
             }
         }
-        
-        if (show_line == 1) {
-            log_sprites[i].SetImage(log_images[line_idx]);
-            log_sprites[i].SetY(Window.GetY() + screen_h - 130 + (i * 18));
-            log_sprites[i].SetOpacity(0.3 + (i * 0.15));
-        } else {
-            log_sprites[i].SetImage(empty_image);
-            log_sprites[i].SetOpacity(0.0);
-        }
     }
+    
+    Plymouth.SetRefreshFunction(refresh_callback);
 }
 
 Plymouth.SetRefreshFunction(refresh_callback);
