@@ -33,4 +33,4 @@ jobs:
         run: nix eval --impure --expr '(builtins.getFlake (toString ./.)).nixosConfigurations.Makima.config.system.build.toplevel.name'
 
       - name: Check formatting
-        run: treefmt --ci
+        run: nix fmt -- --ci
