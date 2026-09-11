@@ -5,5 +5,5 @@ import Quickshell
 import Quickshell.Hyprland
 
 Singleton {
-    property int selectedWorkspaceId: Hyprland.focusedWorkspace.id
+    property int selectedWorkspaceId: Hyprland.focusedWorkspace != null ? parseInt(Hyprland.focusedWorkspace.name) : 1
 }
