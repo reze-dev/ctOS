@@ -1,144 +1,283 @@
+/*
+ * ctOS Plymouth Theme
+ * Designed around a 1920x1080 ctOS background.
+ * The background is the hero: center branding and existing HUD
+ * elements are never covered by the scripted telemetry.
+ */
+
 Window.SetBackgroundTopColor(0, 0, 0);
 Window.SetBackgroundBottomColor(0, 0, 0);
 
 screen_w = Window.GetWidth();
 screen_h = Window.GetHeight();
-center_x = Window.GetX() + (screen_w / 2);
-center_y = Window.GetY() + (screen_h / 2);
+window_x = Window.GetX();
+window_y = Window.GetY();
+center_x = window_x + (screen_w / 2);
+center_y = window_y + (screen_h / 2);
+right_x = window_x + screen_w;
+bottom_y = window_y + screen_h;
+
+/* --------------------------------------------------------- */
+/* Background                                                 */
+/* --------------------------------------------------------- */
 
 background_source = Image("background.png");
 background_image = background_source.Scale(screen_w, screen_h);
 background = Sprite(background_image);
-background.SetPosition(Window.GetX(), Window.GetY(), 0);
+background.SetX(window_x);
+background.SetY(window_y);
+background.SetZ(0);
+background.SetOpacity(1.0);
 
-scan_image = Image.Text(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", 0.81, 1.0, 0.0, 0.15, "JetBrains Mono 14", "left");
-scan = Sprite(scan_image);
-scan.SetZ(30);
+/* --------------------------------------------------------- */
+/* Palette                                                    */
+/* --------------------------------------------------------- */
 
-title_image = Image.Text("ctOS", 1, 1, 1, 1, "JetBrains Mono 48", "left");
-title_shadow_image = Image.Text("ctOS", 0.81, 1.0, 0.0, 0.5, "JetBrains Mono 48", "left");
-title = Sprite(title_image);
-title_shadow = Sprite(title_shadow_image);
-title.SetZ(50);
-title_shadow.SetZ(49);
+TEXT_R = 0.70;
+TEXT_G = 0.72;
+TEXT_B = 0.70;
+MUTED_R = 0.42;
+MUTED_G = 0.44;
+MUTED_B = 0.42;
+GREEN_R = 0.00;
+GREEN_G = 0.88;
+GREEN_B = 0.38;
 
-title_w = title_image.GetWidth();
-title_h = title_image.GetHeight();
+/* --------------------------------------------------------- */
+/* Safe-zone layout                                           */
+/* --------------------------------------------------------- */
 
-sub_image = Image.Text("CENTRAL OPERATING SYSTEM", 0.81, 1.0, 0.0, 1, "JetBrains Mono 14", "left");
-sub = Sprite(sub_image);
-sub.SetZ(50);
-sub.SetX(center_x - (sub_image.GetWidth() / 2));
-sub.SetY(center_y + (title_h / 2) + 10);
+/*
+ * The generated wallpaper already contains:
+ *   - center tesseract + ctOS logo
+ *   - four corner text blocks
+ *   - map panels and registration lines
+ *
+ * Dynamic content therefore lives only in the lower middle.
+ */
+
+telemetry_x = window_x + (screen_w * 0.285);
+telemetry_y = window_y + (screen_h * 0.69);
+status_x = window_x + (screen_w * 0.56);
+status_y = window_y + (screen_h * 0.69);
+progress_x = window_x + (screen_w * 0.56);
+progress_y = window_y + (screen_h * 0.80);
+
+/* --------------------------------------------------------- */
+/* Telemetry header                                           */
+/* --------------------------------------------------------- */
+
+telemetry_header_image = Image.Text(
+    "// BOOT TELEMETRY",
+    GREEN_R, GREEN_G, GREEN_B, 0.88,
+    "JetBrains Mono 10", "left"
+);
+telemetry_header = Sprite(telemetry_header_image);
+telemetry_header.SetZ(20);
+telemetry_header.SetX(telemetry_x);
+telemetry_header.SetY(telemetry_y);
+telemetry_header.SetOpacity(0.82);
+
+/* --------------------------------------------------------- */
+/* Logs                                                       */
+/* --------------------------------------------------------- */
 
 log_lines = [];
-log_lines[0] = "> Mounting virtual filesystems...";
-log_lines[1] = "> Initializing cryptographic keys...";
-log_lines[2] = "> Bypassing hardware locks...";
-log_lines[3] = "> Loading proprietary Blume binaries...";
-log_lines[4] = "> Establishing secure DBus socket...";
-log_lines[5] = "> Spawning polkit agents...";
-log_lines[6] = "> Injecting kernel hooks...";
-log_lines[7] = "> Starting Wayland compositor...";
-log_lines[8] = "> Waking QML UI engines...";
-log_lines[9] = "> Validating system integrity...";
-log_lines[10] = "> Connecting to telemetry servers...";
-log_lines[11] = "> Synchronizing clock...";
-log_lines[12] = "> Handshake OK. Welcome.";
+log_lines[0]  = "> Mounting virtual filesystems...";
+log_lines[1]  = "> Initializing cryptographic keys...";
+log_lines[2]  = "> Verifying hardware integrity...";
+log_lines[3]  = "> Loading system modules...";
+log_lines[4]  = "> Establishing secure D-Bus socket...";
+log_lines[5]  = "> Starting policy agents...";
+log_lines[6]  = "> Initializing kernel interfaces...";
+log_lines[7]  = "> Starting Wayland compositor...";
+log_lines[8]  = "> Initializing QML runtime...";
+log_lines[9]  = "> Validating system integrity...";
+log_lines[10] = "> Synchronizing system state...";
+log_lines[11] = "> Connecting system services...";
+log_lines[12] = "> Handshake complete. Welcome.";
 
 log_images = [];
 for (i = 0; i < 13; i++) {
-    log_images[i] = Image.Text(log_lines[i], 1, 1, 1, 0.8, "JetBrains Mono 11", "left");
+    log_images[i] = Image.Text(
+        log_lines[i],
+        TEXT_R, TEXT_G, TEXT_B, 0.80,
+        "JetBrains Mono 10", "left"
+    );
 }
 
 log_sprites = [];
 for (i = 0; i < 5; i++) {
     log_sprites[i] = Sprite();
-    log_sprites[i].SetZ(60);
-    log_sprites[i].SetX(Window.GetX() + 40);
+    log_sprites[i].SetZ(30);
+    log_sprites[i].SetX(telemetry_x);
     log_sprites[i].SetOpacity(0.0);
 }
 
-progress_text = [];
-progress_text[0] = "[                        ]";
-progress_text[1] = "[###                     ]";
-progress_text[2] = "[######                  ]";
-progress_text[3] = "[#########               ]";
-progress_text[4] = "[############            ]";
-progress_text[5] = "[###############         ]";
-progress_text[6] = "[##################      ]";
-progress_text[7] = "[#####################   ]";
-progress_text[8] = "[########################]";
+/* --------------------------------------------------------- */
+/* System state                                               */
+/* --------------------------------------------------------- */
 
-progress_sprites = [];
-for (i = 0; i < 9; i++) {
-    progress_sprites[i] = Image.Text(progress_text[i], 0.81, 1.0, 0.0, 1, "JetBrains Mono 16", "left");
+status_header_image = Image.Text(
+    "SYSTEM STATE",
+    MUTED_R, MUTED_G, MUTED_B, 0.78,
+    "JetBrains Mono 9", "left"
+);
+status_header = Sprite(status_header_image);
+status_header.SetZ(20);
+status_header.SetX(status_x);
+status_header.SetY(status_y);
+status_header.SetOpacity(0.72);
+
+state_initializing = Image.Text(
+    "INITIALIZING",
+    TEXT_R, TEXT_G, TEXT_B, 0.82,
+    "JetBrains Mono 11", "left"
+);
+state_ready = Image.Text(
+    "SYSTEM READY",
+    GREEN_R, GREEN_G, GREEN_B, 0.95,
+    "JetBrains Mono 11", "left"
+);
+
+system_state = Sprite(state_initializing);
+system_state.SetZ(30);
+system_state.SetX(status_x);
+system_state.SetY(status_y + 20);
+system_state.SetOpacity(0.75);
+
+indicator_image = Image.Text(
+    "●",
+    GREEN_R, GREEN_G, GREEN_B, 0.92,
+    "JetBrains Mono 8", "left"
+);
+indicator = Sprite(indicator_image);
+indicator.SetZ(30);
+indicator.SetX(status_x - indicator_image.GetWidth() - 8);
+indicator.SetY(status_y + 21);
+indicator.SetOpacity(0.65);
+
+/* --------------------------------------------------------- */
+/* Progress                                                   */
+/* --------------------------------------------------------- */
+
+progress_label_image = Image.Text(
+    "BOOT PROGRESS",
+    MUTED_R, MUTED_G, MUTED_B, 0.70,
+    "JetBrains Mono 8", "left"
+);
+progress_label = Sprite(progress_label_image);
+progress_label.SetZ(20);
+progress_label.SetX(progress_x);
+progress_label.SetY(progress_y - 18);
+progress_label.SetOpacity(0.60);
+
+track_image = Image.Text(
+    "[                    ]",
+    MUTED_R, MUTED_G, MUTED_B, 0.65,
+    "JetBrains Mono 12", "left"
+);
+track = Sprite(track_image);
+track.SetZ(20);
+track.SetX(progress_x);
+track.SetY(progress_y);
+track.SetOpacity(0.55);
+
+progress_strings = [];
+progress_strings[0]  = "";
+progress_strings[1]  = "#";
+progress_strings[2]  = "##";
+progress_strings[3]  = "###";
+progress_strings[4]  = "####";
+progress_strings[5]  = "#####";
+progress_strings[6]  = "######";
+progress_strings[7]  = "#######";
+progress_strings[8]  = "########";
+progress_strings[9]  = "#########";
+progress_strings[10] = "##########";
+progress_strings[11] = "###########";
+progress_strings[12] = "############";
+progress_strings[13] = "#############";
+progress_strings[14] = "##############";
+progress_strings[15] = "###############";
+progress_strings[16] = "################";
+progress_strings[17] = "#################";
+progress_strings[18] = "##################";
+progress_strings[19] = "###################";
+progress_strings[20] = "####################";
+
+progress_images = [];
+for (i = 0; i <= 20; i++) {
+    progress_images[i] = Image.Text(
+        progress_strings[i],
+        GREEN_R, GREEN_G, GREEN_B, 0.90,
+        "JetBrains Mono 12", "left"
+    );
 }
 
-progress = Sprite(progress_sprites[0]);
-progress.SetZ(60);
-progress.SetX(center_x - (progress_sprites[0].GetWidth() / 2));
-progress.SetY(Window.GetY() + screen_h - 60);
+progress = Sprite(progress_images[0]);
+progress.SetZ(21);
+progress.SetX(progress_x + 10);
+progress.SetY(progress_y);
+progress.SetOpacity(0.92);
+
+/* --------------------------------------------------------- */
+/* Animation state                                            */
+/* --------------------------------------------------------- */
 
 frame = 0;
 log_index = 0;
+progress_index = 0;
 
 fun refresh_callback() {
     frame++;
-    
-    pulse = (Math.Sin(frame / 10) + 1) / 2;
-    flicker = (Math.Sin(frame * 3) + 1) / 2;
-    jitter_x = 0.0;
-    jitter_y = 0.0;
-    
-    glitch_active = 0.0;
-    if ((frame % 60) < 5) {
-        glitch_active = 1.0;
-        jitter_x = Math.Int(Math.Sin(frame * 13) * 6);
-        jitter_y = Math.Int(Math.Sin(frame * 17) * 4);
-    }
-    
-    background.SetOpacity(0.5);
 
-    scan_y = Window.GetY() + ((frame * 15) % screen_h);
-    scan.SetX(Window.GetX());
-    scan.SetY(scan_y);
+    pulse = (Math.Sin(frame / 28) + 1) / 2;
 
-    title.SetX(center_x - (title_w / 2) + jitter_x);
-    title.SetY(center_y - (title_h / 2) - 20 + jitter_y);
-    title_shadow.SetX(center_x - (title_w / 2) - 4 + jitter_x);
-    title_shadow.SetY(center_y - (title_h / 2) - 18 + jitter_y);
-    
-    if (glitch_active == 1.0) {
-        title_shadow.SetOpacity(0.9);
-        title.SetOpacity(0.7);
-    } else {
-        title_shadow.SetOpacity(0.0);
-        title.SetOpacity(1.0);
-    }
+    indicator.SetOpacity(0.48 + (pulse * 0.27));
 
-    sub.SetOpacity(0.6 + (pulse * 0.4));
-
-    prog_idx = Math.Int(frame / 6) % 9;
-    progress.SetImage(progress_sprites[prog_idx]);
-    
-    if (frame % 8 == 0) {
+    if ((frame % 12) == 0 && log_index < 13) {
         log_index++;
     }
-    
+
     for (i = 0; i < 5; i++) {
         line_idx = log_index + i - 4;
-        if (line_idx >= 0) {
-            if (line_idx < 13) {
-                log_sprites[i].SetImage(log_images[line_idx]);
-                log_sprites[i].SetY(Window.GetY() + screen_h - 130 + (i * 18));
-                log_sprites[i].SetOpacity(0.3 + (i * 0.15));
+
+        if (line_idx >= 0 && line_idx < 13) {
+            log_sprites[i].SetImage(log_images[line_idx]);
+            log_sprites[i].SetY(telemetry_y + 22 + (i * 18));
+
+            if (i == 0) {
+                log_sprites[i].SetOpacity(0.24);
+            } else if (i == 1) {
+                log_sprites[i].SetOpacity(0.36);
+            } else if (i == 2) {
+                log_sprites[i].SetOpacity(0.50);
+            } else if (i == 3) {
+                log_sprites[i].SetOpacity(0.64);
             } else {
-                log_sprites[i].SetOpacity(0.0);
+                log_sprites[i].SetOpacity(0.80);
             }
+        } else {
+            log_sprites[i].SetOpacity(0.0);
         }
     }
-    
+
+    if ((frame % 7) == 0 && progress_index < 20) {
+        progress_index++;
+    }
+
+    progress.SetImage(progress_images[progress_index]);
+
+    if (progress_index >= 20) {
+        system_state.SetImage(state_ready);
+        system_state.SetOpacity(0.90);
+        indicator.SetOpacity(0.85);
+    } else {
+        system_state.SetImage(state_initializing);
+        system_state.SetOpacity(0.55 + (pulse * 0.20));
+    }
+
     Plymouth.SetRefreshFunction(refresh_callback);
 }
 
