@@ -16,7 +16,6 @@ in
           ...
         }:
         {
-
           config = {
             programs.zsh = {
               enable = true;
@@ -50,6 +49,18 @@ in
                   zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza --color=always --icons always $realpath'
                   eval "$(fzf --zsh)"
                   eval "$(zoxide init --cmd cd zsh)"
+                '')
+                (lib.mkOrder 1200 ''
+                  git() {
+                    if [[ "$1" == "add" ]]; then
+                      local git_root
+                      git_root=$(command git rev-parse --show-toplevel) || return
+                      "$git_root/scripts/format" "''${@:2}"
+                      command git add "''${@:2}"
+                    else
+                      command git "$@"
+                    fi
+                  }
                 '')
                 (lib.mkOrder 1500 ''
                   TRANSIENT_PROMPT_PROMPT='$(starship prompt --terminal-width="$COLUMNS" --keymap="''${KEYMAP:-}" --status="''${STARSHIP_CMD_STATUS}" --pipestatus="''${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="''${STARSHIP_DURATION:-}" --jobs="''${STARSHIP_JOBS_COUNT}")'
