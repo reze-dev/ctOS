@@ -57,7 +57,7 @@
       inputs.home-manager.follows = "home-manager";
     };
     dedsec-grub-theme = {
-      url = "github:ihadouken/dedsec-grub-theme";
+      url = "gitlab:VandalByte/dedsec-grub-theme";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     tmux-powerkit = {
