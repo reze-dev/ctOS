@@ -23,6 +23,7 @@ in
       nushell
       shfmt
       shellcheck
+      qt6.qtdeclarative
 
       # Nix
       nil
