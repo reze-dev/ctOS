@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+format_file() {
+  local file="$1"
+
+  [[ -f "$file" ]] || return 0
+
+  case "$file" in
+  *.nix)
+    nixfmt "$file"
+    ;;
+
+  *.qml)
+    qmlformat -i "$file"
+    ;;
+
+  *.sh | *.bash)
+    shfmt -w "$file"
+    ;;
+  esac
+}
+
+if [[ "$#" -eq 0 ]]; then
+  exit 0
+fi
+
+for arg in "$@"; do
+  if [[ "$arg" == "." ]]; then
+    while IFS= read -r -d '' file; do
+      format_file "$file"
+    done < <(
+      command git ls-files \
+        --modified \
+        --others \
+        --exclude-standard \
+        -z
+    )
+  elif [[ -f "$arg" ]]; then
+    format_file "$arg"
+  fi
+done
