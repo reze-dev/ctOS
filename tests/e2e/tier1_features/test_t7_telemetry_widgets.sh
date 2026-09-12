@@ -565,7 +565,7 @@ fi
 
 test_case "T7.09.3" "Zero Polling: Zero high-frequency polling intervals (< 500ms) in surfaces/"
 if [[ -d "${DESKTOP_DIR}/surfaces" ]]; then
-    assert_not_grep "interval:\s*(100|200|250|300)" "${DESKTOP_DIR}/surfaces" "No high-frequency timers allowed in surfaces/"
+    assert_not_grep 'interval:\s*(100|200|250|300)\b' "${DESKTOP_DIR}/surfaces" "No high-frequency timers allowed in surfaces/"
 else
     assert_dir_exists "${DESKTOP_DIR}/surfaces"
 fi

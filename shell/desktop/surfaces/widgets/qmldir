@@ -3,3 +3,6 @@ CpuHexGrid 1.0 CpuHexGrid.qml
 NetworkFlowMatrix 1.0 NetworkFlowMatrix.qml
 RamBlockBar 1.0 RamBlockBar.qml
 AmbientGlitch 1.0 AmbientGlitch.qml
+NetworkTracerWidget 1.0 NetworkTracerWidget.qml
+AudioSurveillanceWidget 1.0 AudioSurveillanceWidget.qml
+TargetProfilerWidget 1.0 TargetProfilerWidget.qml

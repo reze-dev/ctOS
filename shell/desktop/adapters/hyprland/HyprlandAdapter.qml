@@ -61,8 +61,8 @@ Singleton {
         if (!root.available) {
             return -1;
         }
-        if (Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id > 0) {
-            return Hyprland.focusedWorkspace.id;
+        if (Hyprland.focusedWorkspace && parseInt(Hyprland.focusedWorkspace.name) > 0) {
+            return parseInt(Hyprland.focusedWorkspace.name);
         }
         return 1;
     }
@@ -82,12 +82,12 @@ Singleton {
         const result = [];
         for (let i = 0; i < rawList.length; ++i) {
             const ws = rawList[i];
-            if (ws && ws.id > 0) {
+            if (ws && parseInt(ws.name) > 0) {
                 result.push({
-                    "id": ws.id,
-                    "name": ws.name ? ws.name : String(ws.id),
+                    "id": parseInt(ws.name),
+                    "name": ws.name ? ws.name : String(parseInt(ws.name)),
                     "active": Boolean(ws.active),
-                    "focused": Boolean(ws.focused || (ws.id === root.focusedWorkspaceId)),
+                    "focused": Boolean(ws.focused || (parseInt(ws.name) === root.focusedWorkspaceId)),
                     "urgent": Boolean(ws.urgent)
                 });
             }
@@ -163,12 +163,12 @@ Singleton {
         const rawList = Hyprland.workspaces ? Hyprland.workspaces.values : [];
         for (let i = 0; i < rawList.length; ++i) {
             const ws = rawList[i];
-            if (ws && ws.monitor && ws.monitor.name === monitorName && ws.id > 0) {
+            if (ws && ws.monitor && ws.monitor.name === monitorName && parseInt(ws.name) > 0) {
                 filtered.push({
-                    "id": ws.id,
-                    "name": ws.name ? ws.name : String(ws.id),
+                    "id": parseInt(ws.name),
+                    "name": ws.name ? ws.name : String(parseInt(ws.name)),
                     "active": Boolean(ws.active),
-                    "focused": Boolean(ws.focused || (ws.id === root.focusedWorkspaceId)),
+                    "focused": Boolean(ws.focused || (parseInt(ws.name) === root.focusedWorkspaceId)),
                     "urgent": Boolean(ws.urgent)
                 });
             }
