@@ -19,11 +19,15 @@ in
       tree-sitter
       zed-editor
       jdk21
-      python3
       nushell
       shfmt
       shellcheck
       qt6.qtdeclarative
+
+      # Python
+      uv
+      ruff
+      python3
 
       # Nix
       nil
