@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.ctos.features.greeter;
@@ -7,10 +12,14 @@ let
     set -u
 
     ${lib.optionalString config.ctos.debug.enable ''
-    log=/tmp/ctos-desktop-session.log
-    exec >>"$log" 2>&1
-    echo "ctOS desktop launcher: $(${pkgs.coreutils}/bin/date --iso-8601=seconds)"
-    ${pkgs.coreutils}/bin/env
+      log=/tmp/ctos-desktop-session.log
+      exec >>"$log" 2>&1
+      echo "ctOS desktop launcher: $(${pkgs.coreutils}/bin/date --iso-8601=seconds)"
+      ${pkgs.coreutils}/bin/env
+    ''}
+
+    ${lib.optionalString (!config.ctos.debug.enable) ''
+      exec >/dev/null 2>&1
     ''}
 
     exec ${config.programs.hyprland.package}/bin/start-hyprland
@@ -19,11 +28,15 @@ let
     set -u
 
     ${lib.optionalString config.ctos.debug.enable ''
-    log=/tmp/ctos-greeter.log
-    exec >>"$log" 2>&1
-    echo "ctOS greeter launcher: $(${pkgs.coreutils}/bin/date --iso-8601=seconds)"
-    echo "uid=$(${pkgs.coreutils}/bin/id -u) gid=$(${pkgs.coreutils}/bin/id -g) runtime=''${XDG_RUNTIME_DIR-<unset>}"
-    export CTOS_DEBUG=1
+      log=/tmp/ctos-greeter.log
+      exec >>"$log" 2>&1
+      echo "ctOS greeter launcher: $(${pkgs.coreutils}/bin/date --iso-8601=seconds)"
+      echo "uid=$(${pkgs.coreutils}/bin/id -u) gid=$(${pkgs.coreutils}/bin/id -g) runtime=''${XDG_RUNTIME_DIR-<unset>}"
+      export CTOS_DEBUG=1
+    ''}
+
+    ${lib.optionalString (!config.ctos.debug.enable) ''
+      exec >/dev/null 2>&1
     ''}
 
     export CTOS_MODE=greetd
