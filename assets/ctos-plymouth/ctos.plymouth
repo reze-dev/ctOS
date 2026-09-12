@@ -4,5 +4,5 @@ Description=ctOS Hacker Initialization Sequence
 ModuleName=script
 
 [script]
-ImageDir=/usr/share/plymouth/themes/ctos
-ScriptFile=/usr/share/plymouth/themes/ctos/ctos.script
+ImageDir=/etc/plymouth/themes/ctos
+ScriptFile=/etc/plymouth/themes/ctos/ctos.script

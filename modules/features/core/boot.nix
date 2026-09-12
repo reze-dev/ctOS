@@ -46,6 +46,7 @@ in
     boot.plymouth = {
       enable = true;
       theme = "ctos";
+      font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
 
       themePackages = [
         (pkgs.stdenv.mkDerivation {
@@ -70,6 +71,8 @@ in
       "rd.systemd.show_status=false"
       "rd.udev.log_level=3"
       "udev.log_priority=3"
+      "systemd.show_status=false"
+      "vt.global_cursor_default=0"
     ];
     boot.consoleLogLevel = 0;
     boot.initrd.verbose = false;
