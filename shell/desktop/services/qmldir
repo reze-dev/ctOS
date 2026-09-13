@@ -4,3 +4,4 @@ singleton NetworkService 1.0 NetworkService.qml
 singleton PowerService 1.0 PowerService.qml
 singleton SystemMonitorService 1.0 SystemMonitorService.qml
 singleton NetworkTracerService 1.0 NetworkTracerService.qml
+singleton NotificationService 1.0 NotificationService.qml
