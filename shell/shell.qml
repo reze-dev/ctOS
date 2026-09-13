@@ -27,6 +27,10 @@ Scope {
         function closeOverlay(): void {
             OverlayController.close();
         }
+
+        function toggleEventLog(): void {
+            OverlayController.toggleEventLog();
+        }
     }
 
     function resolveTargetScreen(): var {
@@ -439,7 +443,6 @@ Scope {
                 source: "desktop/surfaces/SystemRail.qml"
             }
 
-
             Loader {
                 id: eventLogLoader
 
@@ -447,9 +450,39 @@ Scope {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 asynchronous: false
-                source: "desktop/surfaces/PlaceholderSurface.qml"
+                source: "desktop/surfaces/EventLog.qml"
                 visible: OverlayController.activeSurface === OverlayController.Surface.EventLog
             }
+        }
+    }
+
+    PanelWindow {
+        id: notificationToastHost
+        screen: root.resolveTargetScreen()
+        color: "transparent"
+        visible: NotificationService.activeToasts.count > 0
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-notifications"
+
+        anchors {
+            top: true
+            right: true
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+            right: Theme.spacingMedium
+        }
+
+        implicitWidth: 360
+        implicitHeight: toastStack.implicitHeight
+
+        NotificationToasts {
+            id: toastStack
+            width: 340
+            anchors.horizontalCenter: parent.horizontalCenter
         }
     }
 }
