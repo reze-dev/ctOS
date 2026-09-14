@@ -6,6 +6,8 @@ import "../../core"
 Item {
     id: root
 
+    signal toggleCalendar
+
     readonly property date currentDate: systemClock.date
     readonly property string dateString: Qt.formatDateTime(systemClock.date, "yyyy-MM-dd")
     readonly property string timeString: Qt.formatDateTime(systemClock.date, "HH:mm")
@@ -65,7 +67,7 @@ Item {
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
 
-            onClicked: OverlayController.toggleEventLog()
+            onClicked: root.toggleCalendar()
         }
     }
 }
