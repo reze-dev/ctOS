@@ -27,7 +27,7 @@ Rectangle {
     implicitHeight: height
 
     color: Theme.background
-    radius: Theme.radiusPill
+    radius: Theme.radiusMedium
     border.color: mouseArea.containsMouse ? Theme.accent : Theme.borderMuted
     border.width: Theme.borderWidth
     clip: true
