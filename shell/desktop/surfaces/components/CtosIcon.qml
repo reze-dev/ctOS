@@ -55,6 +55,7 @@ Item {
         if (!norm || norm === "") return "";
         var direct = [
             "battery", "battery-charging", "battery-low",
+            "bluetooth", "bluetooth-slash",
             "wifi", "wifi-slash",
             "volume", "volume-mute", "volume-slash",
             "microphone", "microphone-slash",
