@@ -8,10 +8,35 @@ import "desktop/adapters/hyprland"
 import "desktop/core"
 import "desktop/services"
 import "desktop/surfaces"
+import "desktop/surfaces/components"
 import "desktop/surfaces/widgets"
 
 Scope {
     id: root
+
+    property bool calendarVisible: false
+    property var calendarScreen: null
+
+    function toggleCalendar(targetScreen): void {
+        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
+
+        if (root.calendarVisible) {
+            if (targetScreen === null || targetScreen === undefined || root.calendarScreen === resolved) {
+                root.calendarVisible = false;
+                root.calendarScreen = null;
+            } else {
+                root.calendarScreen = resolved;
+            }
+        } else {
+            root.calendarScreen = resolved;
+            root.calendarVisible = true;
+        }
+    }
+
+    function closeCalendar(): void {
+        root.calendarVisible = false;
+        root.calendarScreen = null;
+    }
 
     IpcHandler {
         target: "ctos"
@@ -30,6 +55,10 @@ Scope {
 
         function toggleEventLog(): void {
             OverlayController.toggleEventLog();
+        }
+
+        function toggleCalendar(): void {
+            root.toggleCalendar(null);
         }
     }
 
@@ -333,6 +362,8 @@ Scope {
                 required property var modelData
 
                 screen: modelData
+
+                onToggleCalendar: root.toggleCalendar(modelData)
             }
         }
     }
@@ -361,6 +392,27 @@ Scope {
                     OverlayController.close();
                 }
             }
+
+            if (root.calendarVisible) {
+                const currentCalScreen = root.calendarScreen;
+                if (!currentCalScreen) {
+                    root.closeCalendar();
+                    return;
+                }
+
+                const screenList = Quickshell.screens;
+                let isCalAlive = false;
+                for (let i = 0; i < screenList.length; ++i) {
+                    if (screenList[i] && screenList[i].name === currentCalScreen.name) {
+                        isCalAlive = true;
+                        break;
+                    }
+                }
+
+                if (!isCalAlive) {
+                    root.closeCalendar();
+                }
+            }
         }
     }
 
@@ -368,6 +420,7 @@ Scope {
         target: OverlayController
 
         function onOverlayOpened(activeSurface: int): void {
+            root.closeCalendar();
             overlayHost.screen = root.resolveTargetScreen();
             overlayHost.forceActiveFocus();
         }
@@ -483,6 +536,65 @@ Scope {
             id: toastStack
             width: 340
             anchors.horizontalCenter: parent.horizontalCenter
+        }
+    }
+
+    PanelWindow {
+        id: calendarBackdropHost
+
+        screen: root.calendarScreen
+        color: "transparent"
+        visible: root.calendarVisible && root.calendarScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-calendar-backdrop"
+
+        anchors {
+            bottom: true
+            left: true
+            right: true
+            top: true
+        }
+
+        MouseArea {
+            id: calendarBackdropMouseArea
+
+            anchors.fill: parent
+
+            onClicked: root.closeCalendar()
+        }
+    }
+
+    PanelWindow {
+        id: calendarPopupHost
+
+        screen: root.calendarScreen
+        color: "transparent"
+        visible: root.calendarVisible && root.calendarScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-calendar-popup"
+
+        anchors {
+            top: true
+            right: true
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+            right: Theme.barPaddingHorizontal
+        }
+
+        implicitWidth: calendarPopup.implicitWidth
+        implicitHeight: calendarPopup.implicitHeight
+
+        CalendarPopup {
+            id: calendarPopup
+
+            onCloseRequested: root.closeCalendar()
         }
     }
 }
