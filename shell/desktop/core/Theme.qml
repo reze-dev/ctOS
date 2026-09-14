@@ -27,7 +27,7 @@ Singleton {
 
     // SECTION Dimensions & Layout Constants
 
-    readonly property int barHeight: 36
+    readonly property int barHeight: 40
     readonly property int barPaddingHorizontal: 8
     readonly property int barPaddingVertical: 0
     readonly property color border: root.gray200
@@ -101,6 +101,7 @@ Singleton {
     readonly property int paddingXs: 2
 
     // Geometry
+    readonly property int radiusMedium: 8
     readonly property int radiusNone: 0
     readonly property int radiusPill: 9999
     readonly property int radiusSmall: 2
