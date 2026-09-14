@@ -549,7 +549,11 @@ FocusScope {
                     elide: Text.ElideRight
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
-                    text: NetworkService.wifiEnabled ? (NetworkService.networkName !== "" ? NetworkService.networkName : "STANDBY") : "DISABLED"
+                    text: {
+                        if (!NetworkService.wifiEnabled) return "DISABLED";
+                        if (NetworkService.isConnecting) return "CONNECTING...";
+                        return NetworkService.networkName !== "" ? NetworkService.networkName : "STANDBY";
+                    }
                 }
             }
 
@@ -567,10 +571,14 @@ FocusScope {
 
                     Text {
                         Layout.fillWidth: true
-                        color: Theme.textPrimary
+                        color: NetworkService.isConnecting ? Theme.accent : Theme.textPrimary
                         font.family: Theme.fontFamilyMonospace
                         font.pixelSize: Theme.fontSizeCaption
-                        text: NetworkService.wifiEnabled ? (NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "" ? NetworkService.networkName : "WI-FI ADAPTER ENABLED") : "WI-FI ADAPTER DISABLED"
+                        text: {
+                            if (!NetworkService.wifiEnabled) return "WI-FI ADAPTER DISABLED";
+                            if (NetworkService.isConnecting) return "CONNECTING TO " + (NetworkService.connectingSsid !== "" ? NetworkService.connectingSsid.toUpperCase() : "NETWORK") + "...";
+                            return (NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "") ? NetworkService.networkName : "WI-FI ADAPTER ENABLED";
+                        }
                         elide: Text.ElideRight
                     }
 
@@ -947,7 +955,7 @@ FocusScope {
             readonly property string _labelDisableWifi: "DISABLE WI-FI"
             Layout.fillWidth: true
             Layout.preferredHeight: 38
-            color: NetworkService.wifiEnabled ? (wifiRadioMouseArea.containsMouse ? "#17df89" : Theme.acidGreen) : (wifiRadioMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
+            color: NetworkService.wifiEnabled ? (wifiRadioMouseArea.containsMouse ? Theme.accent : Theme.acidGreen) : (wifiRadioMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
             border.color: Theme.acidGreen
             border.width: Theme.borderWidth
             radius: Theme.radiusSmall
@@ -994,10 +1002,86 @@ FocusScope {
             }
 
             Text {
-                color: Theme.textSecondary
+                color: NetworkService.isConnecting ? Theme.accent : Theme.textSecondary
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
-                text: NetworkService.wifiEnabled ? (NetworkService.availableNetworks ? NetworkService.availableNetworks.length + " FOUND" : "SCANNING...") : "STANDBY"
+                font.weight: NetworkService.isConnecting ? Theme.fontWeightBold : Theme.fontWeightNormal
+                text: {
+                    if (!NetworkService.wifiEnabled) return "STANDBY";
+                    if (NetworkService.isConnecting) return "CONNECTING...";
+                    return NetworkService.availableNetworks ? NetworkService.availableNetworks.length + " FOUND" : "SCANNING...";
+                }
+            }
+        }
+
+        // Active Connection Status Banner (Tier 2 Dedicated Banner)
+        Rectangle {
+            id: connectingBanner
+            visible: NetworkService.isConnecting
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            color: Theme.surfaceSelected
+            border.color: Theme.accent
+            border.width: Theme.borderWidth
+            radius: Theme.radiusSmall
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Theme.paddingMedium
+                anchors.rightMargin: Theme.paddingMedium
+                spacing: Theme.spacingSmall
+
+                Rectangle {
+                    Layout.preferredHeight: 8
+                    Layout.preferredWidth: 8
+                    color: Theme.accent
+                    radius: 4
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    color: Theme.accent
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Theme.fontWeightBold
+                    text: "CONNECTING TO " + (NetworkService.connectingSsid !== "" ? NetworkService.connectingSsid.toUpperCase() : "NETWORK") + "..."
+                    elide: Text.ElideRight
+                }
+            }
+        }
+
+        // Connection Error Notice Banner
+        Rectangle {
+            id: connectionErrorBanner
+            visible: !NetworkService.isConnecting && NetworkService.lastError !== ""
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            color: Theme.surface
+            border.color: Theme.warningRed
+            border.width: Theme.borderWidth
+            radius: Theme.radiusSmall
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Theme.paddingMedium
+                anchors.rightMargin: Theme.paddingMedium
+                spacing: Theme.spacingSmall
+
+                CtosIcon {
+                    name: "warning"
+                    size: 14
+                    color: Theme.warningRed
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    color: Theme.warningRed
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeCaption
+                    font.weight: Theme.fontWeightBold
+                    text: "FAILED: " + NetworkService.lastError.toUpperCase()
+                    elide: Text.ElideRight
+                }
             }
         }
 
@@ -1041,6 +1125,7 @@ FocusScope {
                     readonly property real itemStrength: (netData && typeof netData.signalStrength === "number") ? netData.signalStrength : 0.0
                     readonly property bool itemIsKnown: Boolean(netData && (netData.known || netData.isKnown || netData.saved))
                     readonly property bool itemIsConnected: Boolean(netData && (netData.connected || netData.isConnected)) || (NetworkService.networkName === itemSsid && NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "")
+                    readonly property bool itemIsConnecting: Boolean(NetworkService.connectingSsid !== "" && (NetworkService.connectingSsid === itemSsid || (netData && NetworkService.connectingSsid === netData.rawSsid)))
                     readonly property bool isSelected: root.selectedSsid === itemSsid
                     readonly property bool showPasswordPrompt: isSelected && !itemIsKnown && !itemIsConnected
                     readonly property bool showConnectedActions: isSelected && itemIsConnected
@@ -1052,9 +1137,9 @@ FocusScope {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 36
-                        border.color: itemIsConnected ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.borderMuted)
+                        border.color: itemIsConnected ? Theme.acidGreen : (itemIsConnecting ? Theme.accent : (itemMouseArea.containsMouse ? Theme.accent : Theme.borderMuted))
                         border.width: Theme.borderWidth
-                        color: itemIsConnected ? Theme.surfaceSelected : (itemMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
+                        color: itemIsConnected ? Theme.surfaceSelected : (itemIsConnecting ? Theme.surfaceSelected : (itemMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface))
                         radius: Theme.radiusSmall
 
                         RowLayout {
@@ -1063,25 +1148,25 @@ FocusScope {
                             spacing: Theme.spacingSmall
 
                             CtosIcon {
-                                active: itemIsConnected
+                                active: itemIsConnected || itemIsConnecting
                                 name: "wifi"
                                 size: 14
-                                color: itemIsConnected ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
+                                color: (itemIsConnected || itemIsConnecting) ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
                             }
 
                             Text {
                                 Layout.fillWidth: true
-                                color: itemIsConnected ? Theme.acidGreen : Theme.textPrimary
+                                color: (itemIsConnected || itemIsConnecting) ? Theme.acidGreen : Theme.textPrimary
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamilyMonospace
                                 font.pixelSize: Theme.fontSizeSmall
-                                font.weight: itemIsConnected ? Theme.fontWeightBold : Theme.fontWeightNormal
+                                font.weight: (itemIsConnected || itemIsConnecting) ? Theme.fontWeightBold : Theme.fontWeightNormal
                                 text: itemSsid !== "" ? itemSsid : "[HIDDEN NETWORK]"
                             }
 
                             // Saved Badge
                             Rectangle {
-                                visible: itemIsKnown && !itemIsConnected
+                                visible: itemIsKnown && !itemIsConnected && !itemIsConnecting
                                 Layout.preferredHeight: 16
                                 Layout.preferredWidth: 46
                                 color: "transparent"
@@ -1096,6 +1181,26 @@ FocusScope {
                                     font.pixelSize: 9
                                     font.weight: Theme.fontWeightBold
                                     text: "SAVED"
+                                }
+                            }
+
+                            // Connecting Badge (Tier 3)
+                            Rectangle {
+                                visible: itemIsConnecting
+                                Layout.preferredHeight: 16
+                                Layout.preferredWidth: 88
+                                color: "transparent"
+                                border.color: Theme.accent
+                                border.width: 1
+                                radius: Theme.radiusSmall
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Theme.accent
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: "[CONNECTING...]"
                                 }
                             }
 
@@ -1222,26 +1327,28 @@ FocusScope {
                             // Connect Button
                             Rectangle {
                                 Layout.preferredHeight: 22
-                                Layout.preferredWidth: 68
-                                border.color: Theme.acidGreen
+                                Layout.preferredWidth: itemIsConnecting ? 92 : 68
+                                border.color: itemIsConnecting ? Theme.accent : Theme.acidGreen
                                 border.width: Theme.borderWidth
-                                color: knownConnectMouseArea.containsMouse ? Theme.surfaceSelected : "transparent"
+                                color: itemIsConnecting ? Theme.surfaceSelected : (knownConnectMouseArea.containsMouse ? Theme.surfaceSelected : "transparent")
                                 radius: Theme.radiusSmall
+                                opacity: (NetworkService.isConnecting && !itemIsConnecting) ? 0.5 : 1.0
 
                                 Text {
                                     anchors.centerIn: parent
-                                    color: Theme.acidGreen
+                                    color: itemIsConnecting ? Theme.accent : Theme.acidGreen
                                     font.family: Theme.fontFamilyMonospace
                                     font.pixelSize: 9
                                     font.weight: Theme.fontWeightBold
-                                    text: "CONNECT"
+                                    text: itemIsConnecting ? "CONNECTING..." : "CONNECT"
                                 }
 
                                 MouseArea {
                                     id: knownConnectMouseArea
                                     anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    hoverEnabled: true
+                                    cursorShape: itemIsConnecting ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                    hoverEnabled: !itemIsConnecting
+                                    enabled: !NetworkService.isConnecting
                                     onClicked: {
                                         NetworkService.connectToNetwork(itemSsid);
                                         root.selectedSsid = "";
@@ -1439,26 +1546,28 @@ FocusScope {
 
                                 Rectangle {
                                     Layout.preferredHeight: 18
-                                    Layout.preferredWidth: 62
-                                    border.color: Theme.acidGreen
+                                    Layout.preferredWidth: itemIsConnecting ? 92 : 62
+                                    border.color: itemIsConnecting ? Theme.accent : Theme.acidGreen
                                     border.width: Theme.borderWidth
-                                    color: pwConnectArea.containsMouse ? Theme.surfaceSelected : "transparent"
+                                    color: itemIsConnecting ? Theme.surfaceSelected : (pwConnectArea.containsMouse ? Theme.surfaceSelected : "transparent")
                                     radius: Theme.radiusSmall
+                                    opacity: (NetworkService.isConnecting && !itemIsConnecting) ? 0.5 : 1.0
 
                                     Text {
                                         anchors.centerIn: parent
-                                        color: Theme.acidGreen
+                                        color: itemIsConnecting ? Theme.accent : Theme.acidGreen
                                         font.family: Theme.fontFamilyMonospace
                                         font.pixelSize: 9
                                         font.weight: Theme.fontWeightBold
-                                        text: "CONNECT"
+                                        text: itemIsConnecting ? "CONNECTING..." : "CONNECT"
                                     }
 
                                     MouseArea {
                                         id: pwConnectArea
                                         anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        hoverEnabled: true
+                                        cursorShape: itemIsConnecting ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                        hoverEnabled: !itemIsConnecting
+                                        enabled: !NetworkService.isConnecting
                                         onClicked: {
                                             if (pwInput.text.trim() === "" || pwInput.text.length === 0) {
                                                 return;
