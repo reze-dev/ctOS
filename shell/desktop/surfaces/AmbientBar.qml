@@ -8,7 +8,9 @@ import "./components"
 PanelWindow {
     id: root
 
-    color: Theme.background
+    signal toggleCalendar
+
+    color: "transparent"
     focusable: true
     implicitHeight: Theme.barHeight
     height: Theme.barHeight
@@ -19,51 +21,57 @@ PanelWindow {
         top: true
     }
 
-    Rectangle {
-        id: bottomBorder
-
-        anchors {
-            bottom: parent.bottom
-            left: parent.left
-            right: parent.right
-        }
-        color: Theme.divider
-        height: Theme.borderWidth
+    margins {
+        top: 3
     }
 
-    RowLayout {
-        id: barLayout
+    // =========================================================================
+    // Left Island: OS Launcher, Workspaces, Window Title
+    // =========================================================================
 
-        anchors.fill: parent
+    Rectangle {
+        id: leftIsland
+
+        anchors.left: parent.left
         anchors.leftMargin: Theme.barPaddingHorizontal
-        anchors.rightMargin: Theme.barPaddingHorizontal
-        spacing: Theme.spacingMedium
+        anchors.verticalCenter: parent.verticalCenter
+        height: Theme.barHeight - 6
+        width: leftSection.implicitWidth + Theme.paddingLarge * 2
+
+        color: Theme.background
+        radius: Theme.radiusPill
+        border.color: Theme.borderMuted
+        border.width: Theme.borderWidth
 
         RowLayout {
             id: leftSection
 
-            Layout.alignment: Qt.AlignLeft
-            Layout.fillHeight: true
+            anchors.fill: parent
+            anchors.leftMargin: Theme.paddingLarge
+            anchors.rightMargin: Theme.paddingLarge
             spacing: Theme.spacingSmall
 
+            // Diamond OS Icon Button (Replaces ctOS text)
             Rectangle {
+                id: nodeBtn
+
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredHeight: 20
-                Layout.preferredWidth: nodeLabel.implicitWidth + Theme.paddingSmall * 2
+                Layout.preferredWidth: 20
                 border.color: nodeMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
                 border.width: Theme.borderWidth
                 color: nodeMouseArea.containsMouse ? Theme.surfaceActive : Theme.surfaceSelected
                 radius: Theme.radiusSmall
 
-                Text {
-                    id: nodeLabel
-
+                Image {
+                    id: nodeIcon
                     anchors.centerIn: parent
-                    color: Theme.accent
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeCaption
-                    font.weight: Theme.fontWeightBold
-                    text: "ctOS"
+                    source: "components/os-icon.svg"
+                    width: 14
+                    height: 14
+                    sourceSize.width: 14
+                    sourceSize.height: 14
+                    fillMode: Image.PreserveAspectFit
                 }
 
                 MouseArea {
@@ -105,19 +113,43 @@ PanelWindow {
                 Layout.maximumWidth: 380
             }
         }
+    }
 
-        Item {
-            id: centerSection
+    // =========================================================================
+    // Center Island: Dynamic Island
+    // =========================================================================
 
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-        }
+    DynamicIsland {
+        id: centerSection
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+    }
+
+    // =========================================================================
+    // Right Island: Status Indicators, Clock, System Rail Button
+    // =========================================================================
+
+    Rectangle {
+        id: rightIsland
+
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.barPaddingHorizontal
+        anchors.verticalCenter: parent.verticalCenter
+        height: Theme.barHeight - 6
+        width: rightSection.implicitWidth + Theme.paddingLarge * 2
+
+        color: Theme.background
+        radius: Theme.radiusPill
+        border.color: Theme.borderMuted
+        border.width: Theme.borderWidth
 
         RowLayout {
             id: rightSection
 
-            Layout.alignment: Qt.AlignRight
-            Layout.fillHeight: true
+            anchors.fill: parent
+            anchors.leftMargin: Theme.paddingLarge
+            anchors.rightMargin: Theme.paddingLarge
             spacing: Theme.spacingSmall
 
             NetworkWidget {
@@ -166,6 +198,8 @@ PanelWindow {
                 id: clockWidget
 
                 Layout.alignment: Qt.AlignVCenter
+
+                onToggleCalendar: root.toggleCalendar()
             }
 
             Rectangle {
