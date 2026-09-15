@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 import qs.common
 import qs.greeter.config
@@ -27,9 +28,37 @@ Singleton {
     // locking means an input prompt won't be added
     readonly property bool locked: false
 
+    // execution state and serialization queue
+    readonly property bool isExecuting: shellProc.running
+    property list<string> _commandQueue: []
+
     enum MessageType {
         Output,
         Prompt
+    }
+
+    // =========================================================================
+    // Subprocess Runner (POSIX Shell Execution)
+    // =========================================================================
+
+    Process {
+        id: shellProc
+        command: []
+        running: false
+
+        stdout: StdioCollector {
+            id: procStdout
+            waitForEnd: true
+        }
+
+        stderr: StdioCollector {
+            id: procStderr
+            waitForEnd: true
+        }
+
+        onExited: function(exitCode, exitStatus) {
+            terminalManager._handleProcessFinished(exitCode, exitStatus);
+        }
     }
 
     /*
@@ -51,7 +80,7 @@ Singleton {
             /* Actual message content. */
             message: properties.message || "",
             /* Message Type. */
-            type: properties.type || TerminalManager.MessageType.Output,
+            type: properties.type !== undefined ? properties.type : TerminalManager.MessageType.Output,
             /* Should message be output immediately. */
             instant: instant,
             /* Allows terminal to sync with external events. */
@@ -69,7 +98,7 @@ Singleton {
         }
     }
 
-    function displayMessages(messages: var) {
+    function displayMessages(messages, options) {
         if (!Array.isArray(messages)) {
             throw new Error("TerminalManager.displayMessages requires an array of message objects");
         }
@@ -162,6 +191,121 @@ Singleton {
         onTriggered: terminalManager.processQueue()
     }
 
+    // =========================================================================
+    // Subprocess Command Execution & Prompt Lifecycle API
+    // =========================================================================
+
+    function _splitLines(rawText) {
+        if (!rawText) {
+            return [];
+        }
+        const lines = rawText.replace(/\r\n/g, "\n").split("\n");
+        if (lines.length > 0 && lines[lines.length - 1] === "") {
+            lines.pop();
+        }
+        return lines;
+    }
+
+    function commitPrompt(cmd) {
+        if (logModel.count > 0) {
+            const lastIdx = logModel.count - 1;
+            const lastItem = logModel.get(lastIdx);
+            if (lastItem && lastItem.type === TerminalManager.MessageType.Prompt) {
+                logModel.set(lastIdx, createMessage({
+                    message: "» " + cmd,
+                    type: TerminalManager.MessageType.Output,
+                    instant: true
+                }));
+                return;
+            }
+        }
+
+        addToModel(createMessage({
+            message: "» " + cmd,
+            type: TerminalManager.MessageType.Output,
+            instant: true
+        }));
+    }
+
+    function _spawnPrompt(instant) {
+        const isInstant = instant !== undefined ? instant : true;
+        if (!terminalManager.locked) {
+            addToModel(createMessage({
+                type: TerminalManager.MessageType.Prompt,
+                instant: isInstant
+            }));
+        }
+    }
+
+    function clear() {
+        _queue = [];
+        _pendingMsg = null;
+        _commandQueue = [];
+        queueWorker.stop();
+        logModel.clear();
+        _spawnPrompt(true);
+    }
+
+    function executeShellCommand(rawCommand) {
+        const cmd = (rawCommand || "").trim();
+        if (!cmd) {
+            if (logModel.count > 0 && logModel.get(logModel.count - 1).type === TerminalManager.MessageType.Prompt) {
+                commitPrompt("");
+            }
+            _spawnPrompt(true);
+            return;
+        }
+
+        if (cmd === "clear") {
+            clear();
+            return;
+        }
+
+        if (shellProc.running) {
+            _commandQueue.push(cmd);
+            return;
+        }
+
+        commitPrompt(cmd);
+        shellProc.command = ["sh", "-c", cmd];
+        shellProc.running = true;
+    }
+
+    function _handleProcessFinished(exitCode, exitStatus) {
+        const outLines = _splitLines(procStdout.text);
+        const errLines = _splitLines(procStderr.text);
+        const messages = [];
+
+        for (let i = 0; i < outLines.length; i++) {
+            messages.push(createMessage({
+                message: outLines[i],
+                type: TerminalManager.MessageType.Output,
+                instant: true
+            }));
+        }
+
+        for (let i = 0; i < errLines.length; i++) {
+            messages.push(createMessage({
+                message: errLines[i],
+                type: TerminalManager.MessageType.Output,
+                instant: true
+            }));
+        }
+
+        if (messages.length > 0) {
+            addToModel(messages);
+        }
+
+        if (_commandQueue.length > 0) {
+            const nextCmd = _commandQueue.shift();
+            commitPrompt(nextCmd);
+            shellProc.command = ["sh", "-c", nextCmd];
+            shellProc.running = true;
+        } else {
+            _spawnPrompt(true);
+        }
+    }
+
     readonly property string _blumePrefix: "[BLUME_IDP]"
     readonly property string _sentinelPrefix: "[SENTINEL]"
 
@@ -212,11 +356,9 @@ Singleton {
                 terminalManager.displayMessages([
                     {
                         message: `${terminalManager._sentinelPrefix} Authentication Failed (TraceId: ${Faker.randomHexString(16)})`,
-                        virtualCommand: "login"
-                    },
-                ], {
-                    isCommandOutput: true
-                });
+                        syntheticCommand: "login"
+                    }
+                ]);
                 break;
             }
         }
