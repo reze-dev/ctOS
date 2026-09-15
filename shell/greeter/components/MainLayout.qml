@@ -1,4 +1,5 @@
 import QtQuick
+import Qt5Compat.GraphicalEffects
 
 import qs.greeter.services
 import qs.greeter.components
@@ -41,6 +42,23 @@ Item {
         id: backgroundImage
         anchors.fill: parent
         source: "../resources/lock.png"
+        fillMode: Image.PreserveAspectCrop
+        visible: false
+    }
+
+    GaussianBlur {
+        id: blurredBackground
+        anchors.fill: backgroundImage
+        source: backgroundImage
+        radius: 48
+        samples: 24
+        cached: true
+    }
+
+    Rectangle {
+        id: frostedTint
+        anchors.fill: parent
+        color: "#18000000"
     }
 
     Splash {
