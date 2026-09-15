@@ -71,13 +71,24 @@ ColumnLayout {
             height: logView.height
         }
 
+        function _scrollToEnd() {
+            logView.forceLayout();
+            logView.positionViewAtEnd();
+        }
+
         Connections {
             target: terminal.logModel
 
             function onCountChanged() {
-                Qt.callLater(() => {
-                    logView.contentY = Math.max(0, logView.contentHeight - logView.height);
-                });
+                Qt.callLater(() => logView._scrollToEnd());
+            }
+        }
+
+        Connections {
+            target: TerminalManager
+
+            function onScrollToEnd() {
+                Qt.callLater(() => logView._scrollToEnd());
             }
         }
 
