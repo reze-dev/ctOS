@@ -43,6 +43,13 @@ let
     export CTOS_LAUNCH_COMMAND=${desktopCommand}
     export QT_QPA_PLATFORM=wayland
     export XDG_SESSION_TYPE=wayland
+    export XCURSOR_THEME=Bibata-Modern-Classic
+    export XCURSOR_SIZE=24
+    export HYPRCURSOR_THEME=Bibata-Modern-Classic
+    export HYPRCURSOR_SIZE=24
+    export XCURSOR_PATH="${pkgs.bibata-cursors}/share/icons:''${XCURSOR_PATH:-/run/current-system/sw/share/icons}"
+    export XDG_DATA_DIRS="${pkgs.bibata-cursors}/share:''${XDG_DATA_DIRS:-/run/current-system/sw/share}"
+    export QML2_IMPORT_PATH="${pkgs.kdePackages.qt5compat}/lib/qt-6/qml:''${QML2_IMPORT_PATH:-}"
     export XDG_RUNTIME_DIR=/run/user/999
     export HOME=/run/user/999
     export XDG_CACHE_HOME=/run/user/999/ctos-cache
@@ -68,9 +75,11 @@ in
       }
     ];
 
+    environment.systemPackages = [ pkgs.bibata-cursors pkgs.kdePackages.qt5compat ];
+
     environment.etc."ctos/greeter.config.json".text = builtins.toJSON {
       general = {
-        fontFamily = "JetBrainsMono Nerd Font";
+        fontFamily = "Maple Mono";
         animations = "all";
         monitor = "";
         exitOverride = [ ];
