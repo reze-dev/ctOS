@@ -12,6 +12,7 @@ Singleton {
     id: terminalManager
 
     signal paused(string pauseMarker)
+    signal scrollToEnd()
 
     // actual model for output messages
     property var logModel: ListModel {}
@@ -216,6 +217,7 @@ Singleton {
                     type: TerminalManager.MessageType.Output,
                     instant: true
                 }));
+                scrollToEnd();
                 return;
             }
         }
@@ -304,6 +306,7 @@ Singleton {
         } else {
             _spawnPrompt(true);
         }
+        scrollToEnd();
     }
 
     readonly property string _blumePrefix: "[BLUME_IDP]"
