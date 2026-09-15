@@ -17,6 +17,7 @@ in
       go_latest
       rustup
       tree-sitter
+      duckdb
       zed-editor
       jdk21
       nushell
