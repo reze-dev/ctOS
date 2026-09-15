@@ -291,7 +291,8 @@ Scope {
                     right: Settings.getWidgetAnchor("networkTracer", "right", false)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("networkTracer", "top", Theme.barHeight + Theme.spacingXl + 230 + Theme.spacingXl)
+                    // Default fallback: top: Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl)
+                    top: Settings.hasWidgetMargin("networkTracer", "top") ? Settings.getWidgetMargin("networkTracer", "top", 0) : (Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl))
                     bottom: Settings.getWidgetMargin("networkTracer", "bottom", 0)
                     left: Settings.getWidgetMargin("networkTracer", "left", Theme.spacing2Xl)
                     right: Settings.getWidgetMargin("networkTracer", "right", 0)
