@@ -3,7 +3,7 @@
   "logo": {
     "source": "$HOME/.config/fastfetch/dedsec.txt",
     "color": {
-      "1": "#1BFD9C"
+      "1": "#FC3E38"
     },
     "padding": {
       "top": 1,
@@ -26,20 +26,28 @@
     {
       "type": "separator",
       "string": "─",
-      "outputColor": "#1BFD9C"
+      "outputColor": "#FFD700"
     },
     {
       "type": "os",
       "key": "OS",
-      "format": "ctOS-{version-id}"
+      "format": "ctOS-{version-id}",
+      "keyColor": "#FFD700"
     },
     {
       "type": "kernel",
       "key": "Kernel",
-      "format": "blume-krn-{release}"
+      "format": "blume-krn-{release}",
+      "keyColor": "#FFD700"
     },
-    "uptime",
-    "packages",
+    {
+      "type": "uptime",
+      "keyColor": "#FFD700"
+    },
+    {
+      "type": "packages",
+      "keyColor": "#FFD700"
+    },
     {
       "type": "separator",
       "string": "─",
@@ -60,13 +68,32 @@
     {
       "type": "separator",
       "string": "─",
-      "outputColor": "#1BFD9C"
+      "outputColor": "#7A7A7A"
     },
-    "disk",
-    "localip",
-    "battery",
-    "poweradapter",
+    {
+      "type": "disk",
+      "keyColor": "#7A7A7A"
+    },
+    {
+      "type": "localip",
+      "keyColor": "#7A7A7A"
+    },
+    {
+      "type": "battery",
+      "keyColor": "#7A7A7A"
+    },
+    {
+      "type": "poweradapter",
+      "keyColor": "#7A7A7A"
+    },
     "break",
-    "colors"
+    {
+      "type": "custom",
+      "format": "{#7A7A7A}◈ ctOS SURVEILLANCE PROTOCOL :: ACTIVE"
+    },
+    {
+      "type": "custom",
+      "format": "{#7A7A7A}◈ CLEARANCE LEVEL :: ADMIN // SID:7B3F"
+    }
   ]
 }
