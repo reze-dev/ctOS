@@ -87,7 +87,10 @@ Singleton {
     }
 
     function finish() {
-        const launchCommand = Settings.launchCommand?.length ? Settings.launchCommand : Env.getArray("LAUNCH_COMMAND");
+        const sessionCmd = SessionManager.getLaunchCommand();
+        const launchCommand = sessionCmd && sessionCmd.length
+            ? sessionCmd
+            : (Settings.launchCommand?.length ? Settings.launchCommand : Env.getArray("LAUNCH_COMMAND"));
         const exitCommand = SessionManager.getExitCommand();
 
         logger.info(`Launching: ${launchCommand.join(" ")}`);
