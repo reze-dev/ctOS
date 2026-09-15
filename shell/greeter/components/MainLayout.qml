@@ -114,6 +114,20 @@ Item {
                         left: fieldGroup.left
                     }
                 }
+            },
+            State {
+                name: "identity_card"
+
+                AnchorChanges {
+                    target: accents
+
+                    anchors {
+                        top: identityCard.top
+                        right: identityCard.right
+                        bottom: identityCard.bottom
+                        left: identityCard.left
+                    }
+                }
             }
         ]
 
@@ -136,6 +150,20 @@ Item {
             top: splash.bottom
             topMargin: 50 * Units.vh
 
+            horizontalCenter: root.horizontalCenter
+        }
+    }
+
+    IdentityCard {
+        id: identityCard
+
+        width: 380 * Units.vh
+        height: 150 * Units.vh
+        opacity: 0
+
+        anchors {
+            top: splash.bottom
+            topMargin: 25 * Units.vh
             horizontalCenter: root.horizontalCenter
         }
     }
@@ -314,7 +342,22 @@ Item {
         }
 
         ScriptAction {
-            script: fieldGroup.start()
+            script: {
+                fieldGroup.opacity = 0;
+                accents.state = "identity_card";
+                identityCard.start();
+            }
+        }
+        PauseAnimation {
+            duration: 1500
+        }
+        ScriptAction {
+            script: {
+                identityCard.opacity = 0;
+                accents.state = "field_group";
+                fieldGroup.opacity = 1;
+                fieldGroup.start();
+            }
         }
     }
 
