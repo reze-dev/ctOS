@@ -1,5 +1,15 @@
 spawn-sh-at-startup "CTOS_MODE=greetd quickshell --path /opt/ctos/greeter.qml"
 
+environment {
+    XCURSOR_THEME "Bibata-Modern-Classic"
+    XCURSOR_SIZE "24"
+}
+
+cursor {
+    xcursor-theme "Bibata-Modern-Classic"
+    xcursor-size 24
+}
+
 animations {
     off
 }
