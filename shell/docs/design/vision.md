@@ -51,3 +51,4 @@ V1 explicitly does not include Niri support, a window overview, clipboard histor
 - **Audio Mixer & Sink Selector**: A drop-down to switch audio output devices and control microphone input volume/mute.
 - **Clipboard History Manager**: A utility surface to track and paste recent clipboard copies.
 - **Power Profile Manager**: A drop-down attached to the Battery widget to toggle system power states (Performance, Balanced, Power-Saver).
+- **Packet Analyzer Widget**: A live scrolling stream of network traffic (powered by `tshark`) to provide a real-time tactical overview of network activity.
