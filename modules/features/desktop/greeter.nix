@@ -75,7 +75,10 @@ in
       }
     ];
 
-    environment.systemPackages = [ pkgs.bibata-cursors pkgs.kdePackages.qt5compat ];
+    environment.systemPackages = [
+      pkgs.bibata-cursors
+      pkgs.kdePackages.qt5compat
+    ];
 
     environment.etc."ctos/greeter.config.json".text = builtins.toJSON {
       general = {
