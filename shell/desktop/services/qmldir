@@ -6,3 +6,4 @@ singleton SystemMonitorService 1.0 SystemMonitorService.qml
 singleton NetworkTracerService 1.0 NetworkTracerService.qml
 singleton NotificationService 1.0 NotificationService.qml
 singleton BluetoothService 1.0 BluetoothService.qml
+singleton SessionService 1.0 SessionService.qml
