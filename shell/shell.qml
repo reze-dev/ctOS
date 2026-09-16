@@ -8,10 +8,66 @@ import "desktop/adapters/hyprland"
 import "desktop/core"
 import "desktop/services"
 import "desktop/surfaces"
+import "desktop/surfaces/components"
 import "desktop/surfaces/widgets"
 
 Scope {
     id: root
+
+    property bool calendarVisible: false
+    property var calendarScreen: null
+
+    property bool bluetoothVisible: false
+    property var bluetoothScreen: null
+
+    function toggleCalendar(targetScreen): void {
+        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
+
+        if (root.calendarVisible) {
+            if (targetScreen === null || targetScreen === undefined || root.calendarScreen === resolved) {
+                root.calendarVisible = false;
+                root.calendarScreen = null;
+            } else {
+                root.calendarScreen = resolved;
+            }
+        } else {
+            root.closeBluetooth();
+            root.calendarScreen = resolved;
+            root.calendarVisible = true;
+        }
+    }
+
+    function closeCalendar(): void {
+        root.calendarVisible = false;
+        root.calendarScreen = null;
+    }
+
+    function toggleBluetooth(targetScreen): void {
+        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
+
+        if (root.bluetoothVisible) {
+            if (targetScreen === null || targetScreen === undefined || root.bluetoothScreen === resolved) {
+                root.bluetoothVisible = false;
+                root.bluetoothScreen = null;
+            } else {
+                root.bluetoothScreen = resolved;
+            }
+        } else {
+            root.closeCalendar();
+            root.bluetoothScreen = resolved;
+            root.bluetoothVisible = true;
+        }
+    }
+
+    function closeBluetooth(): void {
+        root.bluetoothVisible = false;
+        root.bluetoothScreen = null;
+    }
+
+    function closeAllPopups(): void {
+        root.closeCalendar();
+        root.closeBluetooth();
+    }
 
     IpcHandler {
         target: "ctos"
@@ -30,6 +86,14 @@ Scope {
 
         function toggleEventLog(): void {
             OverlayController.toggleEventLog();
+        }
+
+        function toggleCalendar(): void {
+            root.toggleCalendar(null);
+        }
+
+        function toggleBluetooth(): void {
+            root.toggleBluetooth(null);
         }
     }
 
@@ -262,7 +326,8 @@ Scope {
                     right: Settings.getWidgetAnchor("networkTracer", "right", false)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("networkTracer", "top", Theme.barHeight + Theme.spacingXl + 230 + Theme.spacingXl)
+                    // Default fallback: top: Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl)
+                    top: Settings.hasWidgetMargin("networkTracer", "top") ? Settings.getWidgetMargin("networkTracer", "top", 0) : (Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl))
                     bottom: Settings.getWidgetMargin("networkTracer", "bottom", 0)
                     left: Settings.getWidgetMargin("networkTracer", "left", Theme.spacing2Xl)
                     right: Settings.getWidgetMargin("networkTracer", "right", 0)
@@ -333,6 +398,9 @@ Scope {
                 required property var modelData
 
                 screen: modelData
+
+                onToggleCalendar: root.toggleCalendar(modelData)
+                onToggleBluetooth: root.toggleBluetooth(modelData)
             }
         }
     }
@@ -361,6 +429,48 @@ Scope {
                     OverlayController.close();
                 }
             }
+
+            if (root.calendarVisible) {
+                const currentCalScreen = root.calendarScreen;
+                if (!currentCalScreen) {
+                    root.closeCalendar();
+                    return;
+                }
+
+                const screenList = Quickshell.screens;
+                let isCalAlive = false;
+                for (let i = 0; i < screenList.length; ++i) {
+                    if (screenList[i] && screenList[i].name === currentCalScreen.name) {
+                        isCalAlive = true;
+                        break;
+                    }
+                }
+
+                if (!isCalAlive) {
+                    root.closeCalendar();
+                }
+            }
+
+            if (root.bluetoothVisible) {
+                const currentBtScreen = root.bluetoothScreen;
+                if (!currentBtScreen) {
+                    root.closeBluetooth();
+                    return;
+                }
+
+                const screenList = Quickshell.screens;
+                let isBtAlive = false;
+                for (let i = 0; i < screenList.length; ++i) {
+                    if (screenList[i] && screenList[i].name === currentBtScreen.name) {
+                        isBtAlive = true;
+                        break;
+                    }
+                }
+
+                if (!isBtAlive) {
+                    root.closeBluetooth();
+                }
+            }
         }
     }
 
@@ -368,6 +478,8 @@ Scope {
         target: OverlayController
 
         function onOverlayOpened(activeSurface: int): void {
+            root.closeCalendar();
+            root.closeBluetooth();
             overlayHost.screen = root.resolveTargetScreen();
             overlayHost.forceActiveFocus();
         }
@@ -483,6 +595,124 @@ Scope {
             id: toastStack
             width: 340
             anchors.horizontalCenter: parent.horizontalCenter
+        }
+    }
+
+    PanelWindow {
+        id: calendarBackdropHost
+
+        screen: root.calendarScreen
+        color: "transparent"
+        visible: root.calendarVisible && root.calendarScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-calendar-backdrop"
+
+        anchors {
+            bottom: true
+            left: true
+            right: true
+            top: true
+        }
+
+        MouseArea {
+            id: calendarBackdropMouseArea
+
+            anchors.fill: parent
+
+            onClicked: root.closeCalendar()
+        }
+    }
+
+    PanelWindow {
+        id: calendarPopupHost
+
+        screen: root.calendarScreen
+        color: "transparent"
+        visible: root.calendarVisible && root.calendarScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-calendar-popup"
+
+        anchors {
+            top: true
+            right: true
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+            right: Theme.barPaddingHorizontal
+        }
+
+        implicitWidth: calendarPopup.implicitWidth
+        implicitHeight: calendarPopup.implicitHeight
+
+        CalendarPopup {
+            id: calendarPopup
+
+            onCloseRequested: root.closeCalendar()
+        }
+    }
+
+    PanelWindow {
+        id: bluetoothBackdropHost
+
+        screen: root.bluetoothScreen
+        color: "transparent"
+        visible: root.bluetoothVisible && root.bluetoothScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-bluetooth-backdrop"
+
+        anchors {
+            bottom: true
+            left: true
+            right: true
+            top: true
+        }
+
+        MouseArea {
+            id: bluetoothBackdropMouseArea
+
+            anchors.fill: parent
+
+            onClicked: root.closeBluetooth()
+        }
+    }
+
+    PanelWindow {
+        id: bluetoothPopupHost
+
+        screen: root.bluetoothScreen
+        color: "transparent"
+        visible: root.bluetoothVisible && root.bluetoothScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-bluetooth-popup"
+
+        anchors {
+            top: true
+            right: true
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+            right: Theme.barPaddingHorizontal + 60
+        }
+
+        implicitWidth: bluetoothPopup.implicitWidth
+        implicitHeight: bluetoothPopup.implicitHeight
+
+        BluetoothPopup {
+            id: bluetoothPopup
+
+            onCloseRequested: root.closeBluetooth()
         }
     }
 }

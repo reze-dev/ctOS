@@ -53,10 +53,10 @@ let
           hl.config({
               general = {
                   gaps_in = 3,
-                  gaps_out = 10,
+                  gaps_out = 5,
                   border_size = 2,
                   col = {
-                      active_border = { colors = { "rgba(1bfd9cee)", "rgba(66b2b2ee)" }, angle = 45 },
+                      active_border = { colors = { "rgba(1bfd9cee)", "rgba(66b2b2ee)" }, angle = 120 },
                       inactive_border = "rgba(2a2a2aaa)",
                   },
                   resize_on_border = false,

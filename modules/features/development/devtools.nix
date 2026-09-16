@@ -13,13 +13,11 @@ in
     lib.mkEnableOption "developer tools and programming languages";
   config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
-      codecrafters-cli
       go_latest
       rustup
       tree-sitter
-      zed-editor
-      jdk21
-      nushell
+      duckdb
+      jdk25
       shfmt
       shellcheck
       qt6.qtdeclarative
@@ -27,7 +25,8 @@ in
       # Python
       uv
       ruff
-      python3
+      python315
+      jetbrains.pycharm
 
       # Nix
       nil
@@ -53,6 +52,8 @@ in
       # Scala
       metals
       coursier
+      jdk25
+      jetbrains.idea
 
       # Haskell (GHC 9.10 toolchain)
       hs.ghc

@@ -27,7 +27,7 @@ Singleton {
 
     // SECTION Dimensions & Layout Constants
 
-    readonly property int barHeight: 32
+    readonly property int barHeight: 40
     readonly property int barPaddingHorizontal: 8
     readonly property int barPaddingVertical: 0
     readonly property color border: root.gray200
@@ -52,13 +52,13 @@ Singleton {
     readonly property int durationScan: 100
     readonly property int durationSlow: 300
     readonly property color error: root.warningRed
-    readonly property var fontFamilies: ["JetBrainsMono Nerd Font", "JetBrains Mono", "Monaspace Neon", "CaskaydiaCove Nerd Font", "monospace"]
+    readonly property var fontFamilies: ["Maple Mono", "JetBrainsMono Nerd Font", "JetBrains Mono", "Monaspace Neon", "CaskaydiaCove Nerd Font", "monospace"]
 
     // SECTION Monospace Typography
 
-    readonly property string fontFamily: "JetBrainsMono Nerd Font"
+    readonly property string fontFamily: "Maple Mono"
     readonly property string fontFamilyFallback: "monospace"
-    readonly property string fontFamilyMonospace: "JetBrainsMono Nerd Font"
+    readonly property string fontFamilyMonospace: "Maple Mono"
     readonly property int fontSizeBody: 14
 
     // Typography Scale (pixel sizes)
@@ -101,6 +101,7 @@ Singleton {
     readonly property int paddingXs: 2
 
     // Geometry
+    readonly property int radiusMedium: 8
     readonly property int radiusNone: 0
     readonly property int radiusPill: 9999
     readonly property int radiusSmall: 2

@@ -2,6 +2,9 @@
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
   "logo": {
     "source": "$HOME/.config/fastfetch/dedsec.txt",
+    "color": {
+      "1": "#FC3E38"
+    },
     "padding": {
       "top": 1,
       "left": 7,
@@ -10,28 +13,46 @@
   },
   "display": {
     "color": {
-      "keys": "#f1f1f1"
+      "keys": "#1BFD9C",
+      "separator": "#7A7A7A",
+      "output": "#FFFFFF"
     }
   },
   "modules": [
     {
       "type": "title",
-      "format": "{#white}{1}{#}{#blue}@{}{#green}{2}{#}"
+      "format": "{#white}{1}{#}{#red}@{}{#green}{2}{#}"
     },
-    "separator",
+    {
+      "type": "separator",
+      "string": "─",
+      "outputColor": "#FFD700"
+    },
     {
       "type": "os",
       "key": "OS",
-      "format": "ctOS-0.1.0-a"
+      "format": "ctOS-{version-id}",
+      "keyColor": "#FFD700"
     },
     {
       "type": "kernel",
       "key": "Kernel",
-      "format": "blume-krn-1.0.8"
+      "format": "blume-krn-{release}",
+      "keyColor": "#FFD700"
     },
-    "uptime",
-    "packages",
-    "break",
+    {
+      "type": "uptime",
+      "keyColor": "#FFD700"
+    },
+    {
+      "type": "packages",
+      "keyColor": "#FFD700"
+    },
+    {
+      "type": "separator",
+      "string": "─",
+      "outputColor": "#1BFD9C"
+    },
     "shell",
     "de",
     "wm",
@@ -44,13 +65,35 @@
       "key": "Theme",
       "format": "wnkz/monoglow.nvim"
     },
+    {
+      "type": "separator",
+      "string": "─",
+      "outputColor": "#7A7A7A"
+    },
+    {
+      "type": "disk",
+      "keyColor": "#7A7A7A"
+    },
+    {
+      "type": "localip",
+      "keyColor": "#7A7A7A"
+    },
+    {
+      "type": "battery",
+      "keyColor": "#7A7A7A"
+    },
+    {
+      "type": "poweradapter",
+      "keyColor": "#7A7A7A"
+    },
     "break",
-    "disk",
-    "break",
-    "localip",
-    "battery",
-    "poweradapter",
-    "break",
-    "colors"
+    {
+      "type": "custom",
+      "format": "{#7A7A7A}◈ ctOS SURVEILLANCE PROTOCOL :: ACTIVE"
+    },
+    {
+      "type": "custom",
+      "format": "{#7A7A7A}◈ CLEARANCE LEVEL :: ADMIN // SID:7B3F"
+    }
   ]
 }

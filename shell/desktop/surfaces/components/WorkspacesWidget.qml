@@ -24,13 +24,13 @@ Item {
         return [];
     }
 
-    implicitHeight: Theme.barHeight
+    implicitHeight: layout.implicitHeight
     implicitWidth: layout.implicitWidth
 
     RowLayout {
         id: layout
 
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.centerIn: parent
         spacing: Theme.spacingXs
 
         Repeater {
