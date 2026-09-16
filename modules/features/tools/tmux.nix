@@ -82,8 +82,8 @@ in
                   plugin = inputs.tmux-powerkit.packages.${pkgs.stdenv.hostPlatform.system}.default;
                   extraConfig = ''
                     set -g @powerkit_plugins "datetime,battery,cpu,memory,git"
-                    set -g @powerkit_theme "rose-pine"
-                    set -g @powerkit_theme_variant "main"
+                    set -g @powerkit_theme "hackerman"
+                    set -g @powerkit_theme_variant "default"
                     set -g @powerkit_elements_spacing "both"
                     set -g @powerkit_status_interval "5"
                   '';
