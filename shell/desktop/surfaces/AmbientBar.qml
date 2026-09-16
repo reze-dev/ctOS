@@ -61,7 +61,7 @@ PanelWindow {
                 anchors.centerIn: parent
                 fillMode: Image.PreserveAspectFit
                 height: 22
-                source: "components/blume-logo.svg"
+                source: "components/os-icon.svg"
                 sourceSize.height: 22
                 sourceSize.width: 22
                 width: 22
