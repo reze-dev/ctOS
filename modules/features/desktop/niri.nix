@@ -59,6 +59,12 @@ let
               }
             ];
 
+            outputs = {
+              "eDP-1" = {
+                scale = 1.2;
+              };
+            };
+
             # Input configuration
             input = {
               keyboard = {
@@ -105,7 +111,7 @@ let
               focus-ring = {
                 enable = true;
                 width = 2;
-                active.color = "#7dcfff";
+                active.color = "#1BFD9C";
                 inactive.color = "#00000000";
               };
 
