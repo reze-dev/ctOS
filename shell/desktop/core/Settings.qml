@@ -274,13 +274,13 @@ Singleton {
             newPositions["networkFlow"] = normalizePosition(netCfg, { bottom: true, right: true }, { bottom: 24, right: 24 });
 
             const tracerCfg = extractPositionConfig("networkTracer", "widgetNetworkTracer");
-            newPositions["networkTracer"] = normalizePosition(tracerCfg, { top: true, left: true }, { top: 260, left: 24 });
+            newPositions["networkTracer"] = normalizePosition(tracerCfg, { top: true, left: true }, { top: 292, left: 24 });
 
             const audioCfg = extractPositionConfig("audioSurveillance", "widgetAudioSurveillance");
             newPositions["audioSurveillance"] = normalizePosition(audioCfg, { bottom: true, left: true }, { bottom: 24, left: 24 });
 
             const profilerCfg = extractPositionConfig("targetProfiler", "widgetTargetProfiler");
-            newPositions["targetProfiler"] = normalizePosition(profilerCfg, { top: true, left: true }, { top: 48, left: 24 });
+            newPositions["targetProfiler"] = normalizePosition(profilerCfg, { top: true, left: true }, { top: 56, left: 24 });
 
             widgetPositions = newPositions;
 
@@ -525,9 +525,9 @@ Singleton {
         defaultPositions["cpuHexGrid"] = normalizePosition(null, { top: true, right: true }, { top: 48, right: 24 });
         defaultPositions["ramBlockBar"] = normalizePosition(null, { top: true, right: true }, { top: 264, right: 24 });
         defaultPositions["networkFlow"] = normalizePosition(null, { bottom: true, right: true }, { bottom: 24, right: 24 });
-        defaultPositions["networkTracer"] = normalizePosition(null, { top: true, left: true }, { top: 260, left: 24 });
+        defaultPositions["networkTracer"] = normalizePosition(null, { top: true, left: true }, { top: 292, left: 24 });
         defaultPositions["audioSurveillance"] = normalizePosition(null, { bottom: true, left: true }, { bottom: 24, left: 24 });
-        defaultPositions["targetProfiler"] = normalizePosition(null, { top: true, left: true }, { top: 48, left: 24 });
+        defaultPositions["targetProfiler"] = normalizePosition(null, { top: true, left: true }, { top: 56, left: 24 });
         widgetPositions = defaultPositions;
 
         isLoaded = false;

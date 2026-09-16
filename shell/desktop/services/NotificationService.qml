@@ -28,6 +28,9 @@ Singleton {
     // Currently visible toast notifications model (max 3)
     readonly property ListModel activeToasts: activeToastsModel
 
+    // Signal emitted when an incoming notification is processed
+    signal notificationReceived(var notification)
+
     // =========================================================================
     // Internal Models
     // =========================================================================
@@ -226,6 +229,8 @@ Singleton {
 
             root._createToastTimer(notifId, timeoutMs);
         }
+
+        root.notificationReceived(record);
     }
 
     // =========================================================================

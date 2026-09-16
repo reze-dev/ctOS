@@ -6,6 +6,7 @@ import "../../services"
 Item {
     id: root
 
+    property bool isHovered: false
     readonly property bool isOnline: NetworkService.available && NetworkService.isConnected
     readonly property string netText: {
         if (!NetworkService.available || !NetworkService.isConnected) {
@@ -26,67 +27,45 @@ Item {
         return "NET";
     }
 
-    implicitHeight: Theme.barHeight
-    implicitWidth: layout.implicitWidth + Theme.paddingSmall * 2
+    implicitHeight: layout.implicitHeight
+    implicitWidth: layout.implicitWidth
 
-    Rectangle {
-        id: container
+    RowLayout {
+        id: layout
 
-        anchors.fill: parent
-        anchors.margins: Theme.paddingXs
-        border.color: mouseArea.containsMouse ? Theme.ctosGray : "transparent"
-        border.width: Theme.borderWidth
-        color: mouseArea.containsMouse ? Theme.surfaceHover : "transparent"
-        radius: Theme.radiusSmall
+        anchors.centerIn: parent
+        spacing: Theme.spacingXs
 
-        RowLayout {
-            id: layout
-
-            anchors.centerIn: parent
-            spacing: Theme.spacingXs
-
-            CtosIcon {
-                Layout.alignment: Qt.AlignVCenter
-                size: 14
-                name: {
-                    if (!root.isOnline) return "wifi-slash";
-                    if (NetworkService.isEthernet) return "network";
-                    return "wifi";
-                }
-                active: root.isOnline
-                destructive: !root.isOnline && NetworkService.available
-                color: {
-                    if (!NetworkService.available) return Theme.unavailable;
-                    if (!root.isOnline) return Theme.destructive;
-                    return mouseArea.containsMouse ? Theme.accent : Theme.textSecondary;
-                }
+        CtosIcon {
+            Layout.alignment: Qt.AlignVCenter
+            size: 14
+            name: {
+                if (!root.isOnline) return "wifi-slash";
+                if (NetworkService.isEthernet) return "network";
+                return "wifi";
             }
-
-            Text {
-                id: label
-
-                Layout.maximumWidth: 120
-                color: root.isOnline ? Theme.textPrimary : Theme.unavailable
-                elide: Text.ElideRight
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Theme.fontWeightMedium
-                maximumLineCount: 1
-                text: root.netText
-                wrapMode: Text.NoWrap
+            active: root.isOnline
+            destructive: !root.isOnline && NetworkService.available
+            color: {
+                if (!NetworkService.available) return Theme.unavailable;
+                if (!root.isOnline) return Theme.destructive;
+                return root.isHovered ? Theme.accent : Theme.textSecondary;
             }
         }
 
-        MouseArea {
-            id: mouseArea
+        Text {
+            id: label
 
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-
-            onClicked: {
-                OverlayController.openWifiSubmenu();
-            }
+            Layout.alignment: Qt.AlignVCenter
+            Layout.maximumWidth: 120
+            color: root.isOnline ? Theme.textPrimary : Theme.unavailable
+            elide: Text.ElideRight
+            font.family: Theme.fontFamilyMonospace
+            font.pixelSize: Theme.fontSizeSmall
+            font.weight: Theme.fontWeightMedium
+            maximumLineCount: 1
+            text: root.netText
+            wrapMode: Text.NoWrap
         }
     }
 }

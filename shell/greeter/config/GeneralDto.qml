@@ -3,7 +3,7 @@ import Quickshell.Io
 
 JsonObject {
     property string animations: "all"
-    property string fontFamily: "JetBrainsMono Nerd Font"
+    property string fontFamily: "Maple Mono"
     property list<string> exitOverride: []
     property list<string> launchOverride: []
     property string monitor: ""

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 
 import qs.common
 import qs.greeter.config
+import qs.greeter.services
 
 Item {
     id: root
@@ -50,14 +51,25 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 label: "EMPID ##"
-                value: Settings.fakeIdentity.id
+                value: SessionManager.activeUser ? ("UID-" + SessionManager.activeUser.uid) : "UID-STANDBY"
             }
             InfoField {
                 id: employeeClass
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 label: "CLASS"
-                value: Settings.fakeIdentity.class
+                value: {
+                    if (!SessionManager.activeUser) {
+                        return "STANDBY";
+                    }
+                    if (SessionManager.activeUser.uid === 0) {
+                        return "L0_ROOT";
+                    }
+                    if (SessionManager.activeUser.uid === 1000) {
+                        return "L5_ADMIN";
+                    }
+                    return "OPERATOR";
+                }
             }
         }
 
@@ -65,19 +77,18 @@ Item {
             id: employeeName
             Layout.fillWidth: true
             label: "FULL NAME"
-            value: Settings.fakeIdentity.fullName
+            value: SessionManager.activeUser ? SessionManager.activeUser.username.toUpperCase() : "UNKNOWN"
         }
 
         Item {
-
             Layout.fillHeight: true
         }
 
         Image {
             Layout.bottomMargin: 2  // optical compensation
+            Layout.fillWidth: true
             fillMode: Image.PreserveAspectFit
             source: "../resources/id-barcode.svg"
-            width: parent.width
         }
     }
 

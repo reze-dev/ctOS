@@ -5,3 +5,7 @@ VolumeWidget 1.0 VolumeWidget.qml
 BatteryWidget 1.0 BatteryWidget.qml
 ClockWidget 1.0 ClockWidget.qml
 CtosIcon 1.0 CtosIcon.qml
+DynamicIsland 1.0 DynamicIsland.qml
+CalendarPopup 1.0 CalendarPopup.qml
+BluetoothWidget 1.0 BluetoothWidget.qml
+BluetoothPopup 1.0 BluetoothPopup.qml

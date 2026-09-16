@@ -39,5 +39,5 @@ Singleton {
 
     // SECTION Fonts
 
-    property string fontFamily: "JetBrainsMono Nerd Font"
+    property string fontFamily: "Maple Mono"
 }
