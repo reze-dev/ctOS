@@ -54,6 +54,9 @@ let
               {
                 command = [ "ctos-shell" ];
               }
+              {
+                command = [ "hypridle" ];
+              }
             ];
 
             # Input configuration
@@ -298,7 +301,17 @@ in
 {
   imports = [ inputs.niri.nixosModules.niri ];
 
-  options.ctos.features.niri.enable = lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
+  options = {
+    ctos.features.niri.enable = lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
+
+    programs.niri.settings = lib.mkOption {
+      type = lib.types.submodule {
+        freeformType = lib.types.anything;
+      };
+      default = { };
+      description = "Niri configuration settings.";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     # Disable the niri-flake binary cache — we use nixpkgs's niri instead
@@ -308,6 +321,33 @@ in
       enable = true;
       # Override the package to use nixpkgs's niri instead of the flake's build
       package = pkgs.niri;
+      settings = {
+        spawn-at-startup = [
+          {
+            command = [
+              "dbus-update-activation-environment"
+              "--systemd"
+              "WAYLAND_DISPLAY"
+              "XDG_CURRENT_DESKTOP"
+              "DISPLAY"
+              "GTK_USE_PORTAL"
+            ];
+          }
+          {
+            command = [
+              "sh"
+              "-c"
+              "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL && systemctl --user start nixos-fake-graphical-session.target"
+            ];
+          }
+          {
+            command = [ "ctos-shell" ];
+          }
+          {
+            command = [ "hypridle" ];
+          }
+        ];
+      };
     };
 
     home-manager.sharedModules = [ hmNiriModule ];
