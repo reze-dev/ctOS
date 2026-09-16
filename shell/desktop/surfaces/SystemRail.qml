@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import "../core"
 import "../services"
 import "./components"
@@ -21,17 +22,20 @@ FocusScope {
     property string currentView: "main" // "main" | "wifi"
     property alias currentSubmenu: root.currentView
     property string selectedSsid: ""
+    property string confirmingForgetSsid: ""
     readonly property bool reducedMotion: Settings.reducedMotion
 
     function navigateToMain(): void {
         currentView = "main";
         selectedSsid = "";
+        confirmingForgetSsid = "";
         root.forceActiveFocus();
     }
 
     function navigateToWifi(): void {
         currentView = "wifi";
         selectedSsid = "";
+        confirmingForgetSsid = "";
         root.forceActiveFocus();
     }
 
@@ -57,26 +61,62 @@ FocusScope {
         OverlayController.close();
 
         if (action === "reboot") {
-            Quickshell.execDetached(["systemctl", "reboot"]);
+            rebootProcess.running = true;
         } else if (action === "poweroff") {
-            Quickshell.execDetached(["systemctl", "poweroff"]);
+            poweroffProcess.running = true;
         } else if (action === "logout") {
-            Quickshell.execDetached(["hyprctl", "dispatch", "exit"]);
+            logoutProcess.running = true;
         }
     }
 
+    // =========================================================================
+    // Declarative Session Action Processes (Milestone R2)
+    // Replaces legacy Quickshell.execDetached with declarative Quickshell.Io.Process nodes
+    // =========================================================================
+
+    Process {
+        id: lockProcess
+        command: ["loginctl", "lock-session"]
+        running: false
+    }
+
+    Process {
+        id: logoutProcess
+        command: ["hyprctl", "dispatch", "exit"]
+        running: false
+    }
+
+    Process {
+        id: rebootProcess
+        command: ["systemctl", "reboot"]
+        running: false
+    }
+
+    Process {
+        id: poweroffProcess
+        command: ["systemctl", "poweroff"]
+        running: false
+    }
+
+
     // Keyboard navigation focus & Tiered Escape trapping
-    Keys.onEscapePressed: function (event) {
-        if (root.isConfirming) {
+    function handleEscape(): void {
+        if (root.confirmingForgetSsid !== "") {
+            root.confirmingForgetSsid = "";
+        } else if (root.isConfirming) {
             root.cancelConfirmation();
-            event.accepted = true;
+        } else if (root.selectedSsid !== "") {
+            root.selectedSsid = "";
         } else if (root.currentView === "wifi") {
             root.navigateToMain();
-            event.accepted = true;
         } else {
             OverlayController.close();
-            event.accepted = true;
         }
+    }
+
+    Keys.onEscapePressed: function (event) {
+        root.handleEscape();
+        event.accepted = true;
     }
 
     // Synchronize pending session action & pending rail view from OverlayController
@@ -118,6 +158,7 @@ FocusScope {
                 root.confirmationAction = "";
                 root.currentView = "main";
                 root.selectedSsid = "";
+                root.confirmingForgetSsid = "";
             }
         }
     }
@@ -539,7 +580,11 @@ FocusScope {
                     elide: Text.ElideRight
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
-                    text: NetworkService.wifiEnabled ? (NetworkService.networkName !== "" ? NetworkService.networkName : "STANDBY") : "DISABLED"
+                    text: {
+                        if (!NetworkService.wifiEnabled) return "DISABLED";
+                        if (NetworkService.isConnecting) return "CONNECTING...";
+                        return NetworkService.networkName !== "" ? NetworkService.networkName : "STANDBY";
+                    }
                 }
             }
 
@@ -557,10 +602,14 @@ FocusScope {
 
                     Text {
                         Layout.fillWidth: true
-                        color: Theme.textPrimary
+                        color: NetworkService.isConnecting ? Theme.accent : Theme.textPrimary
                         font.family: Theme.fontFamilyMonospace
                         font.pixelSize: Theme.fontSizeCaption
-                        text: NetworkService.wifiEnabled ? (NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "" ? NetworkService.networkName : "WI-FI ADAPTER ENABLED") : "WI-FI ADAPTER DISABLED"
+                        text: {
+                            if (!NetworkService.wifiEnabled) return "WI-FI ADAPTER DISABLED";
+                            if (NetworkService.isConnecting) return "CONNECTING TO " + (NetworkService.connectingSsid !== "" ? NetworkService.connectingSsid.toUpperCase() : "NETWORK") + "...";
+                            return (NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "") ? NetworkService.networkName : "WI-FI ADAPTER ENABLED";
+                        }
                         elide: Text.ElideRight
                     }
 
@@ -712,7 +761,7 @@ FocusScope {
                     hoverEnabled: true
                     onClicked: {
                         OverlayController.close();
-                        Quickshell.execDetached(["loginctl", "lock-session"]);
+                        lockProcess.running = true;
                     }
                 }
             }
@@ -937,7 +986,7 @@ FocusScope {
             readonly property string _labelDisableWifi: "DISABLE WI-FI"
             Layout.fillWidth: true
             Layout.preferredHeight: 38
-            color: NetworkService.wifiEnabled ? (wifiRadioMouseArea.containsMouse ? "#17df89" : Theme.acidGreen) : (wifiRadioMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
+            color: NetworkService.wifiEnabled ? (wifiRadioMouseArea.containsMouse ? Theme.accent : Theme.acidGreen) : (wifiRadioMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
             border.color: Theme.acidGreen
             border.width: Theme.borderWidth
             radius: Theme.radiusSmall
@@ -984,10 +1033,86 @@ FocusScope {
             }
 
             Text {
-                color: Theme.textSecondary
+                color: NetworkService.isConnecting ? Theme.accent : Theme.textSecondary
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
-                text: NetworkService.wifiEnabled ? (NetworkService.availableNetworks ? NetworkService.availableNetworks.length + " FOUND" : "SCANNING...") : "STANDBY"
+                font.weight: NetworkService.isConnecting ? Theme.fontWeightBold : Theme.fontWeightNormal
+                text: {
+                    if (!NetworkService.wifiEnabled) return "STANDBY";
+                    if (NetworkService.isConnecting) return "CONNECTING...";
+                    return NetworkService.availableNetworks ? NetworkService.availableNetworks.length + " FOUND" : "SCANNING...";
+                }
+            }
+        }
+
+        // Active Connection Status Banner (Tier 2 Dedicated Banner)
+        Rectangle {
+            id: connectingBanner
+            visible: NetworkService.isConnecting
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            color: Theme.surfaceSelected
+            border.color: Theme.accent
+            border.width: Theme.borderWidth
+            radius: Theme.radiusSmall
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Theme.paddingMedium
+                anchors.rightMargin: Theme.paddingMedium
+                spacing: Theme.spacingSmall
+
+                Rectangle {
+                    Layout.preferredHeight: 8
+                    Layout.preferredWidth: 8
+                    color: Theme.accent
+                    radius: 4
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    color: Theme.accent
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Theme.fontWeightBold
+                    text: "CONNECTING TO " + (NetworkService.connectingSsid !== "" ? NetworkService.connectingSsid.toUpperCase() : "NETWORK") + "..."
+                    elide: Text.ElideRight
+                }
+            }
+        }
+
+        // Connection Error Notice Banner
+        Rectangle {
+            id: connectionErrorBanner
+            visible: !NetworkService.isConnecting && NetworkService.lastError !== ""
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            color: Theme.surface
+            border.color: Theme.warningRed
+            border.width: Theme.borderWidth
+            radius: Theme.radiusSmall
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Theme.paddingMedium
+                anchors.rightMargin: Theme.paddingMedium
+                spacing: Theme.spacingSmall
+
+                CtosIcon {
+                    name: "warning"
+                    size: 14
+                    color: Theme.warningRed
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    color: Theme.warningRed
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeCaption
+                    font.weight: Theme.fontWeightBold
+                    text: "FAILED: " + NetworkService.lastError.toUpperCase()
+                    elide: Text.ElideRight
+                }
             }
         }
 
@@ -1031,15 +1156,21 @@ FocusScope {
                     readonly property real itemStrength: (netData && typeof netData.signalStrength === "number") ? netData.signalStrength : 0.0
                     readonly property bool itemIsKnown: Boolean(netData && (netData.known || netData.isKnown || netData.saved))
                     readonly property bool itemIsConnected: Boolean(netData && (netData.connected || netData.isConnected)) || (NetworkService.networkName === itemSsid && NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "")
-                    readonly property bool isExpanded: root.selectedSsid === itemSsid && !itemIsKnown && !itemIsConnected
+                    readonly property bool itemIsConnecting: Boolean(NetworkService.connectingSsid !== "" && (NetworkService.connectingSsid === itemSsid || (netData && NetworkService.connectingSsid === netData.rawSsid)))
+                    readonly property bool isSelected: root.selectedSsid === itemSsid
+                    readonly property bool showPasswordPrompt: isSelected && !itemIsKnown && !itemIsConnected
+                    readonly property bool showConnectedActions: isSelected && itemIsConnected
+                    readonly property bool showKnownActions: isSelected && itemIsKnown && !itemIsConnected
+                    readonly property bool isConfirmingForget: root.confirmingForgetSsid === itemSsid
+                    readonly property bool isExpanded: showPasswordPrompt
 
                     // Main Network Entry Tile
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 36
-                        border.color: itemIsConnected ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.borderMuted)
+                        border.color: itemIsConnected ? Theme.acidGreen : (itemIsConnecting ? Theme.accent : (itemMouseArea.containsMouse ? Theme.accent : Theme.borderMuted))
                         border.width: Theme.borderWidth
-                        color: itemIsConnected ? Theme.surfaceSelected : (itemMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface)
+                        color: itemIsConnected ? Theme.surfaceSelected : (itemIsConnecting ? Theme.surfaceSelected : (itemMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface))
                         radius: Theme.radiusSmall
 
                         RowLayout {
@@ -1048,25 +1179,25 @@ FocusScope {
                             spacing: Theme.spacingSmall
 
                             CtosIcon {
-                                active: itemIsConnected
+                                active: itemIsConnected || itemIsConnecting
                                 name: "wifi"
                                 size: 14
-                                color: itemIsConnected ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
+                                color: (itemIsConnected || itemIsConnecting) ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
                             }
 
                             Text {
                                 Layout.fillWidth: true
-                                color: itemIsConnected ? Theme.acidGreen : Theme.textPrimary
+                                color: (itemIsConnected || itemIsConnecting) ? Theme.acidGreen : Theme.textPrimary
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamilyMonospace
                                 font.pixelSize: Theme.fontSizeSmall
-                                font.weight: itemIsConnected ? Theme.fontWeightBold : Theme.fontWeightNormal
+                                font.weight: (itemIsConnected || itemIsConnecting) ? Theme.fontWeightBold : Theme.fontWeightNormal
                                 text: itemSsid !== "" ? itemSsid : "[HIDDEN NETWORK]"
                             }
 
                             // Saved Badge
                             Rectangle {
-                                visible: itemIsKnown && !itemIsConnected
+                                visible: itemIsKnown && !itemIsConnected && !itemIsConnecting
                                 Layout.preferredHeight: 16
                                 Layout.preferredWidth: 46
                                 color: "transparent"
@@ -1081,6 +1212,26 @@ FocusScope {
                                     font.pixelSize: 9
                                     font.weight: Theme.fontWeightBold
                                     text: "SAVED"
+                                }
+                            }
+
+                            // Connecting Badge (Tier 3)
+                            Rectangle {
+                                visible: itemIsConnecting
+                                Layout.preferredHeight: 16
+                                Layout.preferredWidth: 88
+                                color: "transparent"
+                                border.color: Theme.accent
+                                border.width: 1
+                                radius: Theme.radiusSmall
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Theme.accent
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: "[CONNECTING...]"
                                 }
                             }
 
@@ -1110,17 +1261,236 @@ FocusScope {
                             hoverEnabled: true
 
                             onClicked: {
-                                if (itemIsConnected) {
-                                    return;
-                                }
-                                if (itemIsKnown) {
+                                if (root.selectedSsid === itemSsid) {
                                     root.selectedSsid = "";
-                                    NetworkService.connectToNetwork(itemSsid);
+                                    root.confirmingForgetSsid = "";
                                 } else {
-                                    if (root.selectedSsid === itemSsid) {
+                                    root.selectedSsid = itemSsid;
+                                    root.confirmingForgetSsid = "";
+                                }
+                            }
+                        }
+                    }
+
+                    // Connected Network Action Drawer
+                    Rectangle {
+                        id: connectedActionsBox
+                        visible: showConnectedActions
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        color: Theme.gray900
+                        border.color: Theme.warningRed
+                        border.width: Theme.borderWidth
+                        radius: Theme.radiusSmall
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: Theme.paddingMedium
+                            anchors.rightMargin: Theme.paddingMedium
+                            spacing: Theme.spacingSmall
+
+                            Text {
+                                Layout.fillWidth: true
+                                color: Theme.textSecondary
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeCaption
+                                text: "// ACTIVE CONNECTION"
+                            }
+
+                            Rectangle {
+                                Layout.preferredHeight: 22
+                                Layout.preferredWidth: 84
+                                border.color: Theme.warningRed
+                                border.width: Theme.borderWidth
+                                color: disconnectMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                                radius: Theme.radiusSmall
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Theme.warningRed
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: "DISCONNECT"
+                                }
+
+                                MouseArea {
+                                    id: disconnectMouseArea
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        NetworkService.disconnectCurrentNetwork();
                                         root.selectedSsid = "";
-                                    } else {
-                                        root.selectedSsid = itemSsid;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Saved/Known Network Management Drawer
+                    Rectangle {
+                        id: knownActionsBox
+                        visible: showKnownActions
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        color: Theme.gray900
+                        border.color: isConfirmingForget ? Theme.warningRed : Theme.accent
+                        border.width: Theme.borderWidth
+                        radius: Theme.radiusSmall
+
+                        // Normal Actions: [CONNECT] and [FORGET]
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: Theme.paddingMedium
+                            anchors.rightMargin: Theme.paddingMedium
+                            spacing: Theme.spacingSmall
+                            visible: !isConfirmingForget
+
+                            Text {
+                                Layout.fillWidth: true
+                                color: Theme.textSecondary
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeCaption
+                                text: "// SAVED PROFILE"
+                            }
+
+                            // Connect Button
+                            Rectangle {
+                                Layout.preferredHeight: 22
+                                Layout.preferredWidth: itemIsConnecting ? 92 : 68
+                                border.color: itemIsConnecting ? Theme.accent : Theme.acidGreen
+                                border.width: Theme.borderWidth
+                                color: itemIsConnecting ? Theme.surfaceSelected : (knownConnectMouseArea.containsMouse ? Theme.surfaceSelected : "transparent")
+                                radius: Theme.radiusSmall
+                                opacity: (NetworkService.isConnecting && !itemIsConnecting) ? 0.5 : 1.0
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: itemIsConnecting ? Theme.accent : Theme.acidGreen
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: itemIsConnecting ? "CONNECTING..." : "CONNECT"
+                                }
+
+                                MouseArea {
+                                    id: knownConnectMouseArea
+                                    anchors.fill: parent
+                                    cursorShape: itemIsConnecting ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                    hoverEnabled: !itemIsConnecting
+                                    enabled: !NetworkService.isConnecting
+                                    onClicked: {
+                                        NetworkService.connectToNetwork(itemSsid);
+                                        root.selectedSsid = "";
+                                    }
+                                }
+                            }
+
+                            // Forget Button
+                            Rectangle {
+                                Layout.preferredHeight: 22
+                                Layout.preferredWidth: 62
+                                border.color: Theme.warningRed
+                                border.width: Theme.borderWidth
+                                color: forgetMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                                radius: Theme.radiusSmall
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Theme.warningRed
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: "FORGET"
+                                }
+
+                                MouseArea {
+                                    id: forgetMouseArea
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        root.confirmingForgetSsid = itemSsid;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Inline Confirmation Prompt: "FORGET <SSID>? [YES] [NO]"
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: Theme.paddingMedium
+                            anchors.rightMargin: Theme.paddingMedium
+                            spacing: Theme.spacingSmall
+                            visible: isConfirmingForget
+
+                            Text {
+                                Layout.fillWidth: true
+                                color: Theme.warningRed
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: 9
+                                font.weight: Theme.fontWeightBold
+                                text: "FORGET " + itemSsid + "?"
+                            }
+
+                            // YES Button
+                            Rectangle {
+                                Layout.preferredHeight: 22
+                                Layout.preferredWidth: 42
+                                border.color: Theme.warningRed
+                                border.width: Theme.borderWidth
+                                color: forgetYesMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                                radius: Theme.radiusSmall
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Theme.warningRed
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: "YES"
+                                }
+
+                                MouseArea {
+                                    id: forgetYesMouseArea
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        NetworkService.forgetNetwork(itemSsid);
+                                        root.confirmingForgetSsid = "";
+                                        root.selectedSsid = "";
+                                    }
+                                }
+                            }
+
+                            // NO Button
+                            Rectangle {
+                                Layout.preferredHeight: 22
+                                Layout.preferredWidth: 42
+                                border.color: Theme.borderMuted
+                                border.width: Theme.borderWidth
+                                color: forgetNoMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                                radius: Theme.radiusSmall
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: 9
+                                    font.weight: Theme.fontWeightBold
+                                    text: "NO"
+                                }
+
+                                MouseArea {
+                                    id: forgetNoMouseArea
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        root.confirmingForgetSsid = "";
                                     }
                                 }
                             }
@@ -1207,26 +1577,28 @@ FocusScope {
 
                                 Rectangle {
                                     Layout.preferredHeight: 18
-                                    Layout.preferredWidth: 62
-                                    border.color: Theme.acidGreen
+                                    Layout.preferredWidth: itemIsConnecting ? 92 : 62
+                                    border.color: itemIsConnecting ? Theme.accent : Theme.acidGreen
                                     border.width: Theme.borderWidth
-                                    color: pwConnectArea.containsMouse ? Theme.surfaceSelected : "transparent"
+                                    color: itemIsConnecting ? Theme.surfaceSelected : (pwConnectArea.containsMouse ? Theme.surfaceSelected : "transparent")
                                     radius: Theme.radiusSmall
+                                    opacity: (NetworkService.isConnecting && !itemIsConnecting) ? 0.5 : 1.0
 
                                     Text {
                                         anchors.centerIn: parent
-                                        color: Theme.acidGreen
+                                        color: itemIsConnecting ? Theme.accent : Theme.acidGreen
                                         font.family: Theme.fontFamilyMonospace
                                         font.pixelSize: 9
                                         font.weight: Theme.fontWeightBold
-                                        text: "CONNECT"
+                                        text: itemIsConnecting ? "CONNECTING..." : "CONNECT"
                                     }
 
                                     MouseArea {
                                         id: pwConnectArea
                                         anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        hoverEnabled: true
+                                        cursorShape: itemIsConnecting ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                        hoverEnabled: !itemIsConnecting
+                                        enabled: !NetworkService.isConnecting
                                         onClicked: {
                                             if (pwInput.text.trim() === "" || pwInput.text.length === 0) {
                                                 return;

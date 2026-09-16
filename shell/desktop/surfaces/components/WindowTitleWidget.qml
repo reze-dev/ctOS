@@ -22,13 +22,15 @@ Item {
     }
 
     clip: true
-    implicitHeight: Theme.barHeight
+    implicitHeight: layout.implicitHeight
     implicitWidth: Math.min(layout.implicitWidth, 400)
 
     RowLayout {
         id: layout
 
-        anchors.fill: parent
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        anchors.right: parent.right
         spacing: Theme.spacingSmall
 
         Rectangle {

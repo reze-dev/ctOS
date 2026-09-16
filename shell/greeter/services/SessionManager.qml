@@ -9,8 +9,6 @@ import qs.greeter.data
 Singleton {
     id: sessionManager
 
-    property bool _isUsingUwsm: false
-
     property list<User> users: []
     property list<Desktop> desktops: []
 
@@ -108,13 +106,24 @@ Singleton {
         return true;
     }
 
+    function cycleDesktop(saveDefault = false) {
+        if (!desktops || desktops.length <= 1) {
+            return;
+        }
+        let currentIndex = -1;
+        for (let i = 0; i < desktops.length; i++) {
+            if (desktops[i] === activeDesktop || desktops[i].name === activeDesktop?.name) {
+                currentIndex = i;
+                break;
+            }
+        }
+        const nextIndex = (currentIndex + 1) % desktops.length;
+        setDesktop(desktops[nextIndex].name, saveDefault);
+    }
+
     function getExitCommand() {
         if (Settings.exitCommand && Settings.exitCommand.length) {
             return Settings.exitCommand;
-        }
-
-        if (_isUsingUwsm) {
-            return ["uwsm", "stop"];
         }
 
         const currentDesktop = (Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase();
@@ -130,21 +139,78 @@ Singleton {
         return [];
     }
 
+    function parseExec(execStr) {
+        if (!execStr || typeof execStr !== "string") {
+            return [];
+        }
+
+        const tokens = [];
+        let current = "";
+        let inDoubleQuote = false;
+        let inSingleQuote = false;
+        let escaped = false;
+
+        for (let i = 0; i < execStr.length; i++) {
+            const char = execStr[i];
+
+            if (escaped) {
+                current += char;
+                escaped = false;
+                continue;
+            }
+
+            if (char === "\\") {
+                escaped = true;
+                continue;
+            }
+
+            if (char === '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (char === "'" && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            if (/\s/.test(char) && !inDoubleQuote && !inSingleQuote) {
+                if (current.length > 0) {
+                    tokens.push(current);
+                    current = "";
+                }
+                continue;
+            }
+
+            current += char;
+        }
+
+        if (current.length > 0) {
+            tokens.push(current);
+        }
+
+        const result = [];
+        for (const token of tokens) {
+            if (/^%[a-zA-Z]$/.test(token)) {
+                continue;
+            }
+
+            let processed = token.replace(/%[a-zA-Z]/g, "");
+            processed = processed.replace(/%%/g, "%");
+
+            if (processed.length > 0) {
+                result.push(processed);
+            }
+        }
+
+        return result;
+    }
+
     function getLaunchCommand() {
         if (!activeDesktop || !activeDesktop.exec) {
             return [];
         }
-        return activeDesktop.exec.trim().split(/\s+/);
-    }
-
-    Process {
-        id: uwsmCheck
-        command: ["sh", "-c", "env | grep -q '^UWSM'"]
-        running: true
-        onExited: exitCode => {
-            sessionManager._isUsingUwsm = exitCode === 0;
-            desktopsProcess.running = true;
-        }
+        return parseExec(activeDesktop.exec);
     }
 
     Process {
@@ -191,19 +257,46 @@ Singleton {
     Process {
         id: desktopsProcess
         property var _currentEntry: ({})
+        property bool _inDesktopEntry: false
 
-        command: ["sh", "-c", "cat /usr/share/wayland-sessions/*.desktop 2>/dev/null"]
-        running: false
+        command: [
+            "sh", "-c",
+            "search_dirs=\"${XDG_DATA_DIRS:-/usr/local/share:/usr/share}:/run/current-system/sw/share:/usr/share:/usr/local/share\"; " +
+            "old_ifs=\"$IFS\"; IFS=\":\"; seen=\"\"; " +
+            "for d in $search_dirs; do " +
+            "  [ -d \"$d/wayland-sessions\" ] || continue; " +
+            "  for f in \"$d/wayland-sessions\"/*.desktop; do " +
+            "    [ -f \"$f\" ] || continue; " +
+            "    b=\"${f##*/}\"; " +
+            "    case \" $seen \" in *\" $b \"*) continue ;; esac; " +
+            "    seen=\"$seen $b\"; " +
+            "    cat \"$f\"; " +
+            "    echo \"\"; " +
+            "  done; " +
+            "done; " +
+            "IFS=\"$old_ifs\""
+        ]
+        running: true
 
         stdout: SplitParser {
             onRead: data => {
                 const line = data.trim();
-                if (!line) {
+                if (!line || line.startsWith("#")) {
                     return;
                 }
 
                 if (line === "[Desktop Entry]") {
                     desktopsProcess.commit();
+                    desktopsProcess._inDesktopEntry = true;
+                    return;
+                }
+
+                if (line.startsWith("[") && line.endsWith("]")) {
+                    desktopsProcess._inDesktopEntry = false;
+                    return;
+                }
+
+                if (!desktopsProcess._inDesktopEntry) {
                     return;
                 }
 
@@ -212,7 +305,8 @@ Singleton {
                     return;
                 }
 
-                const [key, value] = line.split("=");
+                const key = line.slice(0, splitIdx).trim();
+                const value = line.slice(splitIdx + 1).trim();
 
                 switch (key) {
                 case "Name":
@@ -231,10 +325,6 @@ Singleton {
                     desktopsProcess._currentEntry.desktopNames = value;
                     break;
                 }
-
-                if (value.toLowerCase().includes("uwsm")) {
-                    desktopsProcess._currentEntry._uwsmManaged = true;
-                }
             }
         }
 
@@ -244,28 +334,33 @@ Singleton {
             const xdg = Quickshell.env("XDG_CURRENT_DESKTOP") || "";
             const env = xdg.toLowerCase();
 
-            const detectedDesktop = desktops.find(d => {
-                const nameMatch = env && d.name.toLowerCase().includes(env);
-                const uwsmMatch = (d._uwsmManaged === _isUsingUwsm);
-                return nameMatch && uwsmMatch;
+            const detectedDesktop = sessionManager.desktops.find(d => {
+                return env && (d.name.toLowerCase().includes(env) || (d.desktopNames && d.desktopNames.toLowerCase().includes(env)));
             });
 
-            const compatibleDesktop = desktops.find(desktop => desktop._uwsmManaged === _isUsingUwsm);
-            _firstDesktop = detectedDesktop || compatibleDesktop || (desktops.length > 0 ? desktops[0] : null);
+            sessionManager._firstDesktop = detectedDesktop || (sessionManager.desktops.length > 0 ? sessionManager.desktops[0] : null);
+
+            if (!sessionManager.activeDesktop && sessionManager._firstDesktop) {
+                sessionManager.activeDesktop = sessionManager.findDesktop(Settings.defaultDesktopName) || sessionManager._firstDesktop;
+            }
         }
 
         function commit() {
             const entry = desktopsProcess._currentEntry;
 
             if (entry.name && entry.exec) {
-                const desktopObj = desktopFactory.createObject(sessionManager, entry);
-                desktops.push(desktopObj);
-                desktopsChanged();
+                const isUwsm = entry.exec.toLowerCase().includes("uwsm") || entry.name.toLowerCase().includes("uwsm");
+                const isDuplicate = sessionManager.desktops.some(d => d.name.toLowerCase() === entry.name.toLowerCase());
+
+                if (!isUwsm && !isDuplicate) {
+                    const desktopObj = desktopFactory.createObject(sessionManager, entry);
+                    sessionManager.desktops.push(desktopObj);
+                    sessionManager.desktopsChanged();
+                }
             }
 
-            desktopsProcess._currentEntry = {
-                "_uwsmManaged": false
-            };
+            desktopsProcess._currentEntry = {};
+            desktopsProcess._inDesktopEntry = false;
         }
     }
 }

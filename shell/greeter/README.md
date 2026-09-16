@@ -14,7 +14,9 @@ To run the greeter, you must have the following core components installed on you
 
 - **[cage](https://github.com/cage-kiosk/cage):** A lightweight compositor that can host the greeter window. `wlr-randr` can be used to customise monitor config.
 
-- **JetbrainsMono Nerd Font**: The font I used while designing. Use [Configuration](#configuration) if you want to override it.
+- **Maple Mono**: The system monospace font used across ctOS. Use [Configuration](#configuration) if you want to override it.
+
+- **Bibata-Modern-Classic**: The standard cursor theme (size 24) enforced across the greeter environment.
 
 <br>
 
@@ -53,7 +55,7 @@ command = "env HYPRLAND_CONFIG=/etc/ctos/greeter.hyprland.conf uwsm start hyprla
 command = "env NIRI_CONFIG=/etc/ctos/greeter.niri.kdl uwsm start niri.desktop"
 
 # others and desktop environment users
-command = "env CTOS_MODE=kiosk cage -ds -m last -- quickshell --path /opt/ctos/greeter.qml"
+command = "env CTOS_MODE=kiosk XCURSOR_THEME=Bibata-Modern-Classic XCURSOR_SIZE=24 cage -ds -m last -- quickshell --path /opt/ctos/greeter.qml"
 
 # e.g. you have a secondary monitor that the original command is showing on
 # replace 'HDMI-A-1' with the name of the unwanted monitor
@@ -111,7 +113,7 @@ Configuration will be installed in `/etc/ctos`. The example file below will be i
   "monitor": "DP-3",
 
   /* The typeface used for the terminal-style interface elements */
-  "fontFamily": "JetBrainsMono Nerd Font",
+  "fontFamily": "Maple Mono",
 
   /* Cosmetic 'Identity Card' data displayed in the post-login sequence */
   "fakeIdentity": {

@@ -6,6 +6,7 @@ import "../../services"
 Item {
     id: root
 
+    property bool isHovered: false
     readonly property bool isAvail: AudioService.available
     readonly property bool isMuted: AudioService.muted
     readonly property int volumePercent: Math.round(AudioService.volume * 100)
@@ -19,80 +20,53 @@ Item {
         return volumePercent.toString() + "%";
     }
 
-    implicitHeight: Theme.barHeight
-    implicitWidth: layout.implicitWidth + Theme.paddingSmall * 2
+    implicitHeight: layout.implicitHeight
+    implicitWidth: layout.implicitWidth
 
-    Rectangle {
-        id: container
+    RowLayout {
+        id: layout
 
-        anchors.fill: parent
-        anchors.margins: Theme.paddingXs
-        border.color: mouseArea.containsMouse ? Theme.ctosGray : "transparent"
-        border.width: Theme.borderWidth
-        color: mouseArea.containsMouse ? Theme.surfaceHover : "transparent"
-        radius: Theme.radiusSmall
+        anchors.centerIn: parent
+        spacing: Theme.spacingXs
 
-        RowLayout {
-            id: layout
-
-            anchors.centerIn: parent
-            spacing: Theme.spacingXs
-
-            CtosIcon {
-                Layout.alignment: Qt.AlignVCenter
-                size: 14
-                name: {
-                    if (!root.isAvail) return "volume-slash";
-                    if (root.isMuted) return "volume-slash";
-                    return "volume";
-                }
-                active: mouseArea.containsMouse && root.isAvail && !root.isMuted
-                destructive: root.isMuted
-                color: {
-                    if (!root.isAvail) return Theme.unavailable;
-                    if (root.isMuted) return Theme.destructive;
-                    if (mouseArea.containsMouse) return Theme.accent;
-                    return Theme.textSecondary;
-                }
+        CtosIcon {
+            Layout.alignment: Qt.AlignVCenter
+            size: 14
+            name: {
+                if (!root.isAvail) return "volume-slash";
+                if (root.isMuted) return "volume-slash";
+                return "volume";
             }
-
-            Text {
-                id: valText
-
-                color: {
-                    if (!root.isAvail) {
-                        return Theme.unavailable;
-                    }
-                    if (root.isMuted) {
-                        return Theme.accentRed;
-                    }
-                    return mouseArea.containsMouse ? Theme.accent : Theme.textPrimary;
-                }
-                elide: Text.ElideRight
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Theme.fontWeightMedium
-                maximumLineCount: 1
-                text: root.volumeText
-                wrapMode: Text.NoWrap
+            active: root.isHovered && root.isAvail && !root.isMuted
+            destructive: root.isMuted
+            color: {
+                if (!root.isAvail) return Theme.unavailable;
+                if (root.isMuted) return Theme.destructive;
+                if (root.isHovered) return Theme.accent;
+                return Theme.textSecondary;
             }
         }
 
-        MouseArea {
-            id: mouseArea
+        Text {
+            id: valText
 
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-
-            onClicked: {
-                AudioService.toggleMute();
+            Layout.alignment: Qt.AlignVCenter
+            color: {
+                if (!root.isAvail) {
+                    return Theme.unavailable;
+                }
+                if (root.isMuted) {
+                    return Theme.accentRed;
+                }
+                return root.isHovered ? Theme.accent : Theme.textPrimary;
             }
-
-            onWheel: wheel => {
-                const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                AudioService.stepVolume(delta);
-            }
+            elide: Text.ElideRight
+            font.family: Theme.fontFamilyMonospace
+            font.pixelSize: Theme.fontSizeSmall
+            font.weight: Theme.fontWeightMedium
+            maximumLineCount: 1
+            text: root.volumeText
+            wrapMode: Text.NoWrap
         }
     }
 }

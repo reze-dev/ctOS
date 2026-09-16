@@ -34,6 +34,8 @@ ColumnLayout {
 
     required property var logModel
 
+    property bool restoreTerminalFocus: false
+
     spacing: 15 * Units.vh
 
     TextMetrics {
@@ -69,13 +71,24 @@ ColumnLayout {
             height: logView.height
         }
 
+        function _scrollToEnd() {
+            logView.forceLayout();
+            logView.positionViewAtEnd();
+        }
+
         Connections {
             target: terminal.logModel
 
             function onCountChanged() {
-                Qt.callLater(() => {
-                    logView.contentY = -logView.height + terminal.logModel.count * terminal.lineHeight;
-                });
+                Qt.callLater(() => logView._scrollToEnd());
+            }
+        }
+
+        Connections {
+            target: TerminalManager
+
+            function onScrollToEnd() {
+                Qt.callLater(() => logView._scrollToEnd());
             }
         }
 
@@ -158,7 +171,8 @@ ColumnLayout {
                         text: "» " + command.substr(0, charIndex)
                         color: Theme.textPrimaryDim
                         font: terminal.font
-                        height: parent.height
+                        height: inputDelegate.height
+                        verticalAlignment: Text.AlignVCenter
 
                         onCommandChanged: {
                             typewriterAnimation.to = command.length;
@@ -172,35 +186,52 @@ ColumnLayout {
                             from: 0
                             easing.type: Easing.Linear
                         }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.IBeamCursor
+                            onClicked: {
+                                if (terminalInput.enabled) {
+                                    terminalInput.forceActiveFocus();
+                                }
+                            }
+                        }
                     }
 
                     TextInput {
                         id: terminalInput
 
-                        height: parent.height
-                        width: parent.width - terminalPrompt.width
+                        height: inputDelegate.height
+                        width: Math.max(0, inputDelegate.width - terminalPrompt.width)
 
                         color: Theme.textPrimaryDim
                         font: terminal.font
+                        verticalAlignment: TextInput.AlignVCenter
+                        clip: true
 
                         enabled: !inputDelegate.syntheticCommand
-                        focus: !inputDelegate.syntheticCommand
+                        focus: false
+                        cursorVisible: activeFocus
+                        selectByMouse: true
 
                         onAccepted: {
+                            terminal.restoreTerminalFocus = terminalInput.activeFocus;
                             enabled = false;
                             focus = false;
 
                             CommandManager.sendCommand(terminalInput.text);
                         }
 
-                        Keys.onUpPressed: {
+                        Keys.onUpPressed: (event) => {
                             terminalInput.text = CommandManager.previousHistory();
                             terminalInput.cursorPosition = terminalInput.text.length;
+                            event.accepted = true;
                         }
 
-                        Keys.onDownPressed: {
+                        Keys.onDownPressed: (event) => {
                             terminalInput.text = CommandManager.nextHistory();
                             terminalInput.cursorPosition = terminalInput.text.length;
+                            event.accepted = true;
                         }
 
                         onActiveFocusChanged: {
@@ -210,8 +241,31 @@ ColumnLayout {
                         }
 
                         Component.onCompleted: {
+                            FocusManager._targets = FocusManager._targets.filter(t => {
+                                try {
+                                    return t.item && t.tabIndex !== 1;
+                                } catch (e) {
+                                    return false;
+                                }
+                            });
+
                             FocusManager.registerTarget(terminalInput, {
                                 tabIndex: 1
+                            });
+
+                            if (terminal.restoreTerminalFocus && FocusManager._currentTarget && FocusManager._currentTarget.tabIndex === 1) {
+                                terminalInput.forceActiveFocus();
+                            }
+                            terminal.restoreTerminalFocus = false;
+                        }
+
+                        Component.onDestruction: {
+                            FocusManager._targets = FocusManager._targets.filter(t => {
+                                try {
+                                    return t.item && t.item !== terminalInput;
+                                } catch (e) {
+                                    return false;
+                                }
                             });
                         }
                     }

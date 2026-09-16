@@ -44,6 +44,10 @@ Singleton {
     readonly property bool isConnecting: connectingSsid !== ""
     property string lastError: ""
 
+    // Milestone 4 (Requirement R6): Watchdog & Connection Timing Parameters
+    property int watchdogInterval: 10000
+    property int connectionTimeout: 15000
+
     // Signals
     signal networkStateChanged(bool connected, string connType, string name)
     signal connectionFailed(string ssid, string reason)
@@ -129,8 +133,13 @@ Singleton {
         root.signalStrength = strength;
 
         if (root.connectingSsid !== "") {
-            root.connectingSsid = "";
-            root.lastError = "";
+            const cleanConn = root.sanitizeName(name);
+            const cleanTarget = root.sanitizeName(root.connectingSsid);
+            if (cleanConn === cleanTarget || name === root.connectingSsid) {
+                connectionTimeoutTimer.stop();
+                root.connectingSsid = "";
+                root.lastError = "";
+            }
         }
 
         if (changed) {
@@ -159,6 +168,10 @@ Singleton {
         if (!root.available) {
             return;
         }
+        if (Networking.wifiEnabled) {
+            connectionTimeoutTimer.stop();
+            root.connectingSsid = "";
+        }
         Networking.wifiEnabled = !Networking.wifiEnabled;
     }
 
@@ -167,12 +180,46 @@ Singleton {
         if (!root.available) {
             return;
         }
+        if (!enabled) {
+            connectionTimeoutTimer.stop();
+            root.connectingSsid = "";
+        }
         Networking.wifiEnabled = enabled;
     }
 
     // =========================================================================
     // Debounced Network Discovery Model Builder
     // =========================================================================
+
+    // =========================================================================
+    // Milestone 4 (Requirement R6): Watchdog & Timeout Timers
+    // =========================================================================
+
+    // Periodic Watchdog: Evaluates network state every 10s regardless of model signals
+    // Dynamic running expression required; no literal boolean permitted
+    Timer {
+        id: networkWatchdogTimer
+        interval: 10000
+        repeat: true
+        running: Boolean(root.available && root.watchdogInterval > 0)
+        triggeredOnStart: false
+        onTriggered: root._evaluateNetworkState()
+    }
+
+    // Single-shot 15s connection timeout timer
+    Timer {
+        id: connectionTimeoutTimer
+        interval: 15000
+        repeat: false
+        onTriggered: {
+            if (root.connectingSsid !== "") {
+                const timedOutSsid = root.connectingSsid;
+                root.connectingSsid = "";
+                root.lastError = "Connection timed out";
+                root.connectionFailed(timedOutSsid, "Connection timed out");
+            }
+        }
+    }
 
     Timer {
         id: rebuildDebounceTimer
@@ -268,6 +315,7 @@ Singleton {
 
         root.connectingSsid = ssid;
         root.lastError = "";
+        connectionTimeoutTimer.restart();
 
         const cleanSsid = root.sanitizeName(ssid);
 
@@ -314,6 +362,8 @@ Singleton {
     }
 
     function disconnectCurrentNetwork(): void {
+        connectionTimeoutTimer.stop();
+        root.connectingSsid = "";
         if (!root.available || !Networking.devices || !Networking.devices.values) return;
         for (let i = 0; i < Networking.devices.values.length; i++) {
             const dev = Networking.devices.values[i];
@@ -406,6 +456,7 @@ Singleton {
                             if (netDelegate.network && netDelegate.network.connected) {
                                 if (root.connectingSsid === netDelegate.network.name ||
                                     root.connectingSsid === root.sanitizeName(netDelegate.network.name)) {
+                                    connectionTimeoutTimer.stop();
                                     root.connectingSsid = "";
                                     root.lastError = "";
                                 }
@@ -445,6 +496,7 @@ Singleton {
                             const netName = (netDelegate.network && netDelegate.network.name) ? netDelegate.network.name : "";
                             if (root.connectingSsid === netName ||
                                 root.connectingSsid === root.sanitizeName(netName)) {
+                                connectionTimeoutTimer.stop();
                                 root.connectingSsid = "";
                                 root.lastError = reasonStr;
                             }
@@ -476,6 +528,18 @@ Singleton {
         onCountChanged: {
             root._evaluateNetworkState();
             root._scheduleRebuild();
+        }
+    }
+
+    onAvailableChanged: {
+        if (!root.available) {
+            connectionTimeoutTimer.stop();
+            if (root.connectingSsid !== "") {
+                const failedSsid = root.connectingSsid;
+                root.connectingSsid = "";
+                root.lastError = "NetworkManager daemon unavailable";
+                root.connectionFailed(failedSsid, "NetworkManager daemon unavailable");
+            }
         }
     }
 

@@ -12,8 +12,14 @@ Singleton {
     property int _historyIndex: -1
 
     function sendCommand(input: string) {
-        const raw = input.trim();
+        const raw = input ? input.trim() : "";
         if (!raw) {
+            _commitPrompt("");
+            if (TerminalManager.executeShellCommand) {
+                TerminalManager.executeShellCommand("");
+            } else {
+                TerminalManager.displayMessages([]);
+            }
             return;
         }
 
@@ -27,26 +33,32 @@ Singleton {
 
         switch (command.toLowerCase()) {
         case "change":
+            _commitPrompt(raw);
             _handleChange(args);
             break;
         case "chusr":
+            _commitPrompt(raw);
             _handleUserChange(args);
             break;
         case "chdesk":
+            _commitPrompt(raw);
             _handleDesktopChange(args);
             break;
         case "users":
+            _commitPrompt(raw);
             _handleListUsers();
             break;
         case "desktops":
         case "desk":
+            _commitPrompt(raw);
             _handleListDesktops();
             break;
         case "help":
+            _commitPrompt(raw);
             _showHelp();
             break;
         default:
-            _err(`unknown command '${command}'`);
+            TerminalManager.executeShellCommand(raw);
         }
     }
 
@@ -64,6 +76,22 @@ Singleton {
         }
         _historyIndex--;
         return _history[_historyIndex];
+    }
+
+    function _commitPrompt(cmd) {
+        if (TerminalManager.commitPrompt) {
+            TerminalManager.commitPrompt(cmd);
+        } else if (TerminalManager.logModel && TerminalManager.logModel.count > 0) {
+            const lastIdx = TerminalManager.logModel.count - 1;
+            const lastItem = TerminalManager.logModel.get(lastIdx);
+            if (lastItem && lastItem.type === TerminalManager.MessageType.Prompt) {
+                TerminalManager.logModel.set(lastIdx, {
+                    message: "» " + cmd,
+                    type: TerminalManager.MessageType.Output,
+                    instant: true
+                });
+            }
+        }
     }
 
     function _handleChange(args) {
