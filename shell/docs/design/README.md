@@ -20,4 +20,10 @@ Implementation-facing material lives in the sibling [technical package](../techn
 - The current greeter and lockscreen are preserved and packaged, not redesigned.
 - The primary public integration is a Home Manager module exported from a flake-parts-organized flake.
 
-Deferred work is intentionally not an implicit v1 commitment: Niri, overview, Bluetooth, file search, clipboard history, calendar, screenshot/recording controls, dynamic theming, and a full media panel.
+Deferred work is intentionally not an implicit v1 commitment: Niri, overview, file search, clipboard history, screenshot/recording controls, dynamic theming, and a full media panel.
+
+## Future Enhancements (v2 Roadmap)
+- **Network / Wi-Fi Popup**: A drop-down to list and connect to specific SSIDs.
+- **Audio Mixer & Sink Selector**: A drop-down to switch audio output devices and control microphone input volume/mute.
+- **Clipboard History Manager**: A utility surface to track and paste recent clipboard copies.
+- **Power Profile Manager**: A drop-down attached to the Battery widget to toggle system power states (Performance, Balanced, Power-Saver).
