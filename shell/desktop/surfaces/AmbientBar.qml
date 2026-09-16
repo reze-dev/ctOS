@@ -9,6 +9,7 @@ PanelWindow {
     id: root
 
     signal toggleCalendar
+    signal toggleBluetooth
 
     color: "transparent"
     focusable: true
@@ -302,8 +303,15 @@ PanelWindow {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-                onClicked: BluetoothService.togglePower()
+                onClicked: (mouse) => {
+                    if (mouse && mouse.button === Qt.RightButton) {
+                        BluetoothService.togglePower();
+                    } else {
+                        root.toggleBluetooth();
+                    }
+                }
             }
         }
 

@@ -17,6 +17,9 @@ Scope {
     property bool calendarVisible: false
     property var calendarScreen: null
 
+    property bool bluetoothVisible: false
+    property var bluetoothScreen: null
+
     function toggleCalendar(targetScreen): void {
         const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
 
@@ -28,6 +31,7 @@ Scope {
                 root.calendarScreen = resolved;
             }
         } else {
+            root.closeBluetooth();
             root.calendarScreen = resolved;
             root.calendarVisible = true;
         }
@@ -36,6 +40,33 @@ Scope {
     function closeCalendar(): void {
         root.calendarVisible = false;
         root.calendarScreen = null;
+    }
+
+    function toggleBluetooth(targetScreen): void {
+        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
+
+        if (root.bluetoothVisible) {
+            if (targetScreen === null || targetScreen === undefined || root.bluetoothScreen === resolved) {
+                root.bluetoothVisible = false;
+                root.bluetoothScreen = null;
+            } else {
+                root.bluetoothScreen = resolved;
+            }
+        } else {
+            root.closeCalendar();
+            root.bluetoothScreen = resolved;
+            root.bluetoothVisible = true;
+        }
+    }
+
+    function closeBluetooth(): void {
+        root.bluetoothVisible = false;
+        root.bluetoothScreen = null;
+    }
+
+    function closeAllPopups(): void {
+        root.closeCalendar();
+        root.closeBluetooth();
     }
 
     IpcHandler {
@@ -59,6 +90,10 @@ Scope {
 
         function toggleCalendar(): void {
             root.toggleCalendar(null);
+        }
+
+        function toggleBluetooth(): void {
+            root.toggleBluetooth(null);
         }
     }
 
@@ -365,6 +400,7 @@ Scope {
                 screen: modelData
 
                 onToggleCalendar: root.toggleCalendar(modelData)
+                onToggleBluetooth: root.toggleBluetooth(modelData)
             }
         }
     }
@@ -414,6 +450,27 @@ Scope {
                     root.closeCalendar();
                 }
             }
+
+            if (root.bluetoothVisible) {
+                const currentBtScreen = root.bluetoothScreen;
+                if (!currentBtScreen) {
+                    root.closeBluetooth();
+                    return;
+                }
+
+                const screenList = Quickshell.screens;
+                let isBtAlive = false;
+                for (let i = 0; i < screenList.length; ++i) {
+                    if (screenList[i] && screenList[i].name === currentBtScreen.name) {
+                        isBtAlive = true;
+                        break;
+                    }
+                }
+
+                if (!isBtAlive) {
+                    root.closeBluetooth();
+                }
+            }
         }
     }
 
@@ -422,6 +479,7 @@ Scope {
 
         function onOverlayOpened(activeSurface: int): void {
             root.closeCalendar();
+            root.closeBluetooth();
             overlayHost.screen = root.resolveTargetScreen();
             overlayHost.forceActiveFocus();
         }
@@ -596,6 +654,65 @@ Scope {
             id: calendarPopup
 
             onCloseRequested: root.closeCalendar()
+        }
+    }
+
+    PanelWindow {
+        id: bluetoothBackdropHost
+
+        screen: root.bluetoothScreen
+        color: "transparent"
+        visible: root.bluetoothVisible && root.bluetoothScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-bluetooth-backdrop"
+
+        anchors {
+            bottom: true
+            left: true
+            right: true
+            top: true
+        }
+
+        MouseArea {
+            id: bluetoothBackdropMouseArea
+
+            anchors.fill: parent
+
+            onClicked: root.closeBluetooth()
+        }
+    }
+
+    PanelWindow {
+        id: bluetoothPopupHost
+
+        screen: root.bluetoothScreen
+        color: "transparent"
+        visible: root.bluetoothVisible && root.bluetoothScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-bluetooth-popup"
+
+        anchors {
+            top: true
+            right: true
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+            right: Theme.barPaddingHorizontal + 60
+        }
+
+        implicitWidth: bluetoothPopup.implicitWidth
+        implicitHeight: bluetoothPopup.implicitHeight
+
+        BluetoothPopup {
+            id: bluetoothPopup
+
+            onCloseRequested: root.closeBluetooth()
         }
     }
 }
