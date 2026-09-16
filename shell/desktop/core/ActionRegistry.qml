@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import "../services"
 
 Singleton {
     id: root
@@ -146,7 +147,8 @@ Singleton {
             keywords: ["lock", "screen", "session", "workstation"],
             execute: function () {
                 OverlayController.close();
-                Quickshell.execDetached(["loginctl", "lock-session"]);
+                SessionService.lock();
+                // Quickshell.execDetached(["loginctl", "lock-session"]);
             }
         },
         {

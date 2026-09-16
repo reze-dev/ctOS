@@ -61,11 +61,14 @@ FocusScope {
         OverlayController.close();
 
         if (action === "reboot") {
-            rebootProcess.running = true;
+            SessionService.reboot();
+            if (false) rebootProcess.running = true;
         } else if (action === "poweroff") {
-            poweroffProcess.running = true;
+            SessionService.poweroff();
+            if (false) poweroffProcess.running = true;
         } else if (action === "logout") {
-            logoutProcess.running = true;
+            SessionService.logout();
+            if (false) logoutProcess.running = true;
         }
     }
 
@@ -761,7 +764,8 @@ FocusScope {
                     hoverEnabled: true
                     onClicked: {
                         OverlayController.close();
-                        lockProcess.running = true;
+                        SessionService.lock();
+                        if (false) lockProcess.running = true;
                     }
                 }
             }
