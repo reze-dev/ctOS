@@ -8,3 +8,4 @@ CtosIcon 1.0 CtosIcon.qml
 DynamicIsland 1.0 DynamicIsland.qml
 CalendarPopup 1.0 CalendarPopup.qml
 BluetoothWidget 1.0 BluetoothWidget.qml
+BluetoothPopup 1.0 BluetoothPopup.qml
