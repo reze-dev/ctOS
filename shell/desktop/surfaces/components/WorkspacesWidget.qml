@@ -21,7 +21,7 @@ Item {
             return rawList;
         }
 
-        return [];
+        return [1, 2, 3, 4, 5];
     }
 
     implicitHeight: layout.implicitHeight
@@ -39,9 +39,10 @@ Item {
             Rectangle {
                 id: wsCell
 
-                readonly property bool isActive: Boolean(modelData.active)
-                readonly property bool isFocused: Boolean(modelData.focused || (modelData.id === CompositorService.focusedWorkspaceId))
-                readonly property bool isUrgent: Boolean(modelData.urgent)
+                readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
+                readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active) : (wsId === CompositorService.focusedWorkspaceId)
+                readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
+                readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
                 required property var modelData
 
                 Layout.alignment: Qt.AlignVCenter
@@ -58,7 +59,7 @@ Item {
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
                     font.weight: wsCell.isFocused ? Theme.fontWeightBold : Theme.fontWeightMedium
-                    text: wsCell.modelData.name || String(wsCell.modelData.id)
+                    text: (typeof wsCell.modelData === "object" && wsCell.modelData !== null && wsCell.modelData.name) ? wsCell.modelData.name : String(wsCell.wsId)
                 }
 
                 MouseArea {
@@ -69,7 +70,7 @@ Item {
                     hoverEnabled: true
 
                     onClicked: {
-                        CompositorService.switchToWorkspace(wsCell.modelData.id);
+                        CompositorService.switchToWorkspace(wsCell.wsId);
                     }
                 }
             }
