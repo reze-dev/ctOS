@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import "../core"
 import "../services"
 import "./components"
@@ -60,13 +61,43 @@ FocusScope {
         OverlayController.close();
 
         if (action === "reboot") {
-            Quickshell.execDetached(["systemctl", "reboot"]);
+            rebootProcess.running = true;
         } else if (action === "poweroff") {
-            Quickshell.execDetached(["systemctl", "poweroff"]);
+            poweroffProcess.running = true;
         } else if (action === "logout") {
-            Quickshell.execDetached(["hyprctl", "dispatch", "exit"]);
+            logoutProcess.running = true;
         }
     }
+
+    // =========================================================================
+    // Declarative Session Action Processes (Milestone R2)
+    // Replaces legacy Quickshell.execDetached with declarative Quickshell.Io.Process nodes
+    // =========================================================================
+
+    Process {
+        id: lockProcess
+        command: ["loginctl", "lock-session"]
+        running: false
+    }
+
+    Process {
+        id: logoutProcess
+        command: ["hyprctl", "dispatch", "exit"]
+        running: false
+    }
+
+    Process {
+        id: rebootProcess
+        command: ["systemctl", "reboot"]
+        running: false
+    }
+
+    Process {
+        id: poweroffProcess
+        command: ["systemctl", "poweroff"]
+        running: false
+    }
+
 
     // Keyboard navigation focus & Tiered Escape trapping
     function handleEscape(): void {
@@ -730,7 +761,7 @@ FocusScope {
                     hoverEnabled: true
                     onClicked: {
                         OverlayController.close();
-                        Quickshell.execDetached(["loginctl", "lock-session"]);
+                        lockProcess.running = true;
                     }
                 }
             }
