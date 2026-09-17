@@ -12,6 +12,15 @@ FocusScope {
     height: 500
     focus: true
 
+    Timer {
+        id: searchDebounceTimer
+        interval: 16
+        repeat: false
+        onTriggered: {
+            resultsList.model = ActionRegistry.search(queryInput.text);
+        }
+    }
+
     // Background styling: near-black with hairline border
     Rectangle {
         id: backgroundRect
@@ -176,6 +185,12 @@ FocusScope {
 
                     onTextChanged: {
                         resultsList.currentIndex = 0;
+                        if (text.length === 0) {
+                            searchDebounceTimer.stop();
+                            resultsList.model = ActionRegistry.search("");
+                        } else {
+                            searchDebounceTimer.restart();
+                        }
                     }
 
                     Keys.onDownPressed: function (event) {
@@ -416,6 +431,10 @@ FocusScope {
     }
 
     function executeCurrentItem(): void {
+        if (searchDebounceTimer.running) {
+            searchDebounceTimer.stop();
+            resultsList.model = ActionRegistry.search(queryInput.text);
+        }
         if (!resultsList.model || resultsList.currentIndex < 0 || resultsList.currentIndex >= resultsList.count) {
             return;
         }

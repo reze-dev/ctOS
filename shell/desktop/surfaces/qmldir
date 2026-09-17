@@ -3,3 +3,4 @@ PlaceholderSurface 1.0 PlaceholderSurface.qml
 CommandDeck 1.0 CommandDeck.qml
 EventLog 1.0 EventLog.qml
 NotificationToasts 1.0 NotificationToasts.qml
+SystemRail 1.0 SystemRail.qml

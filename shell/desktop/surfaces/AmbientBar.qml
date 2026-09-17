@@ -15,7 +15,6 @@ PanelWindow {
     color: "transparent"
     focusable: true
     implicitHeight: Theme.barHeight
-    height: Theme.barHeight
 
     anchors {
         left: true
