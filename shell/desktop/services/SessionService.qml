@@ -11,8 +11,8 @@ Singleton {
     // Compositor Detection (Requirements R2, R3)
     // =========================================================================
     readonly property string currentDesktop: (Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase()
-    readonly property bool isNiri: currentDesktop.includes("niri") || Boolean(Quickshell.env("NIRI_SOCKET"))
-    readonly property bool isHyprland: currentDesktop.includes("hyprland") || Boolean(Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
+    readonly property bool isNiri: currentDesktop.includes("niri") || (currentDesktop === "" && Boolean(Quickshell.env("NIRI_SOCKET")))
+    readonly property bool isHyprland: currentDesktop.includes("hyprland") || (currentDesktop === "" && Boolean(Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")))
     readonly property string compositorName: isNiri ? "niri" : (isHyprland ? "hyprland" : "unknown")
 
     // Base command: ["niri", "msg", "action", "quit"] (-s appended for non-interactive exit)
@@ -103,15 +103,9 @@ Singleton {
             return;
         }
         if (!logoutProcess.running) {
-            if (root.compositorName === "unknown") {
-                root.fallbackStage = 1;
-                logoutProcess.command = ["niri", "msg", "action", "quit", "-s"];
-                logoutProcess.running = true;
-            } else {
-                root.fallbackStage = 0;
-                logoutProcess.command = root.logoutCommand;
-                logoutProcess.running = true;
-            }
+            root.fallbackStage = 1;
+            logoutProcess.command = root.logoutCommand;
+            logoutProcess.running = true;
         }
     }
 
@@ -133,7 +127,7 @@ Singleton {
                 root.sessionActionFinished("logout", exitCode);
             } else {
                 root.fallbackStage = 3;
-                logoutProcess.command = ["loginctl", "terminate-session", ""];
+                logoutProcess.command = ["loginctl", "terminate-user", Quickshell.env("USER") || ""];
                 logoutProcess.running = true;
             }
         } else if (root.fallbackStage === 3) {
