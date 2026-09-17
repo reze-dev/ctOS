@@ -100,6 +100,24 @@ Singleton {
         {
             category: "Actions",
             isApp: false,
+            id: "action-toggle-packet-analyzer",
+            name: "Toggle Packet Analyzer",
+            title: "Toggle Packet Analyzer",
+            description: "Show or hide Wireshark/tshark packet sniffer widget",
+            desc: "Show or hide Wireshark/tshark packet sniffer widget",
+            icon: "network-wired",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["packet", "analyzer", "sniffer", "wireshark", "tshark", "network", "telemetry", "widget", "toggle"],
+            execute: function () {
+                PacketAnalyzerService.toggleTracing();
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
             id: "action-toggle-ram-block",
             name: "Toggle RAM Block Bar",
             title: "Toggle RAM Block Bar",
