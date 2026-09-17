@@ -54,17 +54,17 @@ echo "--- Phase 2: Font Streamlining (Maple Mono) ---"
 test_assert "M2.FONT.01: GeneralDto.qml fontFamily is Maple Mono" \
     "grep -q 'property string fontFamily: \"Maple Mono\"' shell/greeter/config/GeneralDto.qml"
 
-test_assert "M2.FONT.02: shell/common/Theme.qml fontFamily is Maple Mono" \
-    "grep -q 'property string fontFamily: \"Maple Mono\"' shell/common/Theme.qml"
+test_assert "M2.FONT.02: shell/greeter/common/Theme.qml fontFamily is Maple Mono" \
+    "grep -q 'property string fontFamily: \"Maple Mono\"' shell/greeter/common/Theme.qml"
 
 test_assert "M2.FONT.03: qml_inspector reports GeneralDto.qml fontFamily == Maple Mono" \
     "python3 tests/e2e/harness/qml_inspector.py has-property shell/greeter/config/GeneralDto.qml fontFamily --type string > /dev/null 2>&1"
 
 test_assert "M2.FONT.04: qml_inspector reports Theme.qml fontFamily == Maple Mono" \
-    "python3 tests/e2e/harness/qml_inspector.py has-property shell/common/Theme.qml fontFamily --type string > /dev/null 2>&1"
+    "python3 tests/e2e/harness/qml_inspector.py has-property shell/greeter/common/Theme.qml fontFamily --type string > /dev/null 2>&1"
 
 test_assert "M2.FONT.05: Zero occurrences of JetBrainsMono in greeter & common QML" \
-    "! grep -rq 'JetBrainsMono' shell/greeter/ shell/common/"
+    "! grep -rq 'JetBrainsMono' shell/greeter/"
 
 
 echo "--- Phase 3: Compositor & Cursor Enforcement ---"

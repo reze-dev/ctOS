@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 DESKTOP_DIR="${PROJECT_ROOT}/shell/desktop"
-COMMON_DIR="${PROJECT_ROOT}/shell/common"
+COMMON_DIR="${PROJECT_ROOT}/shell/greeter/common"
 
 test_case "T1.12.1" "Zero Polling: Zero persistent Process loops (running: true) in desktop/"
 if [[ -d "${DESKTOP_DIR}" ]]; then

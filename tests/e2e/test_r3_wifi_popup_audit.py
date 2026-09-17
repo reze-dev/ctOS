@@ -126,22 +126,43 @@ check("WF.R3.STYLE.SURFACE", "Popup uses Theme.gray900, radiusSmall, borderMuted
 # ==============================================================================
 # 3. Cyberpunk Corner Brackets
 # ==============================================================================
-check("WF.R3.BRACKET.DECL", "cornerBrackets defined with bracketColor Theme.acidGreen and z: 10",
-      "id: cornerBrackets" in popup_content and
-      "readonly property color bracketColor: Theme.acidGreen" in popup_content and
-      bool(re.search(r'id:\s*cornerBrackets[\s\S]*?z:\s*10', popup_content)),
-      "corner brackets present on top z-index")
+if "CornerBrackets" in popup_content:
+    check("WF.R3.BRACKET.DECL", "cornerBrackets defined with bracketColor Theme.acidGreen and z: 10",
+          "id: cornerBrackets" in popup_content and
+          "bracketColor: Theme.acidGreen" in popup_content and
+          bool(re.search(r'CornerBrackets[\s\S]*?id:\s*cornerBrackets[\s\S]*?z:\s*10', popup_content) or re.search(r'CornerBrackets[\s\S]*?z:\s*10[\s\S]*?id:\s*cornerBrackets', popup_content)),
+          "corner brackets present on top z-index")
 
-bracket_arm_rects = re.findall(r'Rectangle\s*\{[^}]*?color:\s*cornerBrackets\.bracketColor[^}]*?\}', popup_content)
-check("WF.R3.BRACKET.ARMS", "Exactly 8 corner bracket arms declared in Theme.acidGreen",
-      len(bracket_arm_rects) == 8,
-      f"found {len(bracket_arm_rects)} arm rects")
+    cb_path = os.path.join(PROJECT_ROOT, "shell/desktop/surfaces/widgets/CornerBrackets.qml")
+    with open(cb_path, "r", encoding="utf-8") as f:
+        cb_content = f.read()
+    bracket_arm_rects = re.findall(r'Rectangle\s*\{[^}]*?color:\s*root\.bracketColor[^}]*?\}', cb_content)
+    check("WF.R3.BRACKET.ARMS", "Exactly 8 corner bracket arms declared in Theme.acidGreen",
+          len(bracket_arm_rects) == 8,
+          f"found {len(bracket_arm_rects)} arm rects")
 
-check("WF.R3.BRACKET.TOKENS", "Corner brackets couple to Theme margin, arm length, and thickness tokens",
-      "Theme.cornerBracketMargin" in popup_content and
-      "Theme.cornerBracketArmLength" in popup_content and
-      "Theme.cornerBracketThickness" in popup_content,
-      "corner brackets adhere strictly to Theme token metrics")
+    check("WF.R3.BRACKET.TOKENS", "Corner brackets couple to Theme margin, arm length, and thickness tokens",
+          "Theme.cornerBracketMargin" in cb_content and
+          "Theme.cornerBracketArmLength" in cb_content and
+          "Theme.cornerBracketThickness" in cb_content,
+          "corner brackets adhere strictly to Theme token metrics")
+else:
+    check("WF.R3.BRACKET.DECL", "cornerBrackets defined with bracketColor Theme.acidGreen and z: 10",
+          "id: cornerBrackets" in popup_content and
+          "readonly property color bracketColor: Theme.acidGreen" in popup_content and
+          bool(re.search(r'id:\s*cornerBrackets[\s\S]*?z:\s*10', popup_content)),
+          "corner brackets present on top z-index")
+
+    bracket_arm_rects = re.findall(r'Rectangle\s*\{[^}]*?color:\s*cornerBrackets\.bracketColor[^}]*?\}', popup_content)
+    check("WF.R3.BRACKET.ARMS", "Exactly 8 corner bracket arms declared in Theme.acidGreen",
+          len(bracket_arm_rects) == 8,
+          f"found {len(bracket_arm_rects)} arm rects")
+
+    check("WF.R3.BRACKET.TOKENS", "Corner brackets couple to Theme margin, arm length, and thickness tokens",
+          "Theme.cornerBracketMargin" in popup_content and
+          "Theme.cornerBracketArmLength" in popup_content and
+          "Theme.cornerBracketThickness" in popup_content,
+          "corner brackets adhere strictly to Theme token metrics")
 
 # ==============================================================================
 # 4. Typography & Monospace Purity

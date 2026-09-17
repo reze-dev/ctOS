@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import "../../core"
 import "../../services"
+import "../widgets"
 
 Rectangle {
     id: root
@@ -39,77 +40,10 @@ Rectangle {
     }
 
     // Cyberpunk Corner Brackets
-    Item {
+    CornerBrackets {
         id: cornerBrackets
-
-        anchors.fill: parent
+        bracketColor: Theme.acidGreen
         z: 10
-
-        readonly property color bracketColor: Theme.acidGreen
-
-        // Top-Left
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
-
-        // Top-Right
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
-
-        // Bottom-Left
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
-
-        // Bottom-Right
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
     }
 
     // =========================================================================

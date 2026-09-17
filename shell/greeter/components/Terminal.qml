@@ -4,9 +4,9 @@ import QtQuick.Layouts
 import QtQml.Models
 
 import qs.greeter.services
-import qs.common
-import qs.common.services
-import qs.common.components
+import qs.greeter.common
+import qs.greeter.common.services
+import qs.greeter.common.components
 import qs.greeter.config
 
 ColumnLayout {

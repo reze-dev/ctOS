@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.greeter.config
-import qs.common
+import qs.greeter.common
 
 Row {
 

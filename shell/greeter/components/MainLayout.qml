@@ -4,9 +4,9 @@ import Qt5Compat.GraphicalEffects
 import qs.greeter.services
 import qs.greeter.components
 import qs.greeter.config
-import qs.common
-import qs.common.services
-import qs.common.components
+import qs.greeter.common
+import qs.greeter.common.services
+import qs.greeter.common.components
 
 Item {
     id: root

@@ -37,7 +37,7 @@ Item {
         id: accentTopLeft
         width: root.individualSize
         height: root.individualSize
-        source: "../../greeter/resources/accent.svg"
+        source: "../../resources/accent.svg"
         anchors {
             left: root.left
             leftMargin: root._horizontalOffset
@@ -50,7 +50,7 @@ Item {
         id: accentBotLeft
         width: root.individualSize
         height: root.individualSize
-        source: "../../greeter/resources/accent.svg"
+        source: "../../resources/accent.svg"
         anchors {
             left: root.left
             leftMargin: root._horizontalOffset
@@ -64,7 +64,7 @@ Item {
         id: accentTopRight
         width: root.individualSize
         height: root.individualSize
-        source: "../../greeter/resources/accent.svg"
+        source: "../../resources/accent.svg"
         anchors {
             right: root.right
             rightMargin: root._horizontalOffset
@@ -78,7 +78,7 @@ Item {
         id: accentBotRight
         width: root.individualSize
         height: root.individualSize
-        source: "../../greeter/resources/accent.svg"
+        source: "../../resources/accent.svg"
         anchors {
             right: root.right
             rightMargin: root._horizontalOffset
