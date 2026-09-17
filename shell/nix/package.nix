@@ -23,6 +23,8 @@ stdenvNoCC.mkDerivation {
         mkdir -p "$out/bin"
         cat << 'EOF' > "$out/bin/ctos-shell"
 #!/bin/sh
+# Kill any existing instances to prevent duplicates
+pkill -f "quickshell.*shell.qml" || true
 EOF
         cat << BIN >> "$out/bin/ctos-shell"
 exec ${pkgs.quickshell}/bin/quickshell -n -p "$out/share/ctos/shell.qml" "\$@"

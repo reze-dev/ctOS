@@ -539,7 +539,7 @@ Scope {
             root.closeBluetooth();
             root.closeNetwork();
             overlayHost.screen = root.resolveTargetScreen();
-            overlayHost.forceActiveFocus();
+
         }
 
         function onOverlayClosed(previousSurface: int): void {
