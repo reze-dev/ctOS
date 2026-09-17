@@ -20,6 +20,9 @@ Scope {
     property bool bluetoothVisible: false
     property var bluetoothScreen: null
 
+    property bool networkVisible: false
+    property var networkScreen: null
+
     function toggleCalendar(targetScreen): void {
         const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
 
@@ -32,6 +35,7 @@ Scope {
             }
         } else {
             root.closeBluetooth();
+            root.closeNetwork();
             root.calendarScreen = resolved;
             root.calendarVisible = true;
         }
@@ -54,6 +58,7 @@ Scope {
             }
         } else {
             root.closeCalendar();
+            root.closeNetwork();
             root.bluetoothScreen = resolved;
             root.bluetoothVisible = true;
         }
@@ -64,9 +69,33 @@ Scope {
         root.bluetoothScreen = null;
     }
 
+    function toggleNetwork(targetScreen): void {
+        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
+
+        if (root.networkVisible) {
+            if (targetScreen === null || targetScreen === undefined || root.networkScreen === resolved) {
+                root.networkVisible = false;
+                root.networkScreen = null;
+            } else {
+                root.networkScreen = resolved;
+            }
+        } else {
+            root.closeCalendar();
+            root.closeBluetooth();
+            root.networkScreen = resolved;
+            root.networkVisible = true;
+        }
+    }
+
+    function closeNetwork(): void {
+        root.networkVisible = false;
+        root.networkScreen = null;
+    }
+
     function closeAllPopups(): void {
         root.closeCalendar();
         root.closeBluetooth();
+        root.closeNetwork();
     }
 
     IpcHandler {
@@ -94,6 +123,10 @@ Scope {
 
         function toggleBluetooth(): void {
             root.toggleBluetooth(null);
+        }
+
+        function toggleNetwork(): void {
+            root.toggleNetwork(null);
         }
     }
 
@@ -401,6 +434,7 @@ Scope {
 
                 onToggleCalendar: root.toggleCalendar(modelData)
                 onToggleBluetooth: root.toggleBluetooth(modelData)
+                onToggleNetwork: root.toggleNetwork(modelData)
             }
         }
     }
@@ -471,6 +505,27 @@ Scope {
                     root.closeBluetooth();
                 }
             }
+
+            if (root.networkVisible) {
+                const currentNetScreen = root.networkScreen;
+                if (!currentNetScreen) {
+                    root.closeNetwork();
+                    return;
+                }
+
+                const screenList = Quickshell.screens;
+                let isNetAlive = false;
+                for (let i = 0; i < screenList.length; ++i) {
+                    if (screenList[i] && screenList[i].name === currentNetScreen.name) {
+                        isNetAlive = true;
+                        break;
+                    }
+                }
+
+                if (!isNetAlive) {
+                    root.closeNetwork();
+                }
+            }
         }
     }
 
@@ -480,6 +535,7 @@ Scope {
         function onOverlayOpened(activeSurface: int): void {
             root.closeCalendar();
             root.closeBluetooth();
+            root.closeNetwork();
             overlayHost.screen = root.resolveTargetScreen();
             overlayHost.forceActiveFocus();
         }
@@ -713,6 +769,65 @@ Scope {
             id: bluetoothPopup
 
             onCloseRequested: root.closeBluetooth()
+        }
+    }
+
+    PanelWindow {
+        id: networkBackdropHost
+
+        screen: root.networkScreen
+        color: "transparent"
+        visible: root.networkVisible && root.networkScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-network-backdrop"
+
+        anchors {
+            bottom: true
+            left: true
+            right: true
+            top: true
+        }
+
+        MouseArea {
+            id: networkBackdropMouseArea
+
+            anchors.fill: parent
+
+            onClicked: root.closeNetwork()
+        }
+    }
+
+    PanelWindow {
+        id: networkPopupHost
+
+        screen: root.networkScreen
+        color: "transparent"
+        visible: root.networkVisible && root.networkScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-network-popup"
+
+        anchors {
+            top: true
+            right: true
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+            right: Theme.barPaddingHorizontal + 160
+        }
+
+        implicitWidth: networkPopup.implicitWidth
+        implicitHeight: networkPopup.implicitHeight
+
+        NetworkPopup {
+            id: networkPopup
+
+            onCloseRequested: root.closeNetwork()
         }
     }
 }
