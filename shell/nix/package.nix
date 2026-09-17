@@ -23,20 +23,9 @@ stdenvNoCC.mkDerivation {
         mkdir -p "$out/bin"
         cat << 'EOF' > "$out/bin/ctos-shell"
 #!/bin/sh
-if [ -z "$NIRI_SOCKET" ]; then
-  for s in "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/niri.*.sock; do
-    if [ -S "$s" ]; then
-      export NIRI_SOCKET="$s"
-      break
-    fi
-  done
-fi
-if [ -z "$XDG_CURRENT_DESKTOP" ] && [ -n "$NIRI_SOCKET" ]; then
-  export XDG_CURRENT_DESKTOP=niri
-fi
 EOF
         cat << BIN >> "$out/bin/ctos-shell"
-exec ${pkgs.quickshell}/bin/quickshell -p "$out/share/ctos/shell.qml" "\$@"
+exec ${pkgs.quickshell}/bin/quickshell -n -p "$out/share/ctos/shell.qml" "\$@"
 BIN
         chmod +x "$out/bin/ctos-shell"
 
