@@ -33,9 +33,9 @@ BIN
 
         # Create IPC message wrapper
         cat << BIN > "$out/bin/ctos-shell-msg"
-    #!/bin/sh
-    exec ${pkgs.quickshell}/bin/quickshell ipc -p "$out/share/ctos/shell.qml" call ctos "\$@"
-    BIN
+#!/bin/sh
+exec ${pkgs.quickshell}/bin/quickshell ipc -p "$out/share/ctos/shell.qml" call ctos "\$@"
+BIN
         chmod +x "$out/bin/ctos-shell-msg"
         
         runHook postInstall
