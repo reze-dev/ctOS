@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pam
 
-import qs.common
+import qs.greeter.common
 
 Singleton {
     id: handler

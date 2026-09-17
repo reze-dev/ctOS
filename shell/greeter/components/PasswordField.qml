@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
-import qs.common
+import qs.greeter.common
 
 TextField {
     id: passwordField

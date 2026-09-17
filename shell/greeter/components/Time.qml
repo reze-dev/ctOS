@@ -1,8 +1,8 @@
 import QtQuick
 import Quickshell
 
-import qs.common
-import qs.common.components
+import qs.greeter.common
+import qs.greeter.common.components
 import qs.greeter.config
 
 Item {

@@ -4,7 +4,7 @@ import Quickshell
 import QtQuick
 
 import qs.greeter.config
-import qs.common
+import qs.greeter.common
 import qs.greeter.services
 
 Singleton {

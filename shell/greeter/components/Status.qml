@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 import Quickshell.Services.UPower
 
-import qs.common
+import qs.greeter.common
 import qs.greeter.config
 
 Surface {

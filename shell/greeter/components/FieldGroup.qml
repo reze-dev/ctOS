@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.common
-import qs.common.services
+import qs.greeter.common
+import qs.greeter.common.services
 import qs.greeter.components
 import qs.greeter.config
 import qs.greeter.services

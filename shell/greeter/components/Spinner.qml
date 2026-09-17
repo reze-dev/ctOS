@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-import qs.common
+import qs.greeter.common
 
 Grid {
     id: root

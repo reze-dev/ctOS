@@ -14,7 +14,6 @@ DESKTOP_DIR="${PROJECT_ROOT}/shell/desktop"
 test_case "T4.06" "Real-World Scenario 6: Greeter Boundary Isolation Complete Security Audit"
 # Deep audit of all desktop sources for forbidden greeter coupling
 if [[ -d "${DESKTOP_DIR}" ]]; then
-    local violations
     violations=$(python3 "${HARNESS_DIR}/qml_inspector.py" check-greeter "${DESKTOP_DIR}" 2>&1 || true)
     assert_match "OK" "${violations}" "No greeter imports or references in desktop/"
 else

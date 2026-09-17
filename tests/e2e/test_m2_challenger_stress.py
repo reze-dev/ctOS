@@ -225,17 +225,17 @@ record_result(
 )
 
 # 2.4 Theme.qml fontFamily
-theme_qml_path = os.path.join(PROJECT_ROOT, "shell/common/Theme.qml")
+theme_qml_path = os.path.join(PROJECT_ROOT, "shell/greeter/common/Theme.qml")
 with open(theme_qml_path) as f:
     theme_content = f.read()
 record_result(
     "M2.FONT.04",
-    "shell/common/Theme.qml: defines property string fontFamily = 'Maple Mono'",
+    "shell/greeter/common/Theme.qml: defines property string fontFamily = 'Maple Mono'",
     'property string fontFamily: "Maple Mono"' in theme_content
 )
 
 # 2.5 Zero JetBrainsMono occurrences
-res_grep_jbm = run_cmd(["grep", "-rn", "JetBrainsMono", "shell/greeter", "shell/common", "modules/features/desktop/greeter.nix"])
+res_grep_jbm = run_cmd(["grep", "-rn", "JetBrainsMono", "shell/greeter", "modules/features/desktop/greeter.nix"])
 record_result(
     "M2.FONT.05",
     "Eradication: zero occurrences of 'JetBrainsMono' across greeter, common, and greeter.nix",
@@ -510,7 +510,7 @@ res_git_unstaged = run_cmd(["git", "diff", "--name-only"])
 unstaged_files = sorted(res_git_unstaged.stdout.strip().splitlines())
 expected_unstaged = [
     "modules/features/desktop/greeter.nix",
-    "shell/common/Theme.qml",
+    "shell/greeter/common/Theme.qml",
     "shell/greeter/README.md",
     "shell/greeter/components/MainLayout.qml",
     "shell/greeter/config/GeneralDto.qml",

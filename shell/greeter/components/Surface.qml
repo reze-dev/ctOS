@@ -1,6 +1,6 @@
 import QtQuick
 
-import qs.common
+import qs.greeter.common
 import qs.greeter.config
 
 Item {
