@@ -36,7 +36,7 @@ if [ -z "$XDG_CURRENT_DESKTOP" ] && [ -n "$NIRI_SOCKET" ]; then
 fi
 EOF
         cat << BIN >> "$out/bin/ctos-shell"
-exec ${pkgs.quickshell}/bin/quickshell "$out/share/ctos/shell.qml" "\$@"
+exec ${pkgs.quickshell}/bin/quickshell -p "$out/share/ctos/shell.qml" "\$@"
 BIN
         chmod +x "$out/bin/ctos-shell"
 
