@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# WARNING: This script launches an interactive Plymouth daemon using /dev/tty.
+# Do NOT execute during an active Wayland/X11 session as it may disrupt the display server.
 mkdir -p /tmp/plymouth-test/themes
 cp -r assets/ctos-plymouth /tmp/plymouth-test/themes/ctos
 sed -i 's|/usr/share/plymouth/themes/ctos|/tmp/plymouth-test/themes/ctos|g' /tmp/plymouth-test/themes/ctos/ctos.plymouth

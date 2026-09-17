@@ -22,12 +22,9 @@ This provides `nixfmt`, `nil` (Nix LSP), `python3`, `git`, and `jq`.
 
 ## Adding a New Host
 
-1. Run the interactive installer (creates `hosts/<hostname>` automatically):
-   ```bash
-   nix run . --impure
-   ```
+Create a host directory (`hosts/YourHostName` containing `default.nix`, `disko.nix`, and `hardware.nix`):
 
-2. Or create a host directory manually (`hosts/YourHostName` containing `default.nix`, `disko.nix`, and `hardware.nix`):
+1. Generate hardware configuration:
    ```bash
    mkdir -p hosts/YourHostName
    sudo nixos-generate-config --show-hardware-config > hosts/YourHostName/hardware.nix
@@ -74,11 +71,11 @@ The host is **auto-discovered** — any directory in `hosts/` with both `default
 # Nix-native checks (module syntax, lib tests, eval tests)
 nix flake check --impure
 
-# Python installer tests
-python3 -m unittest discover -s tests -v
+# End-to-end and test suite runner
+./tests/e2e/run_tests.sh
 
-# Format check
-nix fmt -- --check .
+# Format check (CI mode)
+nix fmt -- --ci
 ```
 
 ## Code Formatting
@@ -105,21 +102,22 @@ We use `nixfmt-rfc-style` (the RFC 166 formatter).
 ```
 ctos/
 ├── flake.nix              # Flake entry point
-├── flake/                 # flake-parts modules (hosts, installer, checks, devshell, formatter)
+├── flake/                 # flake-parts modules (hosts, checks, devshell, formatter, modules, shell)
 ├── hosts/                 # Host machine configs (auto-discovered)
 │   ├── common.nix         # Shared base config
 │   └── <hostname>/        # Per-machine config
 ├── home/
 │   └── home.nix           # Base Home Manager user environment
 ├── lib/
-│   ├── core.nix           # Shared Nix helpers (scanModules, discoverHosts, mkDisko, mkUser, mkProfile)
+│   ├── core.nix           # Shared Nix helpers (scanModules, discoverHosts, mkDisko, mkProfile)
 │   └── disko/
 │       └── generator.nix  # Dynamic mkDisko partition generator
 ├── modules/               # Option-based modules (auto-discovered)
 │   ├── features/          # Vertical feature slices (core, desktop, dev, shell, terminals, tools)
 │   ├── hardware/          # Hardware drivers (NVIDIA)
 │   └── profiles/          # Composable feature bundles (base, desktop, workstation, gaming)
-├── installer/             # Python interactive installer
-├── tests/                 # Python test suites
+├── scripts/               # Repository and maintenance utility scripts
+├── shell/                 # ctOS Quickshell desktop environment and greeter
+├── tests/                 # End-to-end and boundary test suites
 └── assets/                # Themes and media
 ```

@@ -177,23 +177,12 @@ let
               }
             ];
 
-            # Layer rules for notification bars / shell overlays
-            layer-rules = [
-              {
-                matches = [
-                  { namespace = "^waybar$"; }
-                ];
-                shadow.enable = false;
-              }
-            ];
-
             # Comprehensive Keybindings
             binds = {
               # Application Launchers
               "Mod+Return".action = actions.spawn "kitty";
               "Mod+Shift+Return".action = actions.spawn "ghostty";
               "Mod+D".action = actions.spawn "ctos-shell-msg" "toggleCommandDeck";
-              "Mod+Space".action = actions.spawn "ctos-shell-msg" "toggleCommandDeck";
               "Mod+E".action = actions.spawn "kitty" "-e" "yazi";
               "Mod+B".action = actions.spawn "zen";
               "Mod+Shift+Slash".action = actions.show-hotkey-overlay;

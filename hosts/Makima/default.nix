@@ -21,8 +21,6 @@
     home.homeDirectory = lib.mkForce "/home/reze";
   };
 
-  # Bootloader (Limine)
-  boot.loader.limine.resolution = "1920x1080";
   ctos.features.boot.secureBoot.enable = true;
 
   users.users.reze = {
