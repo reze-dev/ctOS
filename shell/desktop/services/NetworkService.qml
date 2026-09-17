@@ -512,7 +512,7 @@ Singleton {
                     readonly property var network: modelData
 
                     Connections {
-                        target: netDelegate.network
+                        target: (netDelegate.network && netDelegate.network.signalStrength !== undefined) ? netDelegate.network : null
                         function onConnectedChanged() {
                             if (netDelegate.network && netDelegate.network.connected) {
                                 if (root.connectingSsid === netDelegate.network.name ||

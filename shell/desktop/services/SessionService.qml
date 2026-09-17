@@ -18,6 +18,8 @@ Singleton {
     // Base command: ["niri", "msg", "action", "quit"] (-s appended for non-interactive exit)
     readonly property var logoutCommand: isNiri ? ["niri", "msg", "action", "quit", "-s"] : ["hyprctl", "dispatch", "exit"]
 
+    readonly property bool dryRun: Quickshell.env("CTOS_SESSION_DRY_RUN") === "1"
+
     property int fallbackStage: 0
 
     // =========================================================================
@@ -83,6 +85,11 @@ Singleton {
     // =========================================================================
     function lock(): void {
         root.sessionActionTriggered("lock");
+        if (root.dryRun) {
+            console.log("[SessionService] DRY-RUN: lock requested, skipping host command");
+            root.sessionActionFinished("lock", 0);
+            return;
+        }
         if (!lockProcess.running) {
             lockProcess.running = true;
         }
@@ -90,6 +97,11 @@ Singleton {
 
     function logout(): void {
         root.sessionActionTriggered("logout");
+        if (root.dryRun) {
+            console.log("[SessionService] DRY-RUN: logout requested, skipping host command");
+            root.sessionActionFinished("logout", 0);
+            return;
+        }
         if (!logoutProcess.running) {
             if (root.compositorName === "unknown") {
                 root.fallbackStage = 1;
@@ -135,6 +147,11 @@ Singleton {
 
     function reboot(): void {
         root.sessionActionTriggered("reboot");
+        if (root.dryRun) {
+            console.log("[SessionService] DRY-RUN: reboot requested, skipping host command");
+            root.sessionActionFinished("reboot", 0);
+            return;
+        }
         if (!rebootProcess.running) {
             rebootProcess.running = true;
         }
@@ -142,6 +159,11 @@ Singleton {
 
     function poweroff(): void {
         root.sessionActionTriggered("poweroff");
+        if (root.dryRun) {
+            console.log("[SessionService] DRY-RUN: poweroff requested, skipping host command");
+            root.sessionActionFinished("poweroff", 0);
+            return;
+        }
         if (!poweroffProcess.running) {
             poweroffProcess.running = true;
         }

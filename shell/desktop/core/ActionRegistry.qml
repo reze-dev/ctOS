@@ -506,6 +506,7 @@ Singleton {
         // 1. Applications Search & Ranking
         const appResults = [];
         const allApps = root.applications;
+        let nameMatches = 0;
         for (let i = 0; i < allApps.length; ++i) {
             const app = allApps[i];
             const name = app.nameLower;
@@ -519,13 +520,16 @@ Singleton {
                 const nameScore = root._fuzzyScore(name, q, app.name || "");
                 if (nameScore !== null) {
                     score = nameScore.score;
-                } else if (generic.startsWith(q) || generic.includes(q) || comment.includes(q)) {
-                    score = 5.0;
-                } else {
-                    const genericScore = root._fuzzyScore(generic, q, app.genericName || "");
-                    const commentScore = root._fuzzyScore(comment, q, app.comment || "");
-                    if (genericScore !== null || commentScore !== null) {
-                        score = 6.0;
+                    nameMatches++;
+                } else if (nameMatches < 15) {
+                    if (generic.startsWith(q) || generic.includes(q) || comment.includes(q)) {
+                        score = 5.0;
+                    } else {
+                        const genericScore = root._fuzzyScore(generic, q, app.genericName || "");
+                        const commentScore = root._fuzzyScore(comment, q, app.comment || "");
+                        if (genericScore !== null || commentScore !== null) {
+                            score = 6.0;
+                        }
                     }
                 }
             }
