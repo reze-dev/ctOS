@@ -17,7 +17,6 @@ in
       rustup
       tree-sitter
       duckdb
-      jdk25
       shfmt
       shellcheck
       qt6.qtdeclarative
