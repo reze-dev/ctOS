@@ -400,16 +400,16 @@ Scope {
                 WlrLayershell.namespace: "ctos-widgets"
 
                 anchors {
-                    top: Settings.getWidgetAnchor("audioSurveillance", "top", false)
-                    bottom: Settings.getWidgetAnchor("audioSurveillance", "bottom", true)
-                    left: Settings.getWidgetAnchor("audioSurveillance", "left", true)
-                    right: Settings.getWidgetAnchor("audioSurveillance", "right", false)
+                    top: Settings.getWidgetAnchor("audioSurveillance", "top", true)
+                    bottom: Settings.getWidgetAnchor("audioSurveillance", "bottom", false)
+                    left: Settings.getWidgetAnchor("audioSurveillance", "left", false)
+                    right: Settings.getWidgetAnchor("audioSurveillance", "right", true)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("audioSurveillance", "top", 0)
-                    bottom: Settings.getWidgetMargin("audioSurveillance", "bottom", Theme.spacing2Xl)
-                    left: Settings.getWidgetMargin("audioSurveillance", "left", Theme.spacing2Xl)
-                    right: Settings.getWidgetMargin("audioSurveillance", "right", 0)
+                    top: Settings.hasWidgetMargin("audioSurveillance", "top") ? Settings.getWidgetMargin("audioSurveillance", "top", 0) : (Theme.barHeight + Theme.spacingXl + (Settings.widgetCpuHexGridVisible ? 200 + Theme.spacingXl : 0) + (Settings.widgetRamBlockBarVisible ? 110 + Theme.spacingXl : 0))
+                    bottom: Settings.getWidgetMargin("audioSurveillance", "bottom", 0)
+                    left: Settings.getWidgetMargin("audioSurveillance", "left", 0)
+                    right: Settings.getWidgetMargin("audioSurveillance", "right", Theme.spacing2Xl)
                 }
 
                 implicitWidth: audioSurveillanceWidget.implicitWidth
