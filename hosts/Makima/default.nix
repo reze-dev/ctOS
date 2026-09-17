@@ -33,6 +33,7 @@
       "wheel"
       "libvirtd"
       "docker"
+      "wireshark"
     ];
     shell = pkgs.zsh;
     hashedPassword = "$6$7uVH9VA23imtOFPs$Rx7oc7xoN5gxBqdB6pg1ZG7xqAeX4LIzLuKjPExFOySTdfmVGdDbCD.4K/dtLLbUbdpcNJ8W5OYpeknaij6mM.";
@@ -59,6 +60,9 @@
     nvidiaBusId = "PCI:1:0:0";
     amdgpuBusId = "PCI:5:0:0";
   };
+
+  programs.wireshark.enable = true;
+  programs.wireshark.package = pkgs.wireshark-cli;
 
   networking.hostName = "Makima";
   system.stateVersion = "26.11";

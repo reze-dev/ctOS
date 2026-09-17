@@ -52,6 +52,7 @@ Singleton {
     property bool widgetNetworkFlowVisible: true
     property bool widgetRamBlockBarVisible: true
     property bool widgetNetworkTracerVisible: true
+    property bool widgetPacketAnalyzerVisible: false
     property bool widgetAudioSurveillanceVisible: true
     property bool widgetTargetProfilerVisible: true
 

@@ -832,4 +832,33 @@ Scope {
             onCloseRequested: root.closeNetwork()
         }
     }
+
+    PanelWindow {
+        id: packetAnalyzerHost
+        
+        screen: root.resolveTargetScreen()
+        color: "transparent"
+        visible: Settings.widgetPacketAnalyzerVisible
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Bottom
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-packet-analyzer"
+
+        anchors {
+            bottom: true
+            left: true
+        }
+        margins {
+            bottom: Theme.spacingMedium
+            left: Theme.spacingMedium
+        }
+
+        implicitWidth: packetAnalyzerWidget.implicitWidth
+        implicitHeight: packetAnalyzerWidget.implicitHeight
+
+        PacketAnalyzerWidget {
+            id: packetAnalyzerWidget
+        }
+    }
 }
