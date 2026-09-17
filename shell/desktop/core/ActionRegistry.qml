@@ -46,6 +46,11 @@ Singleton {
                     if (entry && typeof entry.execute === "function") {
                         entry.execute();
                     }
+                },
+                callback: function () {
+                    if (entry && typeof entry.execute === "function") {
+                        entry.execute();
+                    }
                 }
             });
         }
@@ -238,6 +243,46 @@ Singleton {
         }
     ]
 
+    function _isWordBoundary(textLower, originalText, index) {
+        if (index === 0)
+            return true;
+        if (index < 0 || !textLower || index >= textLower.length)
+            return false;
+
+        // 1. Delimiter boundary: character after whitespace or punctuation
+        const prevChar = textLower[index - 1];
+        if (/[\s\-_.:/+,;@#|()\[\]{}<>]/.test(prevChar))
+            return true;
+
+        // 2. CamelCase boundary in originalText: uppercase after lowercase or start of capitalized segment
+        if (originalText && index < originalText.length) {
+            const curr = originalText[index];
+            const prev = originalText[index - 1];
+            if (curr >= 'A' && curr <= 'Z') {
+                if (prev >= 'a' && prev <= 'z')
+                    return true;
+                if (index + 1 < originalText.length && originalText[index + 1] >= 'a' && originalText[index + 1] <= 'z' && prev >= 'A' && prev <= 'Z')
+                    return true;
+            }
+        }
+
+        // 3. Digit / letter transition
+        const currChar = textLower[index];
+        const isDigitCurr = (currChar >= '0' && currChar <= '9');
+        const isDigitPrev = (prevChar >= '0' && prevChar <= '9');
+        if (isDigitCurr !== isDigitPrev)
+            return true;
+
+        // 4. Subword boundary for compound words (e.g. "fox" in "firefox")
+        if (index >= 3 && /[a-z]/.test(prevChar)) {
+            const sub = textLower.substring(index);
+            if (/^(fox|bird|box|shark|pass|vim|office|shell|deck|calc|term|view|pad|edit|play|node)/.test(sub))
+                return true;
+        }
+
+        return false;
+    }
+
     function _matchesWordBoundary(text, query) {
         if (!text || !query)
             return false;
@@ -247,6 +292,212 @@ Singleton {
                 return true;
         }
         return false;
+    }
+
+    function _fuzzyScore(textLower, queryLower, originalText) {
+        if (!textLower || !queryLower || typeof textLower !== "string" || typeof queryLower !== "string")
+            return null;
+
+        const tLower = textLower.toLowerCase();
+        const qLower = queryLower.toLowerCase().trim();
+        const tLen = tLower.length;
+        const qLen = qLower.length;
+
+        if (qLen === 0 || qLen > tLen)
+            return null;
+
+        // Tier 0: Exact match
+        if (tLower === qLower) {
+            return {
+                score: 0,
+                firstMatchIdx: 0,
+                lastMatchIdx: tLen - 1,
+                span: tLen,
+                boundaryMatches: qLen,
+                maxConsecutive: qLen,
+                compactness: 1.0,
+                startsAtStart: true,
+                isAcronym: false,
+                valueOf: function () {
+                    return this.score;
+                }
+            };
+        }
+
+        // Tier 1: Prefix match
+        if (tLower.startsWith(qLower)) {
+            return {
+                score: 1,
+                firstMatchIdx: 0,
+                lastMatchIdx: qLen - 1,
+                span: qLen,
+                boundaryMatches: 1,
+                maxConsecutive: qLen,
+                compactness: 1.0,
+                startsAtStart: true,
+                isAcronym: false,
+                valueOf: function () {
+                    return this.score;
+                }
+            };
+        }
+
+        // Tier 2: Word boundary match
+        if (root._matchesWordBoundary(tLower, qLower)) {
+            let matchIdx = -1;
+            const words = tLower.split(/[\s\-_.:/]+/);
+            let curOffset = 0;
+            for (let w = 0; w < words.length; ++w) {
+                const word = words[w];
+                const foundPos = tLower.indexOf(word, curOffset);
+                if (word.startsWith(qLower)) {
+                    matchIdx = foundPos;
+                    break;
+                }
+                curOffset = foundPos + word.length;
+            }
+            const startIdx = matchIdx >= 0 ? matchIdx : tLower.indexOf(qLower);
+            return {
+                score: 2,
+                firstMatchIdx: startIdx,
+                lastMatchIdx: startIdx + qLen - 1,
+                span: qLen,
+                boundaryMatches: 1,
+                maxConsecutive: qLen,
+                compactness: 1.0,
+                startsAtStart: (startIdx === 0),
+                isAcronym: false,
+                valueOf: function () {
+                    return this.score;
+                }
+            };
+        }
+
+        // Tier 3: Contiguous substring match
+        if (tLower.includes(qLower)) {
+            const startIdx = tLower.indexOf(qLower);
+            return {
+                score: 3,
+                firstMatchIdx: startIdx,
+                lastMatchIdx: startIdx + qLen - 1,
+                span: qLen,
+                boundaryMatches: 0,
+                maxConsecutive: qLen,
+                compactness: 1.0,
+                startsAtStart: (startIdx === 0),
+                isAcronym: false,
+                valueOf: function () {
+                    return this.score;
+                }
+            };
+        }
+
+        // Tier 3.5: Acronym / Initials match
+        // Check if query matches word/subword boundaries in order
+        const boundaries = [];
+        for (let b = 0; b < tLen; ++b) {
+            if (root._isWordBoundary(tLower, originalText, b)) {
+                boundaries.push(b);
+            }
+        }
+
+        let bIdx = 0;
+        let bQueryIdx = 0;
+        let bFirstIdx = -1;
+        let bLastIdx = -1;
+        while (bIdx < boundaries.length && bQueryIdx < qLen) {
+            const charIdx = boundaries[bIdx];
+            if (tLower[charIdx] === qLower[bQueryIdx]) {
+                if (bFirstIdx === -1)
+                    bFirstIdx = charIdx;
+                bLastIdx = charIdx;
+                bQueryIdx++;
+            }
+            bIdx++;
+        }
+
+        if (bQueryIdx === qLen) {
+            const bSpan = bLastIdx - bFirstIdx + 1;
+            return {
+                score: 3.5,
+                firstMatchIdx: bFirstIdx,
+                lastMatchIdx: bLastIdx,
+                span: bSpan,
+                boundaryMatches: qLen,
+                maxConsecutive: 1,
+                compactness: qLen / bSpan,
+                startsAtStart: (bFirstIdx === 0),
+                isAcronym: true,
+                valueOf: function () {
+                    return this.score;
+                }
+            };
+        }
+
+        // Tier 4.0–4.9: General fuzzy subsequence match
+        // Two-pointer linear scan for subsequence matching
+        let tIdx = 0;
+        let qIdx = 0;
+        let firstMatchIdx = -1;
+        let lastMatchIdx = -1;
+        let consecutiveMatches = 0;
+        let maxConsecutive = 0;
+        let boundaryMatches = 0;
+        let prevMatchIdx = -2;
+
+        while (tIdx < tLen && qIdx < qLen) {
+            if (tLower[tIdx] === qLower[qIdx]) {
+                if (firstMatchIdx === -1)
+                    firstMatchIdx = tIdx;
+                lastMatchIdx = tIdx;
+
+                if (root._isWordBoundary(tLower, originalText, tIdx))
+                    boundaryMatches++;
+
+                if (tIdx === prevMatchIdx + 1) {
+                    consecutiveMatches++;
+                    if (consecutiveMatches > maxConsecutive)
+                        maxConsecutive = consecutiveMatches;
+                } else {
+                    consecutiveMatches = 1;
+                    if (consecutiveMatches > maxConsecutive)
+                        maxConsecutive = consecutiveMatches;
+                }
+
+                prevMatchIdx = tIdx;
+                qIdx++;
+            }
+            tIdx++;
+        }
+
+        // All characters in query must be found in order
+        if (qIdx < qLen)
+            return null;
+
+        const span = lastMatchIdx - firstMatchIdx + 1;
+        const compactness = qLen / span;
+        const startsAtStart = (firstMatchIdx === 0);
+
+        const spanPenalty = (1.0 - compactness) * 0.5;
+        const boundaryBonus = Math.min(0.2, (boundaryMatches / qLen) * 0.2);
+        const startBonus = startsAtStart ? 0.1 : 0.0;
+        const penalty = Math.max(0.0, Math.min(0.9, spanPenalty + 0.3 - boundaryBonus - startBonus));
+        const score = Math.round((4.0 + penalty) * 100) / 100;
+
+        return {
+            score: score,
+            firstMatchIdx: firstMatchIdx,
+            lastMatchIdx: lastMatchIdx,
+            span: span,
+            boundaryMatches: boundaryMatches,
+            maxConsecutive: maxConsecutive,
+            compactness: compactness,
+            startsAtStart: startsAtStart,
+            isAcronym: false,
+            valueOf: function () {
+                return this.score;
+            }
+        };
     }
 
     function search(query: string): var {
@@ -264,16 +515,19 @@ Singleton {
             let score = -1;
             if (q === "") {
                 score = 10;
-            } else if (name === q) {
-                score = 0;
-            } else if (name.startsWith(q)) {
-                score = 1;
-            } else if (root._matchesWordBoundary(name, q)) {
-                score = 2;
-            } else if (name.includes(q)) {
-                score = 3;
-            } else if (generic.startsWith(q) || generic.includes(q) || comment.includes(q)) {
-                score = 4;
+            } else {
+                const nameScore = root._fuzzyScore(name, q, app.name || "");
+                if (nameScore !== null) {
+                    score = nameScore.score;
+                } else if (generic.startsWith(q) || generic.includes(q) || comment.includes(q)) {
+                    score = 5.0;
+                } else {
+                    const genericScore = root._fuzzyScore(generic, q, app.genericName || "");
+                    const commentScore = root._fuzzyScore(comment, q, app.comment || "");
+                    if (genericScore !== null || commentScore !== null) {
+                        score = 6.0;
+                    }
+                }
             }
 
             if (score >= 0) {
@@ -300,34 +554,34 @@ Singleton {
             let score = -1;
             if (q === "") {
                 score = 10;
-            } else if (name === q) {
-                score = 0;
-            } else if (name.startsWith(q)) {
-                score = 1;
-            } else if (root._matchesWordBoundary(name, q)) {
-                score = 2;
-            } else if (name.includes(q)) {
-                score = 3;
             } else {
-                const kw = act.keywords || [];
-                for (let k = 0; k < kw.length; ++k) {
-                    const keyword = (kw[k] || "").toLowerCase();
-                    if (keyword.startsWith(q) || keyword === q) {
-                        score = 4;
-                        break;
-                    }
-                }
-                if (score < 0) {
+                const actNameScore = root._fuzzyScore(name, q, act.name || "");
+                if (actNameScore !== null && actNameScore.score <= 3.5) {
+                    score = actNameScore.score;
+                } else {
+                    const kw = act.keywords || [];
                     for (let k = 0; k < kw.length; ++k) {
                         const keyword = (kw[k] || "").toLowerCase();
-                        if (keyword.includes(q)) {
+                        if (keyword.startsWith(q) || keyword === q) {
                             score = 4;
                             break;
                         }
                     }
-                }
-                if (score < 0 && desc.includes(q)) {
-                    score = 5;
+                    if (score < 0) {
+                        for (let k = 0; k < kw.length; ++k) {
+                            const keyword = (kw[k] || "").toLowerCase();
+                            if (keyword.includes(q)) {
+                                score = 4;
+                                break;
+                            }
+                        }
+                    }
+                    if (score < 0 && desc.includes(q)) {
+                        score = 5;
+                    }
+                    if (score < 0 && actNameScore !== null) {
+                        score = actNameScore.score;
+                    }
                 }
             }
 
@@ -341,7 +595,7 @@ Singleton {
         actResults.sort(function (a, b) {
             if (a.score !== b.score)
                 return a.score - b.score;
-            return 0;
+            return a.name.localeCompare(b.name);
         });
 
         // Return grouped results: Applications first, then Actions

@@ -5,6 +5,8 @@ import QtQuick
 import QtQml
 import Quickshell
 import Quickshell.Networking
+import Quickshell.Io
+
 
 Singleton {
     id: root
@@ -43,6 +45,12 @@ Singleton {
     property string connectingSsid: ""
     readonly property bool isConnecting: connectingSsid !== ""
     property string lastError: ""
+    property bool isScanning: false
+
+    // Categorized network helper accessors
+    readonly property var connectedNetworks: availableNetworks ? availableNetworks.filter(n => n.connected) : []
+    readonly property var savedNetworks: availableNetworks ? availableNetworks.filter(n => n.known && !n.connected) : []
+    readonly property var discoveredNetworks: availableNetworks ? availableNetworks.filter(n => !n.known && !n.connected) : []
 
     // Milestone 4 (Requirement R6): Watchdog & Connection Timing Parameters
     property int watchdogInterval: 10000
@@ -171,6 +179,7 @@ Singleton {
         if (Networking.wifiEnabled) {
             connectionTimeoutTimer.stop();
             root.connectingSsid = "";
+            root.stopScan();
         }
         Networking.wifiEnabled = !Networking.wifiEnabled;
     }
@@ -183,8 +192,57 @@ Singleton {
         if (!enabled) {
             connectionTimeoutTimer.stop();
             root.connectingSsid = "";
+            root.stopScan();
         }
         Networking.wifiEnabled = enabled;
+    }
+
+    // Requests Wi-Fi network rescan via nmcli
+    function scanNetworks(): void {
+        if (!root.available || !root.wifiEnabled || rescanProcess.running) {
+            return;
+        }
+        root.isScanning = true;
+        rescanProcess.running = true;
+    }
+
+    // Stops active scan
+    function stopScan(): void {
+        if (rescanProcess.running) {
+            rescanProcess.running = false;
+        }
+        root.isScanning = false;
+    }
+
+    // Toggles active scanning state
+    function toggleScan(): void {
+        if (root.isScanning || rescanProcess.running) {
+            root.stopScan();
+        } else {
+            root.scanNetworks();
+        }
+    }
+
+    // Forces an immediate re-evaluation and rescan
+    function refresh(): void {
+        root._evaluateNetworkState();
+        root._scheduleRebuild();
+        if (root.available && root.wifiEnabled) {
+            root.scanNetworks();
+        }
+    }
+
+    // Declarative process for network scanning
+    Process {
+        id: rescanProcess
+        command: ["nmcli", "dev", "wifi", "rescan"]
+        running: false
+
+        onExited: function(exitCode) {
+            root.isScanning = false;
+            root._evaluateNetworkState();
+            root._scheduleRebuild();
+        }
     }
 
     // =========================================================================
@@ -407,6 +465,9 @@ Singleton {
             root._scheduleRebuild();
         }
         function onWifiEnabledChanged() {
+            if (!root.wifiEnabled) {
+                root.stopScan();
+            }
             root._evaluateNetworkState();
             root._scheduleRebuild();
         }
@@ -533,6 +594,7 @@ Singleton {
 
     onAvailableChanged: {
         if (!root.available) {
+            root.stopScan();
             connectionTimeoutTimer.stop();
             if (root.connectingSsid !== "") {
                 const failedSsid = root.connectingSsid;

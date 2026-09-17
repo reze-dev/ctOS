@@ -100,7 +100,7 @@ def main():
                 "id": "NIRI_EXPLICIT",
                 "env": {"XDG_CURRENT_DESKTOP": "niri", "NIRI_SOCKET": None, "HYPRLAND_INSTANCE_SIGNATURE": None},
                 "exp_is_niri": True, "exp_is_hypr": False, "exp_comp": "niri",
-                "exp_logout": ["niri", "msg", "action", "quit"]
+                "exp_logout": ["niri", "msg", "action", "quit", "-s"]
             },
             {
                 "id": "HYPRLAND_EXPLICIT",
@@ -112,7 +112,7 @@ def main():
                 "id": "NIRI_SOCKET_FALLBACK",
                 "env": {"XDG_CURRENT_DESKTOP": "", "NIRI_SOCKET": "/run/user/1000/niri.sock", "HYPRLAND_INSTANCE_SIGNATURE": None},
                 "exp_is_niri": True, "exp_is_hypr": False, "exp_comp": "niri",
-                "exp_logout": ["niri", "msg", "action", "quit"]
+                "exp_logout": ["niri", "msg", "action", "quit", "-s"]
             },
             {
                 "id": "HYPRLAND_SIG_FALLBACK",
@@ -130,7 +130,7 @@ def main():
                 "id": "COLON_DESKTOP_LIST",
                 "env": {"XDG_CURRENT_DESKTOP": "GNOME:niri", "NIRI_SOCKET": None, "HYPRLAND_INSTANCE_SIGNATURE": None},
                 "exp_is_niri": True, "exp_is_hypr": False, "exp_comp": "niri",
-                "exp_logout": ["niri", "msg", "action", "quit"]
+                "exp_logout": ["niri", "msg", "action", "quit", "-s"]
             }
         ]
 
@@ -428,6 +428,7 @@ Scope {
                 print(f"    - Intercepted: {inv}")
                 bin_name = inv.split()[0]
                 assert_test(f"INTERCEPT_SAFE.{bin_name}", bin_name in ["loginctl", "hyprctl", "niri", "systemctl", "hyprlock"])
+            assert_test("INTERCEPT_NIRI_QUIT_FLAG_S", any("niri msg action quit -s" in inv for inv in invocations), "Recorded niri msg action quit -s")
         else:
             assert_test("INTERCEPT_LOG_EXISTS", False, "Mock invocations log was not created")
 
