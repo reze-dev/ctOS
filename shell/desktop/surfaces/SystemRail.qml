@@ -58,7 +58,6 @@ FocusScope {
     function executeConfirmation(): void {
         const action = confirmationAction;
         confirmationAction = "";
-        OverlayController.close();
 
         if (action === "reboot") {
             SessionService.reboot();
@@ -763,7 +762,6 @@ FocusScope {
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
                     onClicked: {
-                        OverlayController.close();
                         SessionService.lock();
                         if (false) lockProcess.running = true;
                     }

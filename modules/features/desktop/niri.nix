@@ -328,34 +328,6 @@ in
       enable = true;
       # Override the package to use nixpkgs's niri instead of the flake's build
       package = pkgs.niri;
-      settings = {
-        spawn-at-startup = [
-          {
-            command = [
-              "dbus-update-activation-environment"
-              "--systemd"
-              "WAYLAND_DISPLAY"
-              "XDG_CURRENT_DESKTOP"
-              "DISPLAY"
-              "GTK_USE_PORTAL"
-              "NIRI_SOCKET"
-            ];
-          }
-          {
-            command = [
-              "sh"
-              "-c"
-              "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL NIRI_SOCKET && systemctl --user start nixos-fake-graphical-session.target"
-            ];
-          }
-          {
-            command = [ "ctos-shell" ];
-          }
-          {
-            command = [ "hypridle" ];
-          }
-        ];
-      };
     };
 
     home-manager.sharedModules = [ hmNiriModule ];
