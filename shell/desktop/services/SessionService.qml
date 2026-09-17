@@ -15,7 +15,10 @@ Singleton {
     readonly property bool isHyprland: currentDesktop.includes("hyprland") || Boolean(Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
     readonly property string compositorName: isNiri ? "niri" : (isHyprland ? "hyprland" : "unknown")
 
-    readonly property var logoutCommand: isNiri ? ["niri", "msg", "action", "quit"] : ["hyprctl", "dispatch", "exit"]
+    // Base command: ["niri", "msg", "action", "quit"] (-s appended for non-interactive exit)
+    readonly property var logoutCommand: isNiri ? ["niri", "msg", "action", "quit", "-s"] : ["hyprctl", "dispatch", "exit"]
+
+    property int fallbackStage: 0
 
     // =========================================================================
     // Reactive Process States
@@ -51,7 +54,7 @@ Singleton {
         running: false
 
         onExited: function(exitCode) {
-            root.sessionActionFinished("logout", exitCode);
+            root.handleLogoutExit(exitCode);
         }
     }
 
@@ -88,7 +91,45 @@ Singleton {
     function logout(): void {
         root.sessionActionTriggered("logout");
         if (!logoutProcess.running) {
-            logoutProcess.running = true;
+            if (root.compositorName === "unknown") {
+                root.fallbackStage = 1;
+                logoutProcess.command = ["niri", "msg", "action", "quit", "-s"];
+                logoutProcess.running = true;
+            } else {
+                root.fallbackStage = 0;
+                logoutProcess.command = root.logoutCommand;
+                logoutProcess.running = true;
+            }
+        }
+    }
+
+    function handleLogoutExit(exitCode: int): void {
+        if (root.fallbackStage === 1) {
+            if (exitCode === 0) {
+                root.fallbackStage = 0;
+                logoutProcess.command = root.logoutCommand;
+                root.sessionActionFinished("logout", exitCode);
+            } else {
+                root.fallbackStage = 2;
+                logoutProcess.command = ["hyprctl", "dispatch", "exit"];
+                logoutProcess.running = true;
+            }
+        } else if (root.fallbackStage === 2) {
+            if (exitCode === 0) {
+                root.fallbackStage = 0;
+                logoutProcess.command = root.logoutCommand;
+                root.sessionActionFinished("logout", exitCode);
+            } else {
+                root.fallbackStage = 3;
+                logoutProcess.command = ["loginctl", "terminate-session", ""];
+                logoutProcess.running = true;
+            }
+        } else if (root.fallbackStage === 3) {
+            root.fallbackStage = 0;
+            logoutProcess.command = root.logoutCommand;
+            root.sessionActionFinished("logout", exitCode);
+        } else {
+            root.sessionActionFinished("logout", exitCode);
         }
     }
 

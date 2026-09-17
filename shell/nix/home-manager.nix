@@ -29,7 +29,7 @@ in
       };
 
       Service = {
-        ExecStart = "${pkgs.quickshell}/bin/qs --path ${ctosPackage}/share/ctos/shell.qml";
+        ExecStart = "${ctosPackage}/bin/ctos-shell";
         Restart = "on-failure";
         RestartSec = 2;
         StartLimitBurst = 5;

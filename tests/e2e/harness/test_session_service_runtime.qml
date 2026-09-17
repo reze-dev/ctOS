@@ -111,12 +111,13 @@ Scope {
                         "logoutCommand=" + JSON.stringify(SessionService.logoutCommand));
 
                     if (SessionService.isNiri) {
-                        assertCondition("M4.RUNTIME.12", "Niri logoutCommand is ['niri', 'msg', 'action', 'quit']",
-                            SessionService.logoutCommand.length === 4 &&
+                        assertCondition("M4.RUNTIME.12", "Niri logoutCommand is ['niri', 'msg', 'action', 'quit', '-s']",
+                            SessionService.logoutCommand.length === 5 &&
                             SessionService.logoutCommand[0] === "niri" &&
                             SessionService.logoutCommand[1] === "msg" &&
                             SessionService.logoutCommand[2] === "action" &&
-                            SessionService.logoutCommand[3] === "quit",
+                            SessionService.logoutCommand[3] === "quit" &&
+                            SessionService.logoutCommand[4] === "-s",
                             "command=" + JSON.stringify(SessionService.logoutCommand));
                     } else {
                         assertCondition("M4.RUNTIME.12", "Hyprland logoutCommand is ['hyprctl', 'dispatch', 'exit']",
