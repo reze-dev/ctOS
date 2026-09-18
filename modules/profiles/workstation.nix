@@ -11,6 +11,7 @@ let
     "fish"
     "fzf"
     "git"
+    "nvf"
     "starship"
     "tmux"
     "virtualization"
