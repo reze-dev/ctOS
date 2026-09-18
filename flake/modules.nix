@@ -6,5 +6,6 @@
     ./devshell.nix
     ./formatter.nix
     ./shell.nix
+    ./nvf.nix
   ];
 }
