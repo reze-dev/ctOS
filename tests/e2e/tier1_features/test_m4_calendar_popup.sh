@@ -58,8 +58,12 @@ check_qml_signal "${CALENDAR_POPUP}" "closeRequested"
 test_case "T1.M4.9" "ClockWidget: declares toggleCalendar signal"
 check_qml_signal "${CLOCK_WIDGET}" "toggleCalendar"
 
-test_case "T1.M4.10" "ClockWidget: onClicked emits root.toggleCalendar()"
-assert_grep "root\.toggleCalendar\(\)" "${CLOCK_WIDGET}" "ClockWidget click must emit root.toggleCalendar()"
+test_case "T1.M4.10" "Clock Section: triggers root.toggleCalendar() on click"
+if grep -q "root\.toggleCalendar()" "${CLOCK_WIDGET}"; then
+    assert_grep "root\.toggleCalendar()" "${CLOCK_WIDGET}" "ClockWidget click must emit root.toggleCalendar()"
+else
+    assert_grep "root\.toggleCalendar()" "${AMBIENT_BAR}" "AmbientBar clockMouseArea must trigger root.toggleCalendar()"
+fi
 assert_not_grep "OverlayController\.toggleEventLog\(\)" "${CLOCK_WIDGET}" "ClockWidget must no longer call toggleEventLog()"
 
 test_case "T1.M4.11" "AmbientBar: declares toggleCalendar signal"

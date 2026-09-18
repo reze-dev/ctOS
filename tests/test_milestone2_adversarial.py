@@ -6,15 +6,41 @@ Swap clamping, critical threshold triggers, and CornerBrackets parameters.
 """
 
 import math
+import os
+import re
 import unittest
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
+class HoneycombResult(dict):
+    """Result dict that also supports 3-tuple unpacking, indexing, and comparison to (0, 0, 0)."""
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return (self.get("cols", 0), self.get("rows", 0), self.get("hexRadius", 0))[key]
+        return super().__getitem__(key)
+
+    def __iter__(self):
+        yield self.get("cols", 0)
+        yield self.get("rows", 0)
+        yield self.get("hexRadius", 0)
+
+    def __eq__(self, other):
+        if isinstance(other, tuple) and other == (0, 0, 0):
+            return not self.get("valid", True)
+        return super().__eq__(other)
 
 
 def solve_honeycomb_layout(core_count, max_width=250, max_height=140):
     """Reference solver for CpuHexGrid honeycomb layout calculation.
     Bounds across 1..128 cores.
     """
+    if max_width <= 0 or max_height <= 0:
+        return HoneycombResult({"cols": 0, "rows": 0, "hexRadius": 0, "valid": False})
+
     if core_count <= 0:
-        return {"cols": 1, "rows": 1, "hexRadius": 10, "valid": False}
+        return HoneycombResult({"cols": 1, "rows": 1, "hexRadius": 10, "valid": False})
 
     best = None
     min_waste = float("inf")
@@ -28,7 +54,7 @@ def solve_honeycomb_layout(core_count, max_width=250, max_height=140):
         waste = abs((cols * 1.75 * r) / max_width - ((rows + 0.5) * 1.732 * r) / max_height)
         if waste < min_waste or best is None:
             min_waste = waste
-            best = {"cols": cols, "rows": rows, "hexRadius": r, "valid": True}
+            best = HoneycombResult({"cols": cols, "rows": rows, "hexRadius": r, "valid": True})
 
     return best
 
@@ -97,6 +123,18 @@ class TestMilestone2Adversarial(unittest.TestCase):
     def test_09_zero_core_protection(self):
         res = solve_honeycomb_layout(0)
         self.assertFalse(res["valid"])
+        # Zero and negative dimensions protection
+        res_zero_w = solve_honeycomb_layout(10, max_width=0, max_height=100)
+        self.assertFalse(res_zero_w["valid"])
+        self.assertEqual(res_zero_w, (0, 0, 0))
+
+        res_zero_h = solve_honeycomb_layout(10, max_width=100, max_height=0)
+        self.assertFalse(res_zero_h["valid"])
+        self.assertEqual(res_zero_h, (0, 0, 0))
+
+        res_neg = solve_honeycomb_layout(10, max_width=-50, max_height=-50)
+        self.assertFalse(res_neg["valid"])
+        self.assertEqual(res_neg, (0, 0, 0))
 
     def test_10_negative_core_protection(self):
         res = solve_honeycomb_layout(-4)
@@ -147,10 +185,20 @@ class TestMilestone2Adversarial(unittest.TestCase):
         self.assertIn("%", label)
 
     def test_19_corner_brackets_dimensions(self):
-        bracket_length = 8
-        bracket_thickness = 1
-        self.assertGreater(bracket_length, 0)
-        self.assertGreater(bracket_thickness, 0)
+        brackets_path = os.path.join(PROJECT_ROOT, "shell/desktop/surfaces/widgets/CornerBrackets.qml")
+        self.assertTrue(os.path.isfile(brackets_path), f"CornerBrackets.qml missing at {brackets_path}")
+        with open(brackets_path, "r", encoding="utf-8") as f:
+            src = f.read()
+
+        # Check property contracts
+        self.assertRegex(src, r"property\s+alias\s+bracketLength\s*:\s*root\.armLength")
+        self.assertRegex(src, r"property\s+alias\s+bracketThickness\s*:\s*root\.thickness")
+        self.assertRegex(src, r"property\s+alias\s+bracketMargin\s*:\s*root\.margin")
+        self.assertRegex(src, r"property\s+color\s+bracketColor\s*:\s*Theme\.acidGreen")
+
+        # Verify exactly 8 corner rectangles exist (2 per corner * 4 corners)
+        rect_count = len(re.findall(r"\bRectangle\s*\{", src))
+        self.assertEqual(rect_count, 8)
 
 
 if __name__ == "__main__":

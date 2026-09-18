@@ -97,6 +97,7 @@ done
 
 export PROJECT_ROOT
 export VERBOSE="${VERBOSE_FLAG}"
+export CTOS_SUITE_RUNNER=1
 
 # Temporary accumulator for test results
 GLOBAL_RESULTS_TMP=$(mktemp "/tmp/ctos-test-suite-XXXXXX.log")
