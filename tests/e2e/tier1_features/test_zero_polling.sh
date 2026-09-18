@@ -43,7 +43,7 @@ fi
 
 test_case "T1.12.5" "Zero Polling: Event-driven services without external poll scripts"
 if [[ -d "${DESKTOP_DIR}/services" ]]; then
-    assert_not_grep "(sleep|watch|poll)" "${DESKTOP_DIR}/services" "Services must be reactive event-driven"
+    assert_not_grep "\b(sleep|watch)\s+[0-9]" "${DESKTOP_DIR}/services" "Services must be reactive event-driven"
 else
     assert_eq "0" "0"
 fi

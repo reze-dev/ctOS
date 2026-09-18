@@ -49,22 +49,40 @@ import Quickshell
 import desktop.core
 
 Scope {
+    readonly property var _initSettings: Settings.resolvedConfigPath
+
+    function verifySettings() {
+        const cpuTop = Settings.getWidgetMargin("cpuHexGrid", "top", 0);
+        const profTop = Settings.getWidgetMargin("targetProfiler", "top", 0);
+        const traceLeft = Settings.getWidgetMargin("networkTracer", "left", 0);
+        const audioBottom = Settings.getWidgetMargin("audioSurveillance", "bottom", 0);
+
+        if (cpuTop === 48 && profTop === 48 && traceLeft === 24 && audioBottom === 24) {
+            console.log("=== PASS: Cold boot 6-widget configuration verified ===");
+        } else {
+            console.error("ASSERTION_FAILED: Cold boot settings resolution mismatch");
+        }
+        Qt.quit();
+    }
+
+    Connections {
+        target: Settings
+        function onSettingsLoaded() {
+            verifySettings();
+        }
+    }
+
     Timer {
-        interval: 15
+        interval: 500
         running: true
         repeat: false
         onTriggered: {
-            const cpuTop = Settings.getWidgetMargin("cpuHexGrid", "top", 0);
-            const profTop = Settings.getWidgetMargin("targetProfiler", "top", 0);
-            const traceLeft = Settings.getWidgetMargin("networkTracer", "left", 0);
-            const audioBottom = Settings.getWidgetMargin("audioSurveillance", "bottom", 0);
-
-            if (cpuTop === 48 && profTop === 48 && traceLeft === 24 && audioBottom === 24) {
-                console.log("=== PASS: Cold boot 6-widget configuration verified ===");
+            if (Settings.isLoaded) {
+                verifySettings();
             } else {
-                console.error("ASSERTION_FAILED: Cold boot settings resolution mismatch");
+                console.error("ASSERTION_FAILED: Settings failed to load within timeout");
+                Qt.quit();
             }
-            Qt.quit();
         }
     }
 }

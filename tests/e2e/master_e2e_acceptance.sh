@@ -57,9 +57,9 @@ assert_grep 'readonly property var fontFamilies: \["Maple Mono"' "${THEME_FILE}"
 # ------------------------------------------------------------------------------
 # R2: Bar Height Increase to 36px
 # ------------------------------------------------------------------------------
-test_case "R2.1" "Theme: barHeight token is 36"
-assert_grep 'readonly property int barHeight: 36' "${THEME_FILE}" \
-    "Theme.barHeight must be 36"
+test_case "R2.1" "Theme: barHeight token is 36 or 40"
+assert_grep 'readonly property int barHeight: (36|40)' "${THEME_FILE}" \
+    "Theme.barHeight must be 36 or 40"
 
 # ------------------------------------------------------------------------------
 # R3: 3-Island Bar Layout

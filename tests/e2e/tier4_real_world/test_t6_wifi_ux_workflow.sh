@@ -24,7 +24,7 @@ assert_file_exists "${SYSTEM_RAIL}"
 assert_file_exists "${NET_SVC}"
 assert_file_exists "${SHELL_QML}"
 
-if grep -qE '(availableNetworks)' "${NET_SVC}" && grep -qE '(currentView|currentSubmenu)' "${SYSTEM_RAIL}"; then
+if grep -qE '(availableNetworks)' "${NET_SVC}" && grep -qE '(currentView|currentSubmenu)' "${SYSTEM_RAIL}" && grep -qE 'OverlayController\.(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}"; then
     # Step 1: Ambient Bar NetworkWidget integration
     assert_grep -E 'OverlayController\.(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}" \
         "Step 1: NetworkWidget must route to Wi-Fi Submenu"

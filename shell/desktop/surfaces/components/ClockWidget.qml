@@ -21,6 +21,14 @@ Item {
         precision: SystemClock.Seconds
     }
 
+    MouseArea {
+        id: mouseArea
+
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.toggleCalendar()
+    }
+
     RowLayout {
         id: layout
 

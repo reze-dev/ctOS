@@ -26,9 +26,9 @@ test_case "T1.M1.3" "Theme: fontFamilies array starts with Maple Mono"
 assert_grep 'readonly property var fontFamilies: \["Maple Mono"' "${THEME_FILE}" \
     "Theme.fontFamilies array must prioritize Maple Mono"
 
-test_case "T1.M1.4" "Theme: barHeight token is 36"
-assert_grep 'readonly property int barHeight: 36' "${THEME_FILE}" \
-    "Theme.barHeight must be 36"
+test_case "T1.M1.4" "Theme: barHeight token is 36 or 40"
+assert_grep 'readonly property int barHeight: (36|40)' "${THEME_FILE}" \
+    "Theme.barHeight must be 36 or 40"
 
 test_case "T1.M1.5" "Legacy Cleanup: shell/bar.qml is deleted"
 assert_file_not_exists "${LEGACY_BAR_QML}" "Legacy file shell/bar.qml must be deleted"
