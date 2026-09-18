@@ -12,29 +12,33 @@ stdenvNoCC.mkDerivation {
   dontBuild = true;
 
   installPhase = ''
-        runHook preInstall
-        
-        # Copy assets
-        mkdir -p "$out/share/ctos"
-        cp -R . "$out/share/ctos/"
-        rm -rf "$out/share/ctos/.git" "$out/share/ctos/nix"
-        
-        # Create executable wrapper
-        mkdir -p "$out/bin"
-        cat << BIN > "$out/bin/ctos-shell"
+            runHook preInstall
+            
+            # Copy assets
+            mkdir -p "$out/share/ctos"
+            cp -R . "$out/share/ctos/"
+            rm -rf "$out/share/ctos/.git" "$out/share/ctos/nix"
+            
+            # Create executable wrapper
+            mkdir -p "$out/bin"
+            cat << 'EOF' > "$out/bin/ctos-shell"
     #!/bin/sh
-    exec ${pkgs.quickshell}/bin/quickshell "$out/share/ctos/shell.qml" "\$@"
+    # Kill any existing instances to prevent duplicates
+    pkill -f "quickshell.*shell.qml" || true
+    EOF
+            cat << BIN >> "$out/bin/ctos-shell"
+    exec ${pkgs.quickshell}/bin/quickshell -n -p "$out/share/ctos/shell.qml" "\$@"
     BIN
-        chmod +x "$out/bin/ctos-shell"
+            chmod +x "$out/bin/ctos-shell"
 
-        # Create IPC message wrapper
-        cat << BIN > "$out/bin/ctos-shell-msg"
+            # Create IPC message wrapper
+            cat << BIN > "$out/bin/ctos-shell-msg"
     #!/bin/sh
     exec ${pkgs.quickshell}/bin/quickshell ipc -p "$out/share/ctos/shell.qml" call ctos "\$@"
     BIN
-        chmod +x "$out/bin/ctos-shell-msg"
-        
-        runHook postInstall
+            chmod +x "$out/bin/ctos-shell-msg"
+            
+            runHook postInstall
   '';
 
   meta = {

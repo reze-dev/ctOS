@@ -15,12 +15,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.activation.ctosRemoveLegacyNoctalia = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if command -v systemctl >/dev/null 2>&1; then
-          systemctl --user disable --now noctalia.service noctalia-shell.service 2>/dev/null || true
-      fi
-    '';
-
     systemd.user.services.ctos = {
       Unit = {
         Description = "ctOS Quickshell desktop shell";
@@ -29,7 +23,7 @@ in
       };
 
       Service = {
-        ExecStart = "${pkgs.quickshell}/bin/qs --path ${ctosPackage}/share/ctos/shell.qml";
+        ExecStart = "${ctosPackage}/bin/ctos-shell";
         Restart = "on-failure";
         RestartSec = 2;
         StartLimitBurst = 5;

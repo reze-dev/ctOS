@@ -67,11 +67,6 @@ in
                 tmux = "tmux -u";
                 butt = "but";
               };
-              shellInitLast = ''
-                fzf --fish | source
-                zoxide init --cmd cd fish |source
-                direnv hook fish | source
-              '';
             };
           };
         }

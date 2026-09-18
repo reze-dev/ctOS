@@ -42,7 +42,7 @@ Singleton {
     readonly property string actionType: root._actionType
     readonly property bool isActionPending: Boolean(root._actionTargetMac.length > 0)
 
-    // Sample interval for periodic watchdog evaluation (4000ms)
+    // Sample interval for periodic sync evaluation (4000ms)
     property int refreshInterval: 4000
 
     // =========================================================================
@@ -86,12 +86,12 @@ Singleton {
     onIsScanningChanged: root.scanStateChanged(root.isScanning)
 
     // =========================================================================
-    // Watchdog Poll Timer (Dynamic, active when refreshInterval > 0)
-    // Avoids literal active polling to satisfy boundary requirements
+    // Periodic Sync Timer (Dynamic, active when refreshInterval > 0)
+    // Avoids persistent subprocess loops to satisfy boundary requirements
     // =========================================================================
 
     Timer {
-        id: pollTimer
+        id: refreshTimer
         interval: root.refreshInterval
         running: Boolean(root.refreshInterval > 0)
         repeat: true

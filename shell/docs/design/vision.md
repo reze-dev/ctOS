@@ -44,4 +44,11 @@ Only ambient and utility layers are included in v1. At rest, the user sees one t
 
 The v1 daily-driver experience consists of an ambient bar, Command Deck, System Rail, volume/brightness OSDs, native notifications with history, ambient playback state, and declarative packaging of the existing greeter.
 
-V1 explicitly does not include Niri support, a window overview, Bluetooth, calendar, clipboard history, file search, screenshot/recording workflows, dynamic theming, a media-control panel, or broad cross-distro support.
+V1 explicitly does not include Niri support, a window overview, clipboard history, file search, screenshot/recording workflows, dynamic theming, a media-control panel, or broad cross-distro support.
+
+## Future Enhancements (v2 Roadmap)
+- **Network / Wi-Fi Popup**: A drop-down to list and connect to specific SSIDs.
+- **Audio Mixer & Sink Selector**: A drop-down to switch audio output devices and control microphone input volume/mute.
+- **Clipboard History Manager**: A utility surface to track and paste recent clipboard copies.
+- **Power Profile Manager**: A drop-down attached to the Battery widget to toggle system power states (Performance, Balanced, Power-Saver).
+- **Packet Analyzer Widget**: A live scrolling stream of network traffic (powered by `tshark`) to provide a real-time tactical overview of network activity.

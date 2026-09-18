@@ -15,8 +15,6 @@ let
       pkgs,
       ...
     }:
-    let
-    in
     {
       config = {
         home.packages = with pkgs; [
@@ -141,7 +139,7 @@ let
 
           hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
           hl.bind(mainMod .. " + C", hl.dsp.window.close())
-          hl.bind(mainMod .. " + M", hl.dsp.exit())
+          hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exit())
           hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
           hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
           hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))

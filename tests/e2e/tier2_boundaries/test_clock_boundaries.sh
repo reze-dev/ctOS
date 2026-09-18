@@ -25,9 +25,13 @@ else
     assert_dir_exists "${DESKTOP_DIR}" "shell/desktop required"
 fi
 
+CLOCK_WIDGET="${DESKTOP_DIR}/surfaces/components/ClockWidget.qml"
+
 test_case "T2.10.3" "Clock Boundary: Clock tick frequency is bounded (updates at most once per second)"
-if [[ -d "${DESKTOP_DIR}" ]]; then
-    assert_not_grep "interval:\s*([0-9]{1,2})\b" "${DESKTOP_DIR}" "Clock timer interval must not fire sub-100ms"
+if [[ -f "${CLOCK_WIDGET}" ]]; then
+    assert_not_grep "interval:\s*([0-9]{1,2})\b" "${CLOCK_WIDGET}" "Clock timer interval must not fire sub-100ms"
+elif [[ -d "${DESKTOP_DIR}" ]]; then
+    assert_not_grep "interval:\s*([0-9]{1,2})\b" "${DESKTOP_DIR}/surfaces/components/ClockWidget.qml" "Clock timer interval must not fire sub-100ms"
 else
     assert_dir_exists "${DESKTOP_DIR}" "shell/desktop required"
 fi

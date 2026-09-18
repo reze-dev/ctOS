@@ -138,13 +138,19 @@ run_qml_test_harness() {
         return 1
     fi
 
-    local tmp_settings
-    tmp_settings="$(mktemp /tmp/ctos_test_settings_XXXXXX.json)"
+    local created_tmp=0
+    local tmp_settings="${CTOS_SETTINGS_PATH:-}"
+    if [[ -z "${tmp_settings}" ]]; then
+        tmp_settings="$(mktemp /tmp/ctos_test_settings_XXXXXX.json)"
+        created_tmp=1
+    fi
 
     local output
     output=$(CTOS_SETTINGS_PATH="${tmp_settings}" QML_IMPORT_PATH="${PROJECT_ROOT}/shell" timeout "${timeout_secs}" "${QUICKSHELL_BIN}" -p "${harness_path}" 2>&1)
     local ret=$?
-    rm -f "${tmp_settings}"
+    if [[ "${created_tmp}" -eq 1 ]]; then
+        rm -f "${tmp_settings}"
+    fi
 
     if [[ "${ret}" -ne 0 ]]; then
         CURRENT_TEST_FAILED=1

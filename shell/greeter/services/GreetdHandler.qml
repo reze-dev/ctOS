@@ -6,7 +6,7 @@ import QtQuick
 
 import qs.greeter.config
 import qs.greeter.services
-import qs.common
+import qs.greeter.common
 
 Singleton {
     id: handler

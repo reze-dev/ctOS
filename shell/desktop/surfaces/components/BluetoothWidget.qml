@@ -63,7 +63,7 @@ Item {
                     return Theme.textMuted;
                 }
                 if (root.isConnected) {
-                    return Theme.accent;
+                    return Theme.textPrimary;
                 }
                 if (root.powered) {
                     return root.isHovered ? Theme.accent : Theme.textPrimary;

@@ -30,6 +30,10 @@ Item {
     implicitHeight: layout.implicitHeight
     implicitWidth: layout.implicitWidth
 
+    function openWifiSubmenu(): void {
+        OverlayController.openWifiSubmenu();
+    }
+
     RowLayout {
         id: layout
 

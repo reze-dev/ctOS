@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -20,6 +22,9 @@ Scope {
     property bool bluetoothVisible: false
     property var bluetoothScreen: null
 
+    property bool networkVisible: false
+    property var networkScreen: null
+
     function toggleCalendar(targetScreen): void {
         const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
 
@@ -32,6 +37,7 @@ Scope {
             }
         } else {
             root.closeBluetooth();
+            root.closeNetwork();
             root.calendarScreen = resolved;
             root.calendarVisible = true;
         }
@@ -54,6 +60,7 @@ Scope {
             }
         } else {
             root.closeCalendar();
+            root.closeNetwork();
             root.bluetoothScreen = resolved;
             root.bluetoothVisible = true;
         }
@@ -64,9 +71,33 @@ Scope {
         root.bluetoothScreen = null;
     }
 
+    function toggleNetwork(targetScreen): void {
+        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
+
+        if (root.networkVisible) {
+            if (targetScreen === null || targetScreen === undefined || root.networkScreen === resolved) {
+                root.networkVisible = false;
+                root.networkScreen = null;
+            } else {
+                root.networkScreen = resolved;
+            }
+        } else {
+            root.closeCalendar();
+            root.closeBluetooth();
+            root.networkScreen = resolved;
+            root.networkVisible = true;
+        }
+    }
+
+    function closeNetwork(): void {
+        root.networkVisible = false;
+        root.networkScreen = null;
+    }
+
     function closeAllPopups(): void {
         root.closeCalendar();
         root.closeBluetooth();
+        root.closeNetwork();
     }
 
     IpcHandler {
@@ -94,6 +125,10 @@ Scope {
 
         function toggleBluetooth(): void {
             root.toggleBluetooth(null);
+        }
+
+        function toggleNetwork(): void {
+            root.toggleNetwork(null);
         }
     }
 
@@ -365,16 +400,16 @@ Scope {
                 WlrLayershell.namespace: "ctos-widgets"
 
                 anchors {
-                    top: Settings.getWidgetAnchor("audioSurveillance", "top", false)
-                    bottom: Settings.getWidgetAnchor("audioSurveillance", "bottom", true)
-                    left: Settings.getWidgetAnchor("audioSurveillance", "left", true)
-                    right: Settings.getWidgetAnchor("audioSurveillance", "right", false)
+                    top: Settings.getWidgetAnchor("audioSurveillance", "top", true)
+                    bottom: Settings.getWidgetAnchor("audioSurveillance", "bottom", false)
+                    left: Settings.getWidgetAnchor("audioSurveillance", "left", false)
+                    right: Settings.getWidgetAnchor("audioSurveillance", "right", true)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("audioSurveillance", "top", 0)
-                    bottom: Settings.getWidgetMargin("audioSurveillance", "bottom", Theme.spacing2Xl)
-                    left: Settings.getWidgetMargin("audioSurveillance", "left", Theme.spacing2Xl)
-                    right: Settings.getWidgetMargin("audioSurveillance", "right", 0)
+                    top: Settings.hasWidgetMargin("audioSurveillance", "top") ? Settings.getWidgetMargin("audioSurveillance", "top", 0) : (Theme.barHeight + Theme.spacingXl + (Settings.widgetCpuHexGridVisible ? 200 + Theme.spacingXl : 0) + (Settings.widgetRamBlockBarVisible ? 110 + Theme.spacingXl : 0))
+                    bottom: Settings.getWidgetMargin("audioSurveillance", "bottom", 0)
+                    left: Settings.getWidgetMargin("audioSurveillance", "left", 0)
+                    right: Settings.getWidgetMargin("audioSurveillance", "right", Theme.spacing2Xl)
                 }
 
                 implicitWidth: audioSurveillanceWidget.implicitWidth
@@ -401,6 +436,7 @@ Scope {
 
                 onToggleCalendar: root.toggleCalendar(modelData)
                 onToggleBluetooth: root.toggleBluetooth(modelData)
+                onToggleNetwork: root.toggleNetwork(modelData)
             }
         }
     }
@@ -471,6 +507,27 @@ Scope {
                     root.closeBluetooth();
                 }
             }
+
+            if (root.networkVisible) {
+                const currentNetScreen = root.networkScreen;
+                if (!currentNetScreen) {
+                    root.closeNetwork();
+                    return;
+                }
+
+                const screenList = Quickshell.screens;
+                let isNetAlive = false;
+                for (let i = 0; i < screenList.length; ++i) {
+                    if (screenList[i] && screenList[i].name === currentNetScreen.name) {
+                        isNetAlive = true;
+                        break;
+                    }
+                }
+
+                if (!isNetAlive) {
+                    root.closeNetwork();
+                }
+            }
         }
     }
 
@@ -480,8 +537,9 @@ Scope {
         function onOverlayOpened(activeSurface: int): void {
             root.closeCalendar();
             root.closeBluetooth();
+            root.closeNetwork();
             overlayHost.screen = root.resolveTargetScreen();
-            overlayHost.forceActiveFocus();
+
         }
 
         function onOverlayClosed(previousSurface: int): void {
@@ -713,6 +771,94 @@ Scope {
             id: bluetoothPopup
 
             onCloseRequested: root.closeBluetooth()
+        }
+    }
+
+    PanelWindow {
+        id: networkBackdropHost
+
+        screen: root.networkScreen
+        color: "transparent"
+        visible: root.networkVisible && root.networkScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-network-backdrop"
+
+        anchors {
+            bottom: true
+            left: true
+            right: true
+            top: true
+        }
+
+        MouseArea {
+            id: networkBackdropMouseArea
+
+            anchors.fill: parent
+
+            onClicked: root.closeNetwork()
+        }
+    }
+
+    PanelWindow {
+        id: networkPopupHost
+
+        screen: root.networkScreen
+        color: "transparent"
+        visible: root.networkVisible && root.networkScreen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-network-popup"
+
+        anchors {
+            top: true
+            right: true
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+            right: Theme.barPaddingHorizontal + 160
+        }
+
+        implicitWidth: networkPopup.implicitWidth
+        implicitHeight: networkPopup.implicitHeight
+
+        NetworkPopup {
+            id: networkPopup
+
+            onCloseRequested: root.closeNetwork()
+        }
+    }
+
+    PanelWindow {
+        id: packetAnalyzerHost
+        
+        screen: root.resolveTargetScreen()
+        color: "transparent"
+        visible: Settings.widgetPacketAnalyzerVisible
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Bottom
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "ctos-packet-analyzer"
+
+        anchors {
+            bottom: true
+            left: true
+        }
+        margins {
+            bottom: Theme.spacingMedium
+            left: Theme.spacingMedium
+        }
+
+        implicitWidth: packetAnalyzerWidget.implicitWidth
+        implicitHeight: packetAnalyzerWidget.implicitHeight
+
+        PacketAnalyzerWidget {
+            id: packetAnalyzerWidget
         }
     }
 }

@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell.Io
-import qs.common
+import qs.greeter.common
 
 Item {
     id: config
