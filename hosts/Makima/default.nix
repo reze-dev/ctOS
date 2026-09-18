@@ -49,6 +49,7 @@
     greeter.enable = true;
     fish.enable = true;
     emacs.enable = true;
+    nvf.enable = true;
   };
 
   # NVIDIA GPU
