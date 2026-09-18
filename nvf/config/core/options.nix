@@ -1,5 +1,14 @@
 { pkgs, ... }: {
   config.vim = {
+    # System Environment & PATH fallback
+    luaConfigRC.env = ''
+      local home = vim.env.HOME or vim.fn.expand("~")
+      local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
+      local go_bin = home .. "/go/bin"
+      local cargo_bin = home .. "/.cargo/bin"
+      vim.env.PATH = mason_bin .. ":" .. go_bin .. ":" .. cargo_bin .. ":" .. (vim.env.PATH or "")
+    '';
+
     options = {
       number = true;
       relativenumber = true;
@@ -46,6 +55,27 @@
       foldlevel = 99;
       foldlevelstart = 99;
       foldenable = true;
+
+      # Migrated from lua_config.nix
+      inccommand = "split";
+      jumpoptions = "view";
+      virtualedit = "block";
+      smoothscroll = true;
+      completeopt = [
+        "menu"
+        "menuone"
+        "noselect"
+      ];
     };
+
+    luaConfigRC.core_opt_extras = ''
+      vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
+      vim.opt.fillchars = { eob = " ", fold = " ", foldopen = "v", foldsep = " ", foldclose = ">" }
+      vim.opt.shortmess:append("sI")
+
+      local undo_dir = vim.fn.stdpath("data") .. "/undo"
+      vim.opt.undodir = undo_dir
+      pcall(vim.fn.mkdir, undo_dir, "p")
+    '';
   };
 }
