@@ -5,6 +5,7 @@ Validates mathematical boundary conditions, zero-division protection,
 counter-wrap resilience, 128-core scaling, and procfs parsing logic.
 """
 
+import math
 import unittest
 
 
@@ -78,7 +79,10 @@ def parse_meminfo(raw_text):
         if len(parts) < 2:
             continue
         key = parts[0].strip()
-        val_str = parts[1].strip().split()[0]
+        tokens = parts[1].strip().split()
+        if not tokens:
+            continue
+        val_str = tokens[0]
         try:
             val_kb = float(val_str)
         except ValueError:
@@ -101,10 +105,15 @@ def parse_meminfo(raw_text):
 
 def format_bytes(bytes_val):
     """Reference implementation of SystemMonitorService.formatBytes"""
-    if bytes_val is None or bytes_val <= 0:
+    if bytes_val is None:
+        return "0 B"
+    try:
+        b = float(bytes_val)
+    except (ValueError, TypeError):
+        return "0 B"
+    if math.isnan(b) or b <= 0:
         return "0 B"
     units = ["B", "KB", "MB", "GB", "TB"]
-    b = float(bytes_val)
     i = 0
     while b >= 1024.0 and i < len(units) - 1:
         b /= 1024.0
@@ -112,6 +121,46 @@ def format_bytes(bytes_val):
     if i == 0:
         return f"{int(b)} B"
     return f"{b:.1f} {units[i]}"
+
+
+def parse_net_dev(raw_text, prev_rx=-1, prev_tx=-1, elapsed_sec=1.0):
+    """Reference implementation of SystemMonitorService._parseNetDev"""
+    if not raw_text or not raw_text.strip():
+        return (0.0, 0.0, 0, 0)
+
+    lines = raw_text.strip().split("\n")
+    aggregate_rx = 0
+    aggregate_tx = 0
+
+    for line in lines[2:] if len(lines) > 2 else lines:
+        line = line.strip()
+        if not line or ":" not in line:
+            continue
+        colon_idx = line.find(":")
+        iface = line[:colon_idx].strip()
+        if iface == "lo":
+            continue
+        stats_part = line[colon_idx + 1:].strip()
+        cols = stats_part.split()
+        if len(cols) < 9:
+            continue
+        try:
+            rx = int(cols[0])
+            tx = int(cols[8])
+        except ValueError:
+            continue
+        aggregate_rx += rx
+        aggregate_tx += tx
+
+    rx_rate = 0.0
+    tx_rate = 0.0
+    if prev_rx >= 0 and prev_tx >= 0 and elapsed_sec > 0.1:
+        delta_rx = aggregate_rx - prev_rx
+        delta_tx = aggregate_tx - prev_tx
+        rx_rate = delta_rx / elapsed_sec if delta_rx >= 0 else 0.0
+        tx_rate = delta_tx / elapsed_sec if delta_tx >= 0 else 0.0
+
+    return (rx_rate, tx_rate, aggregate_rx, aggregate_tx)
 
 
 class TestSystemMonitorAdversarial(unittest.TestCase):
@@ -185,11 +234,21 @@ class TestSystemMonitorAdversarial(unittest.TestCase):
         raw = "MemTotal: 8000 kB\nMemAvailable: 10000 kB\n"
         used, total, _, _ = parse_meminfo(raw)
         self.assertEqual(used, 0)
+        # Fuzz test lines with missing values (e.g. "MemTotal:\n", "::::\n")
+        fuzz_used, fuzz_total, fuzz_s_used, fuzz_s_total = parse_meminfo("MemTotal:\nMemAvailable:\nSwapTotal:\nSwapFree:\n")
+        self.assertEqual(fuzz_total, 0)
+        self.assertEqual(fuzz_used, 0)
+        self.assertEqual(fuzz_s_total, 0)
+        self.assertEqual(fuzz_s_used, 0)
+        fuzz_empty_colons = parse_meminfo(":::::\n\n::::\n")
+        self.assertEqual(fuzz_empty_colons, (0, 0, 0, 0))
 
     def test_12_format_bytes_zero(self):
         self.assertEqual(format_bytes(0), "0 B")
         self.assertEqual(format_bytes(-50), "0 B")
         self.assertEqual(format_bytes(None), "0 B")
+        self.assertEqual(format_bytes(float("nan")), "0 B")
+        self.assertEqual(format_bytes(math.nan), "0 B")
 
     def test_13_format_bytes_small(self):
         self.assertEqual(format_bytes(512), "512 B")
@@ -211,15 +270,37 @@ class TestSystemMonitorAdversarial(unittest.TestCase):
         self.assertEqual(format_bytes(1099511627776), "1.0 TB")
 
     def test_18_debounce_interval_guard(self):
-        elapsed = 0.05
-        self.assertTrue(elapsed <= 0.1)
+        sample = (
+            "Inter-|   Receive                                                |  Transmit\n"
+            " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
+            "  eth0: 1048576       0    0    0    0     0          0         0   524288       0    0    0    0     0       0          0\n"
+        )
+        # With elapsed_sec <= 0.1, rate calculation is debounced (returns 0.0)
+        rx_rate, tx_rate, rx_tot, tx_tot = parse_net_dev(sample, prev_rx=0, prev_tx=0, elapsed_sec=0.05)
+        self.assertEqual(rx_rate, 0.0)
+        self.assertEqual(tx_rate, 0.0)
+        self.assertEqual(rx_tot, 1048576)
+        self.assertEqual(tx_tot, 524288)
+
+        # With elapsed_sec > 0.1, rate is computed
+        rx_rate, tx_rate, _, _ = parse_net_dev(sample, prev_rx=0, prev_tx=0, elapsed_sec=1.0)
+        self.assertEqual(rx_rate, 1048576.0)
+        self.assertEqual(tx_rate, 524288.0)
 
     def test_19_rx_tx_counter_wrap(self):
+        # When 32-bit counter wraps around (curr < prev), rate is clamped to 0.0 instead of negative
+        sample = (
+            "Inter-|   Receive                                                |  Transmit\n"
+            " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
+            "  eth0:    5000       0    0    0    0     0          0         0     5000       0    0    0    0     0       0          0\n"
+        )
         prev_rx = 4000000000
-        curr_rx = 5000
-        delta_rx = curr_rx - prev_rx
-        safe_rx = max(0, delta_rx)
-        self.assertEqual(safe_rx, 0)
+        prev_tx = 4000000000
+        rx_rate, tx_rate, rx_tot, tx_tot = parse_net_dev(sample, prev_rx=prev_rx, prev_tx=prev_tx, elapsed_sec=1.0)
+        self.assertEqual(rx_rate, 0.0)
+        self.assertEqual(tx_rate, 0.0)
+        self.assertEqual(rx_tot, 5000)
+        self.assertEqual(tx_tot, 5000)
 
     def test_20_multi_thread_irregular_indices(self):
         raw = "cpu 100 0 50 200\ncpu0 50 0 25 100\ncpu2 50 0 25 100\n"
