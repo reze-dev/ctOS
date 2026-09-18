@@ -140,16 +140,26 @@ has_shield = bool(re.search(r"MouseArea\s*\{[\s\S]*?anchors\.fill:\s*parent[\s\S
 record("BT.POP.SHIELD.01", "Root MouseArea click shield with preventStealing: true swallows clicks", has_shield,
        "MouseArea { anchors.fill: parent; preventStealing: true; onClicked: mouse => mouse.accepted = true }")
 
-bracket_match = re.search(r"id:\s*cornerBrackets([\s\S]*?)ColumnLayout\s*\{\s*id:\s*mainColumn", popup_code)
-record("BT.POP.BRACKET.01", "cornerBrackets Item exists with bracketColor: Theme.acidGreen",
-       bracket_match is not None and "bracketColor: Theme.acidGreen" in bracket_match.group(0),
-       "cornerBrackets Item found")
-
-if bracket_match:
-    rects = re.findall(r"Rectangle\s*\{", bracket_match.group(1))
+if "CornerBrackets" in popup_code:
+    cb_path = os.path.join(PROJECT_ROOT, "shell/desktop/surfaces/widgets/CornerBrackets.qml")
+    with open(cb_path, "r", encoding="utf-8") as f:
+        cb_content = f.read()
+    rects = re.findall(r"Rectangle\s*\{", cb_content)
+    record("BT.POP.BRACKET.01", "cornerBrackets Item exists with bracketColor: Theme.acidGreen",
+           "id: cornerBrackets" in popup_code and "bracketColor: Theme.acidGreen" in popup_code,
+           "cornerBrackets Item found")
     record("BT.POP.BRACKET.02", "Exactly 8 corner bracket arm Rectangles exist", len(rects) == 8, f"armCount={len(rects)}")
 else:
-    record("BT.POP.BRACKET.02", "Exactly 8 corner bracket arm Rectangles exist", False, "block not found")
+    bracket_match = re.search(r"id:\s*cornerBrackets([\s\S]*?)ColumnLayout\s*\{\s*id:\s*mainColumn", popup_code)
+    record("BT.POP.BRACKET.01", "cornerBrackets Item exists with bracketColor: Theme.acidGreen",
+           bracket_match is not None and "bracketColor: Theme.acidGreen" in bracket_match.group(0),
+           "cornerBrackets Item found")
+
+    if bracket_match:
+        rects = re.findall(r"Rectangle\s*\{", bracket_match.group(1))
+        record("BT.POP.BRACKET.02", "Exactly 8 corner bracket arm Rectangles exist", len(rects) == 8, f"armCount={len(rects)}")
+    else:
+        record("BT.POP.BRACKET.02", "Exactly 8 corner bracket arm Rectangles exist", False, "block not found")
 
 # ==============================================================================
 # SECTION 6: Signals & Service Interactions Wiring

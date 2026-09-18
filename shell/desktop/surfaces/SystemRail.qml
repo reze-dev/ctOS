@@ -5,6 +5,7 @@ import Quickshell.Io
 import "../core"
 import "../services"
 import "./components"
+import "./widgets"
 
 FocusScope {
     id: root
@@ -58,14 +59,13 @@ FocusScope {
     function executeConfirmation(): void {
         const action = confirmationAction;
         confirmationAction = "";
-        OverlayController.close();
 
         if (action === "reboot") {
-            rebootProcess.running = true;
+            SessionService.reboot();
         } else if (action === "poweroff") {
-            poweroffProcess.running = true;
+            SessionService.poweroff();
         } else if (action === "logout") {
-            logoutProcess.running = true;
+            SessionService.logout();
         }
     }
 
@@ -184,76 +184,10 @@ FocusScope {
     }
 
     // Corner Brackets (Feature 7 / T1.21.5)
-    Item {
+    CornerBrackets {
         id: cornerBrackets
-        anchors.fill: parent
+        bracketColor: root.isConfirming ? Theme.destructive : Theme.acidGreen
         z: 10
-
-        readonly property color bracketColor: root.isConfirming ? Theme.destructive : Theme.acidGreen
-
-        // Top-Left
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
-
-        // Top-Right
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
-
-        // Bottom-Left
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
-
-        // Bottom-Right
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: cornerBrackets.bracketColor
-        }
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: cornerBrackets.bracketColor
-        }
     }
 
     // Inside Click Consumer (T2.21.4 & T3.18)
@@ -760,8 +694,7 @@ FocusScope {
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
                     onClicked: {
-                        OverlayController.close();
-                        lockProcess.running = true;
+                        SessionService.lock();
                     }
                 }
             }

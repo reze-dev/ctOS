@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Widgets
 import "../core"
 import "./components"
+import "./widgets"
 
 FocusScope {
     id: root
@@ -11,6 +12,15 @@ FocusScope {
     width: 680
     height: 500
     focus: true
+
+    Timer {
+        id: searchDebounceTimer
+        interval: 16
+        repeat: false
+        onTriggered: {
+            resultsList.model = ActionRegistry.search(queryInput.text);
+        }
+    }
 
     // Background styling: near-black with hairline border
     Rectangle {
@@ -22,74 +32,10 @@ FocusScope {
     }
 
     // Corner brackets matching ctOS visual grammar
-    Item {
+    CornerBrackets {
         id: cornerBrackets
-        anchors.fill: parent
+        bracketColor: Theme.acidGreen
         z: 10
-
-        // Top-Left
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: Theme.acidGreen
-        }
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: Theme.acidGreen
-        }
-
-        // Top-Right
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: Theme.acidGreen
-        }
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            y: Theme.cornerBracketMargin
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: Theme.acidGreen
-        }
-
-        // Bottom-Left
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: Theme.acidGreen
-        }
-        Rectangle {
-            x: Theme.cornerBracketMargin
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: Theme.acidGreen
-        }
-
-        // Bottom-Right
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            width: Theme.cornerBracketArmLength
-            height: Theme.cornerBracketThickness
-            color: Theme.acidGreen
-        }
-        Rectangle {
-            x: parent.width - Theme.cornerBracketMargin - Theme.cornerBracketThickness
-            y: parent.height - Theme.cornerBracketMargin - Theme.cornerBracketArmLength
-            width: Theme.cornerBracketThickness
-            height: Theme.cornerBracketArmLength
-            color: Theme.acidGreen
-        }
     }
 
     // Inside clicks consumed so they don't dismiss scrim
@@ -176,6 +122,12 @@ FocusScope {
 
                     onTextChanged: {
                         resultsList.currentIndex = 0;
+                        if (text.length === 0) {
+                            searchDebounceTimer.stop();
+                            resultsList.model = ActionRegistry.search("");
+                        } else {
+                            searchDebounceTimer.restart();
+                        }
                     }
 
                     Keys.onDownPressed: function (event) {
@@ -416,6 +368,10 @@ FocusScope {
     }
 
     function executeCurrentItem(): void {
+        if (searchDebounceTimer.running) {
+            searchDebounceTimer.stop();
+            resultsList.model = ActionRegistry.search(queryInput.text);
+        }
         if (!resultsList.model || resultsList.currentIndex < 0 || resultsList.currentIndex >= resultsList.count) {
             return;
         }

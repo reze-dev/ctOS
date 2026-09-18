@@ -11,7 +11,9 @@ Item {
     property color bracketColor: Theme.acidGreen
     property alias color: root.bracketColor
     property int armLength: Theme.cornerBracketArmLength
+    property alias bracketLength: root.armLength
     property int thickness: Theme.cornerBracketThickness
+    property alias bracketThickness: root.thickness
     property int margin: Theme.cornerBracketMargin
     property alias bracketMargin: root.margin
 

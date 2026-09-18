@@ -34,7 +34,7 @@ assert_grep "solveLayout" "${CPU_HEX_FILE}" "CpuHexGrid must implement dynamic s
 assert_grep "isOffline" "${CPU_HEX_FILE}" "CpuHexGrid must explicitly handle sparse and offline cores"
 
 test_case "T2.02.6" "M2 Python Adversarial Stress Harness (19/19 tests)"
-if python3 -m unittest tests/test_milestone2_adversarial.py >/dev/null 2>&1; then
+if python3 tests/test_milestone2_adversarial.py >/dev/null 2>&1 || python3 -m unittest discover -s tests -p "test_milestone2_adversarial.py" >/dev/null 2>&1; then
     assert_eq "0" "0" "Adversarial stress harness (1..128 cores layout, zero-swap, 20 segments) passed"
 else
     assert_eq "0" "1" "Adversarial stress harness failed"

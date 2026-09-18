@@ -21,6 +21,8 @@ in
       easyeffects
       grim
       hyprcursor
+      hypridle
+      hyprlock
       hyprpolkitagent
       kdePackages.dolphin
       kdePackages.okular

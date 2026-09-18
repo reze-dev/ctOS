@@ -42,19 +42,29 @@ let
                   "XDG_CURRENT_DESKTOP"
                   "DISPLAY"
                   "GTK_USE_PORTAL"
+                  "NIRI_SOCKET"
                 ];
               }
               {
                 command = [
                   "sh"
                   "-c"
-                  "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL && systemctl --user start nixos-fake-graphical-session.target"
+                  "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL NIRI_SOCKET && systemctl --user start nixos-fake-graphical-session.target"
                 ];
               }
               {
                 command = [ "ctos-shell" ];
               }
+              {
+                command = [ "hypridle" ];
+              }
             ];
+
+            outputs = {
+              "eDP-1" = {
+                scale = 1.2;
+              };
+            };
 
             # Input configuration
             input = {
@@ -102,7 +112,7 @@ let
               focus-ring = {
                 enable = true;
                 width = 2;
-                active.color = "#7dcfff";
+                active.color = "#1BFD9C";
                 inactive.color = "#00000000";
               };
 
@@ -167,23 +177,12 @@ let
               }
             ];
 
-            # Layer rules for notification bars / shell overlays
-            layer-rules = [
-              {
-                matches = [
-                  { namespace = "^waybar$"; }
-                ];
-                shadow.enable = false;
-              }
-            ];
-
             # Comprehensive Keybindings
             binds = {
               # Application Launchers
               "Mod+Return".action = actions.spawn "kitty";
               "Mod+Shift+Return".action = actions.spawn "ghostty";
-              "Mod+D".action = actions.spawn "ctos-shell-msg toggleCommandDeck";
-              "Mod+Space".action = actions.spawn "ctos-shell-msg toggleCommandDeck";
+              "Mod+D".action = actions.spawn "ctos-shell-msg" "toggleCommandDeck";
               "Mod+E".action = actions.spawn "kitty" "-e" "yazi";
               "Mod+B".action = actions.spawn "zen";
               "Mod+Shift+Slash".action = actions.show-hotkey-overlay;
@@ -298,7 +297,17 @@ in
 {
   imports = [ inputs.niri.nixosModules.niri ];
 
-  options.ctos.features.niri.enable = lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
+  options = {
+    ctos.features.niri.enable = lib.mkEnableOption "Niri scrollable-tiling Wayland compositor";
+
+    programs.niri.settings = lib.mkOption {
+      type = lib.types.submodule {
+        freeformType = lib.types.anything;
+      };
+      default = { };
+      description = "Niri configuration settings.";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     # Disable the niri-flake binary cache — we use nixpkgs's niri instead

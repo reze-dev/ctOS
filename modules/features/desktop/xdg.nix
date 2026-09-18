@@ -134,42 +134,42 @@ let
               "org.kde.dolphin.desktop"
             ];
 
-            # Plain Text, Markdown & Code (Zed / Ghostty)
+            # Plain Text, Markdown & Code (Emacs / Neovim)
             "text/plain" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "text/markdown" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "text/x-nix" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "text/css" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "text/x-python" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "application/json" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "application/yaml" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "application/toml" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
             "application/xml" = [
-              "dev.zed.Zed.desktop"
-              "ghostty.desktop"
+              "emacs.desktop"
+              "nvim.desktop"
             ];
           };
         };

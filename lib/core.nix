@@ -31,33 +31,6 @@ rec {
     });
   };
 
-  # User & Home-Manager Functional Combinator
-  mkUser =
-    {
-      username,
-      groups ? [ "wheel" ],
-      shell ? null,
-      homeDir ? "/home/${username}",
-      homeConfig ? ../home/home.nix,
-      extraConfig ? { },
-    }:
-    { pkgs, ... }:
-    {
-      users.users.${username} = {
-        isNormalUser = true;
-        description = username;
-        extraGroups = groups;
-      }
-      // (lib.optionalAttrs (shell != null) { inherit shell; })
-      // extraConfig;
-
-      home-manager.users.${username} = {
-        imports = [ homeConfig ];
-        home.username = username;
-        home.homeDirectory = homeDir;
-      };
-    };
-
   scanModules =
     dir:
     if dir |> builtins.pathExists then
@@ -107,21 +80,4 @@ rec {
     ]
     ++ modulePaths
     ++ lib.optionals (hostHasDisko hostsDir hostName) [ inputs.disko.nixosModules.disko ];
-
-  mkSystem =
-    {
-      inputs,
-      hostName,
-      system ? "x86_64-linux",
-      hostsDir ? ../hosts,
-      extraModules ? [ ],
-    }:
-    lib.nixosSystem {
-      inherit system;
-      specialArgs = {
-        inherit inputs;
-        ctos = import ./core.nix { inherit lib; };
-      };
-      modules = (mkHostModules { inherit inputs hostsDir hostName; }) ++ extraModules;
-    };
 }

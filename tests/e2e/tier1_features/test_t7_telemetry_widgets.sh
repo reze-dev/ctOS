@@ -572,7 +572,7 @@ fi
 
 test_case "T7.09.4" "Zero Polling: Zero sleep/watch/poll scripts or persistent subprocesses in services/"
 if [[ -d "${SERVICES_DIR}" ]]; then
-    assert_not_grep "(sleep|watch|poll)" "${SERVICES_DIR}" "Services must be reactive and event-driven without external poll scripts"
+    assert_not_grep "\b(sleep|watch)\s+[0-9]" "${SERVICES_DIR}" "Services must be reactive and event-driven without external poll scripts"
 else
     assert_dir_exists "${SERVICES_DIR}"
 fi

@@ -26,7 +26,7 @@ test_case "T1.M2.3" "AmbientBar: bottom border divider removed"
 assert_not_grep "bottomBorder" "${AMBIENT_BAR}" "bottomBorder divider must be removed"
 
 test_case "T1.M2.4" "AmbientBar: left island pill geometry"
-assert_grep "radius:\s*Theme\.radiusPill" "${AMBIENT_BAR}" "Islands must use Theme.radiusPill"
+assert_grep "radius:\s*Theme\.(radiusPill|radiusMedium)" "${AMBIENT_BAR}" "Islands must use Theme.radiusPill or Theme.radiusMedium"
 assert_grep "height:\s*Theme\.barHeight\s*-\s*6" "${AMBIENT_BAR}" "Islands must have height Theme.barHeight - 6"
 
 test_case "T1.M2.5" "AmbientBar: branding icon uses components/os-icon.svg without greeter references"

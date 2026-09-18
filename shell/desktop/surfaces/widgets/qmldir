@@ -6,3 +6,4 @@ AmbientGlitch 1.0 AmbientGlitch.qml
 NetworkTracerWidget 1.0 NetworkTracerWidget.qml
 AudioSurveillanceWidget 1.0 AudioSurveillanceWidget.qml
 TargetProfilerWidget 1.0 TargetProfilerWidget.qml
+PacketAnalyzerWidget 1.0 PacketAnalyzerWidget.qml

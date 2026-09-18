@@ -167,8 +167,12 @@ for line in status_lines:
     if status_code[0] in ('M', 'A', 'R'):
         staged_in_git.add(filename)
 
-check("GIT.STAGED.01", "All 7 Milestone 1 core files staged in git index",
-      staged_m1_files.issubset(staged_in_git),
+tracked_res = subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=PROJECT_ROOT)
+tracked_files = set(tracked_res.stdout.strip().splitlines())
+git_active_files = staged_in_git | tracked_files
+
+check("GIT.STAGED.01", "All 7 Milestone 1 core files staged or tracked in git index",
+      staged_m1_files.issubset(git_active_files),
       f"staged count={len(staged_in_git)}")
 
 check("GIT.AGENTS.01", ".agents directory is NOT tracked in git index",

@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-import qs.common
+import qs.greeter.common
 import qs.greeter.config
 import qs.greeter.services
 

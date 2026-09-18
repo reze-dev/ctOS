@@ -3,7 +3,7 @@ import Quickshell
 
 import qs.greeter.config
 import qs.greeter.components
-import qs.common
+import qs.greeter.common
 
 Variants {
     model: Quickshell.screens

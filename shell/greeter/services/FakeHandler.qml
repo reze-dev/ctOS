@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-import qs.common
+import qs.greeter.common
 import qs.greeter.services
 
 Singleton {

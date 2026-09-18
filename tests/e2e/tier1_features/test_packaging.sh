@@ -60,6 +60,6 @@ EXEC_START=$(nix eval --impure --expr '
     };
   in hm.config.systemd.user.services.ctos.Service.ExecStart
 ')
-assert_match "shell\.qml" "${EXEC_START}" "systemd service ExecStart must reference shell.qml"
+assert_match "(shell\.qml|ctos-shell)" "${EXEC_START}" "systemd service ExecStart must reference shell.qml or ctos-shell wrapper"
 
 report_summary

@@ -11,6 +11,7 @@ let
     "firefox"
     "ghostty"
     "hyprland"
+    "hyprlock"
     "kitty"
     "niri"
     "power"

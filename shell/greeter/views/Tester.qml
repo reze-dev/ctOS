@@ -3,7 +3,7 @@ import Quickshell
 
 import qs.greeter.components
 import qs.greeter.config
-import qs.common
+import qs.greeter.common
 
 // qmllint disable
 PanelWindow {

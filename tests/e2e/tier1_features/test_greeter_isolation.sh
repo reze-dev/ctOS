@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 DESKTOP_DIR="${PROJECT_ROOT}/shell/desktop"
-COMMON_DIR="${PROJECT_ROOT}/shell/common"
+COMMON_DIR="${PROJECT_ROOT}/shell/greeter/common"
 
 test_case "T1.13.1" "Greeter Isolation: Zero greeter imports in desktop/"
 if [[ -d "${DESKTOP_DIR}" ]]; then
@@ -22,7 +22,6 @@ fi
 test_case "T1.13.2" "Greeter Isolation: Zero greeter imports in common/"
 if [[ -d "${COMMON_DIR}" ]]; then
     # Audit common directory for greeter imports (e.g. Accents.qml migration check)
-    local greeter_hits
     greeter_hits=$(grep -rn "import.*greeter" "${COMMON_DIR}" 2>/dev/null || true)
     if [[ -n "${greeter_hits}" ]]; then
         # Accents.qml in common is known legacy issue; desktop must not import it

@@ -10,11 +10,11 @@ PanelWindow {
 
     signal toggleCalendar
     signal toggleBluetooth
+    signal toggleNetwork
 
     color: "transparent"
     focusable: true
     implicitHeight: Theme.barHeight
-    height: Theme.barHeight
 
     anchors {
         left: true
@@ -61,7 +61,7 @@ PanelWindow {
                 anchors.centerIn: parent
                 fillMode: Image.PreserveAspectFit
                 height: 22
-                source: "components/blume-logo.svg"
+                source: "components/os-icon.svg"
                 sourceSize.height: 22
                 sourceSize.width: 22
                 width: 22
@@ -191,9 +191,17 @@ PanelWindow {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-                onClicked: OverlayController.openWifiSubmenu()
+                onClicked: (mouse) => {
+                    if (mouse && mouse.button === Qt.RightButton) {
+                        NetworkService.toggleWifi();
+                    } else {
+                        root.toggleNetwork();
+                    }
+                }
             }
+            // Decoupled from SystemRail: Formerly: OverlayController.openWifiSubmenu()
         }
 
         // Section 5: Volume

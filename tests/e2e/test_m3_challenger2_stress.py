@@ -825,7 +825,7 @@ record(
 # 8.5: M2 Maple Mono font in GeneralDto and Theme.qml
 with open(os.path.join(PROJECT_ROOT, "shell/greeter/config/GeneralDto.qml"), "r") as f:
     dto_content = f.read()
-with open(os.path.join(PROJECT_ROOT, "shell/common/Theme.qml"), "r") as f:
+with open(os.path.join(PROJECT_ROOT, "shell/greeter/common/Theme.qml"), "r") as f:
     theme_content = f.read()
 
 record(
@@ -866,7 +866,7 @@ res_staged = run_cmd(["git", "diff", "--name-only", "--cached"])
 staged_list = sorted([l.strip() for l in res_staged.stdout.strip().splitlines() if l.strip()])
 expected_staged = sorted([
     "modules/features/desktop/greeter.nix",
-    "shell/common/Theme.qml",
+    "shell/greeter/common/Theme.qml",
     "shell/config/fastfetch/config.jsonc",
     "shell/desktop/core/Settings.qml",
     "shell/greeter/README.md",
