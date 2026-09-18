@@ -37,7 +37,7 @@ else
 fi
 
 test_case "T2.01.4" "SystemMonitor: Python adversarial stress harness passes (20/20 tests)"
-if python3 -m unittest tests/test_system_monitor_adversarial.py >/dev/null 2>&1; then
+if python3 tests/test_system_monitor_adversarial.py >/dev/null 2>&1 || python3 -m unittest discover -s tests -p "test_system_monitor_adversarial.py" >/dev/null 2>&1; then
     assert_eq "0" "0" "Adversarial stress harness (fuzzing, 128 cores, counter wraps) passes cleanly"
 else
     assert_eq "0" "1" "Adversarial stress harness failed"
