@@ -132,8 +132,8 @@
       precognition = {
         enable = true;
         setupOpts = {
-          start_visible = false;
-          show_blank = true;
+          startVisible = false;
+          showBlankVirtLine = true;
         };
       };
     };
