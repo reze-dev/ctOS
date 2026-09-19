@@ -208,7 +208,7 @@
           "filename",
           cond = conditions.buffer_not_empty,
           color = { fg = c.magenta, gui = "bold" },
-          symbols = { modified = " ●", readonly = " 󰌾", unnamed = "[No Name]", newfile = "[New]" },
+          symbols = { modified = " ", readonly = " 󰌾", unnamed = "[No Name]", newfile = "[New]" },
         })
 
         ins_left({ "location", color = { fg = c.blue, gui = "bold" } })

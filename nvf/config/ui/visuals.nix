@@ -72,7 +72,7 @@
             css_fn = true;
             mode = "background";
             tailwind = false;
-            virtualtext = "■";
+            virtualtext = "󱓻";
             always_update = false;
           };
         };
