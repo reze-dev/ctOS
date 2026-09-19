@@ -95,7 +95,7 @@ let
 
             # Layout & Visual Styling
             layout = {
-              gaps = 12;
+              gaps = 5;
               center-focused-column = "on-overflow";
 
               preset-column-widths = [
