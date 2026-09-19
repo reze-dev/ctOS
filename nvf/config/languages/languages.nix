@@ -67,7 +67,7 @@
               type = "",
               declaration = "",
               expression = "",
-              statement = "",
+              statement = "",
               specifier = "",
               ["template argument"] = "",
             },
