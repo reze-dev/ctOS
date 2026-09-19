@@ -30,6 +30,7 @@
       shfmt                            # shfmt
       gersemi                          # gersemi (CMake formatter)
       sqlfluff                         # sqlfluff (SQL formatter/linter)
+      fish                             # fish_indent
 
       # Linters
       golangci-lint                    # golangci-lint

@@ -7,6 +7,14 @@
       };
       nvim-lint = {
         enable = true;
+        linters = {
+          clang-tidy = {
+            cmd = "${pkgs.clang-tools}/bin/clang-tidy";
+          };
+          ruff = {
+            cmd = "${pkgs.ruff}/bin/ruff";
+          };
+        };
         linters_by_ft = {
           c = [ "clang-tidy" ];
           cpp = [ "clang-tidy" ];
@@ -19,8 +27,19 @@
     luaConfigRC.lint_setup = ''
       local ok, lint = pcall(require, "lint")
       if ok then
-        lint.linters["clang-tidy"] = lint.linters.clangtidy
-        lint.linters["golangci-lint"] = lint.linters.golangcilint
+        if lint.linters.clangtidy and not lint.linters["clang-tidy"] then
+          lint.linters["clang-tidy"] = lint.linters.clangtidy
+        end
+        if lint.linters.golangcilint and not lint.linters["golangci-lint"] then
+          lint.linters["golangci-lint"] = lint.linters.golangcilint
+        end
+        if not lint.linters["ruff"] then
+          lint.linters["ruff"] = {
+            cmd = "${pkgs.ruff}/bin/ruff",
+            stdin = true,
+            args = { "check", "--force-exclude", "--stdin-filename", "$FILENAME", "-" },
+          }
+        end
 
         lint.linters_by_ft = {
           c = { "clang-tidy" },

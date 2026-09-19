@@ -244,7 +244,7 @@
             local codelldb_path = "${pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter}/bin/codelldb"
             local liblldb_path = "${pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter}/share/lldb/lib/liblldb.so"
 
-            if vim.fn.filereadable(codelldb_path) == 1 then
+            if vim.fn.filereadable(codelldb_path) == 1 or vim.fn.executable(codelldb_path) == 1 then
               return cfg.get_codelldb_adapter(codelldb_path, liblldb_path)
             elseif vim.fn.executable("codelldb") == 1 then
               return cfg.get_codelldb_adapter(vim.fn.exepath("codelldb"), "")
