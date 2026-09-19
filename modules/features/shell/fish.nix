@@ -43,17 +43,6 @@ in
                 set -x TERM xterm-256color
               '';
               functions = {
-                git = ''
-                  if test "$argv[1]" = add
-                    set -l git_root (command git rev-parse --show-toplevel)
-                    or return
-
-                    "$git_root/scripts/format" $argv[2..-1]
-                    command git add $argv[2..-1]
-                  else
-                    command git $argv
-                  end
-                '';
                 starship_transient_prompt_func = "starship module character";
               };
               shellAliases = {
@@ -63,7 +52,6 @@ in
                 tree = "eza -T --icons";
                 la = "eza -la --icons";
                 lo = "eza -l -o --icons";
-                vim = "nvim";
                 tmux = "tmux -u";
                 butt = "but";
               };

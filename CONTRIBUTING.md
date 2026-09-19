@@ -116,7 +116,6 @@ ctos/
 │   ├── features/          # Vertical feature slices (core, desktop, dev, shell, terminals, tools)
 │   ├── hardware/          # Hardware drivers (NVIDIA)
 │   └── profiles/          # Composable feature bundles (base, desktop, workstation, gaming)
-├── scripts/               # Repository and maintenance utility scripts
 ├── shell/                 # ctOS Quickshell desktop environment and greeter
 ├── tests/                 # End-to-end and boundary test suites
 └── assets/                # Themes and media
