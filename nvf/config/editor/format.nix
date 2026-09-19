@@ -2,6 +2,22 @@
   config.vim = {
     formatter.conform-nvim = {
       enable = true;
+      presets = {
+        clang-format.enable = true;
+        rustfmt.enable = true;
+        goimports.enable = true;
+        gofumpt.enable = true;
+        stylua.enable = true;
+        ruff.enable = true;
+        ruff-organize-imports.enable = true;
+        taplo.enable = true;
+        prettier.enable = true;
+        nixfmt.enable = true;
+        shfmt.enable = true;
+        fish-indent.enable = true;
+        gersemi.enable = true;
+        sqlfluff.enable = true;
+      };
       setupOpts = {
         formatters_by_ft = {
           c = [ "clang-format" ];

@@ -142,7 +142,7 @@
             section_separators = "",
             globalstatus = true,
             disabled_filetypes = {
-              statusline = { "dashboard", "snacks_dashboard", "lazy", "mason" },
+              statusline = { "dashboard", "snacks_dashboard", "lazy" },
             },
             theme = {
               normal = { c = { fg = c.fg, bg = c.bg } },
