@@ -241,12 +241,13 @@
           adapter = function()
             local ok_cfg, cfg = pcall(require, "rustaceanvim.config")
             if not ok_cfg then return nil end
-            local mason_path = vim.fn.stdpath("data") .. "/mason/packages/codelldb"
-            local codelldb_path = mason_path .. "/extension/adapter/codelldb"
-            local liblldb_path = mason_path .. "/extension/lldb/lib/liblldb.so"
+            local codelldb_path = "${pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter}/bin/codelldb"
+            local liblldb_path = "${pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter}/share/lldb/lib/liblldb.so"
 
             if vim.fn.filereadable(codelldb_path) == 1 then
               return cfg.get_codelldb_adapter(codelldb_path, liblldb_path)
+            elseif vim.fn.executable("codelldb") == 1 then
+              return cfg.get_codelldb_adapter(vim.fn.exepath("codelldb"), "")
             else
               return cfg.get_codelldb_adapter("codelldb", "")
             end

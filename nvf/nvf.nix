@@ -23,6 +23,7 @@
     ./config/editor/whichkey.nix
 
     # Tools
+    ./config/tools/tooling.nix
     ./config/tools/telescope.nix
     ./config/tools/navigation.nix
     ./config/tools/git.nix

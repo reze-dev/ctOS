@@ -43,7 +43,6 @@
               "dashboard"
               "snacks_dashboard"
               "lazy"
-              "mason"
               "notify"
               "oil"
               "toggleterm"
@@ -91,7 +90,6 @@
             "dashboard"
             "snacks_dashboard"
             "lazy"
-            "mason"
             "TelescopePrompt"
           ];
         };

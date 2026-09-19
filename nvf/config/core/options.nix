@@ -3,10 +3,9 @@
     # System Environment & PATH fallback
     luaConfigRC.env = ''
       local home = vim.env.HOME or vim.fn.expand("~")
-      local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
       local go_bin = home .. "/go/bin"
       local cargo_bin = home .. "/.cargo/bin"
-      vim.env.PATH = mason_bin .. ":" .. go_bin .. ":" .. cargo_bin .. ":" .. (vim.env.PATH or "")
+      vim.env.PATH = go_bin .. ":" .. cargo_bin .. ":" .. (vim.env.PATH or "")
     '';
 
     options = {

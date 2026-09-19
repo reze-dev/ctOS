@@ -1,12 +1,18 @@
 { pkgs, ... }: {
   config.vim = {
-    diagnostics.nvim-lint = {
-      enable = true;
-      linters_by_ft = {
-        c = [ "clang-tidy" ];
-        cpp = [ "clang-tidy" ];
-        go = [ "golangci-lint" ];
-        python = [ "ruff" ];
+    diagnostics = {
+      presets = {
+        clangtidy.enable = true;
+        golangci-lint.enable = true;
+      };
+      nvim-lint = {
+        enable = true;
+        linters_by_ft = {
+          c = [ "clang-tidy" ];
+          cpp = [ "clang-tidy" ];
+          go = [ "golangci-lint" ];
+          python = [ "ruff" ];
+        };
       };
     };
 

@@ -147,7 +147,6 @@
           "netrw"
           "NvimTree"
           "lazy"
-          "mason"
           "oil"
           "snacks_dashboard"
           "dashboard"

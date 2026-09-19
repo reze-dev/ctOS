@@ -160,14 +160,20 @@
         map("n", "<leader>dw", function() require("dap.ui.widgets").hover() end, { desc = "DAP: widgets" })
 
         -- CodeLLDB Discovery & Adapter
-        local mason_path = vim.fn.stdpath("data") .. "/mason/packages/codelldb"
-        local codelldb_mason = mason_path .. "/extension/adapter/codelldb"
+        local codelldb_pkg = "${pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter}/bin/codelldb"
+        local liblldb_pkg = "${pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter}/share/lldb/lib/liblldb.so"
         local codelldb_cmd = "codelldb"
 
-        if vim.fn.filereadable(codelldb_mason) == 1 or vim.fn.executable(codelldb_mason) == 1 then
-          codelldb_cmd = codelldb_mason
+        if vim.fn.executable(codelldb_pkg) == 1 then
+          codelldb_cmd = codelldb_pkg
         elseif vim.fn.executable("codelldb") == 1 then
           codelldb_cmd = vim.fn.exepath("codelldb")
+        end
+
+        local codelldb_args = { "--port", "''${port}" }
+        if vim.fn.filereadable(liblldb_pkg) == 1 then
+          table.insert(codelldb_args, 1, "--liblldb")
+          table.insert(codelldb_args, 2, liblldb_pkg)
         end
 
         dap.adapters.codelldb = {
@@ -175,7 +181,7 @@
           port = "''${port}",
           executable = {
             command = codelldb_cmd,
-            args = { "--port", "''${port}" },
+            args = codelldb_args,
           },
         }
         dap.adapters.lldb = dap.adapters.codelldb
@@ -317,10 +323,10 @@
         dap.configurations.rust = codelldb_configurations
 
         -- Delve (Go)
+        local dlv_pkg = "${pkgs.delve}/bin/dlv"
         local dlv_path = "dlv"
-        local mason_dlv = vim.fn.stdpath("data") .. "/mason/packages/delve/dlv"
-        if vim.fn.filereadable(mason_dlv) == 1 or vim.fn.executable(mason_dlv) == 1 then
-          dlv_path = mason_dlv
+        if vim.fn.executable(dlv_pkg) == 1 then
+          dlv_path = dlv_pkg
         elseif vim.fn.executable("dlv") == 1 then
           dlv_path = vim.fn.exepath("dlv")
         end
