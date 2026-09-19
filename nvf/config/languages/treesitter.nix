@@ -3,7 +3,7 @@
     treesitter = {
       enable = true;
       autotagHtml = true;
-      context.enable = true;
+      context.enable = false;
       textobjects = {
         enable = true;
         setupOpts = {
