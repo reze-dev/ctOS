@@ -64,21 +64,21 @@
           },
           ast = {
             role_icons = {
-              type = "🄣",
-              declaration = "🄓",
-              expression = "🄔",
-              statement = ";",
-              specifier = "🄢",
-              ["template argument"] = "🆃",
+              type = "",
+              declaration = "",
+              expression = "",
+              statement = "",
+              specifier = "",
+              ["template argument"] = "",
             },
             kind_icons = {
-              Compound = "🄲",
-              Recovery = "🅁",
-              TranslationUnit = "🅄",
-              PackExpansion = "🄿",
-              TemplateTypeParm = "🅃",
-              TemplateTemplateParm = "🅃",
-              TemplateParamObject = "🅃",
+              Compound = "",
+              Recovery = "",
+              TranslationUnit = "",
+              PackExpansion = "",
+              TemplateTypeParm = "",
+              TemplateTemplateParm = "",
+              TemplateParamObject = "",
             },
             highlights = {
               detail = "Comment",
@@ -134,7 +134,7 @@
           tag_options = "json=omitempty",
           verbose = false,
           log_path = vim.fn.stdpath("cache") .. "/gonvim.log",
-          icons = { breakpoint = "🔴", currentpos = "🏃" },
+          icons = { breakpoint = "", currentpos = "" },
         })
 
         vim.api.nvim_create_autocmd("FileType", {

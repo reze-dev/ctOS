@@ -85,7 +85,7 @@
             alt = [ "INFO" ];
           };
           TEST = {
-            icon = "⏲ ";
+            icon = "󰙨 ";
             color = "test";
             alt = [
               "TESTING"

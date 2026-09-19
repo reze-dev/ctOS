@@ -6,9 +6,9 @@
         enable = true;
         setupOpts = {
           icons = {
-            expanded = "▾";
-            collapsed = "▸";
-            current_frame = "▸";
+            expanded = "";
+            collapsed = "";
+            current_frame = "";
           };
           layouts = [
             {
@@ -84,7 +84,7 @@
         vim.fn.sign_define("DapBreakpointCondition", { text = " ", texthl = "DiagnosticWarn", linehl = "", numhl = "" })
         vim.fn.sign_define("DapBreakpointRejected", { text = " ", texthl = "DiagnosticError", linehl = "", numhl = "" })
         vim.fn.sign_define("DapLogPoint", { text = " ", texthl = "DiagnosticInfo", linehl = "", numhl = "" })
-        vim.fn.sign_define("DapStopped", { text = "▶ ", texthl = "DiagnosticOk", linehl = "DapStoppedLine", numhl = "" })
+        vim.fn.sign_define("DapStopped", { text = " ", texthl = "DiagnosticOk", linehl = "DapStoppedLine", numhl = "" })
         vim.api.nvim_set_hl(0, "DapStoppedLine", { default = true, link = "Visual" })
 
         -- DAP UI Listeners
