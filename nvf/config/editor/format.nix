@@ -1,4 +1,4 @@
-{ lib, ... }: {
+{ pkgs, lib, ... }: {
   config.vim = {
     formatter.conform-nvim = {
       enable = true;
@@ -29,10 +29,12 @@
           ];
           lua = [ "stylua" ];
           python = [
-            "ruff_format"
-            "ruff_organize_imports"
+            "ruff"
+            "ruff-organize-imports"
           ];
           toml = [ "taplo" ];
+          cmake = [ "gersemi" ];
+          sql = [ "sqlfluff" ];
           javascript = [ "prettier" ];
           typescript = [ "prettier" ];
           javascriptreact = [ "prettier" ];
@@ -46,7 +48,7 @@
           markdown = [ "prettier" ];
           graphql = [ "prettier" ];
           nix = [ "nixfmt" ];
-          fish = [ "fish_indent" ];
+          fish = [ "fish-indent" ];
           sh = [ "shfmt" ];
           bash = [ "shfmt" ];
           "_" = [ "trim_whitespace" ];
@@ -79,6 +81,15 @@
           };
           clang-format = {
             prepend_args = [ "-fallback-style=LLVM" ];
+          };
+          ruff_format = {
+            command = "${pkgs.ruff}/bin/ruff";
+          };
+          ruff_organize_imports = {
+            command = "${pkgs.ruff}/bin/ruff";
+          };
+          fish_indent = {
+            command = "${pkgs.fish}/bin/fish_indent";
           };
         };
       };
