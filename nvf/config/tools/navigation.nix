@@ -141,6 +141,7 @@
     binds.hardtime-nvim = {
       enable = true;
       setupOpts = {
+        enabled = false;
         max_count = 3;
         disabled_filetypes = [
           "qf"
@@ -173,6 +174,9 @@
     extraPlugins = with pkgs.vimPlugins; {
       vim-tmux-navigator = {
         package = vim-tmux-navigator;
+      };
+      nvim-spider = {
+        package = nvim-spider;
       };
     };
 
@@ -351,6 +355,52 @@
         mode = "n";
         action = "<cmd>TmuxNavigateRight<cr>";
         desc = "Navigate right (tmux-aware)";
+      }
+
+      # Spider
+      {
+        key = "w";
+        mode = [
+          "n"
+          "o"
+          "x"
+        ];
+        action = "function() require('spider').motion('w') end";
+        lua = true;
+        desc = "Spider-w";
+      }
+      {
+        key = "e";
+        mode = [
+          "n"
+          "o"
+          "x"
+        ];
+        action = "function() require('spider').motion('e') end";
+        lua = true;
+        desc = "Spider-e";
+      }
+      {
+        key = "b";
+        mode = [
+          "n"
+          "o"
+          "x"
+        ];
+        action = "function() require('spider').motion('b') end";
+        lua = true;
+        desc = "Spider-b";
+      }
+      {
+        key = "ge";
+        mode = [
+          "n"
+          "o"
+          "x"
+        ];
+        action = "function() require('spider').motion('ge') end";
+        lua = true;
+        desc = "Spider-ge";
       }
     ];
   };
