@@ -34,9 +34,9 @@ in
               extraConfig = ''
                 include ${../../../shell/config/kitty/themes/monoglow.conf}
 
-                font_family family='MonoLisa' style=Regular features="+calt +liga +salt"
+                font_family family='MonoLisa' style=Regular features="+calt +liga +salt +ss07 +ss08"
                 bold_font        auto
-                italic_font family='MonoLisa Italic' style=Regular features="+calt +liga +salt +ss02"
+                italic_font family='MonoLisa Italic' style=Regular features="+calt +liga +salt +ss02 +ss07 +ss08"
                 bold_italic_font auto
                 window_padding_width 12
                 hide_window_decorations yes
