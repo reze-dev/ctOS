@@ -136,6 +136,60 @@ Singleton {
         {
             category: "Actions",
             isApp: false,
+            id: "action-toggle-target-profiler",
+            name: "Toggle Target Profiler",
+            title: "Toggle Target Profiler",
+            description: "Show or hide Target Profiler telemetry widget",
+            desc: "Show or hide Target Profiler telemetry widget",
+            icon: "system-search",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["target", "profiler", "telemetry", "widget", "toggle"],
+            execute: function () {
+                Settings.widgetTargetProfilerVisible = !Settings.widgetTargetProfilerVisible;
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
+            id: "action-toggle-network-tracer",
+            name: "Toggle Net Packet Tracer",
+            title: "Toggle Net Packet Tracer",
+            description: "Show or hide Net Packet Tracer telemetry widget",
+            desc: "Show or hide Net Packet Tracer telemetry widget",
+            icon: "network-wired",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["network", "tracer", "packet", "telemetry", "widget", "toggle"],
+            execute: function () {
+                Settings.widgetNetworkTracerVisible = !Settings.widgetNetworkTracerVisible;
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
+            id: "action-toggle-audio-surveillance",
+            name: "Toggle Freq Intercept",
+            title: "Toggle Freq Intercept",
+            description: "Show or hide Freq Intercept telemetry widget",
+            desc: "Show or hide Freq Intercept telemetry widget",
+            icon: "audio-card",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["audio", "surveillance", "freq", "intercept", "telemetry", "widget", "toggle"],
+            execute: function () {
+                Settings.widgetAudioSurveillanceVisible = !Settings.widgetAudioSurveillanceVisible;
+                Settings.save();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
             id: "action-toggle-all-widgets",
             name: "Toggle All Desktop Widgets",
             title: "Toggle All Desktop Widgets",
@@ -147,11 +201,14 @@ Singleton {
             disabledNote: "",
             keywords: ["all", "widgets", "telemetry", "desktop", "toggle", "cpu", "ram", "network"],
             execute: function () {
-                const anyVisible = Settings.widgetCpuHexGridVisible || Settings.widgetNetworkFlowVisible || Settings.widgetRamBlockBarVisible;
+                const anyVisible = Settings.widgetCpuHexGridVisible || Settings.widgetNetworkFlowVisible || Settings.widgetRamBlockBarVisible || Settings.widgetTargetProfilerVisible || Settings.widgetNetworkTracerVisible || Settings.widgetAudioSurveillanceVisible;
                 const nextState = !anyVisible;
                 Settings.widgetCpuHexGridVisible = nextState;
                 Settings.widgetNetworkFlowVisible = nextState;
                 Settings.widgetRamBlockBarVisible = nextState;
+                Settings.widgetTargetProfilerVisible = nextState;
+                Settings.widgetNetworkTracerVisible = nextState;
+                Settings.widgetAudioSurveillanceVisible = nextState;
                 Settings.save();
             }
         },
