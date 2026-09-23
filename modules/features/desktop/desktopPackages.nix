@@ -25,6 +25,7 @@ in
       hyprlock
       hyprpolkitagent
       kdePackages.dolphin
+      kdePackages.dolphin-plugins
       kdePackages.okular
       libnotify
       mpv

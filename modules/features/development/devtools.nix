@@ -19,6 +19,7 @@ in
       duckdb
       shfmt
       shellcheck
+      just
       qt6.qtdeclarative
 
       # Python
