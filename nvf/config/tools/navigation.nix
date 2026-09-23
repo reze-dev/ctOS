@@ -132,8 +132,10 @@
       precognition = {
         enable = true;
         setupOpts = {
-          startVisible = false;
+          startVisible = true;
           showBlankVirtLine = true;
+          highlightColor.link = "DiagnosticSignWarn";
+          targetedMotionHighlightColor.link = "DiagnosticSignInfo";
         };
       };
     };
