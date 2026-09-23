@@ -25,6 +25,7 @@ in
       uv
       ruff
       python315
+      mojo-bin
       jetbrains.pycharm
 
       # Nix
