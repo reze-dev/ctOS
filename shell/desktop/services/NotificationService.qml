@@ -53,6 +53,9 @@ Singleton {
     // Map of notifId -> raw Notification object
     property var _notificationObjects: ({})
 
+    // Map of "appName|summary" -> timestamp
+    property var _recentNotifications: ({})
+
     // Component for instantiating per-toast auto-expiry timers
     Component {
         id: toastTimerComponent
@@ -178,6 +181,25 @@ Singleton {
             } catch (e) {}
         }
 
+        const dedupKey = appName + "|" + summary;
+        const now = Date.now();
+        
+        // Clean up expired entries to prevent memory leak
+        const cutoff = now - Settings.notificationCooldownSeconds * 1000;
+        for (let key in root._recentNotifications) {
+            if (root._recentNotifications[key] < cutoff) {
+                delete root._recentNotifications[key];
+            }
+        }
+
+        let isDuplicate = false;
+        if (root._recentNotifications[dedupKey] !== undefined) {
+            if (now - root._recentNotifications[dedupKey] < Settings.notificationCooldownSeconds * 1000) {
+                isDuplicate = true;
+            }
+        }
+        root._recentNotifications[dedupKey] = now;
+
         const record = {
             notifId: notifId,
             id: notifId,
@@ -199,7 +221,7 @@ Singleton {
         }
         historyModel.insert(0, record);
 
-        if (!root.doNotDisturb) {
+        if (!root.doNotDisturb && !isDuplicate) {
             for (let t = activeToastsModel.count - 1; t >= 0; --t) {
                 const existingToast = activeToastsModel.get(t);
                 if (existingToast && (existingToast.notifId === notifId || existingToast.id === notifId)) {
