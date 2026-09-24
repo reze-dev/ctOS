@@ -2,6 +2,8 @@ import QtQuick
 
 import qs.greeter.config
 
+import Qt5Compat.GraphicalEffects
+
 Item {
     id: root
 
@@ -11,6 +13,8 @@ Item {
 
     property bool animate: true
     property int individualSize: 4
+
+    property color tintColor: "transparent"
 
     property int startingHorizontalOffset: 0
     property int startingVerticalOffset: 0
@@ -44,6 +48,10 @@ Item {
             top: root.top
             topMargin: root._verticalOffset
         }
+        layer.enabled: !Qt.colorEqual(root.tintColor, "transparent")
+        layer.effect: ColorOverlay {
+            color: root.tintColor
+        }
     }
 
     Image {
@@ -58,6 +66,10 @@ Item {
             bottomMargin: root._verticalOffset
         }
         rotation: 270
+        layer.enabled: !Qt.colorEqual(root.tintColor, "transparent")
+        layer.effect: ColorOverlay {
+            color: root.tintColor
+        }
     }
 
     Image {
@@ -72,6 +84,10 @@ Item {
             topMargin: root._verticalOffset
         }
         rotation: 90
+        layer.enabled: !Qt.colorEqual(root.tintColor, "transparent")
+        layer.effect: ColorOverlay {
+            color: root.tintColor
+        }
     }
 
     Image {
@@ -86,6 +102,10 @@ Item {
             bottomMargin: root._verticalOffset
         }
         rotation: 180
+        layer.enabled: !Qt.colorEqual(root.tintColor, "transparent")
+        layer.effect: ColorOverlay {
+            color: root.tintColor
+        }
     }
 
     ParallelAnimation {
