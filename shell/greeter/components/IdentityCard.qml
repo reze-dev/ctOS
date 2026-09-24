@@ -12,6 +12,7 @@ Item {
         id: field
         property string label: "FIELD"
         property string value: "VALUE"
+        property color valueColor: Theme.textPrimary
         property alias fieldValueOpacity: fieldValue.opacity
 
         Text {
@@ -27,7 +28,7 @@ Item {
         Text {
             id: fieldValue
             text: field.value
-            color: Theme.textPrimary
+            color: field.valueColor
             font {
                 family: Settings.fontFamily
                 pixelSize: 22
@@ -40,11 +41,11 @@ Item {
         width: parent.width * 0.55
         height: parent.height
 
-        spacing: 15
+        spacing: 6
 
         RowLayout {
             id: row
-            spacing: 10
+            spacing: 6
 
             InfoField {
                 id: employeeId
@@ -70,6 +71,14 @@ Item {
                     }
                     return "OPERATOR";
                 }
+            }
+            InfoField {
+                id: employeeAccess
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                label: "ACCESS"
+                value: "RESTRICTED"
+                valueColor: "#ff3333"
             }
         }
 
@@ -110,6 +119,8 @@ Item {
         Image {
             source: "../resources/user.svg"
             opacity: 0.9
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
         }
     }
 
@@ -125,7 +136,7 @@ Item {
             value: 0
         }
         PropertyAction {
-            targets: [employeeId, employeeClass, employeeName]
+            targets: [employeeId, employeeClass, employeeAccess, employeeName]
             property: "fieldValueOpacity"
             value: 0
         }
@@ -153,6 +164,12 @@ Item {
 
                 NumberAnimation {
                     target: employeeClass
+                    property: "fieldValueOpacity"
+                    to: 1
+                    duration: 150
+                }
+                NumberAnimation {
+                    target: employeeAccess
                     property: "fieldValueOpacity"
                     to: 1
                     duration: 150
