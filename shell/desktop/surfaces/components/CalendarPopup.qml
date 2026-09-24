@@ -90,8 +90,8 @@ Rectangle {
     }
 
     function resetToToday(): void {
-        viewYear = todayYear;
-        viewMonth = todayMonth;
+        viewYear = Qt.binding(function() { return todayYear; });
+        viewMonth = Qt.binding(function() { return todayMonth; });
     }
 
     function generateCalendarCells(year: int, month: int, tYear: int, tMonth: int, tDate: int): var {
