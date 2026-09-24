@@ -31,6 +31,7 @@ in
         enable = true;
         efiSupport = true;
         device = "nodev";
+        useOSProber = true;
         dedsec-theme = {
           enable = true;
           style = "legion";
