@@ -23,8 +23,13 @@ stdenvNoCC.mkDerivation {
             mkdir -p "$out/bin"
             cat << 'EOF' > "$out/bin/ctos-shell"
     #!/bin/sh
-    # Kill any existing instances to prevent duplicates
-    pkill -f "quickshell.*shell.qml" || true
+    LOCKFILE="''${XDG_RUNTIME_DIR:-/tmp}/ctos-shell.lock"
+    exec 9>"$LOCKFILE"
+    if ! flock -n 9; then
+        echo "ctos-shell: another instance is already running" >&2
+        exit 0
+    fi
+    echo $$ >&9
     EOF
             cat << BIN >> "$out/bin/ctos-shell"
     exec ${pkgs.quickshell}/bin/quickshell -n -p "$out/share/ctos/shell.qml" "\$@"
