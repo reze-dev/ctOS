@@ -23,9 +23,10 @@ in
       };
 
       Service = {
+        Type = "simple";
         ExecStart = "${ctosPackage}/bin/ctos-shell";
         Restart = "on-failure";
-        RestartSec = 2;
+        RestartSec = 3;
         StartLimitBurst = 5;
         StartLimitIntervalSec = 30;
       };

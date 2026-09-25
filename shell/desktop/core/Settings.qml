@@ -38,6 +38,8 @@ Singleton {
     readonly property bool defaultWidgetTargetProfilerVisible: true
     property bool featuresCommandDeck: true
     property bool featuresNotifications: true
+    property int notificationCooldownSeconds: 30
+    readonly property int defaultNotificationCooldownSeconds: 30
     property bool featuresSystemRail: true
 
     // Indicator if configuration was successfully loaded from disk
@@ -130,6 +132,14 @@ Singleton {
                 featuresNotifications = data.features.notifications;
             } else {
                 featuresNotifications = defaultFeaturesNotifications;
+            }
+
+            if (typeof data.notificationCooldownSeconds === "number" && Number.isInteger(data.notificationCooldownSeconds) && data.notificationCooldownSeconds >= 0) {
+                notificationCooldownSeconds = data.notificationCooldownSeconds;
+            } else if (data.features && typeof data.features.notificationCooldownSeconds === "number" && Number.isInteger(data.features.notificationCooldownSeconds) && data.features.notificationCooldownSeconds >= 0) {
+                notificationCooldownSeconds = data.features.notificationCooldownSeconds;
+            } else {
+                notificationCooldownSeconds = defaultNotificationCooldownSeconds;
             }
 
             // barHeight: supports flat key or nested bar.height
@@ -311,6 +321,7 @@ Singleton {
         data.featuresCommandDeck = root.featuresCommandDeck;
         data.featuresSystemRail = root.featuresSystemRail;
         data.featuresNotifications = root.featuresNotifications;
+        data.notificationCooldownSeconds = root.notificationCooldownSeconds;
         data.barHeight = root.barHeight;
         data.theme = root.theme;
         data.wallpaper = root.wallpaper;
@@ -511,6 +522,7 @@ Singleton {
         featuresCommandDeck = defaultFeaturesCommandDeck;
         featuresSystemRail = defaultFeaturesSystemRail;
         featuresNotifications = defaultFeaturesNotifications;
+        notificationCooldownSeconds = defaultNotificationCooldownSeconds;
         barHeight = defaultBarHeight;
         theme = defaultTheme;
         wallpaper = defaultWallpaper;

@@ -46,14 +46,30 @@ Rectangle {
     // Calendar State & Calculations
     // =========================================================================
 
-    property int viewYear: (new Date()).getFullYear()
-    property int viewMonth: (new Date()).getMonth()
+    SystemClock {
+        id: systemClock
+
+        precision: SystemClock.Minute
+    }
+
+    property int todayYear: systemClock.date.getFullYear()
+    property int todayMonth: systemClock.date.getMonth()
+    property int todayDate: systemClock.date.getDate()
+
+    property int viewYear: todayYear
+    property int viewMonth: todayMonth
 
     readonly property var monthNames: ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
 
     readonly property var dayHeaders: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
-    readonly property var gridCells: generateCalendarCells(root.viewYear, root.viewMonth)
+    readonly property var gridCells: generateCalendarCells(root.viewYear, root.viewMonth, root.todayYear, root.todayMonth, root.todayDate)
+
+    onVisibleChanged: {
+        if (visible) {
+            resetToToday();
+        }
+    }
 
     function previousMonth(): void {
         if (viewMonth === 0) {
@@ -74,17 +90,12 @@ Rectangle {
     }
 
     function resetToToday(): void {
-        const now = new Date();
-        viewYear = now.getFullYear();
-        viewMonth = now.getMonth();
+        viewYear = Qt.binding(function() { return todayYear; });
+        viewMonth = Qt.binding(function() { return todayMonth; });
     }
 
-    function generateCalendarCells(year: int, month: int): var {
+    function generateCalendarCells(year: int, month: int, tYear: int, tMonth: int, tDate: int): var {
         const cells = [];
-        const today = new Date();
-        const todayYear = today.getFullYear();
-        const todayMonth = today.getMonth();
-        const todayDate = today.getDate();
 
         const firstDay = new Date(year, month, 1);
         const firstDayIndex = (firstDay.getDay() + 6) % 7;
@@ -111,7 +122,7 @@ Rectangle {
                 cellYear = month === 11 ? year + 1 : year;
             }
 
-            const isToday = (cellYear === todayYear && cellMonth === todayMonth && dayNum === todayDate && isCurrentMonth);
+            const isToday = (cellYear === tYear && cellMonth === tMonth && dayNum === tDate && isCurrentMonth);
 
             cells.push({
                 day: dayNum,
@@ -361,7 +372,7 @@ Rectangle {
                 color: Theme.textMuted
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
-                text: "// " + Qt.formatDateTime(new Date(), "yyyy-MM-dd")
+                text: "// " + Qt.formatDateTime(systemClock.date, "yyyy-MM-dd")
             }
 
             Rectangle {

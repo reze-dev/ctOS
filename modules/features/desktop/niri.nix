@@ -53,9 +53,6 @@ let
                 ];
               }
               {
-                command = [ "ctos-shell" ];
-              }
-              {
                 command = [ "hypridle" ];
               }
             ];
