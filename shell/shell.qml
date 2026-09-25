@@ -130,6 +130,14 @@ Scope {
         function toggleNetwork(): void {
             root.toggleNetwork(null);
         }
+
+        function toggleRadialSettings(): void {
+            OverlayController.toggleRadialSettings();
+        }
+
+        function openRadialSettings(): void {
+            OverlayController.openRadialSettings();
+        }
     }
 
     function resolveTargetScreen(): var {
@@ -622,6 +630,16 @@ Scope {
                 asynchronous: false
                 source: "desktop/surfaces/EventLog.qml"
                 visible: OverlayController.activeSurface === OverlayController.Surface.EventLog
+            }
+
+            Loader {
+                id: radialSettingsLoader
+
+                anchors.fill: parent
+                asynchronous: false
+                active: true
+                visible: OverlayController.activeSurface === OverlayController.Surface.RadialSettings
+                source: "desktop/surfaces/radial/RadialSettings.qml"
             }
         }
     }

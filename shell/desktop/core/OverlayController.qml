@@ -11,7 +11,8 @@ Singleton {
         None,
         CommandDeck,
         SystemRail,
-        EventLog
+        EventLog,
+        RadialSettings
     }
 
     // Primary Overlay State Enum
@@ -19,7 +20,8 @@ Singleton {
         None,
         CommandDeck,
         SystemRail,
-        EventLog
+        EventLog,
+        RadialSettings
     }
 
     property var _focusTargets: ({})
@@ -33,6 +35,7 @@ Singleton {
     readonly property bool isOverlayActive: activeSurface !== OverlayController.Surface.None
     readonly property int surfaceCommandDeck: 1
     readonly property int surfaceEventLog: 3
+    readonly property int surfaceRadialSettings: 4
 
     // Explicit constants for zero-ambiguity access
     readonly property int surfaceNone: 0
@@ -53,7 +56,7 @@ Singleton {
     // Internal Transition Logic
 
     function _isValidSurface(surface: int): bool {
-        if (surface < 0 || surface > OverlayController.Surface.EventLog) {
+        if (surface < 0 || surface > OverlayController.Surface.RadialSettings) {
             return false;
         }
         return true;
@@ -127,6 +130,9 @@ Singleton {
     function openEventLog(): void {
         _setSurface(OverlayController.Surface.EventLog);
     }
+    function openRadialSettings(): void {
+        _setSurface(OverlayController.Surface.RadialSettings);
+    }
     function openSystemRail(): void {
         _setSurface(OverlayController.Surface.SystemRail);
     }
@@ -172,6 +178,9 @@ Singleton {
     }
     function toggleEventLog(): void {
         toggle(OverlayController.Surface.EventLog);
+    }
+    function toggleRadialSettings(): void {
+        toggle(OverlayController.Surface.RadialSettings);
     }
     function toggleSystemRail(): void {
         toggle(OverlayController.Surface.SystemRail);
