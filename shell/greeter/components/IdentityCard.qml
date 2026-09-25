@@ -8,10 +8,15 @@ import qs.greeter.services
 Item {
     id: root
 
+    // =========================================================================
+    // InfoField inline component
+    // =========================================================================
+
     component InfoField: Column {
         id: field
         property string label: "FIELD"
         property string value: "VALUE"
+        property color valueColor: Theme.textPrimary
         property alias fieldValueOpacity: fieldValue.opacity
 
         Text {
@@ -20,98 +25,125 @@ Item {
             color: Theme.textPrimaryDim
             font {
                 family: Settings.fontFamily
-                pixelSize: 14
+                pixelSize: Math.round(11 * Units.vh)
             }
         }
 
         Text {
             id: fieldValue
             text: field.value
-            color: Theme.textPrimary
+            color: field.valueColor
             font {
                 family: Settings.fontFamily
-                pixelSize: 22
+                pixelSize: Math.round(17 * Units.vh)
                 weight: 500
             }
+            elide: Text.ElideRight
         }
     }
 
-    ColumnLayout {
-        width: parent.width * 0.55
-        height: parent.height
+    // =========================================================================
+    // Card layout — unified RowLayout splitting left info from right photo
+    // =========================================================================
 
-        spacing: 15
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
 
-        RowLayout {
-            id: row
-            spacing: 10
+        // ── Left column: fields + barcode ────────────────────────────────────
+        ColumnLayout {
+            id: infoColumn
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: Math.round(4 * Units.vh)
 
-            InfoField {
-                id: employeeId
+            // Row 1: EMPID / CLASS / ACCESS
+            RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                label: "EMPID ##"
-                value: SessionManager.activeUser ? ("UID-" + SessionManager.activeUser.uid) : "UID-STANDBY"
-            }
-            InfoField {
-                id: employeeClass
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                label: "CLASS"
-                value: {
-                    if (!SessionManager.activeUser) {
-                        return "STANDBY";
+                spacing: Math.round(6 * Units.vh)
+
+                InfoField {
+                    id: employeeId
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    label: "EMPID ##"
+                    value: SessionManager.activeUser ? ("UID-" + SessionManager.activeUser.uid) : "UID-STANDBY"
+                }
+                InfoField {
+                    id: employeeClass
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    label: "CLASS"
+                    value: {
+                        if (!SessionManager.activeUser) {
+                            return "STANDBY";
+                        }
+                        if (SessionManager.activeUser.uid === 0) {
+                            return "L0_ROOT";
+                        }
+                        if (SessionManager.activeUser.uid === 1000) {
+                            return "L5_ADMIN";
+                        }
+                        return "OPERATOR";
                     }
-                    if (SessionManager.activeUser.uid === 0) {
-                        return "L0_ROOT";
-                    }
-                    if (SessionManager.activeUser.uid === 1000) {
-                        return "L5_ADMIN";
-                    }
-                    return "OPERATOR";
+                }
+                InfoField {
+                    id: employeeAccess
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    label: "ACCESS"
+                    value: "RESTRICTED"
+                    valueColor: Theme.accentRed
                 }
             }
+
+            // Row 2: Full name
+            InfoField {
+                id: employeeName
+                Layout.fillWidth: true
+                label: "FULL NAME"
+                value: SessionManager.activeUser ? SessionManager.activeUser.username.toUpperCase() : "UNKNOWN"
+            }
+
+            // Spacer
+            Item {
+                Layout.fillHeight: true
+            }
+
+            // Row 3: Barcode — constrain height by aspect ratio of the SVG (241:72)
+            Image {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.round(width * (72 / 241))
+                fillMode: Image.Stretch
+                source: "../resources/id-barcode.svg"
+            }
         }
 
-        InfoField {
-            id: employeeName
-            Layout.fillWidth: true
-            label: "FULL NAME"
-            value: SessionManager.activeUser ? SessionManager.activeUser.username.toUpperCase() : "UNKNOWN"
-        }
-
+        // ── Right column: profile picture ─────────────────────────────────────
         Item {
+            id: profilePicture
+            // Keep the photo panel square-ish: take 32% of total card width
+            Layout.preferredWidth: Math.round(root.width * 0.32)
             Layout.fillHeight: true
-        }
 
-        Image {
-            Layout.bottomMargin: 2  // optical compensation
-            Layout.fillWidth: true
-            fillMode: Image.PreserveAspectFit
-            source: "../resources/id-barcode.svg"
-        }
-    }
+            Rectangle {
+                anchors.fill: parent
+                color: "#1effffff"
+            }
 
-    Item {
-        id: profilePicture
-        // width: parent.width * 0.40
-        width: parent.height / 5 * 4
-        height: parent.height
-
-        anchors {
-            right: parent.right
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: '#1effffff'
-        }
-
-        Image {
-            source: "../resources/user.svg"
-            opacity: 0.9
+            Image {
+                source: "../resources/user.svg"
+                opacity: 0.9
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
+                anchors.margins: Math.round(4 * Units.vh)
+            }
         }
     }
+
+    // =========================================================================
+    // Reveal animation
+    // =========================================================================
 
     SequentialAnimation {
         id: revealAnimation
@@ -125,7 +157,7 @@ Item {
             value: 0
         }
         PropertyAction {
-            targets: [employeeId, employeeClass, employeeName]
+            targets: [employeeId, employeeClass, employeeAccess, employeeName]
             property: "fieldValueOpacity"
             value: 0
         }
@@ -153,6 +185,12 @@ Item {
 
                 NumberAnimation {
                     target: employeeClass
+                    property: "fieldValueOpacity"
+                    to: 1
+                    duration: 150
+                }
+                NumberAnimation {
+                    target: employeeAccess
                     property: "fieldValueOpacity"
                     to: 1
                     duration: 150

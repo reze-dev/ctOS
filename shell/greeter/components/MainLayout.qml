@@ -345,6 +345,7 @@ Item {
             script: {
                 fieldGroup.opacity = 0;
                 accents.state = "identity_card";
+                accents.tintColor = "#00ff41";
                 identityCard.start();
             }
         }
@@ -355,6 +356,7 @@ Item {
             script: {
                 identityCard.opacity = 0;
                 accents.state = "field_group";
+                accents.tintColor = "transparent";
                 fieldGroup.opacity = 1;
                 fieldGroup.start();
             }
