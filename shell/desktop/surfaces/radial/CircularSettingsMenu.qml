@@ -171,7 +171,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: (root.model && root.model.categories[root.focusedIndex]) ? root.model.categories[root.focusedIndex].name : "SYSTEM"
                 font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeTitle
+                font.pixelSize: Theme.fontSizeQuery
                 font.weight: Theme.fontWeightBold
                 color: Theme.textPrimary
                 elide: Text.ElideRight
@@ -182,7 +182,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: (root.model && root.model.categories[root.focusedIndex]) ? root.model.categories[root.focusedIndex].subtitle : ""
                 font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
+                font.pixelSize: Theme.fontSizeTitle
                 color: Theme.acidGreen
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2

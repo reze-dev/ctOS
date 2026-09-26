@@ -20,7 +20,7 @@ Item {
     property bool isHovered: false
     property bool isActive: false
 
-    property real nodeSize: isPreview ? 20 : 32
+    property real nodeSize: isPreview ? 30 : 32
     property real screenX: x + width / 2
     property real screenY: y + height / 2
 
@@ -96,7 +96,7 @@ Item {
         CtosIcon {
             id: nodeIcon
             anchors.centerIn: parent
-            size: root.isPreview ? 12 : Math.max(16, root.nodeSize * 0.44)
+            size: root.isPreview ? 18 : Math.max(16, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
             color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "#FFFFFF" : (root.isPreview ? Theme.gray800 : Theme.gray500))
             visible: !root.isPreview || root.isSelected
@@ -109,13 +109,13 @@ Item {
         // Active State Indicator Dot
         Rectangle {
             id: activeDot
-            width: root.isPreview ? 4 : 6
-            height: root.isPreview ? 4 : 6
+            width: 6
+            height: 6
             radius: Theme.radiusPill
             color: Theme.acidGreen
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            anchors.margins: root.isPreview ? 1 : 3
+            anchors.margins: 3
             visible: root.isActive && !root.locked
         }
 
