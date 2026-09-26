@@ -273,7 +273,7 @@ FocusScope {
         isExpanded: root.branchExpanded
         wheelCenterX: wheelMenu.wheelCenterX
         wheelCenterY: wheelMenu.wheelCenterY
-        branchOriginX: wheelMenu.leftAnchorX + 170
+        branchOriginX: wheelMenu.leftAnchorX + 350
         branchOriginY: root.height / 2
         z: 5
 
@@ -289,7 +289,7 @@ FocusScope {
         model: settingsModel
         focusedIndex: root.focusedCategoryIndex
         isExpanded: root.wheelExpanded
-        leftAnchorX: 180
+        leftAnchorX: -70
         z: 10
 
         onCategoryClicked: function(idx) {

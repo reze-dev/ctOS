@@ -395,7 +395,7 @@ FocusScope {
             OverlayController.close();
         } else if (typeof item.execute === "function") {
             item.execute();
-            if (item.id !== "action-system-rail" && item.id !== "action-event-log") {
+            if (item.id !== "action-system-rail" && item.id !== "action-event-log" && item.id !== "action-toggle-radial-settings") {
                 OverlayController.close();
             }
         }

@@ -20,7 +20,7 @@ Item {
     property bool isHovered: false
     property bool isActive: false
 
-    property real nodeSize: (!isPreview && isSelected) ? 60 : (isPreview ? 40 : 42)
+    property real nodeSize: (!isPreview && isSelected) ? 60 : (isPreview ? 30 : 42)
     property real screenX: x + width / 2
     property real screenY: y + height / 2
 
