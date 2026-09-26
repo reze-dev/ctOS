@@ -50,7 +50,7 @@ Item {
 
         ShapePath {
             strokeWidth: 1.0
-            strokeColor: "#000000"
+            strokeColor: "black"
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
 

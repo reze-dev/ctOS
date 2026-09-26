@@ -138,7 +138,7 @@ FocusScope {
     Rectangle {
         id: scrimBackdrop
         anchors.fill: parent
-        color: "#0D3A8F"
+        color: Qt.rgba(13/255, 58/255, 143/255, 1.0)
         opacity: 0.94
     }
 

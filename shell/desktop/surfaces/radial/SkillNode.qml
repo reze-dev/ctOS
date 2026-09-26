@@ -81,9 +81,9 @@ Item {
         id: nodeDisc
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: (root.isSelected || root.isHovered) ? "#000000" : Theme.gray900
+        color: (root.isSelected || root.isHovered) ? "black" : Theme.gray900
         border.width: (root.isSelected || root.isHovered) ? 2 : 1
-        border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "#FFFFFF" : (root.isPreview ? Theme.gray800 : Theme.gray700))
+        border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "white" : (root.isPreview ? Theme.gray800 : Theme.gray700))
 
         Behavior on border.color {
             ColorAnimation { duration: Theme.durationFast }
@@ -98,7 +98,7 @@ Item {
             anchors.centerIn: parent
             size: root.isPreview ? 18 : Math.max(16, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
-            color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "#FFFFFF" : (root.isPreview ? Theme.gray800 : Theme.gray500))
+            color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "white" : (root.isPreview ? Theme.gray800 : Theme.gray500))
             visible: !root.isPreview || root.isSelected
 
             Behavior on color {
