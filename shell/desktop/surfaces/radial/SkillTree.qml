@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../../core"
-import "RadialGeometry.js" as RadialGeometry
 
 Item {
     id: root
@@ -17,8 +16,11 @@ Item {
 
     property real wheelCenterX: width / 2
     property real wheelCenterY: height / 2
+    property real outerRadius: 205
     property real branchOriginX: 300
     property real branchOriginY: height / 2
+
+    readonly property var rootNode: (root.model && root.model.categories[root.focusedCategoryIndex]?.nodes?.length > 0) ? root.model.categories[root.focusedCategoryIndex].nodes[0] : null
 
     signal nodeSelected(string nodeId)
     signal nodeHovered(string nodeId)
@@ -69,25 +71,22 @@ Item {
                 id: previewSubtree
                 required property int index
                 readonly property int categoryIdx: previewSubtree.index
-                readonly property real angleDeg: -90.0 + previewSubtree.categoryIdx * (360.0 / (root.model ? root.model.categoryCount : 8))
+                readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 9)
+                readonly property real angleDeg: -90.0 + previewSubtree.index * previewSubtree.segAngle
+                readonly property real rad: previewSubtree.angleDeg * Math.PI / 180.0
+                readonly property real radMinus8: (previewSubtree.angleDeg - 8.0) * Math.PI / 180.0
+                readonly property real radPlus8: (previewSubtree.angleDeg + 8.0) * Math.PI / 180.0
+                readonly property real radMinus12: (previewSubtree.angleDeg - 12.0) * Math.PI / 180.0
+
                 readonly property bool isCatFocused: root.focusedCategoryIndex === previewSubtree.categoryIdx
                 readonly property var cat: (root.model && root.model.categories[previewSubtree.categoryIdx]) ? root.model.categories[previewSubtree.categoryIdx] : null
 
-                // Subtree polar anchor points
-                property var r0Point: ({x: 0, y: 0})
-                property var r1Point: ({x: 0, y: 0})
-                property var c1Point: ({x: 0, y: 0})
-                property var c2Point: ({x: 0, y: 0})
-                property var c3Point: ({x: 0, y: 0})
-
-                Component.onCompleted: {
-                    var a = previewSubtree.angleDeg;
-                    r0Point = RadialGeometry.pointOnCircle(0, 0, 206, a);
-                    r1Point = RadialGeometry.pointOnCircle(0, 0, 246, a);
-                    c1Point = RadialGeometry.pointOnCircle(0, 0, 291, a - 8.0);
-                    c2Point = RadialGeometry.pointOnCircle(0, 0, 291, a + 8.0);
-                    c3Point = RadialGeometry.pointOnCircle(0, 0, 336, a - 12.0);
-                }
+                // Subtree polar anchor points (reactive trigonometric properties)
+                readonly property var r0Point: ({ x: 206 * Math.cos(previewSubtree.rad), y: 206 * Math.sin(previewSubtree.rad) })
+                readonly property var r1Point: ({ x: 246 * Math.cos(previewSubtree.rad), y: 246 * Math.sin(previewSubtree.rad) })
+                readonly property var c1Point: ({ x: 291 * Math.cos(previewSubtree.radMinus8), y: 291 * Math.sin(previewSubtree.radMinus8) })
+                readonly property var c2Point: ({ x: 291 * Math.cos(previewSubtree.radPlus8), y: 291 * Math.sin(previewSubtree.radPlus8) })
+                readonly property var c3Point: ({ x: 336 * Math.cos(previewSubtree.radMinus12), y: 336 * Math.sin(previewSubtree.radMinus12) })
 
                 // Trunk edge
                 SkillEdge {
@@ -183,13 +182,59 @@ Item {
             NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
         }
 
+        // Staggered cascade controller for nodes and connecting edges
+        Item {
+            id: cascadeController
+
+            property real offset0: 0.0
+            property real offset1: 0.0
+            property real offset2: 0.0
+            property real offset3: 0.0
+            property real offset4: 0.0
+            property real offset5: 0.0
+            property real offset6: 0.0
+            property real offset7: 0.0
+
+            function getOffset(nodeIndex: int): real {
+                if (nodeIndex === 0) return cascadeController.offset0;
+                if (nodeIndex === 1) return cascadeController.offset1;
+                if (nodeIndex === 2) return cascadeController.offset2;
+                if (nodeIndex === 3) return cascadeController.offset3;
+                if (nodeIndex === 4) return cascadeController.offset4;
+                if (nodeIndex === 5) return cascadeController.offset5;
+                if (nodeIndex === 6) return cascadeController.offset6;
+                if (nodeIndex === 7) return cascadeController.offset7;
+                return 0.0;
+            }
+
+            function restartCascade(): void {
+                cascadeAnim0.restart();
+                cascadeAnim1.restart();
+                cascadeAnim2.restart();
+                cascadeAnim3.restart();
+                cascadeAnim4.restart();
+                cascadeAnim5.restart();
+                cascadeAnim6.restart();
+                cascadeAnim7.restart();
+            }
+
+            NumberAnimation { id: cascadeAnim0; target: cascadeController; property: "offset0"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 0; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim1; target: cascadeController; property: "offset1"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 60; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim2; target: cascadeController; property: "offset2"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 120; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim3; target: cascadeController; property: "offset3"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 180; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim4; target: cascadeController; property: "offset4"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 240; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim5; target: cascadeController; property: "offset5"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 300; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim6; target: cascadeController; property: "offset6"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 360; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim7; target: cascadeController; property: "offset7"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 420; running: root.isExpanded; easing.type: Easing.OutBack }
+        }
+
         // Horizontal Anchor Ray from Wheel to Root Node
         SkillEdge {
             id: anchorRay
-            x1: root.branchOriginX
-            y1: root.branchOriginY
-            x2: root.branchOriginX + 70
-            y2: root.branchOriginY
+            x1: root.wheelCenterX + 205
+            y1: root.wheelCenterY
+            x2: root.branchOriginX + (root.rootNode ? root.rootNode.pos.x : 70) + cascadeController.offset0
+            y2: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
             isActive: true
             isPreview: false
         }
@@ -199,6 +244,12 @@ Item {
             function onIsExpandedChanged(): void {
                 if (root.isExpanded) {
                     anchorRay.triggerPulse();
+                    cascadeController.restartCascade();
+                }
+            }
+            function onFocusedCategoryIndexChanged(): void {
+                if (root.isExpanded) {
+                    cascadeController.restartCascade();
                 }
             }
             function onNodeSelected(nodeId): void {
@@ -224,9 +275,22 @@ Item {
                         var childId = parentNode.edges[j];
                         var childNode = root.model.getNode(root.focusedCategoryIndex, childId);
                         if (childNode) {
+                            var childIdx = -1;
+                            for (var k = 0; k < cat.nodes.length; ++k) {
+                                if (cat.nodes[k].id === childId) {
+                                    childIdx = k;
+                                    break;
+                                }
+                            }
                             edgesList.push({
                                 parentId: parentNode.id,
                                 childId: childId,
+                                parentIndex: i,
+                                childIndex: childIdx,
+                                parentPosX: parentNode.pos.x,
+                                parentPosY: parentNode.pos.y,
+                                childPosX: childNode.pos.x,
+                                childPosY: childNode.pos.y,
                                 x1: root.branchOriginX + parentNode.pos.x,
                                 y1: root.branchOriginY + parentNode.pos.y,
                                 x2: root.branchOriginX + childNode.pos.x,
@@ -241,10 +305,10 @@ Item {
             delegate: SkillEdge {
                 id: edgeItem
                 required property var modelData
-                x1: edgeItem.modelData.x1
-                y1: edgeItem.modelData.y1
-                x2: edgeItem.modelData.x2
-                y2: edgeItem.modelData.y2
+                x1: root.branchOriginX + edgeItem.modelData.parentPosX + cascadeController.getOffset(edgeItem.modelData.parentIndex)
+                y1: root.branchOriginY + edgeItem.modelData.parentPosY
+                x2: root.branchOriginX + edgeItem.modelData.childPosX + cascadeController.getOffset(edgeItem.modelData.childIndex)
+                y2: root.branchOriginY + edgeItem.modelData.childPosY
                 isActive: root.selectedNodeId === edgeItem.modelData.childId || root.selectedNodeId === edgeItem.modelData.parentId
                 isPreview: false
 
@@ -272,26 +336,11 @@ Item {
                 id: nodeWrapper
                 required property var modelData
                 required property int index
-                x: root.branchOriginX + nodeWrapper.modelData.pos.x - 24 + cascadeOffset.offset
+                readonly property real cascadeOffset: cascadeController.getOffset(nodeWrapper.index)
+                x: root.branchOriginX + nodeWrapper.modelData.pos.x - 24 + nodeWrapper.cascadeOffset
                 y: root.branchOriginY + nodeWrapper.modelData.pos.y - 24
                 width: 48
                 height: 48
-
-                // Staggered cascade entrance on branch expansion
-                QtObject {
-                    id: cascadeOffset
-                    property real offset: 0.0
-                }
-
-                NumberAnimation {
-                    target: cascadeOffset
-                    property: "offset"
-                    from: -30.0
-                    to: 0.0
-                    duration: Theme.durationSlow + (nodeWrapper.index * 60)
-                    running: root.isExpanded
-                    easing.type: Easing.OutBack
-                }
 
                 SkillNode {
                     id: skillNode

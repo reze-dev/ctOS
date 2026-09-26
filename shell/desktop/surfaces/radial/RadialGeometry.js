@@ -149,28 +149,59 @@ function findSpatialNeighbor(currentNode, allNodes, direction) {
 
         var dx = n.screenX - cx;
         var dy = n.screenY - cy;
-        var d = Math.sqrt(dx * dx + dy * dy);
+        var d = Math.max(1.0, Math.sqrt(dx * dx + dy * dy));
         if (d < 1.0) continue;
 
         var score = 0;
-        // Direction vectors:
+        // Direction vectors and proximity scoring within directional cone:
         // Up: dx=0, dy=-1
         // Right: dx=1, dy=0
         // Down: dx=0, dy=1
         // Left: dx=-1, dy=0
         if (direction === 0) { // Up
             if (dy >= -5) continue; // must be above
-            score = (-dy * 2.0) - Math.abs(dx);
+            score = (1000.0 / d) - (Math.abs(dx) * 2.0);
         } else if (direction === 1) { // Right
             if (dx <= 5) continue; // must be right
-            score = (dx * 2.0) - Math.abs(dy);
+            score = (1000.0 / d) - (Math.abs(dy) * 2.0);
         } else if (direction === 2) { // Down
             if (dy <= 5) continue; // must be below
-            score = (dy * 2.0) - Math.abs(dx);
+            score = (1000.0 / d) - (Math.abs(dx) * 2.0);
         } else if (direction === 3) { // Left
             if (dx >= -5) continue; // must be left
-            score = (-dx * 2.0) - Math.abs(dy);
+            score = (1000.0 / d) - (Math.abs(dy) * 2.0);
         }
+
+        // Prevent jumping over intermediate tier nodes in directional cone
+        var isOccluded = false;
+        for (var k = 0; k < allNodes.length; ++k) {
+            var m = allNodes[k];
+            if (m.id === currentNode.id || m.id === n.id) continue;
+            var mdx = m.screenX - cx;
+            var mdy = m.screenY - cy;
+            if (direction === 1) { // Right
+                if (mdx > 5 && mdx < dx - 40 && Math.abs(mdy) < 180) {
+                    isOccluded = true;
+                    break;
+                }
+            } else if (direction === 3) { // Left
+                if (mdx < -5 && mdx > dx + 40 && Math.abs(mdy) < 180) {
+                    isOccluded = true;
+                    break;
+                }
+            } else if (direction === 0) { // Up
+                if (mdy < -5 && mdy > dy + 40 && Math.abs(mdx) < 180) {
+                    isOccluded = true;
+                    break;
+                }
+            } else if (direction === 2) { // Down
+                if (mdy > 5 && mdy < dy - 40 && Math.abs(mdx) < 180) {
+                    isOccluded = true;
+                    break;
+                }
+            }
+        }
+        if (isOccluded) continue;
 
         if (score > bestScore) {
             bestScore = score;

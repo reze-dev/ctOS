@@ -57,13 +57,11 @@ Item {
         }
     }
 
-    // Centered icon coordinates along the radial sector ray
-    readonly property var iconCenter: RadialGeometry.pointOnCircle(
-        root.cx,
-        root.cy,
-        (root.effectiveInnerRadius + root.effectiveOuterRadius) / 2.0,
-        root.centerAngle
-    )
+    // Centered icon coordinates along the radial sector ray using direct arithmetic
+    readonly property real iconRadius: (root.effectiveInnerRadius + root.effectiveOuterRadius) / 2.0
+    readonly property real iconRad: root.centerAngle * Math.PI / 180.0
+    readonly property real iconCenterX: root.cx + root.iconRadius * Math.cos(root.iconRad)
+    readonly property real iconCenterY: root.cy + root.iconRadius * Math.sin(root.iconRad)
 
     // Signals
     signal clicked()
@@ -106,8 +104,8 @@ Item {
     // Centered Category Icon with Rotation Compensation
     Item {
         id: iconContainer
-        x: root.iconCenter.x - width / 2
-        y: root.iconCenter.y - height / 2
+        x: root.iconCenterX - width / 2
+        y: root.iconCenterY - height / 2
         width: 36
         height: 36
 

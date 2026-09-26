@@ -46,11 +46,88 @@ FocusScope {
         OverlayController.unregisterFocusTarget(OverlayController.Surface.RadialSettings);
     }
 
+    // Phased Transition State Coordination
+    property bool wheelExpanded: false
+    property bool branchExpanded: false
+
+    // NumberAnimation for smooth branch retraction
+    NumberAnimation {
+        id: branchFadeAnim
+        target: skillTree
+        property: "opacity"
+        from: 1.0
+        to: 0.0
+        duration: 130
+        easing.type: Easing.OutCubic
+    }
+
+    // Expand Choreography: Wheel translates left first, branch deploys once wheel nears left edge
+    Timer {
+        id: expandTimer
+        interval: 180
+        repeat: false
+        onTriggered: {
+            if (root.isExpanded) {
+                root.branchExpanded = true;
+            }
+        }
+    }
+
+    // Collapse Choreography: Branch retracts first (140ms), then wheel returns to center
+    Timer {
+        id: collapseTimerWheelReturn
+        interval: 140
+        repeat: false
+        onTriggered: {
+            if (!root.isExpanded) {
+                root.branchExpanded = false;
+                root.wheelExpanded = false;
+            }
+        }
+    }
+
+    // Preview trees blossom back in as the wheel approaches screen center
+    Timer {
+        id: collapseTimerPreviewRestore
+        interval: 320
+        repeat: false
+        onTriggered: {
+            if (!root.isExpanded) {
+                skillTree.opacity = 1.0;
+            }
+        }
+    }
+
+    onIsExpandedChanged: {
+        if (root.isExpanded) {
+            collapseTimerWheelReturn.stop();
+            collapseTimerPreviewRestore.stop();
+            branchFadeAnim.stop();
+            skillTree.opacity = 1.0;
+
+            root.wheelExpanded = true;
+            root.branchExpanded = false;
+            expandTimer.restart();
+        } else {
+            expandTimer.stop();
+            branchFadeAnim.restart();
+            collapseTimerWheelReturn.restart();
+            collapseTimerPreviewRestore.restart();
+        }
+    }
+
     onVisibleChanged: {
         if (visible) {
             root.forceActiveFocus();
         } else {
             root.isExpanded = false;
+            expandTimer.stop();
+            collapseTimerWheelReturn.stop();
+            collapseTimerPreviewRestore.stop();
+            branchFadeAnim.stop();
+            root.wheelExpanded = false;
+            root.branchExpanded = false;
+            skillTree.opacity = 1.0;
         }
     }
 
@@ -193,7 +270,7 @@ FocusScope {
         model: settingsModel
         focusedCategoryIndex: root.focusedCategoryIndex
         selectedNodeId: root.selectedNodeId
-        isExpanded: root.isExpanded
+        isExpanded: root.branchExpanded
         wheelCenterX: wheelMenu.wheelCenterX
         wheelCenterY: wheelMenu.wheelCenterY
         branchOriginX: wheelMenu.leftAnchorX + 170
@@ -211,7 +288,7 @@ FocusScope {
         anchors.fill: parent
         model: settingsModel
         focusedIndex: root.focusedCategoryIndex
-        isExpanded: root.isExpanded
+        isExpanded: root.wheelExpanded
         leftAnchorX: 180
         z: 10
 
@@ -228,6 +305,10 @@ FocusScope {
                 root.focusedCategoryIndex = idx;
             }
         }
+
+        onCollapseRequested: {
+            root.isExpanded = false;
+        }
     }
 
     // Tactical Right-Side Detail Context Panel
@@ -236,7 +317,7 @@ FocusScope {
         model: settingsModel
         focusedCategoryIndex: root.focusedCategoryIndex
         selectedNodeId: root.selectedNodeId
-        isExpanded: root.isExpanded
+        isExpanded: root.branchExpanded
         z: 15
     }
 

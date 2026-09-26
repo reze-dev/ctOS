@@ -60,7 +60,8 @@ Item {
             "volume", "volume-mute", "volume-slash",
             "microphone", "microphone-slash",
             "lock", "reboot", "power", "logout",
-            "brightness", "gear", "warning", "close", "check"
+            "brightness", "gear", "warning", "close", "check",
+            "keyboard", "mouse", "shield", "palette", "terminal", "memory", "cpu"
         ];
         if (direct.indexOf(norm) !== -1) {
             if (norm === "volume-slash") return "volume-mute";
@@ -114,7 +115,7 @@ Item {
         return "";
     }
 
-    // TIER 1: Phosphor System SVGs (Dynamic Recoloring)
+    // TIER 1: Phosphor / Material System SVGs (Dynamic Recoloring)
     Item {
         id: tier1Container
         anchors.fill: parent
@@ -130,20 +131,13 @@ Item {
             visible: false
         }
 
-        Rectangle {
-            id: systemColorRect
-            anchors.fill: systemSvg
-            color: root.effectiveColor
-            visible: false
-        }
-
         MultiEffect {
             id: systemEffect
             anchors.fill: systemSvg
-            source: systemColorRect
-            maskEnabled: true
-            maskSource: systemSvg
-            visible: root.isSystemIcon && (systemSvg.status !== Image.Error && systemSvg.status !== Image.Null)
+            source: systemSvg
+            colorization: 1.0
+            colorizationColor: root.effectiveColor
+            visible: root.isSystemIcon && (systemSvg.status !== Image.Error && systemSvg.status !== Image.Null) && root.effectiveColor !== "transparent"
         }
     }
 
@@ -177,20 +171,13 @@ Item {
             visible: false
         }
 
-        Rectangle {
-            id: fallbackColorRect
-            anchors.fill: fallbackRawImage
-            color: root.effectiveColor
-            visible: false
-        }
-
         MultiEffect {
             id: fallbackEffect
             anchors.fill: fallbackRawImage
-            source: fallbackColorRect
-            maskEnabled: true
-            maskSource: fallbackRawImage
-            visible: root.isShaderFallback
+            source: fallbackRawImage
+            colorization: 1.0
+            colorizationColor: root.effectiveColor
+            visible: root.isShaderFallback && root.effectiveColor !== "transparent"
         }
     }
 }

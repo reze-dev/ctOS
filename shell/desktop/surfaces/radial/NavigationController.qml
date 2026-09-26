@@ -19,7 +19,7 @@ Item {
     property real surfaceWidth: 1920
     property real surfaceHeight: 1080
     property var activeNodes: []
-    property int categoryCount: 8
+    property int categoryCount: 9
 
     property real innerDeadZone: 45.0
     property real outerMaxRadius: 360.0
@@ -60,7 +60,7 @@ Item {
             var bestNode = RadialGeometry.findClosestNode(mouseX, mouseY, root.activeNodes, root.selectedNodeId, 25.0);
             if (bestNode && bestNode.id && bestNode.id !== root.selectedNodeId) {
                 var d = RadialGeometry.distance(mouseX, mouseY, bestNode.screenX, bestNode.screenY);
-                if (d < 160.0) {
+                if (d < 36.0) {
                     root.selectedNodeId = bestNode.id;
                     root.nodeChanged(bestNode.id);
                 }

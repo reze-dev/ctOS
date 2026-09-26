@@ -114,7 +114,7 @@ Item {
             anchors.centerIn: parent
             size: root.isPreview ? 12 : Math.max(16, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
-            color: root.locked ? Theme.warningRed : (root.isSelected ? Theme.gray50 : (root.isHovered ? Theme.gray200 : (root.isPreview ? Theme.gray800 : Theme.gray500)))
+            color: root.locked ? Theme.warningRed : (root.isSelected ? Theme.acidGreen : (root.isHovered ? Theme.gray200 : (root.isPreview ? Theme.gray800 : Theme.gray500)))
             visible: !root.isPreview || root.isSelected
 
             Behavior on color {
@@ -158,5 +158,24 @@ Item {
         }
     }
 
-
+    // Interactive Mouse Interaction Area
+    MouseArea {
+        id: nodeMouseArea
+        anchors.fill: parent
+        enabled: !root.isPreview
+        hoverEnabled: true
+        cursorShape: root.locked ? Qt.ForbiddenCursor : Qt.PointingHandCursor
+        onEntered: {
+            root.isHovered = true;
+            root.hovered();
+        }
+        onExited: {
+            root.isHovered = false;
+        }
+        onClicked: {
+            if (!root.locked) {
+                root.clicked();
+            }
+        }
+    }
 }

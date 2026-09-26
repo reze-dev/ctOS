@@ -31,27 +31,41 @@ Item {
         }
     }
 
-    // Target Rotation: Aligns selected category to 0 deg (pointing right)
-    readonly property real selectedBaseAngle: -90.0 + focusedIndex * (360.0 / (root.model ? root.model.categoryCount : 8))
-    readonly property real desiredAngle: isExpanded ? RadialGeometry.normalizeAngle(-selectedBaseAngle) : 0.0
-    property real targetWheelRotation: desiredAngle
-    property real wheelRotation: targetWheelRotation
+    // Target Rotation: Continuous shortest-path calculation
+    readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 9)
+    readonly property real selectedBaseAngle: -90.0 + focusedIndex * segAngle
+    readonly property real baseTargetAngle: isExpanded ? RadialGeometry.normalizeAngle(-selectedBaseAngle) : 0.0
+
+    property real wheelRotation: 0.0
 
     Behavior on wheelRotation {
+        id: wheelRotationBehavior
         NumberAnimation {
+            id: wheelRotationAnim
             duration: Theme.durationSlow
             easing.type: Easing.OutCubic
+            onRunningChanged: {
+                if (!running && !root.isExpanded) {
+                    wheelRotationBehavior.enabled = false;
+                    root.wheelRotation = 0.0;
+                    wheelRotationBehavior.enabled = true;
+                }
+            }
         }
     }
 
-    onDesiredAngleChanged: {
-        var diff = RadialGeometry.angleDifference(root.wheelRotation, root.desiredAngle);
-        root.targetWheelRotation = root.wheelRotation + diff;
+    function updateRotationTarget(): void {
+        var currentNorm = RadialGeometry.normalizeAngle(root.wheelRotation);
+        var delta = RadialGeometry.angleDifference(currentNorm, root.baseTargetAngle);
+        root.wheelRotation = root.wheelRotation + delta;
     }
+
+    onBaseTargetAngleChanged: updateRotationTarget()
 
     // Signals
     signal categoryClicked(int index)
     signal categoryHovered(int index)
+    signal collapseRequested()
 
     // Rotating Wheel Container
     Item {
@@ -63,7 +77,7 @@ Item {
         rotation: root.wheelRotation
         transformOrigin: Item.Center
 
-        // 8 Annular Sectors
+        // Annular Sectors (dynamic category count)
         Repeater {
             model: root.model ? root.model.categoryCount : 0
             delegate: RadialSegment {
@@ -78,9 +92,8 @@ Item {
                 cy: wheelContainer.height / 2
                 baseInnerRadius: root.innerRadius
                 baseOuterRadius: root.outerRadius
-                readonly property real segAngle: 360.0 / (root.model ? root.model.categoryCount : 8)
-                startAngle: -90.0 + index * segAngle - (segAngle / 2.0 - 1.0)
-                endAngle: -90.0 + index * segAngle + (segAngle / 2.0 - 1.0)
+                startAngle: -90.0 + index * root.segAngle - (root.segAngle / 2.0 - 1.0)
+                endAngle: -90.0 + index * root.segAngle + (root.segAngle / 2.0 - 1.0)
                 wheelRotation: root.wheelRotation
                 isFocused: root.focusedIndex === index && !root.isExpanded
                 isSelected: root.focusedIndex === index && root.isExpanded
@@ -122,7 +135,7 @@ Item {
                 hoverEnabled: true
                 onClicked: {
                     if (root.isExpanded) {
-                        root.isExpanded = false;
+                        root.collapseRequested();
                     } else {
                         root.categoryClicked(root.focusedIndex);
                     }

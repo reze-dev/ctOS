@@ -72,6 +72,27 @@ Item {
         onClicked: function(mouse) {
             mouse.accepted = true;
         }
+        onWheel: function(wheel) {
+            wheel.accepted = true;
+        }
+    }
+
+    onSelectedNodeIdChanged: {
+        if (root.isExpanded) {
+            contentTransitionAnim.restart();
+        }
+    }
+
+    SequentialAnimation {
+        id: contentTransitionAnim
+        PropertyAction { target: layout; property: "opacity"; value: 0.2 }
+        NumberAnimation {
+            target: layout
+            property: "opacity"
+            to: 1.0
+            duration: Theme.durationNormal
+            easing.type: Easing.OutCubic
+        }
     }
 
     // Main Content Column
