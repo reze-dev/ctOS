@@ -107,7 +107,7 @@ Item {
                 readonly property var r1Point: ({ x: 320 * Math.cos(previewSubtree.rad), y: 320 * Math.sin(previewSubtree.rad) })
                 readonly property var c1Point: ({ x: 380 * Math.cos(previewSubtree.radMinus8), y: 380 * Math.sin(previewSubtree.radMinus8) })
                 readonly property var c2Point: ({ x: 380 * Math.cos(previewSubtree.radPlus8), y: 380 * Math.sin(previewSubtree.radPlus8) })
-                readonly property var c3Point: ({ x: 440 * Math.cos(previewSubtree.radMinus12), y: 440 * Math.sin(previewSubtree.radMinus12) })
+                readonly property var c3Point: ({ x: 440 * Math.cos(previewSubtree.radMinus8), y: 440 * Math.sin(previewSubtree.radMinus8) })
 
                 // Trunk edge
                 SkillEdge {
