@@ -20,21 +20,20 @@ Item {
     property real cy: height / 2
     property real baseInnerRadius: 100
     property real baseOuterRadius: 170
-    property real startAngle: -90.0
-    Behavior on startAngle {
+    property real centerAngle: -90.0
+    property real currentWidth: (root.isFocused || root.isSelected) ? 60.0 : 16.0
+    
+    Behavior on currentWidth {
         NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
     }
-    property real endAngle: -45.0
-    Behavior on endAngle {
-        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
-    }
+    
+    property real startAngle: centerAngle - currentWidth / 2.0
+    property real endAngle: centerAngle + currentWidth / 2.0
     property real wheelRotation: 0.0
 
     property bool isFocused: false
     property bool isSelected: false
     property bool isDimmed: false
-
-    readonly property real centerAngle: (startAngle + endAngle) / 2.0
 
     // Dynamic Opacity for Dimmed State
     opacity: isDimmed ? 0.15 : 1.0
@@ -64,8 +63,8 @@ Item {
         ShapePath {
             id: sectorPath
             strokeWidth: 2.0
-            strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : Theme.gray400)
-            fillColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.gray800 : Theme.gray700)
+            strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : Theme.gray300)
+            fillColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.gray800 : Theme.gray600)
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.MiterJoin
 

@@ -212,39 +212,4 @@ function findSpatialNeighbor(currentNode, allNodes, direction) {
     return bestNeighbor || currentNode;
 }
 
-// Calculates dynamic start, end, and center angles for circumferential expansion
-function getAngularLayout(index, count, focusedIndex, focusedWidth) {
-    if (count <= 0) return { startAngle: 0, endAngle: 0, centerAngle: 0 };
-    
-    var baseOffset = -90.0;
-    var remainder = 360.0 - focusedWidth;
-    var normalWidth = count > 1 ? remainder / (count - 1) : 360.0;
 
-    // Calculate shortest distance in index space
-    var diff = index - focusedIndex;
-    var half = Math.floor(count / 2);
-    if (diff > half) diff -= count;
-    if (diff < -half) diff += count;
-
-    var centerOfFocused = baseOffset + focusedIndex * (360.0 / count);
-
-    var start, end;
-    if (diff === 0) {
-        start = centerOfFocused - focusedWidth / 2.0;
-        end = centerOfFocused + focusedWidth / 2.0;
-    } else if (diff > 0) {
-        start = centerOfFocused + focusedWidth / 2.0 + (diff - 1) * normalWidth;
-        end = start + normalWidth;
-    } else { // diff < 0
-        end = centerOfFocused - focusedWidth / 2.0 + (diff + 1) * normalWidth;
-        start = end - normalWidth;
-    }
-
-    // Apply a 2 degree visual gap
-    var gap = 2.0;
-    return {
-        startAngle: start + gap / 2.0,
-        endAngle: end - gap / 2.0,
-        centerAngle: (start + end) / 2.0
-    };
-}

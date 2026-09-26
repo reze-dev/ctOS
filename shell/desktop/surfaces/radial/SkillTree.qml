@@ -72,8 +72,7 @@ Item {
                 required property int index
                 readonly property int categoryIdx: previewSubtree.index
                 readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 9)
-                readonly property var layout: RadialGeometry.getAngularLayout(previewSubtree.categoryIdx, root.model ? root.model.categoryCount : 9, root.focusedCategoryIndex, 70.0)
-                readonly property real angleDeg: layout.centerAngle
+                readonly property real angleDeg: -90.0 + previewSubtree.index * previewSubtree.segAngle
                 readonly property real rad: previewSubtree.angleDeg * Math.PI / 180.0
                 readonly property real radMinus8: (previewSubtree.angleDeg - 8.0) * Math.PI / 180.0
                 readonly property real radPlus8: (previewSubtree.angleDeg + 8.0) * Math.PI / 180.0
