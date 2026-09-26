@@ -14,9 +14,9 @@ Item {
     property int focusedIndex: 0
     property bool isExpanded: false
 
-    property real baseDiameter: 520
-    property real innerRadius: 185
-    property real outerRadius: 220
+    property real baseDiameter: 420
+    property real innerRadius: 150
+    property real outerRadius: 210
     property real leftAnchorX: Math.max(100, width * 0.06)
 
     // Animated Wheel Center Coordinates
@@ -32,7 +32,7 @@ Item {
     }
 
     // Target Rotation: Continuous shortest-path calculation
-    readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 9)
+    readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 8)
     readonly property real selectedBaseAngle: -90.0 + focusedIndex * segAngle
     readonly property real baseTargetAngle: isExpanded ? RadialGeometry.normalizeAngle(-selectedBaseAngle) : 0.0
 

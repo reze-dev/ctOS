@@ -20,7 +20,7 @@ Item {
     property bool isHovered: false
     property bool isActive: false
 
-    property real nodeSize: isPreview ? 20 : 48
+    property real nodeSize: isPreview ? 20 : 32
     property real screenX: x + width / 2
     property real screenY: y + height / 2
 
@@ -75,31 +75,15 @@ Item {
         }
     }
 
-    // Outer Selection / Status Ring
-    Rectangle {
-        id: outerRing
-        anchors.centerIn: parent
-        width: root.width + (root.isPreview ? 4 : 8)
-        height: root.height + (root.isPreview ? 4 : 8)
-        radius: Theme.radiusPill
-        color: "transparent"
-        border.width: root.isSelected ? 2 : (root.isHovered ? 1 : 0)
-        border.color: root.locked ? Theme.warningRed : (root.isSelected ? Theme.acidGreen : Theme.gray200)
-        visible: (root.isSelected || root.isHovered) && !root.isPreview
-
-        Behavior on border.color {
-            ColorAnimation { duration: Theme.durationFast }
-        }
-    }
 
     // Main Node Disc
     Rectangle {
         id: nodeDisc
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: root.isSelected ? Theme.gray800 : Theme.gray900
-        border.width: root.isSelected ? 2 : 1
-        border.color: root.locked ? Theme.warningRed : (root.isSelected ? (root.isPreview ? Theme.gray50 : Theme.acidGreen) : (root.isHovered ? Theme.gray200 : (root.isPreview ? Theme.gray800 : Theme.gray700)))
+        color: (root.isSelected || root.isHovered) ? "#000000" : Theme.gray900
+        border.width: (root.isSelected || root.isHovered) ? 2 : 1
+        border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "#FFFFFF" : (root.isPreview ? Theme.gray800 : Theme.gray700))
 
         Behavior on border.color {
             ColorAnimation { duration: Theme.durationFast }
@@ -114,7 +98,7 @@ Item {
             anchors.centerIn: parent
             size: root.isPreview ? 12 : Math.max(16, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
-            color: root.locked ? Theme.warningRed : (root.isSelected ? Theme.acidGreen : (root.isHovered ? Theme.gray200 : (root.isPreview ? Theme.gray800 : Theme.gray500)))
+            color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "#FFFFFF" : (root.isPreview ? Theme.gray800 : Theme.gray500))
             visible: !root.isPreview || root.isSelected
 
             Behavior on color {

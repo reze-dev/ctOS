@@ -16,7 +16,7 @@ Item {
 
     property real wheelCenterX: width / 2
     property real wheelCenterY: height / 2
-    property real outerRadius: 220
+    property real outerRadius: 210
     property real branchOriginX: 300
     property real branchOriginY: height / 2
 
@@ -71,7 +71,7 @@ Item {
                 id: previewSubtree
                 required property int index
                 readonly property int categoryIdx: previewSubtree.index
-                readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 9)
+                readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 8)
                 readonly property real angleDeg: -90.0 + previewSubtree.index * previewSubtree.segAngle
                 readonly property real rad: previewSubtree.angleDeg * Math.PI / 180.0
                 readonly property real radMinus8: (previewSubtree.angleDeg - 8.0) * Math.PI / 180.0
@@ -90,10 +90,12 @@ Item {
 
                 // Trunk edge
                 SkillEdge {
-                    x1: (root.wheelCenterX + previewSubtree.r0Point.x)
-                    y1: (root.wheelCenterY + previewSubtree.r0Point.y)
+                    x1: root.wheelCenterX
+                    y1: root.wheelCenterY
                     x2: (root.wheelCenterX + previewSubtree.r1Point.x)
                     y2: (root.wheelCenterY + previewSubtree.r1Point.y)
+                    node1Radius: 210
+                    node2Radius: 10
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
@@ -104,6 +106,8 @@ Item {
                     y1: (root.wheelCenterY + previewSubtree.r1Point.y)
                     x2: (root.wheelCenterX + previewSubtree.c1Point.x)
                     y2: (root.wheelCenterY + previewSubtree.c1Point.y)
+                    node1Radius: 10
+                    node2Radius: 10
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
@@ -114,6 +118,8 @@ Item {
                     y1: (root.wheelCenterY + previewSubtree.r1Point.y)
                     x2: (root.wheelCenterX + previewSubtree.c2Point.x)
                     y2: (root.wheelCenterY + previewSubtree.c2Point.y)
+                    node1Radius: 10
+                    node2Radius: 10
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
@@ -124,6 +130,8 @@ Item {
                     y1: (root.wheelCenterY + previewSubtree.c1Point.y)
                     x2: (root.wheelCenterX + previewSubtree.c3Point.x)
                     y2: (root.wheelCenterY + previewSubtree.c3Point.y)
+                    node1Radius: 10
+                    node2Radius: 10
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
@@ -231,10 +239,12 @@ Item {
         // Horizontal Anchor Ray from Wheel to Root Node
         SkillEdge {
             id: anchorRay
-            x1: root.wheelCenterX + 205
+            x1: root.wheelCenterX
             y1: root.wheelCenterY
             x2: root.branchOriginX + (root.rootNode ? root.rootNode.pos.x : 70) + cascadeController.offset0
             y2: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
+            node1Radius: 210
+            node2Radius: 16
             isActive: true
             isPreview: false
         }
@@ -309,6 +319,8 @@ Item {
                 y1: root.branchOriginY + edgeItem.modelData.parentPosY
                 x2: root.branchOriginX + edgeItem.modelData.childPosX + cascadeController.getOffset(edgeItem.modelData.childIndex)
                 y2: root.branchOriginY + edgeItem.modelData.childPosY
+                node1Radius: 16
+                node2Radius: 16
                 isActive: root.selectedNodeId === edgeItem.modelData.childId || root.selectedNodeId === edgeItem.modelData.parentId
                 isPreview: false
 

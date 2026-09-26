@@ -726,88 +726,9 @@ Item {
                     controlType: "readonly",
                     value: function() { return 0; },
                     valueText: function() { return "RESTRICTED"; },
-                    execute: function() {}
                 }
             ]
 
-        },
-        // =====================================================================
-        // 8. DEV
-        // =====================================================================
-        {
-            id: "dev",
-            name: "DEV",
-            subtitle: "DEVELOPMENT // DEBUG",
-            icon: "gear",
-            description: "Developer tools and debug overlays.",
-            nodes: [
-                {
-                    id: "dev-debug",
-                    title: "DEBUG OVERLAY",
-                    subtitle: "DEV.01 // HUD",
-                    icon: "check",
-                    description: "Toggle debug overlay.",
-                    locked: false,
-                    lockReason: "",
-                    requires: [],
-                    pos: { x: 81, y: -2 },
-                    edges: ["dev-log", "dev-trace"],
-                    controlType: "toggle",
-                    value: function() { return 0; },
-                    valueText: function() { return "DISABLED"; },
-                    execute: function() {}
-                },
-                {
-                    id: "dev-log",
-                    title: "SYSTEM LOG",
-                    subtitle: "DEV.02 // LOG",
-                    icon: "lock",
-                    description: "View system logs.",
-                    locked: false,
-                    lockReason: "",
-                    requires: ["dev-debug"],
-                    pos: { x: 187, y: -65 },
-                    edges: ["dev-console"],
-                    controlType: "action",
-                    actionLabel: "OPEN",
-                    value: function() { return 1; },
-                    valueText: function() { return "LOG"; },
-                    execute: function() {}
-                },
-                {
-                    id: "dev-trace",
-                    title: "PROFILER TRACE",
-                    subtitle: "DEV.03 // TRACE",
-                    icon: "wifi",
-                    description: "Trace process execution.",
-                    locked: false,
-                    lockReason: "",
-                    requires: ["dev-debug"],
-                    pos: { x: 283, y: 101 },
-                    edges: [],
-                    controlType: "action",
-                    actionLabel: "TRACE",
-                    value: function() { return 1; },
-                    valueText: function() { return "TRACE"; },
-                    execute: function() {}
-                },
-                {
-                    id: "dev-console",
-                    title: "ROOT CONSOLE",
-                    subtitle: "DEV.04 // ROOT",
-                    icon: "volume",
-                    description: "Root shell access.",
-                    locked: true,
-                    lockReason: "Requires sudo.",
-                    requires: ["dev-log"],
-                    pos: { x: 346, y: -76 },
-                    edges: [],
-                    controlType: "readonly",
-                    value: function() { return 0; },
-                    valueText: function() { return "RESTRICTED"; },
-                    execute: function() {}
-                }
-            ]
         }
     ]
 

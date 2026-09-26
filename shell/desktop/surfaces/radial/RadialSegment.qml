@@ -18,8 +18,8 @@ Item {
 
     property real cx: width / 2
     property real cy: height / 2
-    property real baseInnerRadius: 100
-    property real baseOuterRadius: 170
+    property real baseInnerRadius: 150
+    property real baseOuterRadius: 210
     property real centerAngle: -90.0
     property real currentWidth: (root.isFocused || root.isSelected) ? 60.0 : 20.0
     

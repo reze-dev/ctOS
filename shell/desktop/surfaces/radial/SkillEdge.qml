@@ -14,6 +14,20 @@ Item {
     property real x2: 0.0
     property real y2: 0.0
 
+    property real node1Radius: 0.0
+    property real node2Radius: 0.0
+
+    readonly property real dx: x2 - x1
+    readonly property real dy: y2 - y1
+    readonly property real distance: Math.sqrt(dx * dx + dy * dy)
+    readonly property real angle: Math.atan2(dy, dx)
+    
+    readonly property real startEdgeX: distance > (node1Radius + node2Radius) ? x1 + Math.cos(angle) * node1Radius : x1
+    readonly property real startEdgeY: distance > (node1Radius + node2Radius) ? y1 + Math.sin(angle) * node1Radius : y1
+    
+    readonly property real endEdgeX: distance > (node1Radius + node2Radius) ? x2 - Math.cos(angle) * node2Radius : x2
+    readonly property real endEdgeY: distance > (node1Radius + node2Radius) ? y2 - Math.sin(angle) * node2Radius : y2
+
     property bool isActive: false
     property bool isPreview: false
     property int pulseDuration: Theme.durationSlow
@@ -35,24 +49,17 @@ Item {
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-            strokeWidth: root.isPreview ? 1.0 : (root.isActive ? 2.0 : 1.2)
-            strokeColor: root.isActive ? Theme.acidGreen : (root.isPreview ? Theme.gray700 : Theme.gray600)
+            strokeWidth: 1.0
+            strokeColor: "#000000"
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
 
-            Behavior on strokeColor {
-                ColorAnimation { duration: Theme.durationFast }
-            }
-            Behavior on strokeWidth {
-                NumberAnimation { duration: Theme.durationFast }
-            }
-
-            startX: root.x1
-            startY: root.y1
+            startX: root.startEdgeX
+            startY: root.startEdgeY
 
             PathLine {
-                x: root.x2
-                y: root.y2
+                x: root.endEdgeX
+                y: root.endEdgeY
             }
         }
     }
@@ -76,7 +83,7 @@ Item {
         radius: Theme.radiusPill
         color: Theme.acidGreen
         visible: pulseAnim.running && !root.isPreview
-        x: root.x1 + root.progress * (root.x2 - root.x1) - width / 2
-        y: root.y1 + root.progress * (root.y2 - root.y1) - height / 2
+        x: root.startEdgeX + root.progress * (root.endEdgeX - root.startEdgeX) - width / 2
+        y: root.startEdgeY + root.progress * (root.endEdgeY - root.startEdgeY) - height / 2
     }
 }
