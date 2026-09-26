@@ -85,7 +85,6 @@ Item {
                 width: wheelContainer.width
                 height: wheelContainer.height
                 
-                index: index
                 categoryId: (root.model && root.model.categories[index]) ? root.model.categories[index].id : ""
                 categoryName: (root.model && root.model.categories[index]) ? root.model.categories[index].name : ""
                 iconName: (root.model && root.model.categories[index]) ? root.model.categories[index].icon : "gear"
