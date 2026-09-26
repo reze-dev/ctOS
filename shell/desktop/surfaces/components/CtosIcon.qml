@@ -130,12 +130,19 @@ Item {
             visible: false
         }
 
+        Rectangle {
+            id: systemColorRect
+            anchors.fill: systemSvg
+            color: root.effectiveColor
+            visible: false
+        }
+
         MultiEffect {
             id: systemEffect
             anchors.fill: systemSvg
-            source: systemSvg
-            colorization: 1.0
-            colorizationColor: root.effectiveColor
+            source: systemColorRect
+            maskEnabled: true
+            maskSource: systemSvg
             visible: root.isSystemIcon && (systemSvg.status !== Image.Error && systemSvg.status !== Image.Null)
         }
     }
@@ -170,12 +177,19 @@ Item {
             visible: false
         }
 
+        Rectangle {
+            id: fallbackColorRect
+            anchors.fill: fallbackRawImage
+            color: root.effectiveColor
+            visible: false
+        }
+
         MultiEffect {
             id: fallbackEffect
             anchors.fill: fallbackRawImage
-            source: fallbackRawImage
-            colorization: 1.0
-            colorizationColor: root.effectiveColor
+            source: fallbackColorRect
+            maskEnabled: true
+            maskSource: fallbackRawImage
             visible: root.isShaderFallback
         }
     }

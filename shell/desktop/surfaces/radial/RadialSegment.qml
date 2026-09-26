@@ -126,17 +126,5 @@ Item {
             }
         }
 
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-
-            onEntered: {
-                root.hovered();
-            }
-            onClicked: {
-                root.clicked();
-            }
-        }
     }
 }

@@ -158,22 +158,5 @@ Item {
         }
     }
 
-    // Interactive Hover and Click Handler
-    MouseArea {
-        id: nodeMouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
 
-        onEntered: {
-            root.isHovered = true;
-            root.hovered();
-        }
-        onExited: {
-            root.isHovered = false;
-        }
-        onClicked: {
-            root.clicked();
-        }
-    }
 }

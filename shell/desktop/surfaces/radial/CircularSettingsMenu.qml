@@ -14,10 +14,10 @@ Item {
     property int focusedIndex: 0
     property bool isExpanded: false
 
-    property real baseDiameter: 360
-    property real innerRadius: 95
-    property real outerRadius: 170
-    property real leftAnchorX: 180
+    property real baseDiameter: 420
+    property real innerRadius: 110
+    property real outerRadius: 205
+    property real leftAnchorX: Math.max(100, width * 0.06)
 
     // Animated Wheel Center Coordinates
     property real targetCenterX: isExpanded ? leftAnchorX : (width / 2)
@@ -32,7 +32,7 @@ Item {
     }
 
     // Target Rotation: Aligns selected category to 0 deg (pointing right)
-    readonly property real selectedBaseAngle: -90.0 + focusedIndex * 45.0
+    readonly property real selectedBaseAngle: -90.0 + focusedIndex * (360.0 / (root.model ? root.model.categoryCount : 8))
     readonly property real desiredAngle: isExpanded ? RadialGeometry.normalizeAngle(-selectedBaseAngle) : 0.0
     property real targetWheelRotation: desiredAngle
     property real wheelRotation: targetWheelRotation
@@ -65,7 +65,7 @@ Item {
 
         // 8 Annular Sectors
         Repeater {
-            model: 8
+            model: root.model ? root.model.categoryCount : 0
             delegate: RadialSegment {
                 id: segItem
                 width: wheelContainer.width
@@ -78,8 +78,9 @@ Item {
                 cy: wheelContainer.height / 2
                 baseInnerRadius: root.innerRadius
                 baseOuterRadius: root.outerRadius
-                startAngle: -90.0 + index * 45.0 - 21.5
-                endAngle: -90.0 + index * 45.0 + 21.5
+                readonly property real segAngle: 360.0 / (root.model ? root.model.categoryCount : 8)
+                startAngle: -90.0 + index * segAngle - (segAngle / 2.0 - 1.0)
+                endAngle: -90.0 + index * segAngle + (segAngle / 2.0 - 1.0)
                 wheelRotation: root.wheelRotation
                 isFocused: root.focusedIndex === index && !root.isExpanded
                 isSelected: root.focusedIndex === index && root.isExpanded

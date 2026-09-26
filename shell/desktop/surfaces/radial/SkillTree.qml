@@ -64,66 +64,75 @@ Item {
         }
 
         Repeater {
-            model: 8
+            model: root.model ? root.model.categoryCount : 0
             delegate: Item {
                 id: previewSubtree
                 required property int index
                 readonly property int categoryIdx: previewSubtree.index
-                readonly property real angleDeg: -90.0 + previewSubtree.categoryIdx * 45.0
+                readonly property real angleDeg: -90.0 + previewSubtree.categoryIdx * (360.0 / (root.model ? root.model.categoryCount : 8))
                 readonly property bool isCatFocused: root.focusedCategoryIndex === previewSubtree.categoryIdx
                 readonly property var cat: (root.model && root.model.categories[previewSubtree.categoryIdx]) ? root.model.categories[previewSubtree.categoryIdx] : null
 
                 // Subtree polar anchor points
-                readonly property var r0Point: RadialGeometry.pointOnCircle(root.wheelCenterX, root.wheelCenterY, 175, previewSubtree.angleDeg)
-                readonly property var r1Point: RadialGeometry.pointOnCircle(root.wheelCenterX, root.wheelCenterY, 215, previewSubtree.angleDeg)
-                readonly property var c1Point: RadialGeometry.pointOnCircle(root.wheelCenterX, root.wheelCenterY, 260, previewSubtree.angleDeg - 8.0)
-                readonly property var c2Point: RadialGeometry.pointOnCircle(root.wheelCenterX, root.wheelCenterY, 260, previewSubtree.angleDeg + 8.0)
-                readonly property var c3Point: RadialGeometry.pointOnCircle(root.wheelCenterX, root.wheelCenterY, 305, previewSubtree.angleDeg - 12.0)
+                property var r0Point: ({x: 0, y: 0})
+                property var r1Point: ({x: 0, y: 0})
+                property var c1Point: ({x: 0, y: 0})
+                property var c2Point: ({x: 0, y: 0})
+                property var c3Point: ({x: 0, y: 0})
+
+                Component.onCompleted: {
+                    var a = previewSubtree.angleDeg;
+                    r0Point = RadialGeometry.pointOnCircle(0, 0, 206, a);
+                    r1Point = RadialGeometry.pointOnCircle(0, 0, 246, a);
+                    c1Point = RadialGeometry.pointOnCircle(0, 0, 291, a - 8.0);
+                    c2Point = RadialGeometry.pointOnCircle(0, 0, 291, a + 8.0);
+                    c3Point = RadialGeometry.pointOnCircle(0, 0, 336, a - 12.0);
+                }
 
                 // Trunk edge
                 SkillEdge {
-                    x1: previewSubtree.r0Point.x
-                    y1: previewSubtree.r0Point.y
-                    x2: previewSubtree.r1Point.x
-                    y2: previewSubtree.r1Point.y
+                    x1: (root.wheelCenterX + previewSubtree.r0Point.x)
+                    y1: (root.wheelCenterY + previewSubtree.r0Point.y)
+                    x2: (root.wheelCenterX + previewSubtree.r1Point.x)
+                    y2: (root.wheelCenterY + previewSubtree.r1Point.y)
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
 
                 // Branch edge 1
                 SkillEdge {
-                    x1: previewSubtree.r1Point.x
-                    y1: previewSubtree.r1Point.y
-                    x2: previewSubtree.c1Point.x
-                    y2: previewSubtree.c1Point.y
+                    x1: (root.wheelCenterX + previewSubtree.r1Point.x)
+                    y1: (root.wheelCenterY + previewSubtree.r1Point.y)
+                    x2: (root.wheelCenterX + previewSubtree.c1Point.x)
+                    y2: (root.wheelCenterY + previewSubtree.c1Point.y)
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
 
                 // Branch edge 2
                 SkillEdge {
-                    x1: previewSubtree.r1Point.x
-                    y1: previewSubtree.r1Point.y
-                    x2: previewSubtree.c2Point.x
-                    y2: previewSubtree.c2Point.y
+                    x1: (root.wheelCenterX + previewSubtree.r1Point.x)
+                    y1: (root.wheelCenterY + previewSubtree.r1Point.y)
+                    x2: (root.wheelCenterX + previewSubtree.c2Point.x)
+                    y2: (root.wheelCenterY + previewSubtree.c2Point.y)
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
 
                 // Branch edge 3 (Leaf extension)
                 SkillEdge {
-                    x1: previewSubtree.c1Point.x
-                    y1: previewSubtree.c1Point.y
-                    x2: previewSubtree.c3Point.x
-                    y2: previewSubtree.c3Point.y
+                    x1: (root.wheelCenterX + previewSubtree.c1Point.x)
+                    y1: (root.wheelCenterY + previewSubtree.c1Point.y)
+                    x2: (root.wheelCenterX + previewSubtree.c3Point.x)
+                    y2: (root.wheelCenterY + previewSubtree.c3Point.y)
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
 
                 // Root Preview Node
                 SkillNode {
-                    x: previewSubtree.r1Point.x - width / 2
-                    y: previewSubtree.r1Point.y - height / 2
+                    x: (root.wheelCenterX + previewSubtree.r1Point.x) - width / 2
+                    y: (root.wheelCenterY + previewSubtree.r1Point.y) - height / 2
                     isPreview: true
                     isSelected: previewSubtree.isCatFocused
                     iconName: previewSubtree.cat ? previewSubtree.cat.icon : "gear"
@@ -131,8 +140,8 @@ Item {
 
                 // Child Preview Node 1
                 SkillNode {
-                    x: previewSubtree.c1Point.x - width / 2
-                    y: previewSubtree.c1Point.y - height / 2
+                    x: (root.wheelCenterX + previewSubtree.c1Point.x) - width / 2
+                    y: (root.wheelCenterY + previewSubtree.c1Point.y) - height / 2
                     isPreview: true
                     isSelected: previewSubtree.isCatFocused
                     iconName: (previewSubtree.cat && previewSubtree.cat.nodes && previewSubtree.cat.nodes[1]) ? previewSubtree.cat.nodes[1].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear")
@@ -140,8 +149,8 @@ Item {
 
                 // Child Preview Node 2
                 SkillNode {
-                    x: previewSubtree.c2Point.x - width / 2
-                    y: previewSubtree.c2Point.y - height / 2
+                    x: (root.wheelCenterX + previewSubtree.c2Point.x) - width / 2
+                    y: (root.wheelCenterY + previewSubtree.c2Point.y) - height / 2
                     isPreview: true
                     isSelected: previewSubtree.isCatFocused
                     iconName: (previewSubtree.cat && previewSubtree.cat.nodes && previewSubtree.cat.nodes[2]) ? previewSubtree.cat.nodes[2].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear")
@@ -149,8 +158,8 @@ Item {
 
                 // Child Preview Node 3
                 SkillNode {
-                    x: previewSubtree.c3Point.x - width / 2
-                    y: previewSubtree.c3Point.y - height / 2
+                    x: (root.wheelCenterX + previewSubtree.c3Point.x) - width / 2
+                    y: (root.wheelCenterY + previewSubtree.c3Point.y) - height / 2
                     isPreview: true
                     isSelected: previewSubtree.isCatFocused
                     iconName: (previewSubtree.cat && previewSubtree.cat.nodes && previewSubtree.cat.nodes[3]) ? previewSubtree.cat.nodes[3].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear")
