@@ -85,6 +85,9 @@ Item {
                 width: wheelContainer.width
                 height: wheelContainer.height
                 
+                property int categoryCount: root.model ? root.model.categoryCount : 8
+                property int globalFocusedIndex: root.focusedIndex
+                
                 categoryId: (root.model && root.model.categories[index]) ? root.model.categories[index].id : ""
                 categoryName: (root.model && root.model.categories[index]) ? root.model.categories[index].name : ""
                 iconName: (root.model && root.model.categories[index]) ? root.model.categories[index].icon : "gear"
@@ -92,7 +95,6 @@ Item {
                 cy: wheelContainer.height / 2
                 baseInnerRadius: root.innerRadius
                 baseOuterRadius: root.outerRadius
-                centerAngle: -90.0 + index * root.segAngle
                 wheelRotation: root.wheelRotation
                 isFocused: root.focusedIndex === index && !root.isExpanded
                 isSelected: root.focusedIndex === index && root.isExpanded

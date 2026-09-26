@@ -138,7 +138,7 @@ FocusScope {
     Rectangle {
         id: scrimBackdrop
         anchors.fill: parent
-        color: Theme.gray900
+        color: "#0D3A8F"
         opacity: 0.94
     }
 

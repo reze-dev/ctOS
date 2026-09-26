@@ -20,15 +20,40 @@ Item {
     property real cy: height / 2
     property real baseInnerRadius: 150
     property real baseOuterRadius: 210
-    property real centerAngle: -90.0
-    property real currentWidth: (root.isFocused || root.isSelected) ? 60.0 : 20.0
+    property real _lastTargetAngle: -90.0 + index * (360.0 / Math.max(1, typeof categoryCount !== "undefined" ? categoryCount : 8))
+    property var layoutInfo: RadialGeometry.getSegmentTargetLayout(
+        index, 
+        typeof globalFocusedIndex !== "undefined" ? globalFocusedIndex : 0, 
+        typeof categoryCount !== "undefined" ? categoryCount : 8, 
+        2.0, 
+        90.0, 
+        _lastTargetAngle
+    )
+
+    onLayoutInfoChanged: {
+        if (layoutInfo && layoutInfo.centerAngle !== undefined) {
+            _lastTargetAngle = layoutInfo.centerAngle;
+        }
+    }
+
+    property real centerAngle: layoutInfo.centerAngle
+    property real currentWidth: layoutInfo.width
+    property real startAngle: layoutInfo.startAngle
+    property real endAngle: layoutInfo.endAngle
     
     Behavior on currentWidth {
         NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
     }
+    Behavior on centerAngle {
+        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+    }
+    Behavior on startAngle {
+        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+    }
+    Behavior on endAngle {
+        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+    }
     
-    property real startAngle: centerAngle - currentWidth / 2.0
-    property real endAngle: centerAngle + currentWidth / 2.0
     property real wheelRotation: 0.0
 
     property bool isFocused: false

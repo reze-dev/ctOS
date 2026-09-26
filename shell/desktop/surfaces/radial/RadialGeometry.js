@@ -212,4 +212,50 @@ function findSpatialNeighbor(currentNode, allNodes, direction) {
     return bestNeighbor || currentNode;
 }
 
+// Calculates dynamic layout for radial segments where one is expanded and others shrink
+// Maintains fixed gaps and ensures segments push each other sequentially.
+function getSegmentTargetLayout(index, focusedIndex, categoryCount, gapAngle, focusedWidth, previousCenterAngle) {
+    if (categoryCount <= 0) return { width: 0, centerAngle: previousCenterAngle || 0, startAngle: 0, endAngle: 0 };
+    
+    var totalAvailable = 360.0 - categoryCount * gapAngle;
+    var isIdle = (focusedIndex < 0 || focusedIndex >= categoryCount);
+    
+    var normalWidth = totalAvailable / categoryCount;
+    if (!isIdle && categoryCount > 1) {
+        normalWidth = (totalAvailable - focusedWidth) / (categoryCount - 1);
+    }
+    
+    var widths = [];
+    for (var i = 0; i < categoryCount; i++) {
+        widths.push(isIdle ? (totalAvailable / categoryCount) : (i === focusedIndex ? focusedWidth : normalWidth));
+    }
+    
+    var anchorIndex = isIdle ? 0 : focusedIndex;
+    var nominalAnchorAngle = -90.0 + anchorIndex * (360.0 / categoryCount);
+    
+    var dist = 0.0;
+    if (index >= anchorIndex) {
+        for (var j = anchorIndex; j < index; j++) {
+            dist += (widths[j] / 2.0) + gapAngle + (widths[j+1] / 2.0);
+        }
+    } else {
+        for (var j = anchorIndex; j > index; j--) {
+            dist -= (widths[j] / 2.0) + gapAngle + (widths[j-1] / 2.0);
+        }
+    }
+    
+    var targetCenter = nominalAnchorAngle + dist;
+    
+    if (previousCenterAngle !== undefined && previousCenterAngle !== null) {
+        while (targetCenter - previousCenterAngle > 180.0) targetCenter -= 360.0;
+        while (targetCenter - previousCenterAngle < -180.0) targetCenter += 360.0;
+    }
+    
+    return {
+        width: widths[index],
+        centerAngle: targetCenter,
+        startAngle: targetCenter - widths[index] / 2.0,
+        endAngle: targetCenter + widths[index] / 2.0
+    };
+}
 

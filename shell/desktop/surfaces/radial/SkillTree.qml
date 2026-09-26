@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../../core"
+import "RadialGeometry.js" as RadialGeometry
 
 Item {
     id: root
@@ -71,8 +72,28 @@ Item {
                 id: previewSubtree
                 required property int index
                 readonly property int categoryIdx: previewSubtree.index
-                readonly property real segAngle: 360.0 / (root.model ? Math.max(1, root.model.categoryCount) : 8)
-                readonly property real angleDeg: -90.0 + previewSubtree.index * previewSubtree.segAngle
+                
+                property real _lastTargetAngle: -90.0 + previewSubtree.index * (360.0 / Math.max(1, root.model ? root.model.categoryCount : 8))
+                property var layoutInfo: RadialGeometry.getSegmentTargetLayout(
+                    previewSubtree.index, 
+                    root.focusedCategoryIndex, 
+                    root.model ? Math.max(1, root.model.categoryCount) : 8, 
+                    2.0, 
+                    90.0, 
+                    _lastTargetAngle
+                )
+
+                onLayoutInfoChanged: {
+                    if (layoutInfo && layoutInfo.centerAngle !== undefined) {
+                        _lastTargetAngle = layoutInfo.centerAngle;
+                    }
+                }
+
+                property real angleDeg: layoutInfo.centerAngle
+                
+                Behavior on angleDeg {
+                    NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+                }
                 readonly property real rad: previewSubtree.angleDeg * Math.PI / 180.0
                 readonly property real radMinus8: (previewSubtree.angleDeg - 8.0) * Math.PI / 180.0
                 readonly property real radPlus8: (previewSubtree.angleDeg + 8.0) * Math.PI / 180.0
