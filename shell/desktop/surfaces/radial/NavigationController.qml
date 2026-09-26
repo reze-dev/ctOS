@@ -21,8 +21,8 @@ Item {
     property var activeNodes: []
     property int categoryCount: 9
 
-    property real innerDeadZone: 45.0
-    property real outerMaxRadius: 360.0
+    property real innerDeadZone: 160.0
+    property real outerMaxRadius: 420.0
 
     // Signals
     signal categoryChanged(int newIndex)

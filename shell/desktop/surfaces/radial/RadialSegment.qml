@@ -31,19 +31,19 @@ Item {
     readonly property real centerAngle: (startAngle + endAngle) / 2.0
 
     // Animated dynamic radii for hover expansion
-    property real effectiveInnerRadius: isFocused ? (baseInnerRadius - 4) : baseInnerRadius
-    property real effectiveOuterRadius: isFocused ? (baseOuterRadius + 12) : baseOuterRadius
+    property real effectiveInnerRadius: isFocused ? (baseInnerRadius - 8) : (isDimmed ? baseInnerRadius : (baseInnerRadius + 4))
+    property real effectiveOuterRadius: isFocused ? (baseOuterRadius + 25) : (isDimmed ? baseOuterRadius : (baseOuterRadius - 6))
 
     Behavior on effectiveInnerRadius {
         NumberAnimation {
-            duration: Theme.durationNormal
+            duration: Theme.durationSlow
             easing.type: Easing.OutCubic
         }
     }
 
     Behavior on effectiveOuterRadius {
         NumberAnimation {
-            duration: Theme.durationNormal
+            duration: Theme.durationSlow
             easing.type: Easing.OutCubic
         }
     }
@@ -75,9 +75,9 @@ Item {
 
         ShapePath {
             id: sectorPath
-            strokeWidth: (root.isFocused || root.isSelected) ? 2.0 : 1.0
-            strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : Theme.gray700)
-            fillColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.gray800 : Theme.gray900)
+            strokeWidth: (root.isFocused || root.isSelected) ? 2.0 : 1.5
+            strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : Theme.gray600)
+            fillColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.gray800 : Theme.gray800)
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.MiterJoin
 

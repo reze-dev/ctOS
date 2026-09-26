@@ -394,10 +394,10 @@ FocusScope {
                     root.focusedCategoryIndex = clickedCat;
                 }
             } else {
-                if (distFromCenter < 90) {
+                if (distFromCenter < 170) {
                     // Clicked center hub -> expand
                     root.isExpanded = true;
-                } else if (distFromCenter > 220) {
+                } else if (distFromCenter > 280) {
                     // Clicked far background -> dismiss
                     OverlayController.close();
                 } else {

@@ -16,7 +16,7 @@ Item {
 
     property real wheelCenterX: width / 2
     property real wheelCenterY: height / 2
-    property real outerRadius: 205
+    property real outerRadius: 220
     property real branchOriginX: 300
     property real branchOriginY: height / 2
 
@@ -82,11 +82,11 @@ Item {
                 readonly property var cat: (root.model && root.model.categories[previewSubtree.categoryIdx]) ? root.model.categories[previewSubtree.categoryIdx] : null
 
                 // Subtree polar anchor points (reactive trigonometric properties)
-                readonly property var r0Point: ({ x: 206 * Math.cos(previewSubtree.rad), y: 206 * Math.sin(previewSubtree.rad) })
-                readonly property var r1Point: ({ x: 246 * Math.cos(previewSubtree.rad), y: 246 * Math.sin(previewSubtree.rad) })
-                readonly property var c1Point: ({ x: 291 * Math.cos(previewSubtree.radMinus8), y: 291 * Math.sin(previewSubtree.radMinus8) })
-                readonly property var c2Point: ({ x: 291 * Math.cos(previewSubtree.radPlus8), y: 291 * Math.sin(previewSubtree.radPlus8) })
-                readonly property var c3Point: ({ x: 336 * Math.cos(previewSubtree.radMinus12), y: 336 * Math.sin(previewSubtree.radMinus12) })
+                readonly property var r0Point: ({ x: 225 * Math.cos(previewSubtree.rad), y: 225 * Math.sin(previewSubtree.rad) })
+                readonly property var r1Point: ({ x: 265 * Math.cos(previewSubtree.rad), y: 265 * Math.sin(previewSubtree.rad) })
+                readonly property var c1Point: ({ x: 310 * Math.cos(previewSubtree.radMinus8), y: 310 * Math.sin(previewSubtree.radMinus8) })
+                readonly property var c2Point: ({ x: 310 * Math.cos(previewSubtree.radPlus8), y: 310 * Math.sin(previewSubtree.radPlus8) })
+                readonly property var c3Point: ({ x: 355 * Math.cos(previewSubtree.radMinus12), y: 355 * Math.sin(previewSubtree.radMinus12) })
 
                 // Trunk edge
                 SkillEdge {
@@ -231,7 +231,7 @@ Item {
         // Horizontal Anchor Ray from Wheel to Root Node
         SkillEdge {
             id: anchorRay
-            x1: root.wheelCenterX + 205
+            x1: root.wheelCenterX + 225
             y1: root.wheelCenterY
             x2: root.branchOriginX + (root.rootNode ? root.rootNode.pos.x : 70) + cascadeController.offset0
             y2: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
