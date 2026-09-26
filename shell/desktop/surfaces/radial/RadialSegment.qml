@@ -11,7 +11,7 @@ Item {
     // Properties
     // =========================================================================
 
-    property int index: 0
+    required property int index
     property string categoryId: ""
     property string categoryName: ""
     property string iconName: "gear"
