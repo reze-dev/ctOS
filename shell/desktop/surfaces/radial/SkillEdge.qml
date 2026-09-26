@@ -49,7 +49,7 @@ Item {
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-            strokeWidth: 1.0
+            strokeWidth: root.isPreview ? 2.0 : 3.0
             strokeColor: "black"
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap

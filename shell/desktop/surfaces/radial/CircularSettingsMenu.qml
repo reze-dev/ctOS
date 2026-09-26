@@ -15,7 +15,7 @@ Item {
     property bool isExpanded: false
 
     property real baseDiameter: 420
-    property real innerRadius: 150
+    property real innerRadius: isExpanded ? 200 : 150
     property real outerRadius: 210
     property real leftAnchorX: Math.max(100, width * 0.06)
 
@@ -23,6 +23,13 @@ Item {
     property real targetCenterX: isExpanded ? leftAnchorX : (width / 2)
     property real wheelCenterX: targetCenterX
     property real wheelCenterY: height / 2
+
+    Behavior on innerRadius {
+        NumberAnimation {
+            duration: Theme.durationSlow
+            easing.type: Easing.OutCubic
+        }
+    }
 
     Behavior on wheelCenterX {
         NumberAnimation {
@@ -99,6 +106,7 @@ Item {
                 isFocused: root.focusedIndex === index && !root.isExpanded
                 isSelected: root.focusedIndex === index && root.isExpanded
                 isDimmed: root.isExpanded && root.focusedIndex !== index
+                isExpanded: root.isExpanded
 
                 onClicked: {
                     root.categoryClicked(index);
@@ -160,7 +168,7 @@ Item {
             anchors.centerIn: parent
             width: parent.width - 30
             spacing: 4
-            opacity: root.isExpanded ? 0.3 : 1.0
+            opacity: root.isExpanded ? 0.0 : 1.0
 
             Behavior on opacity {
                 NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }

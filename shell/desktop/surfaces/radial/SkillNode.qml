@@ -20,9 +20,13 @@ Item {
     property bool isHovered: false
     property bool isActive: false
 
-    property real nodeSize: isPreview ? 30 : 32
+    property real nodeSize: (!isPreview && isSelected) ? 60 : (isPreview ? 40 : 42)
     property real screenX: x + width / 2
     property real screenY: y + height / 2
+
+    Behavior on nodeSize {
+        NumberAnimation { duration: Theme.durationFast }
+    }
 
     width: nodeSize
     height: nodeSize
@@ -81,8 +85,8 @@ Item {
         id: nodeDisc
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: (root.isSelected || root.isHovered) ? "black" : Theme.gray900
-        border.width: (root.isSelected || root.isHovered) ? 2 : 1
+        color: (!root.isPreview || root.isSelected || root.isHovered) ? "black" : Theme.gray900
+        border.width: (!root.isPreview) ? 0 : ((root.isSelected || root.isHovered) ? 2 : 1)
         border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "white" : (root.isPreview ? Theme.gray800 : Theme.gray700))
 
         Behavior on border.color {
@@ -96,9 +100,9 @@ Item {
         CtosIcon {
             id: nodeIcon
             anchors.centerIn: parent
-            size: root.isPreview ? 18 : Math.max(16, root.nodeSize * 0.44)
+            size: root.isPreview ? 24 : Math.max(20, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
-            color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "white" : (root.isPreview ? Theme.gray800 : Theme.gray500))
+            color: root.locked ? Theme.warningRed : ((!root.isPreview || root.isSelected || root.isHovered) ? "white" : (root.isPreview ? Theme.gray800 : Theme.gray500))
             visible: !root.isPreview || root.isSelected
 
             Behavior on color {

@@ -115,8 +115,8 @@ Item {
                     y1: root.wheelCenterY
                     x2: (root.wheelCenterX + previewSubtree.r1Point.x)
                     y2: (root.wheelCenterY + previewSubtree.r1Point.y)
-                    node1Radius: 210
-                    node2Radius: 10
+                    node1Radius: 225
+                    node2Radius: 20
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
                 }
@@ -264,7 +264,7 @@ Item {
             y1: root.wheelCenterY
             x2: root.branchOriginX + (root.rootNode ? root.rootNode.pos.x : 70) + cascadeController.offset0
             y2: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
-            node1Radius: 210
+            node1Radius: 225
             node2Radius: 16
             isActive: true
             isPreview: false

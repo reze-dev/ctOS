@@ -59,6 +59,7 @@ Item {
     property bool isFocused: false
     property bool isSelected: false
     property bool isDimmed: false
+    property bool isExpanded: false
 
     // We removed the aggressive 0.15 opacity dimming so the other 8 segments stay visible!
     opacity: 1.0
@@ -114,6 +115,11 @@ Item {
         y: root.iconCenterY - height / 2
         width: 36
         height: 36
+        opacity: root.isExpanded ? 0.0 : 1.0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+        }
 
         // Counter-rotate by wheel rotation so icon stays strictly upright
         rotation: -root.wheelRotation
