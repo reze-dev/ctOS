@@ -21,7 +21,7 @@ Item {
     property real baseInnerRadius: 100
     property real baseOuterRadius: 170
     property real centerAngle: -90.0
-    property real currentWidth: (root.isFocused || root.isSelected) ? 60.0 : 16.0
+    property real currentWidth: (root.isFocused || root.isSelected) ? 60.0 : 20.0
     
     Behavior on currentWidth {
         NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
@@ -35,14 +35,8 @@ Item {
     property bool isSelected: false
     property bool isDimmed: false
 
-    // Dynamic Opacity for Dimmed State
-    opacity: isDimmed ? 0.15 : 1.0
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.durationSlow
-            easing.type: Easing.OutCubic
-        }
-    }
+    // We removed the aggressive 0.15 opacity dimming so the other 8 segments stay visible!
+    opacity: 1.0
 
     // Centered icon coordinates along the radial sector ray using direct arithmetic
     readonly property real iconRadius: (root.baseInnerRadius + root.baseOuterRadius) / 2.0
