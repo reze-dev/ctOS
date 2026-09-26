@@ -92,8 +92,9 @@ Item {
                 cy: wheelContainer.height / 2
                 baseInnerRadius: root.innerRadius
                 baseOuterRadius: root.outerRadius
-                startAngle: -90.0 + index * root.segAngle - (root.segAngle / 2.0 - 1.0)
-                endAngle: -90.0 + index * root.segAngle + (root.segAngle / 2.0 - 1.0)
+                readonly property var layout: RadialGeometry.getAngularLayout(index, root.model ? root.model.categoryCount : 9, root.focusedIndex, 70.0)
+                startAngle: layout.startAngle
+                endAngle: layout.endAngle
                 wheelRotation: root.wheelRotation
                 isFocused: root.focusedIndex === index && !root.isExpanded
                 isSelected: root.focusedIndex === index && root.isExpanded

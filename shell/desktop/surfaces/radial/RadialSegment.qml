@@ -21,7 +21,13 @@ Item {
     property real baseInnerRadius: 100
     property real baseOuterRadius: 170
     property real startAngle: -90.0
+    Behavior on startAngle {
+        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+    }
     property real endAngle: -45.0
+    Behavior on endAngle {
+        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+    }
     property real wheelRotation: 0.0
 
     property bool isFocused: false
@@ -29,24 +35,6 @@ Item {
     property bool isDimmed: false
 
     readonly property real centerAngle: (startAngle + endAngle) / 2.0
-
-    // Animated dynamic radii for hover expansion
-    property real effectiveInnerRadius: isFocused ? (baseInnerRadius - 8) : (isDimmed ? baseInnerRadius : (baseInnerRadius + 4))
-    property real effectiveOuterRadius: isFocused ? (baseOuterRadius + 25) : (isDimmed ? baseOuterRadius : (baseOuterRadius - 6))
-
-    Behavior on effectiveInnerRadius {
-        NumberAnimation {
-            duration: Theme.durationSlow
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on effectiveOuterRadius {
-        NumberAnimation {
-            duration: Theme.durationSlow
-            easing.type: Easing.OutCubic
-        }
-    }
 
     // Dynamic Opacity for Dimmed State
     opacity: isDimmed ? 0.15 : 1.0
@@ -58,7 +46,7 @@ Item {
     }
 
     // Centered icon coordinates along the radial sector ray using direct arithmetic
-    readonly property real iconRadius: (root.effectiveInnerRadius + root.effectiveOuterRadius) / 2.0
+    readonly property real iconRadius: (root.baseInnerRadius + root.baseOuterRadius) / 2.0
     readonly property real iconRad: root.centerAngle * Math.PI / 180.0
     readonly property real iconCenterX: root.cx + root.iconRadius * Math.cos(root.iconRad)
     readonly property real iconCenterY: root.cy + root.iconRadius * Math.sin(root.iconRad)
@@ -75,9 +63,9 @@ Item {
 
         ShapePath {
             id: sectorPath
-            strokeWidth: (root.isFocused || root.isSelected) ? 2.0 : 1.5
-            strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : Theme.gray600)
-            fillColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.gray800 : Theme.gray800)
+            strokeWidth: 2.0
+            strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : Theme.gray400)
+            fillColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.gray800 : Theme.gray700)
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.MiterJoin
 
@@ -92,8 +80,8 @@ Item {
                 path: RadialGeometry.createSectorSvgPath(
                     root.cx,
                     root.cy,
-                    root.effectiveInnerRadius,
-                    root.effectiveOuterRadius,
+                    root.baseInnerRadius,
+                    root.baseOuterRadius,
                     root.startAngle,
                     root.endAngle
                 )
