@@ -19,7 +19,7 @@ Item {
     property real wheelCenterY: height / 2
     property real outerRadius: 210
     property real branchOriginX: 300
-    property real branchOriginY: height / 2 - (root.rootNode ? root.rootNode.pos.y : 0)
+    property real branchOriginY: height / 2
 
     readonly property var rootNode: (root.model && root.model.categories[root.focusedCategoryIndex]?.nodes?.length > 0) ? root.model.categories[root.focusedCategoryIndex].nodes[0] : null
 
@@ -33,6 +33,7 @@ Item {
         var cat = model.getCategory(focusedCategoryIndex);
         if (!cat || !cat.nodes) return [];
         var list = [];
+        var rootPosY = cat.nodes.length > 0 ? cat.nodes[0].pos.y : 0;
         for (var i = 0; i < cat.nodes.length; ++i) {
             var n = cat.nodes[i];
             list.push({
@@ -45,7 +46,7 @@ Item {
                 controlType: n.controlType,
                 pos: n.pos,
                 screenX: root.branchOriginX + n.pos.x,
-                screenY: root.branchOriginY + n.pos.y
+                screenY: root.branchOriginY + n.pos.y - rootPosY
             });
         }
         return list;
@@ -207,6 +208,15 @@ Item {
         opacity: root.isExpanded ? 1.0 : 0.0
         visible: opacity > 0.01
 
+        property real currentRootPosY: {
+            if (!root.model || !root.isExpanded) return 0.0;
+            var cat = root.model.getCategory(root.focusedCategoryIndex);
+            if (cat && cat.nodes && cat.nodes.length > 0) {
+                return cat.nodes[0].pos.y;
+            }
+            return 0.0;
+        }
+
         Behavior on opacity {
             NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
         }
@@ -299,6 +309,7 @@ Item {
                 var cat = root.model.getCategory(root.focusedCategoryIndex);
                 if (!cat || !cat.nodes) return [];
                 var edgesList = [];
+                var rootPosY = expandedBranchContainer.currentRootPosY;
                 for (var i = 0; i < cat.nodes.length; ++i) {
                     var parentNode = cat.nodes[i];
                     if (!parentNode.edges) continue;
@@ -323,9 +334,9 @@ Item {
                                 childPosX: childNode.pos.x,
                                 childPosY: childNode.pos.y,
                                 x1: root.branchOriginX + parentNode.pos.x,
-                                y1: root.branchOriginY + parentNode.pos.y,
+                                y1: root.branchOriginY + parentNode.pos.y - rootPosY,
                                 x2: root.branchOriginX + childNode.pos.x,
-                                y2: root.branchOriginY + childNode.pos.y
+                                y2: root.branchOriginY + childNode.pos.y - rootPosY
                             });
                         }
                     }
@@ -337,9 +348,9 @@ Item {
                 id: edgeItem
                 required property var modelData
                 x1: root.branchOriginX + edgeItem.modelData.parentPosX + cascadeController.getOffset(edgeItem.modelData.parentIndex)
-                y1: root.branchOriginY + edgeItem.modelData.parentPosY
+                y1: root.branchOriginY + edgeItem.modelData.parentPosY - expandedBranchContainer.currentRootPosY
                 x2: root.branchOriginX + edgeItem.modelData.childPosX + cascadeController.getOffset(edgeItem.modelData.childIndex)
-                y2: root.branchOriginY + edgeItem.modelData.childPosY
+                y2: root.branchOriginY + edgeItem.modelData.childPosY - expandedBranchContainer.currentRootPosY
                 node1Radius: 16
                 node2Radius: 16
                 isActive: root.selectedNodeId === edgeItem.modelData.childId || root.selectedNodeId === edgeItem.modelData.parentId
@@ -371,7 +382,7 @@ Item {
                 required property int index
                 readonly property real cascadeOffset: cascadeController.getOffset(nodeWrapper.index)
                 x: root.branchOriginX + nodeWrapper.modelData.pos.x - 24 + nodeWrapper.cascadeOffset
-                y: root.branchOriginY + nodeWrapper.modelData.pos.y - 24
+                y: root.branchOriginY + nodeWrapper.modelData.pos.y - expandedBranchContainer.currentRootPosY - 24
                 width: 48
                 height: 48
 
@@ -383,6 +394,7 @@ Item {
                     subtitle: nodeWrapper.modelData.subtitle
                     iconName: nodeWrapper.modelData.icon
                     locked: nodeWrapper.modelData.locked
+                    controlType: nodeWrapper.modelData.controlType
                     isSelected: root.selectedNodeId === nodeWrapper.modelData.id
                     isActive: {
                         var _ = root.model ? root.model.revision : 0;

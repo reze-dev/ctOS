@@ -14,6 +14,7 @@ Item {
     property string subtitle: ""
     property string iconName: "gear"
 
+    property string controlType: ""
     property bool locked: false
     property bool isSelected: false
     property bool isPreview: false
@@ -38,9 +39,15 @@ Item {
         pulseAnim.restart();
     }
 
-    onIsSelectedChanged: {
-        if (isSelected && !isPreview) {
-            triggerPulse();
+    readonly property bool shouldPulse: !isPreview && (isSelected || isActive || isHovered)
+
+    onShouldPulseChanged: {
+        if (shouldPulse) {
+            pulseAnim.restart();
+        } else {
+            pulseAnim.stop();
+            pulseRing.scale = 1.0;
+            pulseRing.opacity = 0.0;
         }
     }
 
@@ -52,7 +59,7 @@ Item {
         height: root.height
         radius: Theme.radiusPill
         color: "transparent"
-        border.color: root.locked ? Theme.warningRed : Theme.acidGreen
+        border.color: (root.controlType === "readonly" || root.locked) ? Theme.accentRed : Theme.accentGreen
         border.width: 2
         opacity: 0.0
         scale: 1.0
@@ -60,6 +67,8 @@ Item {
 
         ParallelAnimation {
             id: pulseAnim
+            running: root.shouldPulse
+            loops: Animation.Infinite
             NumberAnimation {
                 target: pulseRing
                 property: "scale"
