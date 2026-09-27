@@ -191,10 +191,7 @@ Singleton {
 
     // Declarative Dismissal Bindings:
     // Escape key shortcut dismisses active primary overlay cleanly.
-    Shortcut {
-        enabled: root.isOverlayActive
-        sequence: "Escape"
+    // Declarative Dismissal Bindings:
+    // Escape key handling is delegated to the active surfaces via Keys.onEscapePressed.
 
-        onActivated: root.close()
-    }
 }

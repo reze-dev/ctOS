@@ -14,9 +14,9 @@ Item {
     property int focusedIndex: 0
     property bool isExpanded: false
 
-    property real baseDiameter: 420
-    property real innerRadius: isExpanded ? 200 : 150
-    property real outerRadius: 210
+    property real baseDiameter: 360
+    property real innerRadius: isExpanded ? 170 : 130
+    property real outerRadius: 180
     property real leftAnchorX: Math.max(100, width * 0.06)
 
     // Animated Wheel Center Coordinates

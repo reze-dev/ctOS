@@ -411,6 +411,15 @@ FocusScope {
         }
     }
 
+    Keys.onEscapePressed: function(event) {
+        if (root.isExpanded) {
+            root.isExpanded = false;
+        } else {
+            OverlayController.close();
+        }
+        event.accepted = true;
+    }
+
     // Global Keyboard Focus Handling
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F12) {
