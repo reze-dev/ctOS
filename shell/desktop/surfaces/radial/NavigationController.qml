@@ -44,7 +44,6 @@ Item {
             var angle = RadialGeometry.angleFromCenter(root.wheelCenterX, root.wheelCenterY, mouseX, mouseY);
             var bestIdx = RadialGeometry.findClosestSegment(angle, root.categoryCount, root.focusedCategoryIndex, 4.0);
             if (bestIdx !== root.focusedCategoryIndex) {
-                root.focusedCategoryIndex = bestIdx;
                 root.categoryChanged(bestIdx);
             }
         } else {
@@ -61,7 +60,6 @@ Item {
             if (bestNode && bestNode.id && bestNode.id !== root.selectedNodeId) {
                 var d = RadialGeometry.distance(mouseX, mouseY, bestNode.screenX, bestNode.screenY);
                 if (d < 36.0) {
-                    root.selectedNodeId = bestNode.id;
                     root.nodeChanged(bestNode.id);
                 }
             }
@@ -74,12 +72,10 @@ Item {
             if (angleDeltaY > 0) {
                 // Scroll up -> counter-clockwise
                 var prevIdx = (root.focusedCategoryIndex - 1 + root.categoryCount) % root.categoryCount;
-                root.focusedCategoryIndex = prevIdx;
                 root.categoryChanged(prevIdx);
             } else if (angleDeltaY < 0) {
                 // Scroll down -> clockwise
                 var nextIdx = (root.focusedCategoryIndex + 1) % root.categoryCount;
-                root.focusedCategoryIndex = nextIdx;
                 root.categoryChanged(nextIdx);
             }
         } else {
@@ -93,12 +89,10 @@ Item {
             }
             if (angleDeltaY > 0) {
                 var pIdx = (curIdx - 1 + root.activeNodes.length) % root.activeNodes.length;
-                root.selectedNodeId = root.activeNodes[pIdx].id;
-                root.nodeChanged(root.selectedNodeId);
+                root.nodeChanged(root.activeNodes[pIdx].id);
             } else if (angleDeltaY < 0) {
                 var nIdx = (curIdx + 1) % root.activeNodes.length;
-                root.selectedNodeId = root.activeNodes[nIdx].id;
-                root.nodeChanged(root.selectedNodeId);
+                root.nodeChanged(root.activeNodes[nIdx].id);
             }
         }
     }
@@ -141,7 +135,6 @@ Item {
                 return true;
             } else if (key === Qt.Key_Right || key === Qt.Key_D) {
                 var next = (root.focusedCategoryIndex + 1) % root.categoryCount;
-                root.focusedCategoryIndex = next;
                 root.categoryChanged(next);
                 return true;
             } else if (key === Qt.Key_Down || key === Qt.Key_S) {
@@ -150,7 +143,6 @@ Item {
                 return true;
             } else if (key === Qt.Key_Left || key === Qt.Key_A) {
                 var prev = (root.focusedCategoryIndex - 1 + root.categoryCount) % root.categoryCount;
-                root.focusedCategoryIndex = prev;
                 root.categoryChanged(prev);
                 return true;
             }
@@ -158,12 +150,10 @@ Item {
             // Category cycling in expanded mode
             if (key === Qt.Key_Tab || key === Qt.Key_PageDown || key === Qt.Key_BracketRight) {
                 var nextCat = (root.focusedCategoryIndex + 1) % root.categoryCount;
-                root.focusedCategoryIndex = nextCat;
                 root.categoryChanged(nextCat);
                 return true;
             } else if (key === Qt.Key_Backtab || key === Qt.Key_PageUp || key === Qt.Key_BracketLeft) {
                 var prevCat = (root.focusedCategoryIndex - 1 + root.categoryCount) % root.categoryCount;
-                root.focusedCategoryIndex = prevCat;
                 root.categoryChanged(prevCat);
                 return true;
             }
@@ -189,7 +179,6 @@ Item {
 
                 var nextNeighbor = RadialGeometry.findSpatialNeighbor(cur, root.activeNodes, dir);
                 if (nextNeighbor && nextNeighbor.id && nextNeighbor.id !== root.selectedNodeId) {
-                    root.selectedNodeId = nextNeighbor.id;
                     root.nodeChanged(nextNeighbor.id);
                     return true;
                 } else if (dir === 3) {

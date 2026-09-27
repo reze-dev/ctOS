@@ -19,7 +19,7 @@ Item {
     property real wheelCenterY: height / 2
     property real outerRadius: 210
     property real branchOriginX: 300
-    property real branchOriginY: height / 2
+    property real branchOriginY: height / 2 - (root.rootNode ? root.rootNode.pos.y : 0)
 
     readonly property var rootNode: (root.model && root.model.categories[root.focusedCategoryIndex]?.nodes?.length > 0) ? root.model.categories[root.focusedCategoryIndex].nodes[0] : null
 
@@ -261,13 +261,10 @@ Item {
         SkillEdge {
             id: anchorRay
             x1: root.wheelCenterX
-            y1: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
+            y1: root.wheelCenterY
             x2: root.branchOriginX + (root.rootNode ? root.rootNode.pos.x : 70) + cascadeController.offset0
-            y2: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
-            node1Radius: {
-                var dy = root.rootNode ? root.rootNode.pos.y : 0;
-                return Math.sqrt(Math.max(0, 225*225 - dy*dy));
-            }
+            y2: root.wheelCenterY
+            node1Radius: root.outerRadius + 5
             node2Radius: 16
             isActive: true
             isPreview: false
@@ -393,7 +390,6 @@ Item {
                     }
 
                     onClicked: {
-                        root.selectedNodeId = nodeWrapper.modelData.id;
                         root.nodeSelected(nodeWrapper.modelData.id);
                     }
 
