@@ -73,8 +73,8 @@ Item {
                 target: pulseRing
                 property: "scale"
                 from: 1.0
-                to: 2.5
-                duration: 2000
+                to: 1.8
+                duration: 1000
                 easing.type: Easing.OutCubic
             }
             NumberAnimation {
@@ -82,7 +82,7 @@ Item {
                 property: "opacity"
                 from: 0.8
                 to: 0.0
-                duration: 2000
+                duration: 1000
                 easing.type: Easing.OutCubic
             }
         }
