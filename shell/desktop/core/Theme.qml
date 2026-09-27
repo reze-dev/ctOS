@@ -11,8 +11,8 @@ Singleton {
     readonly property color accent: root.acidGreen
     readonly property color accentGreen: root.acidGreen
     readonly property color accentRed: root.warningRed
-    readonly property color pastelBlue: Qt.rgba(174/255, 198/255, 207/255, 1.0)
-    readonly property color pastelOrange: Qt.rgba(255/255, 179/255, 71/255, 1.0)
+    readonly property color pastelBlue: Qt.rgba(119/255, 181/255, 254/255, 1.0)
+    readonly property color pastelOrange: Qt.rgba(255/255, 150/255, 79/255, 1.0)
 
     // SECTION Accent Primitives
 

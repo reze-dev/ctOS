@@ -17,8 +17,8 @@ Singleton {
 
     readonly property color accentGreen: "#1bfd9c"
     readonly property color accentRed: "#fc3e38"
-    readonly property color pastelBlue: Qt.rgba(174/255, 198/255, 207/255, 1.0)
-    readonly property color pastelOrange: Qt.rgba(255/255, 179/255, 71/255, 1.0)
+    readonly property color pastelBlue: Qt.rgba(119/255, 181/255, 254/255, 1.0)
+    readonly property color pastelOrange: Qt.rgba(255/255, 150/255, 79/255, 1.0)
 
     // SECTION Theme
 
