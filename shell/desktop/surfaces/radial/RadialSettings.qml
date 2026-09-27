@@ -412,16 +412,19 @@ FocusScope {
     }
 
     Keys.onEscapePressed: function(event) {
-        if (root.isExpanded) {
-            root.isExpanded = false;
-        } else {
-            OverlayController.close();
+        var handled = navCtrl.handleKeyPress(Qt.Key_Escape);
+        if (handled) {
+            event.accepted = true;
         }
-        event.accepted = true;
     }
 
     // Global Keyboard Focus Handling
     Keys.onPressed: function(event) {
+        if (event.key === Qt.Key_Escape) {
+            // Handled specifically by onEscapePressed to preempt global shortcuts
+            return;
+        }
+
         if (event.key === Qt.Key_F12) {
             root.debugMode = !root.debugMode;
             event.accepted = true;
