@@ -61,7 +61,7 @@ Item {
             "microphone", "microphone-slash",
             "lock", "reboot", "power", "logout",
             "brightness", "gear", "warning", "close", "check",
-            "keyboard", "mouse", "shield", "palette", "terminal", "memory", "cpu"
+            "keyboard", "mouse", "shield", "palette", "terminal", "memory", "cpu", "layers", "storage", "dark-mode", "tune", "policy", "bolt", "timer", "verified-user", "visibility-off", "vpn-key"
         ];
         if (direct.indexOf(norm) !== -1) {
             if (norm === "volume-slash") return "volume-mute";
