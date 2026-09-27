@@ -572,12 +572,6 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "ctos-overlay"
 
-        Shortcut {
-            enabled: OverlayController.isOverlayActive
-            sequence: "Escape"
-
-            onActivated: OverlayController.close()
-        }
 
         Rectangle {
             id: scrimVisual
