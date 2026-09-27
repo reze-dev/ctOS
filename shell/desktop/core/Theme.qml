@@ -23,8 +23,6 @@ Singleton {
     
     // Proposing placeholder values for the "two new colors". 
     // These can be updated once the exact hex codes are provided.
-    readonly property color newColorA: "#FF00FF" // Placeholder magenta
-    readonly property color newColorB: "#00FFFF" // Placeholder cyan
 
     // SECTION Surface & Background Tokens
 

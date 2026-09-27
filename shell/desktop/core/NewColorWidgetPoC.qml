@@ -17,7 +17,7 @@ Rectangle {
         Rectangle {
             width: 150
             height: 30
-            color: Theme.newColorA
+            color: Theme.pastelBlue
             radius: Theme.radiusSmall
             
             Text {
@@ -32,7 +32,7 @@ Rectangle {
         Rectangle {
             width: 150
             height: 30
-            color: Theme.newColorB
+            color: Theme.pastelOrange
             radius: Theme.radiusSmall
             
             Text {
