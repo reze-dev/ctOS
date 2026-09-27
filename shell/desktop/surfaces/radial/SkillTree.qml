@@ -115,7 +115,7 @@ Item {
                     y1: root.wheelCenterY
                     x2: (root.wheelCenterX + previewSubtree.r1Point.x)
                     y2: (root.wheelCenterY + previewSubtree.r1Point.y)
-                    node1Radius: root.outerRadius + 15
+                    node1Radius: root.outerRadius + 5
                     node2Radius: 15
                     isActive: previewSubtree.isCatFocused
                     isPreview: true
@@ -261,10 +261,13 @@ Item {
         SkillEdge {
             id: anchorRay
             x1: root.wheelCenterX
-            y1: root.wheelCenterY
+            y1: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
             x2: root.branchOriginX + (root.rootNode ? root.rootNode.pos.x : 70) + cascadeController.offset0
             y2: root.branchOriginY + (root.rootNode ? root.rootNode.pos.y : 0)
-            node1Radius: 225
+            node1Radius: {
+                var dy = root.rootNode ? root.rootNode.pos.y : 0;
+                return Math.sqrt(Math.max(0, 225*225 - dy*dy));
+            }
             node2Radius: 16
             isActive: true
             isPreview: false

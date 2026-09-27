@@ -139,7 +139,7 @@ FocusScope {
         id: scrimBackdrop
         anchors.fill: parent
         color: Qt.rgba(13/255, 58/255, 143/255, 1.0)
-        opacity: 0.94
+        opacity: 0.95
     }
 
     // Cybernetic Grid Background
@@ -152,7 +152,7 @@ FocusScope {
             var ctx = getContext("2d");
             ctx.clearRect(0, 0, width, height);
             ctx.strokeStyle = Theme.gray700;
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 0.5;
 
             var step = 48;
             for (var x = step; x < width; x += step) {
