@@ -21,7 +21,7 @@ Item {
     property bool isHovered: false
     property bool isActive: false
 
-    property real nodeSize: (!isPreview && isSelected) ? 60 : (isPreview ? 30 : 42)
+    property real nodeSize: (!isPreview && (isSelected || isHovered)) ? 60 : (isPreview ? 30 : 42)
     property real screenX: x + width / 2
     property real screenY: y + height / 2
 
@@ -39,7 +39,7 @@ Item {
         pulseAnim.restart();
     }
 
-    readonly property bool shouldPulse: !isPreview && (isSelected || isActive || isHovered)
+    readonly property bool shouldPulse: !isPreview && (isSelected || isHovered)
 
     onShouldPulseChanged: {
         if (shouldPulse) {
@@ -59,8 +59,8 @@ Item {
         height: root.height
         radius: Theme.radiusPill
         color: "transparent"
-        border.color: (root.controlType === "readonly" || root.locked) ? Theme.accentRed : Theme.accentGreen
-        border.width: 2
+        border.color: (root.controlType === "readonly" || root.locked) ? Theme.warningRed : Theme.acidGreen
+        border.width: 4
         opacity: 0.0
         scale: 1.0
         visible: !root.isPreview
@@ -73,8 +73,8 @@ Item {
                 target: pulseRing
                 property: "scale"
                 from: 1.0
-                to: 1.8
-                duration: Theme.durationSlow
+                to: 2.5
+                duration: 2000
                 easing.type: Easing.OutCubic
             }
             NumberAnimation {
@@ -82,7 +82,7 @@ Item {
                 property: "opacity"
                 from: 0.8
                 to: 0.0
-                duration: Theme.durationSlow
+                duration: 2000
                 easing.type: Easing.OutCubic
             }
         }
