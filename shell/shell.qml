@@ -661,34 +661,34 @@ Scope {
             anchors.horizontalCenter: parent.horizontalCenter
         }
     }
-    // EventLog is now embedded in DynamicIsland — standalone popup removed
-    // PanelWindow {
-    //     id: eventLogPopupHost
-    //
-    //     screen: overlayHost.screen
-    //     color: "transparent"
-    //     visible: OverlayController.activeSurface === OverlayController.Surface.EventLog && overlayHost.screen !== null
-    //     exclusionMode: ExclusionMode.Ignore
-    //
-    //     WlrLayershell.layer: WlrLayer.Overlay
-    //     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-    //     WlrLayershell.namespace: "ctos-eventlog-popup"
-    //
-    //     anchors {
-    //         top: true
-    //
-    //     }
-    //     margins {
-    //         top: Settings.barHeight + Theme.spacingMedium
-    //     }
-    //
-    //     implicitWidth: eventLogPopup.implicitWidth
-    //     implicitHeight: eventLogPopup.implicitHeight
-    //
-    //     EventLog {
-    //         id: eventLogPopup
-    //     }
-    // }
+    PanelWindow {
+        id: eventLogPopupHost
+
+        screen: overlayHost.screen
+        color: "transparent"
+        visible: OverlayController.activeSurface === OverlayController.Surface.EventLog && overlayHost.screen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        WlrLayershell.namespace: "ctos-eventlog-popup"
+
+        anchors {
+            top: true
+        }
+        margins {
+            top: 3
+        }
+
+        implicitWidth: 360
+        implicitHeight: 508
+
+        EventLog {
+            id: eventLogPopup
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+        }
+    }
 
     PanelWindow {
         id: calendarBackdropHost

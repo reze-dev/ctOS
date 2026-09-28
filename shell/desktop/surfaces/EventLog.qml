@@ -18,6 +18,7 @@ FocusScope {
     focus: true
 
     property int currentTab: 0
+    readonly property bool isOpen: OverlayController.activeSurface === OverlayController.Surface.EventLog
 
     // Keyboard navigation focus & Tiered Escape trapping
     Keys.onEscapePressed: function (event) {
@@ -44,382 +45,461 @@ FocusScope {
         }
     }
 
-    // Background container handled by Dynamic Island previously, now explicit
-    Rectangle {
+    // Dismiss area covering the outer canvas outside the animated panel
+    MouseArea {
+        id: canvasDismissArea
         anchors.fill: parent
+        onClicked: OverlayController.close()
+    }
+
+    // Animated Visual Panel Container (morphs from Dynamic Island 120x34 to 360x500)
+    Rectangle {
+        id: panelContainer
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        width: root.isOpen ? 360 : 120
+        height: root.isOpen ? 500 : 34
+        radius: root.isOpen ? Theme.radiusMedium : Theme.radiusPill
         color: Theme.background
-        radius: Theme.radiusMedium
         border.color: Theme.borderMuted
         border.width: Theme.borderWidth
-    }
+        clip: true
 
-    // Corner Brackets decoration (cyber aesthetic)
-    CornerBrackets {
-        id: cornerBrackets
-        bracketColor: Theme.acidGreen
-        margin: Theme.cornerBracketMargin
-        armLength: Theme.cornerBracketArmLength
-        thickness: Theme.cornerBracketThickness
-        z: 10
-    }
-
-    // Inside Click Consumer
-    MouseArea {
-        id: insideClickConsumer
-        anchors.fill: parent
-        hoverEnabled: true
-        preventStealing: true
-        onClicked: function (mouse) {
-            mouse.accepted = true;
+        Behavior on width {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
         }
-    }
 
-    // Main Content Column
-    ColumnLayout {
-        id: mainLayout
-        anchors.fill: parent
-        anchors.margins: Theme.paddingXl
-        spacing: Theme.spacingMedium
-
-        // Header Row
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Theme.spacingMedium
-
-            Rectangle {
-                Layout.preferredHeight: 8
-                Layout.preferredWidth: 8
-                color: Theme.accent
-                radius: 4
+        Behavior on height {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
             }
+        }
 
-            Text {
-                Layout.fillWidth: true
-                color: Theme.accent
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSegment
-                font.weight: Theme.fontWeightBold
-                text: "// EVENT LOG"
+        Behavior on radius {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
             }
+        }
 
-            // DND Toggle Button
-            Rectangle {
-                id: dndButton
-                Layout.preferredHeight: 24
-                Layout.preferredWidth: dndLabel.implicitWidth + Theme.paddingMedium * 2
-                border.color: NotificationService.doNotDisturb ? Theme.warningRed : (dndMouseArea.containsMouse ? Theme.accent : Theme.borderMuted)
-                border.width: Theme.borderWidth
-                color: NotificationService.doNotDisturb ? Theme.surfaceSelected : (dndMouseArea.containsMouse ? Theme.surfaceHover : "transparent")
-                radius: Theme.radiusSmall
-
-                Text {
-                    id: dndLabel
-                    anchors.centerIn: parent
-                    color: NotificationService.doNotDisturb ? Theme.warningRed : (dndMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeCaption
-                    font.weight: Theme.fontWeightBold
-                    text: NotificationService.doNotDisturb ? "[DND]" : "[DND OFF]"
-                }
-
-                MouseArea {
-                    id: dndMouseArea
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: NotificationService.toggleDnd()
-                }
+        // Inside Click Consumer
+        MouseArea {
+            id: insideClickConsumer
+            anchors.fill: parent
+            hoverEnabled: true
+            preventStealing: true
+            onClicked: function (mouse) {
+                mouse.accepted = true;
             }
+        }
 
-            // Close Button
-            Rectangle {
-                id: closeButton
-                Layout.preferredHeight: 24
-                Layout.preferredWidth: 24
-                border.color: closeMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                border.width: Theme.borderWidth
-                color: closeMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
-                radius: Theme.radiusSmall
+        // Corner Brackets decoration (cyber aesthetic)
+        CornerBrackets {
+            id: cornerBrackets
+            bracketColor: Theme.acidGreen
+            margin: Theme.cornerBracketMargin
+            armLength: Theme.cornerBracketArmLength
+            thickness: Theme.cornerBracketThickness
+            z: 10
+            opacity: root.isOpen ? 1.0 : 0.0
+            visible: opacity > 0.0
 
-                Text {
-                    anchors.centerIn: parent
-                    color: closeMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeCaption
-                    font.weight: Theme.fontWeightBold
-                    text: "x"
-                }
-
-                MouseArea {
-                    id: closeMouseArea
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: OverlayController.close()
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Settings.reducedMotion ? 0 : Theme.durationFast
                 }
             }
         }
 
-        // Header Divider & Tabs
+        // Main Content Column
         ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 0
+            id: mainLayout
+            anchors.fill: parent
+            anchors.margins: Theme.paddingXl
+            spacing: Theme.spacingMedium
+            opacity: root.isOpen ? 1.0 : 0.0
+            visible: opacity > 0.0
 
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Settings.reducedMotion ? 0 : Theme.durationFast
+                }
+            }
+
+            // Header Row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Theme.spacingMedium
 
                 Rectangle {
-                    id: tab0
+                    Layout.preferredHeight: 8
+                    Layout.preferredWidth: 8
+                    color: Theme.accent
+                    radius: 4
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    color: Theme.accent
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeSegment
+                    font.weight: Theme.fontWeightBold
+                    text: "// EVENT LOG"
+                }
+
+                // DND Toggle Button
+                Rectangle {
+                    id: dndButton
                     Layout.preferredHeight: 24
-                    Layout.preferredWidth: tab0Text.implicitWidth + Theme.paddingMedium * 2
-                    color: root.currentTab === 0 ? Theme.surfaceSelected : (tab0MouseArea.containsMouse ? Theme.surfaceHover : "transparent")
-                    border.color: root.currentTab === 0 ? Theme.accent : Theme.borderMuted
+                    Layout.preferredWidth: dndLabel.implicitWidth + Theme.paddingMedium * 2
+                    border.color: NotificationService.doNotDisturb ? Theme.warningRed : (dndMouseArea.containsMouse ? Theme.accent : Theme.borderMuted)
                     border.width: Theme.borderWidth
+                    color: NotificationService.doNotDisturb ? Theme.surfaceSelected : (dndMouseArea.containsMouse ? Theme.surfaceHover : "transparent")
                     radius: Theme.radiusSmall
 
                     Text {
-                        id: tab0Text
+                        id: dndLabel
                         anchors.centerIn: parent
-                        color: root.currentTab === 0 ? Theme.accent : Theme.textSecondary
+                        color: NotificationService.doNotDisturb ? Theme.warningRed : (dndMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
                         font.family: Theme.fontFamilyMonospace
                         font.pixelSize: Theme.fontSizeCaption
                         font.weight: Theme.fontWeightBold
-                        text: "NOTIFICATIONS"
+                        text: NotificationService.doNotDisturb ? "[DND]" : "[DND OFF]"
                     }
 
                     MouseArea {
-                        id: tab0MouseArea
+                        id: dndMouseArea
                         anchors.fill: parent
-                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.currentTab = 0
+                        hoverEnabled: true
+                        onClicked: NotificationService.toggleDnd()
                     }
+                }
+
+                // Close Button
+                Rectangle {
+                    id: closeButton
+                    Layout.preferredHeight: 24
+                    Layout.preferredWidth: 24
+                    border.color: closeMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
+                    border.width: Theme.borderWidth
+                    color: closeMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                    radius: Theme.radiusSmall
+
+                    Text {
+                        anchors.centerIn: parent
+                        color: closeMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
+                        font.family: Theme.fontFamilyMonospace
+                        font.pixelSize: Theme.fontSizeCaption
+                        font.weight: Theme.fontWeightBold
+                        text: "x"
+                    }
+
+                    MouseArea {
+                        id: closeMouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: OverlayController.close()
+                    }
+                }
+            }
+
+            // Header Divider & Tabs
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacingMedium
+
+                    Rectangle {
+                        id: tab0
+                        Layout.preferredHeight: 24
+                        Layout.preferredWidth: tab0Text.implicitWidth + Theme.paddingMedium * 2
+                        color: root.currentTab === 0 ? Theme.surfaceSelected : (tab0MouseArea.containsMouse ? Theme.surfaceHover : "transparent")
+                        border.color: root.currentTab === 0 ? Theme.accent : Theme.borderMuted
+                        border.width: Theme.borderWidth
+                        radius: Theme.radiusSmall
+
+                        Text {
+                            id: tab0Text
+                            anchors.centerIn: parent
+                            color: root.currentTab === 0 ? Theme.accent : Theme.textSecondary
+                            font.family: Theme.fontFamilyMonospace
+                            font.pixelSize: Theme.fontSizeCaption
+                            font.weight: Theme.fontWeightBold
+                            text: "NOTIFICATIONS"
+                        }
+
+                        MouseArea {
+                            id: tab0MouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.currentTab = 0
+                        }
+                    }
+
+                    Rectangle {
+                        id: tab1
+                        Layout.preferredHeight: 24
+                        Layout.preferredWidth: tab1Text.implicitWidth + Theme.paddingMedium * 2
+                        color: root.currentTab === 1 ? Theme.surfaceSelected : (tab1MouseArea.containsMouse ? Theme.surfaceHover : "transparent")
+                        border.color: root.currentTab === 1 ? Theme.accent : Theme.borderMuted
+                        border.width: Theme.borderWidth
+                        radius: Theme.radiusSmall
+
+                        Text {
+                            id: tab1Text
+                            anchors.centerIn: parent
+                            color: root.currentTab === 1 ? Theme.accent : Theme.textSecondary
+                            font.family: Theme.fontFamilyMonospace
+                            font.pixelSize: Theme.fontSizeCaption
+                            font.weight: Theme.fontWeightBold
+                            text: "SYSTEM LOGS"
+                        }
+
+                        MouseArea {
+                            id: tab1MouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.currentTab = 1
+                        }
+                    }
+                }
+
+                Item {
+                    Layout.preferredHeight: Theme.spacingMedium
                 }
 
                 Rectangle {
-                    id: tab1
-                    Layout.preferredHeight: 24
-                    Layout.preferredWidth: tab1Text.implicitWidth + Theme.paddingMedium * 2
-                    color: root.currentTab === 1 ? Theme.surfaceSelected : (tab1MouseArea.containsMouse ? Theme.surfaceHover : "transparent")
-                    border.color: root.currentTab === 1 ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-                    radius: Theme.radiusSmall
-
-                    Text {
-                        id: tab1Text
-                        anchors.centerIn: parent
-                        color: root.currentTab === 1 ? Theme.accent : Theme.textSecondary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                        font.weight: Theme.fontWeightBold
-                        text: "SYSTEM LOGS"
-                    }
-
-                    MouseArea {
-                        id: tab1MouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.currentTab = 1
-                    }
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Theme.borderWidth
+                    color: Theme.borderMuted
                 }
             }
 
+            // Body Content Area (ListView or Empty State)
             Item {
-                Layout.preferredHeight: Theme.spacingMedium
-            }
-
-            Rectangle {
+                id: contentContainer
                 Layout.fillWidth: true
-                Layout.preferredHeight: Theme.borderWidth
-                color: Theme.borderMuted
-            }
-        }
+                Layout.fillHeight: true
+                visible: root.currentTab === 0
 
-        // Body Content Area (ListView or Empty State)
-        Item {
-            id: contentContainer
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: root.currentTab === 0
+                // Notification History ListView
+                ListView {
+                    id: historyListView
+                    anchors.fill: parent
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    spacing: Theme.spacingSmall
+                    model: NotificationService.history
+                    visible: NotificationService.history.count > 0
 
-            // Notification History ListView
-            ListView {
-                id: historyListView
-                anchors.fill: parent
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-                spacing: Theme.spacingSmall
-                model: NotificationService.history
-                visible: NotificationService.history.count > 0
+                    delegate: Rectangle {
+                        id: cardItem
+                        required property int index
+                        required property var notifId
+                        required property string appName
+                        required property string summary
+                        required property string body
+                        required property int urgency
+                        required property string timestamp
 
-                delegate: Rectangle {
-                    id: cardItem
-                    required property int index
-                    required property var notifId
-                    required property string appName
-                    required property string summary
-                    required property string body
-                    required property int urgency
-                    required property string timestamp
-
-                    width: historyListView.width
-                    implicitHeight: cardLayout.implicitHeight + Theme.paddingMedium * 2
-                    color: Theme.gray800
-                    border.color: Theme.gray700
-                    border.width: Theme.borderWidth
-                    radius: Theme.radiusSmall
-
-                    readonly property color urgencyColor: {
-                        if (cardItem.urgency === 2) {
-                            return Theme.warningRed;
-                        }
-                        if (cardItem.urgency === 0) {
-                            return Theme.textMuted;
-                        }
-                        return Theme.acidGreen;
-                    }
-
-                    // Urgency accent stripe on left edge
-                    Rectangle {
-                        id: urgencyStripe
-                        anchors.bottom: parent.bottom
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        color: cardItem.urgencyColor
+                        width: historyListView.width
+                        implicitHeight: cardLayout.implicitHeight + Theme.paddingMedium * 2
+                        color: Theme.gray800
+                        border.color: Theme.gray700
+                        border.width: Theme.borderWidth
                         radius: Theme.radiusSmall
-                        width: 3
-                    }
 
-                    ColumnLayout {
-                        id: cardLayout
-                        anchors.left: urgencyStripe.right
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: Theme.paddingMedium
-                        spacing: Theme.spacingSmall
+                        readonly property color urgencyColor: {
+                            if (cardItem.urgency === 2) {
+                                return Theme.warningRed;
+                            }
+                            if (cardItem.urgency === 0) {
+                                return Theme.textMuted;
+                            }
+                            return Theme.acidGreen;
+                        }
 
-                        // Header line: Urgency Dot, App Name (left), Timestamp (right)
-                        RowLayout {
-                            Layout.fillWidth: true
+                        // Urgency accent stripe on left edge
+                        Rectangle {
+                            id: urgencyStripe
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            color: cardItem.urgencyColor
+                            radius: Theme.radiusSmall
+                            width: 3
+                        }
+
+                        ColumnLayout {
+                            id: cardLayout
+                            anchors.left: urgencyStripe.right
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: Theme.paddingMedium
                             spacing: Theme.spacingSmall
 
-                            Rectangle {
-                                Layout.preferredHeight: 6
-                                Layout.preferredWidth: 6
-                                color: cardItem.urgencyColor
-                                radius: 3
+                            // Header line: Urgency Dot, App Name (left), Timestamp (right)
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Theme.spacingSmall
+
+                                Rectangle {
+                                    Layout.preferredHeight: 6
+                                    Layout.preferredWidth: 6
+                                    color: cardItem.urgencyColor
+                                    radius: 3
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    color: Theme.textSecondary
+                                    elide: Text.ElideRight
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.weight: Theme.fontWeightMedium
+                                    text: cardItem.appName.toUpperCase()
+                                }
+
+                                Text {
+                                    color: Theme.textMuted
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    text: cardItem.timestamp
+                                }
                             }
 
+                            // Summary text
+                            Text {
+                                Layout.fillWidth: true
+                                color: Theme.textPrimary
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeSmall
+                                font.weight: Theme.fontWeightBold
+                                text: cardItem.summary
+                            }
+
+                            // Body text (word wrap, max 3 lines, elide)
                             Text {
                                 Layout.fillWidth: true
                                 color: Theme.textSecondary
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamilyMonospace
                                 font.pixelSize: Theme.fontSizeCaption
-                                font.weight: Theme.fontWeightMedium
-                                text: cardItem.appName.toUpperCase()
+                                maximumLineCount: 3
+                                text: cardItem.body
+                                visible: cardItem.body !== ""
+                                wrapMode: Text.WordWrap
                             }
 
-                            Text {
-                                color: Theme.textMuted
-                                font.family: Theme.fontFamilyMonospace
-                                font.pixelSize: Theme.fontSizeCaption
-                                text: cardItem.timestamp
-                            }
-                        }
-
-                        // Summary text
-                        Text {
-                            Layout.fillWidth: true
-                            color: Theme.textPrimary
-                            elide: Text.ElideRight
-                            font.family: Theme.fontFamilyMonospace
-                            font.pixelSize: Theme.fontSizeSmall
-                            font.weight: Theme.fontWeightBold
-                            text: cardItem.summary
-                        }
-
-                        // Body text (word wrap, max 3 lines, elide)
-                        Text {
-                            Layout.fillWidth: true
-                            color: Theme.textSecondary
-                            elide: Text.ElideRight
-                            font.family: Theme.fontFamilyMonospace
-                            font.pixelSize: Theme.fontSizeCaption
-                            maximumLineCount: 3
-                            text: cardItem.body
-                            visible: cardItem.body !== ""
-                            wrapMode: Text.WordWrap
-                        }
-
-                        // Dismiss action button
-                        RowLayout {
-                            Layout.fillWidth: true
-
-                            Item {
+                            // Dismiss action button
+                            RowLayout {
                                 Layout.fillWidth: true
-                            }
 
-                            Rectangle {
-                                id: dismissBtn
-                                Layout.preferredHeight: 20
-                                Layout.preferredWidth: dismissText.implicitWidth + Theme.paddingSmall * 2
-                                border.color: dismissMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                                border.width: Theme.borderWidth
-                                color: dismissMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
-                                radius: Theme.radiusSmall
-
-                                Text {
-                                    id: dismissText
-                                    anchors.centerIn: parent
-                                    color: dismissMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
-                                    font.family: Theme.fontFamilyMonospace
-                                    font.pixelSize: Theme.fontSizeCaption
-                                    font.weight: Theme.fontWeightMedium
-                                    text: "[DISMISS]"
+                                Item {
+                                    Layout.fillWidth: true
                                 }
 
-                                MouseArea {
-                                    id: dismissMouseArea
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    hoverEnabled: true
-                                    onClicked: NotificationService.dismissHistoryItem(cardItem.index)
+                                Rectangle {
+                                    id: dismissBtn
+                                    Layout.preferredHeight: 20
+                                    Layout.preferredWidth: dismissText.implicitWidth + Theme.paddingSmall * 2
+                                    border.color: dismissMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
+                                    border.width: Theme.borderWidth
+                                    color: dismissMouseArea.containsMouse ? Theme.surfaceHover : "transparent"
+                                    radius: Theme.radiusSmall
+
+                                    Text {
+                                        id: dismissText
+                                        anchors.centerIn: parent
+                                        color: dismissMouseArea.containsMouse ? Theme.accent : Theme.textSecondary
+                                        font.family: Theme.fontFamilyMonospace
+                                        font.pixelSize: Theme.fontSizeCaption
+                                        font.weight: Theme.fontWeightMedium
+                                        text: "[DISMISS]"
+                                    }
+
+                                    MouseArea {
+                                        id: dismissMouseArea
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        hoverEnabled: true
+                                        onClicked: NotificationService.dismissHistoryItem(cardItem.index)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // Scrollbar track & thumb
-            Rectangle {
-                id: scrollTrack
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.top: parent.top
-                color: Theme.gray800
-                radius: 2
-                visible: historyListView.visible && (historyListView.height < historyListView.contentHeight)
-                width: 4
-
+                // Scrollbar track & thumb
                 Rectangle {
-                    id: scrollThumb
-                    color: Theme.acidGreen
-                    height: Math.max(16, historyListView.visibleArea.heightRatio * historyListView.height)
+                    id: scrollTrack
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    color: Theme.gray800
                     radius: 2
+                    visible: historyListView.visible && (historyListView.height < historyListView.contentHeight)
                     width: 4
-                    y: historyListView.visibleArea.yPosition * historyListView.height
+
+                    Rectangle {
+                        id: scrollThumb
+                        color: Theme.acidGreen
+                        height: Math.max(16, historyListView.visibleArea.heightRatio * historyListView.height)
+                        radius: 2
+                        width: 4
+                        y: historyListView.visibleArea.yPosition * historyListView.height
+                    }
+                }
+
+                // Empty state container
+                Item {
+                    id: emptyState
+                    anchors.fill: parent
+                    visible: NotificationService.history.count === 0
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: Theme.spacingMedium
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredHeight: 8
+                            Layout.preferredWidth: 8
+                            color: Theme.textMuted
+                            radius: 4
+                        }
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            color: Theme.textMuted
+                            font.family: Theme.fontFamilyMonospace
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.weight: Theme.fontWeightMedium
+                            text: "NO NOTIFICATIONS // STANDBY"
+                        }
+                    }
                 }
             }
 
-            // Empty state container
+            // System Logs Content Area
             Item {
-                id: emptyState
-                anchors.fill: parent
-                visible: NotificationService.history.count === 0
+                id: systemLogsContainer
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: root.currentTab === 1
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -439,99 +519,69 @@ FocusScope {
                         font.family: Theme.fontFamilyMonospace
                         font.pixelSize: Theme.fontSizeSmall
                         font.weight: Theme.fontWeightMedium
-                        text: "NO NOTIFICATIONS // STANDBY"
+                        text: "SYSTEM LOGS // UNAVAILABLE"
                     }
                 }
             }
-        }
 
-        // System Logs Content Area
-        Item {
-            id: systemLogsContainer
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: root.currentTab === 1
-
-            ColumnLayout {
-                anchors.centerIn: parent
-                spacing: Theme.spacingMedium
-
-                Rectangle {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredHeight: 8
-                    Layout.preferredWidth: 8
-                    color: Theme.textMuted
-                    radius: 4
-                }
-
-                Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    color: Theme.textMuted
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.weight: Theme.fontWeightMedium
-                    text: "SYSTEM LOGS // UNAVAILABLE"
-                }
-            }
-        }
-
-        // Footer Divider
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Theme.borderWidth
-            color: Theme.borderMuted
-            visible: root.currentTab === 0
-        }
-
-        // Footer Action Row
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Theme.spacingMedium
-            visible: root.currentTab === 0
-
-            Text {
-                Layout.fillWidth: true
-                color: Theme.textSecondary
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                text: NotificationService.history.count > 0
-                      ? NotificationService.history.count + " LOGGED"
-                      : "0 LOGGED"
-            }
-
+            // Footer Divider
             Rectangle {
-                id: clearAllBtn
-                Layout.preferredHeight: 26
-                Layout.preferredWidth: clearAllText.implicitWidth + Theme.paddingMedium * 2
-                border.color: NotificationService.history.count === 0
-                              ? Theme.borderMuted
-                              : (clearMouseArea.containsMouse ? Theme.destructive : Theme.borderMuted)
-                border.width: Theme.borderWidth
-                color: NotificationService.history.count === 0
-                       ? "transparent"
-                       : (clearMouseArea.containsMouse ? Theme.surfaceHover : "transparent")
-                opacity: NotificationService.history.count === 0 ? 0.4 : 1.0
-                radius: Theme.radiusSmall
+                Layout.fillWidth: true
+                Layout.preferredHeight: Theme.borderWidth
+                color: Theme.borderMuted
+                visible: root.currentTab === 0
+            }
+
+            // Footer Action Row
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spacingMedium
+                visible: root.currentTab === 0
 
                 Text {
-                    id: clearAllText
-                    anchors.centerIn: parent
-                    color: NotificationService.history.count === 0
-                           ? Theme.textMuted
-                           : (clearMouseArea.containsMouse ? Theme.destructive : Theme.textPrimary)
+                    Layout.fillWidth: true
+                    color: Theme.textSecondary
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
-                    font.weight: Theme.fontWeightBold
-                    text: "[CLEAR ALL]"
+                    text: NotificationService.history.count > 0
+                          ? NotificationService.history.count + " LOGGED"
+                          : "0 LOGGED"
                 }
 
-                MouseArea {
-                    id: clearMouseArea
-                    anchors.fill: parent
-                    cursorShape: NotificationService.history.count > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    enabled: NotificationService.history.count > 0
-                    hoverEnabled: NotificationService.history.count > 0
-                    onClicked: NotificationService.clearAll()
+                Rectangle {
+                    id: clearAllBtn
+                    Layout.preferredHeight: 26
+                    Layout.preferredWidth: clearAllText.implicitWidth + Theme.paddingMedium * 2
+                    border.color: NotificationService.history.count === 0
+                                  ? Theme.borderMuted
+                                  : (clearMouseArea.containsMouse ? Theme.destructive : Theme.borderMuted)
+                    border.width: Theme.borderWidth
+                    color: NotificationService.history.count === 0
+                           ? "transparent"
+                           : (clearMouseArea.containsMouse ? Theme.surfaceHover : "transparent")
+                    opacity: NotificationService.history.count === 0 ? 0.4 : 1.0
+                    radius: Theme.radiusSmall
+
+                    Text {
+                        id: clearAllText
+                        anchors.centerIn: parent
+                        color: NotificationService.history.count === 0
+                               ? Theme.textMuted
+                               : (clearMouseArea.containsMouse ? Theme.destructive : Theme.textPrimary)
+                        font.family: Theme.fontFamilyMonospace
+                        font.pixelSize: Theme.fontSizeCaption
+                        font.weight: Theme.fontWeightBold
+                        text: "[CLEAR ALL]"
+                    }
+
+                    MouseArea {
+                        id: clearMouseArea
+                        anchors.fill: parent
+                        cursorShape: NotificationService.history.count > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        enabled: NotificationService.history.count > 0
+                        hoverEnabled: NotificationService.history.count > 0
+                        onClicked: NotificationService.clearAll()
+                    }
                 }
             }
         }

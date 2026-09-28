@@ -67,8 +67,8 @@ PanelWindow {
         function onXChanged() { root.flushWaylandMask(); }
     }
     WlrLayershell.namespace: "ctos-bar"
-    WlrLayershell.keyboardFocus: OverlayController.activeSurface === OverlayController.Surface.EventLog ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
-    implicitHeight: centerSection.height > Theme.barHeight ? centerSection.y + centerSection.height + 8 : Theme.barHeight
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    implicitHeight: Theme.barHeight
 
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: Theme.barHeight
