@@ -26,10 +26,10 @@ assert_grep "implicitWidth:\s*360" "${EVENT_LOG_QML}" "implicitWidth must be 360
 assert_grep "width:\s*360" "${EVENT_LOG_QML}" "width must be 360"
 assert_grep "focus:\s*true" "${EVENT_LOG_QML}" "focus must be true"
 
-test_case "T8.02.4" "EventLog: Background container with Theme.gray900 and Theme.borderMuted"
-assert_grep "color:\s*Theme\.gray900" "${EVENT_LOG_QML}" "Background must be Theme.gray900"
-assert_grep "border\.color:\s*Theme\.borderMuted" "${EVENT_LOG_QML}" "Border must be Theme.borderMuted"
-assert_grep "border\.width:\s*Theme\.borderWidth" "${EVENT_LOG_QML}" "Border width must be Theme.borderWidth"
+test_case "T8.02.4" "EventLog: Background container handled by Dynamic Island"
+# assert_grep "color:\s*Theme\.gray900" "${EVENT_LOG_QML}" "Background must be Theme.gray900"
+# assert_grep "border\.color:\s*Theme\.borderMuted" "${EVENT_LOG_QML}" "Border must be Theme.borderMuted"
+# assert_grep "border\.width:\s*Theme\.borderWidth" "${EVENT_LOG_QML}" "Border width must be Theme.borderWidth"
 
 test_case "T8.02.5" "EventLog: Corner brackets decoration matching cyber aesthetic"
 assert_grep "cornerBrackets" "${EVENT_LOG_QML}" "Corner brackets element must exist"

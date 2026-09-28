@@ -13,9 +13,11 @@ FocusScope {
 
     implicitWidth: 360
     width: 360
-    anchors.bottom: parent ? parent.bottom : undefined
-    anchors.top: parent ? parent.top : undefined
+    implicitHeight: 500
+    height: 500
     focus: true
+
+    property int currentTab: 0
 
     // Keyboard navigation focus & Tiered Escape trapping
     Keys.onEscapePressed: function (event) {
@@ -42,14 +44,7 @@ FocusScope {
         }
     }
 
-    // Background container
-    Rectangle {
-        id: panelBackground
-        anchors.fill: parent
-        color: Theme.gray900
-        border.color: Theme.borderMuted
-        border.width: Theme.borderWidth
-    }
+    // Background container handled by Dynamic Island
 
     // Corner Brackets decoration (cyber aesthetic)
     CornerBrackets {
@@ -158,11 +153,81 @@ FocusScope {
             }
         }
 
-        // Header Divider
-        Rectangle {
+        // Header Divider & Tabs
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: Theme.borderWidth
-            color: Theme.borderMuted
+            spacing: 0
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spacingMedium
+
+                Rectangle {
+                    id: tab0
+                    Layout.preferredHeight: 24
+                    Layout.preferredWidth: tab0Text.implicitWidth + Theme.paddingMedium * 2
+                    color: root.currentTab === 0 ? Theme.surfaceSelected : (tab0MouseArea.containsMouse ? Theme.surfaceHover : "transparent")
+                    border.color: root.currentTab === 0 ? Theme.accent : Theme.borderMuted
+                    border.width: Theme.borderWidth
+                    radius: Theme.radiusSmall
+
+                    Text {
+                        id: tab0Text
+                        anchors.centerIn: parent
+                        color: root.currentTab === 0 ? Theme.accent : Theme.textSecondary
+                        font.family: Theme.fontFamilyMonospace
+                        font.pixelSize: Theme.fontSizeCaption
+                        font.weight: Theme.fontWeightBold
+                        text: "NOTIFICATIONS"
+                    }
+
+                    MouseArea {
+                        id: tab0MouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.currentTab = 0
+                    }
+                }
+
+                Rectangle {
+                    id: tab1
+                    Layout.preferredHeight: 24
+                    Layout.preferredWidth: tab1Text.implicitWidth + Theme.paddingMedium * 2
+                    color: root.currentTab === 1 ? Theme.surfaceSelected : (tab1MouseArea.containsMouse ? Theme.surfaceHover : "transparent")
+                    border.color: root.currentTab === 1 ? Theme.accent : Theme.borderMuted
+                    border.width: Theme.borderWidth
+                    radius: Theme.radiusSmall
+
+                    Text {
+                        id: tab1Text
+                        anchors.centerIn: parent
+                        color: root.currentTab === 1 ? Theme.accent : Theme.textSecondary
+                        font.family: Theme.fontFamilyMonospace
+                        font.pixelSize: Theme.fontSizeCaption
+                        font.weight: Theme.fontWeightBold
+                        text: "SYSTEM LOGS"
+                    }
+
+                    MouseArea {
+                        id: tab1MouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.currentTab = 1
+                    }
+                }
+            }
+
+            Item {
+                Layout.preferredHeight: Theme.spacingMedium
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Theme.borderWidth
+                color: Theme.borderMuted
+            }
         }
 
         // Body Content Area (ListView or Empty State)
@@ -170,6 +235,7 @@ FocusScope {
             id: contentContainer
             Layout.fillWidth: true
             Layout.fillHeight: true
+            visible: root.currentTab === 0
 
             // Notification History ListView
             ListView {
@@ -372,17 +438,49 @@ FocusScope {
             }
         }
 
+        // System Logs Content Area
+        Item {
+            id: systemLogsContainer
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: root.currentTab === 1
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: Theme.spacingMedium
+
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredHeight: 8
+                    Layout.preferredWidth: 8
+                    color: Theme.textMuted
+                    radius: 4
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    color: Theme.textMuted
+                    font.family: Theme.fontFamilyMonospace
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Theme.fontWeightMedium
+                    text: "SYSTEM LOGS // UNAVAILABLE"
+                }
+            }
+        }
+
         // Footer Divider
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Theme.borderWidth
             color: Theme.borderMuted
+            visible: root.currentTab === 0
         }
 
         // Footer Action Row
         RowLayout {
             Layout.fillWidth: true
             spacing: Theme.spacingMedium
+            visible: root.currentTab === 0
 
             Text {
                 Layout.fillWidth: true

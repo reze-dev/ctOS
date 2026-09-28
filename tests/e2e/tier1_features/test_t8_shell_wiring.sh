@@ -20,13 +20,13 @@ test_case "T8.04.2" "ShellWiring: IpcHandler contains toggleEventLog method rout
 assert_grep "function\s+toggleEventLog\s*\(\)\s*:\s*void" "${SHELL_QML}" "IpcHandler must declare toggleEventLog(): void"
 assert_grep "OverlayController\.toggleEventLog\(\)" "${SHELL_QML}" "toggleEventLog must invoke OverlayController.toggleEventLog()"
 
-test_case "T8.04.3" "ShellWiring: eventLogLoader has source desktop/surfaces/EventLog.qml"
-assert_grep "id:\s*eventLogLoader" "${SHELL_QML}" "Loader with id eventLogLoader must exist"
-assert_grep 'source:\s*"desktop/surfaces/EventLog\.qml"' "${SHELL_QML}" "eventLogLoader source must be desktop/surfaces/EventLog.qml"
+test_case "T8.04.3" "ShellWiring: eventLogLoader has source ../EventLog.qml"
+assert_grep "id:\s*eventLogEmbeddedLoader" "shell/desktop/surfaces/components/DynamicIsland.qml" "Loader with id eventLogEmbeddedLoader must exist"
+assert_grep 'source:\s*"\.\./EventLog\.qml"' "shell/desktop/surfaces/components/DynamicIsland.qml" "eventLogEmbeddedLoader source must be ../EventLog.qml"
 
 test_case "T8.04.4" "ShellWiring: eventLogLoader visibility bound to OverlayController.Surface.EventLog"
-assert_grep "visible:\s*OverlayController\.activeSurface\s*===\s*OverlayController\.Surface\.EventLog" "${SHELL_QML}" "eventLogLoader visible condition must check Surface.EventLog"
-assert_grep "asynchronous:\s*false" "${SHELL_QML}" "eventLogLoader must be synchronous (asynchronous: false)"
+assert_grep "active:\s*root\.isEventLogOpen\s*||\s*opacity\s*>\s*0" "shell/desktop/surfaces/components/DynamicIsland.qml" "eventLogEmbeddedLoader active condition must check isEventLogOpen"
+assert_grep "opacity:\s*root\.isEventLogOpen\s*\?\s*1\.0\s*:\s*0\.0" "shell/desktop/surfaces/components/DynamicIsland.qml" "eventLogEmbeddedLoader opacity must bind to isEventLogOpen"
 
 test_case "T8.04.5" "ShellWiring: notificationToastHost PanelWindow declared with target screen"
 assert_grep "id:\s*notificationToastHost" "${SHELL_QML}" "PanelWindow notificationToastHost must exist"

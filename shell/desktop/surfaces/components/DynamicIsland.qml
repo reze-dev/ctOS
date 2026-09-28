@@ -20,10 +20,11 @@ Rectangle {
     property string latestAppName: ""
     property string latestSummary: ""
     property int latestUrgency: 1
+    readonly property bool isEventLogOpen: OverlayController.activeSurface === OverlayController.Surface.EventLog
 
-    width: isExpanded ? expandedWidth : compactWidth
+    width: isEventLogOpen ? 360 : (isExpanded ? expandedWidth : compactWidth)
     implicitWidth: width
-    height: Theme.barHeight - 6
+    height: isEventLogOpen ? 500 : (Theme.barHeight - 6)
     implicitHeight: height
 
     color: Theme.background
@@ -37,6 +38,13 @@ Rectangle {
     // =========================================================================
 
     Behavior on width {
+        NumberAnimation {
+            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+            easing.type: Easing.InOutQuad
+        }
+    }
+
+    Behavior on height {
         NumberAnimation {
             duration: Settings.reducedMotion ? 0 : Theme.durationSlow
             easing.type: Easing.InOutQuad
@@ -98,7 +106,7 @@ Rectangle {
     RowLayout {
         id: compactContent
         anchors.centerIn: parent
-        opacity: root.isExpanded ? 0.0 : 1.0
+        opacity: (root.isExpanded || root.isEventLogOpen) ? 0.0 : 1.0
         visible: opacity > 0.0
         spacing: Theme.spacingSmall
 
@@ -171,7 +179,7 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: Theme.paddingLarge
         anchors.rightMargin: Theme.paddingLarge
-        opacity: root.isExpanded ? 1.0 : 0.0
+        opacity: (root.isExpanded && !root.isEventLogOpen) ? 1.0 : 0.0
         visible: opacity > 0.0
         spacing: Theme.spacingSmall
 
@@ -232,6 +240,7 @@ Rectangle {
         cursorShape: Qt.PointingHandCursor
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        enabled: !root.isEventLogOpen // Disable click to toggle when event log is fully open, as it handles its own input.
 
         onClicked: (mouse) => {
             if (mouse.button === Qt.RightButton) {
@@ -244,6 +253,25 @@ Rectangle {
                 } else {
                     OverlayController.toggleEventLog();
                 }
+            }
+        }
+    }
+
+    // =========================================================================
+    // Event Log Container
+    // =========================================================================
+
+    Loader {
+        id: eventLogEmbeddedLoader
+        anchors.fill: parent
+        active: root.isEventLogOpen || opacity > 0
+        opacity: root.isEventLogOpen ? 1.0 : 0.0
+        visible: opacity > 0.0
+        source: "../EventLog.qml"
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.durationFast
             }
         }
     }

@@ -431,6 +431,8 @@ Scope {
         }
     }
 
+
+
     Variants {
         id: barVariants
 
@@ -615,16 +617,8 @@ Scope {
                 source: "desktop/surfaces/SystemRail.qml"
             }
 
-            Loader {
-                id: eventLogLoader
+            // EventLog moved to DynamicIsland
 
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.top: parent.top
-                asynchronous: false
-                source: "desktop/surfaces/EventLog.qml"
-                visible: OverlayController.activeSurface === OverlayController.Surface.EventLog
-            }
 
             Loader {
                 id: radialSettingsLoader
