@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.Mpris
 import "../../core"
 import "../../services"
 
@@ -14,9 +15,10 @@ Rectangle {
     // =========================================================================
 
     readonly property real compactWidth: 120
+    readonly property real mediaWidth: 240
     readonly property real expandedWidth: 300
 
-    // Two primary states: "compact", "notification"
+    // States: "compact", "media", "notification"
     property string state: "compact"
 
     // Writable isExpanded for backward compatibility with tests.
@@ -29,12 +31,96 @@ Rectangle {
     property int latestUrgency: 1
     readonly property bool isEventLogOpen: OverlayController.activeSurface === OverlayController.Surface.EventLog
 
+    // =========================================================================
+    // MPRIS Active Player Tracking & Equalizer State
+    // =========================================================================
+
+    property int _mprisTrigger: 0
+
+    Repeater {
+        model: Mpris.players.values
+
+        Item {
+            id: mprisWatcher
+            required property var modelData
+
+            Connections {
+                target: mprisWatcher.modelData
+
+                function onPlaybackStateChanged(): void {
+                    root._mprisTrigger++;
+                }
+                function onTrackTitleChanged(): void {
+                    root._mprisTrigger++;
+                }
+                function onTrackArtistChanged(): void {
+                    root._mprisTrigger++;
+                }
+            }
+        }
+    }
+
+    readonly property var activePlayer: {
+        const trigger = root._mprisTrigger;
+        const list = Mpris.players.values;
+        if (!list || list.length === 0) return null;
+
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            if (p && p.playbackState === MprisPlaybackState.Playing) {
+                return p;
+            }
+        }
+
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            if (p && p.playbackState === MprisPlaybackState.Paused && p.trackTitle && p.trackTitle.trim() !== "") {
+                return p;
+            }
+        }
+
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            if (p && p.playbackState === MprisPlaybackState.Paused) {
+                return p;
+            }
+        }
+
+        return list[0] || null;
+    }
+
+    readonly property bool hasMedia: activePlayer !== null && (
+        activePlayer.playbackState === MprisPlaybackState.Playing ||
+        (activePlayer.trackTitle !== undefined && activePlayer.trackTitle !== null && activePlayer.trackTitle.trim() !== "")
+    )
+    readonly property bool isPlaying: hasMedia && activePlayer.playbackState === MprisPlaybackState.Playing
+
+    readonly property string mediaTitle: (activePlayer && activePlayer.trackTitle && activePlayer.trackTitle.trim() !== "") ? activePlayer.trackTitle.trim() : "--UNTITLED--"
+    readonly property string mediaArtist: (activePlayer && activePlayer.trackArtist && activePlayer.trackArtist.trim() !== "") ? activePlayer.trackArtist.trim() : ""
+
+    property real visualizerPhase: 0.0
+
+    NumberAnimation {
+        id: visualizerAnim
+        target: root
+        property: "visualizerPhase"
+        from: 0.0
+        to: 6.283185307179586
+        duration: 1200
+        loops: Animation.Infinite
+        running: root.isPlaying && !Settings.reducedMotion
+    }
+
+    // =========================================================================
+    // State Synchronization
+    // =========================================================================
+
     // Sync isExpanded writes -> state
     onIsExpandedChanged: {
-        if (root.isExpanded && root.state === "compact") {
+        if (root.isExpanded && root.state !== "notification") {
             root.state = "notification";
         } else if (!root.isExpanded && root.state === "notification") {
-            root.state = "compact";
+            root.state = root.hasMedia ? "media" : "compact";
         }
     }
 
@@ -42,8 +128,15 @@ Rectangle {
     onStateChanged: {
         if (root.state === "notification" && !root.isExpanded) {
             root.isExpanded = true;
-        } else if (root.state === "compact" && root.isExpanded) {
+        } else if (root.state !== "notification" && root.isExpanded) {
             root.isExpanded = false;
+        }
+    }
+
+    // Sync media presence -> state (when not displaying notification)
+    onHasMediaChanged: {
+        if (!root.isExpanded) {
+            root.state = root.hasMedia ? "media" : "compact";
         }
     }
 
@@ -51,8 +144,16 @@ Rectangle {
     // Synchronously compute width/height based on state to avoid desync.
     function _computeLayout(): var {
         const isExp = root.isExpanded || root.state === "notification";
+        let targetW = root.compactWidth;
+        if (isExp) {
+            targetW = root.expandedWidth;
+        } else if (root.hasMedia) {
+            targetW = root.mediaWidth;
+        } else if (mouseArea.containsMouse) {
+            targetW = root.compactWidth + 12;
+        }
         return {
-            w: isExp ? root.expandedWidth : root.compactWidth,
+            w: targetW,
             h: Theme.barHeight - 6
         };
     }
@@ -66,7 +167,7 @@ Rectangle {
 
     color: Theme.background
     radius: Theme.radiusPill
-    border.color: mouseArea.containsMouse ? Theme.accent : Theme.borderMuted
+    border.color: (mouseArea.containsMouse || root.isExpanded) ? Theme.accent : "black"
     border.width: Theme.borderWidth
     clip: true
 
@@ -139,13 +240,13 @@ Rectangle {
     }
 
     // =========================================================================
-    // Compact View
+    // Compact View (Idle / DND / Unread)
     // =========================================================================
 
     RowLayout {
         id: compactContent
         anchors.centerIn: parent
-        opacity: (!root.isExpanded && root.state === "compact") ? 1.0 : 0.0
+        opacity: (!root.isExpanded && !root.hasMedia) ? 1.0 : 0.0
         visible: opacity > 0.0
         spacing: Theme.spacingSmall
 
@@ -206,6 +307,70 @@ Rectangle {
             font.family: Theme.fontFamilyMonospace
             font.pixelSize: Theme.fontSizeCaption
             font.weight: Theme.fontWeightNormal
+        }
+    }
+
+    // =========================================================================
+    // Media Pill / Live Activity View (240x34)
+    // =========================================================================
+
+    RowLayout {
+        id: mediaContent
+        anchors.fill: parent
+        anchors.leftMargin: Theme.paddingLarge
+        anchors.rightMargin: Theme.paddingLarge
+        opacity: (!root.isExpanded && root.hasMedia) ? 1.0 : 0.0
+        visible: opacity > 0.0
+        spacing: Theme.spacingSmall
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationFast
+            }
+        }
+
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            text: root.isPlaying ? "▶" : "⏸"
+            color: root.isPlaying ? Theme.acidGreen : Theme.textMuted
+            font.family: Theme.fontFamilyMonospace
+            font.pixelSize: Theme.fontSizeCaption
+            font.weight: Theme.fontWeightBold
+        }
+
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            Layout.fillWidth: true
+            text: root.mediaArtist !== "" ? (root.mediaTitle + " // " + root.mediaArtist) : root.mediaTitle
+            color: Theme.textPrimary
+            font.family: Theme.fontFamilyMonospace
+            font.pixelSize: Theme.fontSizeCaption
+            font.weight: Theme.fontWeightNormal
+            elide: Text.ElideRight
+            maximumLineCount: 1
+        }
+
+        // Animated Equalizer Bars
+        RowLayout {
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredHeight: 14
+            spacing: 2
+
+            Repeater {
+                model: 4
+
+                Rectangle {
+                    id: eqBar
+                    required property int index
+                    Layout.alignment: Qt.AlignBottom
+                    Layout.preferredWidth: 3
+                    Layout.preferredHeight: root.isPlaying
+                        ? Math.max(3, Math.round((Math.sin((eqBar.index * 1.1) + root.visualizerPhase) * 0.4 + 0.5) * 14))
+                        : 3
+                    color: root.isPlaying ? Theme.acidGreen : Theme.gray600
+                    radius: 1
+                }
+            }
         }
     }
 
@@ -289,10 +454,15 @@ Rectangle {
                 } else {
                     collapseTimer.stop();
                     root.isExpanded = false;
-                    root.state = "compact";
+                    root.state = root.hasMedia ? "media" : "compact";
                     OverlayController.openEventLog();
                 }
             }
+        }
+
+        onWheel: (wheel) => {
+            const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
+            AudioService.stepVolume(delta);
         }
     }
 }
