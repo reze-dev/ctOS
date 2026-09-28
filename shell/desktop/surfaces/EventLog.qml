@@ -44,7 +44,14 @@ FocusScope {
         }
     }
 
-    // Background container handled by Dynamic Island
+    // Background container handled by Dynamic Island previously, now explicit
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.background
+        radius: Theme.radiusMedium
+        border.color: Theme.borderMuted
+        border.width: Theme.borderWidth
+    }
 
     // Corner Brackets decoration (cyber aesthetic)
     CornerBrackets {

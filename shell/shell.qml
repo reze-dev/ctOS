@@ -661,6 +661,33 @@ Scope {
             anchors.horizontalCenter: parent.horizontalCenter
         }
     }
+    PanelWindow {
+        id: eventLogPopupHost
+
+        screen: overlayHost.screen
+        color: "transparent"
+        visible: OverlayController.activeSurface === OverlayController.Surface.EventLog && overlayHost.screen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        WlrLayershell.namespace: "ctos-eventlog-popup"
+
+        anchors {
+            top: true
+            
+        }
+        margins {
+            top: Settings.barHeight + Theme.spacingMedium
+        }
+
+        implicitWidth: eventLogPopup.implicitWidth
+        implicitHeight: eventLogPopup.implicitHeight
+
+        EventLog {
+            id: eventLogPopup
+        }
+    }
 
     PanelWindow {
         id: calendarBackdropHost

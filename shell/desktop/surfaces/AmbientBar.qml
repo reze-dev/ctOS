@@ -29,8 +29,8 @@ PanelWindow {
             Region {
                 x: centerSection.x
                 y: centerSection.y
-                width: centerSection.isEventLogOpen ? 360 : centerSection.width
-                height: centerSection.isEventLogOpen ? 500 : centerSection.height
+                width: centerSection.width
+                height: centerSection.height
             }
             Region {
                 x: rightSections.x
@@ -60,7 +60,6 @@ PanelWindow {
         function onWidthChanged() { root.flushWaylandMask(); }
         function onHeightChanged() { root.flushWaylandMask(); }
         function onXChanged() { root.flushWaylandMask(); }
-        function onIsEventLogOpenChanged() { root.flushWaylandMask(); }
     }
     Connections {
         target: rightSections
@@ -68,8 +67,8 @@ PanelWindow {
         function onXChanged() { root.flushWaylandMask(); }
     }
     WlrLayershell.namespace: "ctos-bar"
-    WlrLayershell.keyboardFocus: centerSection.isEventLogOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
-    implicitHeight: (centerSection.isEventLogOpen || centerSection.height > Theme.barHeight) ? 506 : Theme.barHeight
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    implicitHeight: Theme.barHeight
 
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: Theme.barHeight
