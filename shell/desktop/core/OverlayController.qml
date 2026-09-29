@@ -131,7 +131,7 @@ Singleton {
         _setSurface(OverlayController.Surface.CommandDeck);
     }
     function openEventLog(): void {
-        _setSurface(OverlayController.Surface.EventLog);
+        _setSurface(OverlayController.Surface.CommandCenter);
     }
     function openCommandCenter(): void {
         _setSurface(OverlayController.Surface.CommandCenter);
@@ -140,7 +140,7 @@ Singleton {
         _setSurface(OverlayController.Surface.RadialSettings);
     }
     function openSystemRail(): void {
-        _setSurface(OverlayController.Surface.SystemRail);
+        _setSurface(OverlayController.Surface.CommandCenter);
     }
     function openSystemRailWithAction(action: string): void {
         pendingSessionAction = action;
@@ -183,7 +183,7 @@ Singleton {
         toggle(OverlayController.Surface.CommandDeck);
     }
     function toggleEventLog(): void {
-        toggle(OverlayController.Surface.EventLog);
+        toggle(OverlayController.Surface.CommandCenter);
     }
     function toggleCommandCenter(): void {
         toggle(OverlayController.Surface.CommandCenter);
@@ -192,7 +192,7 @@ Singleton {
         toggle(OverlayController.Surface.RadialSettings);
     }
     function toggleSystemRail(): void {
-        toggle(OverlayController.Surface.SystemRail);
+        toggle(OverlayController.Surface.CommandCenter);
     }
     function unregisterFocusTarget(surface: int): void {
         delete _focusTargets[surface];
