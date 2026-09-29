@@ -11,27 +11,27 @@ Item {
     property Component headerComponent
     property Component contentComponent
 
-    implicitWidth: mainLayout.implicitWidth
-    implicitHeight: mainLayout.implicitHeight
+    implicitWidth: mainColumn.implicitWidth
+    implicitHeight: mainColumn.implicitHeight
 
-    ColumnLayout {
-        id: mainLayout
+    Column {
+        id: mainColumn
         anchors.left: parent.left
         anchors.right: parent.right
         spacing: 0
 
         Loader {
-            Layout.fillWidth: true
+            id: headerLoader
+            width: parent.width
             sourceComponent: root.headerComponent
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: root.isExpanded ? contentLoader.implicitHeight : 0
-            color: "transparent"
+        Item {
+            width: parent.width
+            height: root.isExpanded ? (contentLoader.item ? (contentLoader.item.implicitHeight > 0 ? contentLoader.item.implicitHeight : contentLoader.item.height) : 0) : 0
             clip: true
 
-            Behavior on Layout.preferredHeight {
+            Behavior on height {
                 NumberAnimation {
                     duration: Settings.reducedMotion ? 0 : Theme.durationSlow
                     easing.type: Easing.InOutQuad
@@ -40,9 +40,7 @@ Item {
 
             Loader {
                 id: contentLoader
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
+                width: parent.width
                 sourceComponent: root.contentComponent
             }
         }

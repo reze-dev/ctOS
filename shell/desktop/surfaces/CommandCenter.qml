@@ -338,8 +338,8 @@ FocusScope {
                 }
                 contentComponent: Component {
                     ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 300
+                        width: parent ? parent.width : 0
+                        height: 300
                                         // Notification History ListView
                 ListView {
                     id: historyListView
@@ -362,6 +362,7 @@ FocusScope {
 
                         width: historyListView.width
                         implicitHeight: cardLayout.implicitHeight + Theme.paddingMedium * 2
+                        height: implicitHeight
                         color: Theme.gray800
                         border.color: Theme.gray700
                         border.width: Theme.borderWidth
@@ -604,9 +605,9 @@ FocusScope {
                 Layout.fillWidth: true
                 isExpanded: panelContainer.expandedAccordion === "wifi"
                 headerComponent: Component {
-                                    Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 64
+                    Rectangle {
+                        width: parent ? parent.width : 0
+                        height: 64
                     color: NetworkService.wifiEnabled ? Theme.surfaceSelected : Theme.gray800
                     border.color: NetworkService.wifiEnabled ? Theme.acidGreen : (swWifiMouse.containsMouse ? Theme.accent : Theme.gray700)
                     border.width: Theme.borderWidth
@@ -678,8 +679,8 @@ FocusScope {
                 }
                 contentComponent: Component {
                     ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 350
+                        width: parent ? parent.width : 0
+                        height: 350
                                 // Status Subheader
         RowLayout {
             Layout.fillWidth: true
@@ -810,6 +811,7 @@ FocusScope {
                 delegate: ColumnLayout {
                     id: networkItemDelegate
                     width: networkListView.width
+                    height: implicitHeight
                     spacing: 2
 
                     readonly property var netData: modelData
@@ -1286,9 +1288,9 @@ FocusScope {
                 Layout.fillWidth: true
                 isExpanded: panelContainer.expandedAccordion === "bluetooth"
                 headerComponent: Component {
-                                    Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 64
+                    Rectangle {
+                        width: parent ? parent.width : 0
+                        height: 64
                     color: BluetoothService.powered ? Theme.surfaceSelected : Theme.gray800
                     border.color: BluetoothService.powered ? Theme.acidGreen : (swBtMouse.containsMouse ? Theme.accent : Theme.gray700)
                     border.width: Theme.borderWidth
@@ -1360,8 +1362,8 @@ FocusScope {
                 }
                 contentComponent: Component {
                     Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 100
+                        width: parent ? parent.width : 0
+                        height: 100
                         color: Theme.surfaceSelected
                         border.color: Theme.borderMuted
                         border.width: Theme.borderWidth
@@ -1385,9 +1387,9 @@ FocusScope {
                 Layout.fillWidth: true
                 isExpanded: panelContainer.expandedAccordion === "audio"
                 headerComponent: Component {
-                                    Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 64
+                    Rectangle {
+                        width: parent ? parent.width : 0
+                        height: 64
                     color: !AudioService.muted ? Theme.surfaceSelected : Theme.gray800
                     border.color: !AudioService.muted ? Theme.acidGreen : (swAudioMouse.containsMouse ? Theme.accent : Theme.gray700)
                     border.width: Theme.borderWidth
@@ -1459,8 +1461,8 @@ FocusScope {
                 }
                 contentComponent: Component {
                     ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 280
+                        width: parent ? parent.width : 0
+                        height: 280
                                 ColumnLayout {
             Layout.fillWidth: true
             spacing: Theme.spacingSmall
@@ -1880,8 +1882,8 @@ FocusScope {
                 isExpanded: panelContainer.expandedAccordion === "power"
                 headerComponent: Component {
                     Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 64
+                        width: parent ? parent.width : 0
+                        height: 64
                         color: Theme.gray800
                         border.color: PowerService.percentage < 20 ? Theme.warningRed : Theme.gray700
                         border.width: Theme.borderWidth
@@ -1955,8 +1957,8 @@ FocusScope {
                 }
                 contentComponent: Component {
                     ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: root.isConfirming ? 250 : 150
+                        width: parent ? parent.width : 0
+                        height: root.isConfirming ? 250 : 150
                                 ColumnLayout {
             Layout.fillWidth: true
             spacing: Theme.spacingSmall
