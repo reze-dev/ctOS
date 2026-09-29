@@ -729,7 +729,7 @@ Item {
                 }
             ]
 
-        }
+        } // END OF CATEGORIES
     ]
 
 

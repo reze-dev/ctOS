@@ -195,7 +195,7 @@ for cat_id, cat_name, nodes_block in cat_blocks:
             all_cats_ok = False
             break
 
-check("M4.GEO.ALL_CATEGORIES_RIGHT_VALID", "All 9 categories have valid Right arrow transition from root node",
+check("M4.GEO.ALL_CATEGORIES_RIGHT_VALID", "All 8 categories have valid Right arrow transition from root node",
       all_cats_ok and len(cat_blocks) >= 8)
 
 # ==============================================================================
@@ -205,8 +205,8 @@ nav_path = os.path.join(RADIAL_DIR, "NavigationController.qml")
 with open(nav_path, "r", encoding="utf-8") as f:
     nav_code = f.read()
 
-check("M4.NAV.CAT_COUNT_9", "categoryCount defaults to 9 in NavigationController.qml",
-      re.search(r"property\s+int\s+categoryCount\s*:\s*9", nav_code) is not None)
+check("M4.NAV.CAT_COUNT_8", "categoryCount defaults to 8 in NavigationController.qml",
+      re.search(r"property\s+int\s+categoryCount\s*:\s*8", nav_code) is not None)
 
 check("M4.NAV.CLAMP_HOVER", "Hover selection snap threshold clamped to <= 40px (36.0px)",
       re.search(r"if\s*\(\s*d\s*<\s*(?:36|40)(?:\.0)?\s*\)", nav_code) is not None)

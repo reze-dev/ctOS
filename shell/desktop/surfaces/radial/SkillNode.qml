@@ -53,7 +53,7 @@ Item {
 
     // Expanding Concentric Signal Pulse Wave
     Rectangle {
-        id: pulseRing
+        id: outerRing
         anchors.centerIn: parent
         width: root.width
         height: root.height
