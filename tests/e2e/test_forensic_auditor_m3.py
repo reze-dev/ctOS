@@ -55,7 +55,7 @@ tracked_diff = [f.strip() for f in proc.stdout.strip().split("\n") if f.strip()]
 # plus untracked shell/desktop/surfaces/components/BluetoothPopup.qml
 allowed_tracked = {
     "shell/desktop/services/BluetoothService.qml", # M2
-    "shell/desktop/surfaces/SystemRail.qml",       # M1
+    "shell/desktop/surfaces/CommandCenter.qml",       # M1
     "shell/desktop/surfaces/AmbientBar.qml",      # M3
     "shell/desktop/surfaces/components/qmldir",   # M3
     "shell/shell.qml"                            # M3

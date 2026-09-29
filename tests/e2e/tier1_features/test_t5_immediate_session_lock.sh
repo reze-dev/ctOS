@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 ACTION_REG="${PROJECT_ROOT}/shell/desktop/core/ActionRegistry.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 
 test_case "T1.26.1" "Immediate Lock: ActionRegistry declares action-lock"
 assert_file_exists "${ACTION_REG}"
@@ -28,11 +28,11 @@ assert_match "destructive:\s*false" "${lock_block}" "Lock session must not requi
 test_case "T1.26.4" "Immediate Lock: Lock action has enabled: true"
 assert_match "enabled:\s*true" "${lock_block}" "Lock session action must be enabled"
 
-test_case "T1.26.5" "Immediate Lock: SystemRail provides Lock Session tile or invocation"
+test_case "T1.26.5" "Immediate Lock: CommandCenter provides Lock Session tile or invocation"
 if [[ -f "${SYSTEM_RAIL}" ]]; then
-    assert_grep -E "(lock-session|lockSession|LOCK SESSION)" "${SYSTEM_RAIL}" "SystemRail must offer immediate lock action"
+    assert_grep -E "(lock-session|lockSession|LOCK SESSION)" "${SYSTEM_RAIL}" "CommandCenter must offer immediate lock action"
 else
-    test_skip "Pending M2: SystemRail Lock Session tile pending M2"
+    test_skip "Pending M2: CommandCenter Lock Session tile pending M2"
 fi
 
 report_summary

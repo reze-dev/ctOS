@@ -9,7 +9,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 DESKTOP_DIR="${PROJECT_ROOT}/shell/desktop"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 
 test_case "T2.29.1" "Allowlisted Execution Boundary: Zero sh -c command invocations across desktop surfaces"
 assert_not_grep -E '\[\s*"sh"\s*,\s*"-c"' "${DESKTOP_DIR}" "Prohibit [\"sh\", \"-c\"] invocations"

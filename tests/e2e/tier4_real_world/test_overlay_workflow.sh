@@ -18,7 +18,7 @@ test_case "T4.03" "Real-World Scenario 3: Overlay Workflow Mutual Exclusion & Di
 # 2. Keybindings & scrim clicks dismiss active overlay
 if [[ -f "${OVERLAY_CTRL}" ]]; then
     check_qml_method "${OVERLAY_CTRL}" "openCommandDeck"
-    check_qml_method "${OVERLAY_CTRL}" "openSystemRail"
+    check_qml_method "${OVERLAY_CTRL}" "openCommandCenter"
     check_qml_method "${OVERLAY_CTRL}" "close"
     assert_grep -i "(Key_Escape|escape)" "${DESKTOP_DIR}" "Escape key dismissal required"
     assert_grep -i "(scrim|backdrop|outside)" "${DESKTOP_DIR}" "Outside click dismissal required"

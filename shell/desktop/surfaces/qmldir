@@ -1,6 +1,4 @@
 AmbientBar 1.0 AmbientBar.qml
 CommandDeck 1.0 CommandDeck.qml
-EventLog 1.0 EventLog.qml
 NotificationToasts 1.0 NotificationToasts.qml
-SystemRail 1.0 SystemRail.qml
 CommandCenter 1.0 CommandCenter.qml

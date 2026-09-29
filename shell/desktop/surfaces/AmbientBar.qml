@@ -87,14 +87,21 @@ PanelWindow {
     // Left Sections: Logo, Workspaces, Window Title
     // =========================================================================
 
-    RowLayout {
-        id: leftSections
-
+    Rectangle {
+        id: leftIsland
         anchors.left: parent.left
         anchors.leftMargin: Theme.barPaddingHorizontal
         anchors.top: parent.top
         anchors.topMargin: (Theme.barHeight - height) / 2
-        spacing: Theme.spacingMedium
+        height: Theme.barHeight - 6
+        width: leftSections.width
+        radius: Theme.radiusPill
+        color: "transparent"
+
+        RowLayout {
+            id: leftSections
+            anchors.fill: parent
+            spacing: Theme.spacingMedium
 
         // Section 1: Blume Logo
         Rectangle {
@@ -194,6 +201,7 @@ PanelWindow {
                 hoverEnabled: true
             }
         }
+        }
     }
 
     // =========================================================================
@@ -212,14 +220,21 @@ PanelWindow {
     // Right Sections: Network, Volume, Battery, Bluetooth, Clock, System Rail
     // =========================================================================
 
-    RowLayout {
-        id: rightSections
-
+    Rectangle {
+        id: rightIsland
         anchors.right: parent.right
         anchors.rightMargin: Theme.barPaddingHorizontal
         anchors.top: parent.top
         anchors.topMargin: (Theme.barHeight - height) / 2
-        spacing: Theme.spacingMedium
+        height: Theme.barHeight - 6
+        width: rightSections.width
+        radius: Theme.radiusPill
+        color: "transparent"
+
+        RowLayout {
+            id: rightSections
+            anchors.fill: parent
+            spacing: Theme.spacingMedium
 
         // Section 4: Network
         Rectangle {
@@ -336,7 +351,7 @@ PanelWindow {
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
 
-                onClicked: OverlayController.toggleSystemRail()
+                onClicked: OverlayController.toggleCommandCenter()
             }
         }
 
@@ -423,7 +438,7 @@ PanelWindow {
         Rectangle {
             id: railSection
 
-            readonly property bool isRailOpen: OverlayController.activeSurface === OverlayController.Surface.SystemRail
+            readonly property bool isRailOpen: OverlayController.activeSurface === OverlayController.Surface.CommandCenter
 
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredHeight: Theme.barHeight - 6
@@ -454,8 +469,9 @@ PanelWindow {
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
 
-                onClicked: OverlayController.toggleSystemRail()
+                onClicked: OverlayController.toggleCommandCenter()
             }
+        }
         }
     }
 }

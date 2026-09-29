@@ -42,7 +42,7 @@ from typing import Dict, Any, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SESSION_SVC_PATH = PROJECT_ROOT / "shell/desktop/services/SessionService.qml"
 COMPOSITOR_SVC_PATH = PROJECT_ROOT / "shell/desktop/services/CompositorService.qml"
-SYSTEM_RAIL_PATH = PROJECT_ROOT / "shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL_PATH = PROJECT_ROOT / "shell/desktop/surfaces/CommandCenter.qml"
 ACTION_REG_PATH = PROJECT_ROOT / "shell/desktop/core/ActionRegistry.qml"
 WORKSPACES_WIDGET_PATH = PROJECT_ROOT / "shell/desktop/surfaces/components/WorkspacesWidget.qml"
 QMLDIR_PATH = PROJECT_ROOT / "shell/desktop/services/qmldir"
@@ -131,7 +131,7 @@ def test_static_ast_and_invariants():
            "execDetached" not in session_exec)
     record("AST.NO_EXEC_DETACHED.COMPOSITOR", "Zero active execDetached in CompositorService.qml",
            "execDetached" not in compositor_exec)
-    record("AST.NO_EXEC_DETACHED.RAIL", "Zero active execDetached in SystemRail.qml",
+    record("AST.NO_EXEC_DETACHED.RAIL", "Zero active execDetached in CommandCenter.qml",
            "execDetached" not in rail_exec)
     record("AST.NO_EXEC_DETACHED.ACTION_REG", "Zero active execDetached in ActionRegistry.qml",
            "execDetached" not in action_reg_exec)

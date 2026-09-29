@@ -9,14 +9,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 ACTION_REG="${PROJECT_ROOT}/shell/desktop/core/ActionRegistry.qml"
 
-test_case "T1.27.1" "Session Safety: SystemRail provides confirmation state property"
+test_case "T1.27.1" "Session Safety: CommandCenter provides confirmation state property"
 if [[ -f "${SYSTEM_RAIL}" ]]; then
-    assert_grep -E "(confirmationAction|isConfirming|confirming)" "${SYSTEM_RAIL}" "SystemRail must track confirmation state"
+    assert_grep -E "(confirmationAction|isConfirming|confirming)" "${SYSTEM_RAIL}" "CommandCenter must track confirmation state"
 else
-    test_skip "Pending M3: SystemRail confirmation state pending M3"
+    test_skip "Pending M3: CommandCenter confirmation state pending M3"
 fi
 
 test_case "T1.27.2" "Session Safety: Destructive session actions defined (logout, reboot, poweroff)"

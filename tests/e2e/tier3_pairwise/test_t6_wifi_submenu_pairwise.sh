@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 NET_SVC="${PROJECT_ROOT}/shell/desktop/services/NetworkService.qml"
 OVERLAY_CTRL="${PROJECT_ROOT}/shell/desktop/core/OverlayController.qml"
 NET_WIDGET="${PROJECT_ROOT}/shell/desktop/surfaces/components/NetworkWidget.qml"
@@ -18,7 +18,7 @@ test_case "T3.23" "Pairwise: Destructive session confirmation safely supersedes 
 assert_file_exists "${SYSTEM_RAIL}"
 if grep -qE '(currentView|currentSubmenu)' "${SYSTEM_RAIL}"; then
     assert_grep -E '(isConfirming|confirmationAction)' "${SYSTEM_RAIL}" \
-        "Confirmation state must exist in SystemRail"
+        "Confirmation state must exist in CommandCenter"
     assert_grep -E '(visible:\s*root\.isConfirming|visible:\s*!root\.isConfirming|visible:\s*confirmationLayout)' "${SYSTEM_RAIL}" \
         "Session safety confirmation view must visually supersede all regular views"
 else
@@ -40,7 +40,7 @@ test_case "T3.25" "Pairwise: Operating audio volume or mic slider does not corru
 assert_file_exists "${SYSTEM_RAIL}"
 if grep -qE '(passwordPrompt|PASSWORD|TextInput)' "${SYSTEM_RAIL}"; then
     assert_grep -E '(AudioService|setVolume|stepVolume|volumeSlider)' "${SYSTEM_RAIL}" \
-        "SystemRail must host volume controls alongside view state machine"
+        "CommandCenter must host volume controls alongside view state machine"
     assert_grep -E '(TextInput|TextField)' "${SYSTEM_RAIL}" \
         "Password prompt text input must be isolated in its own scope"
 else
@@ -50,10 +50,10 @@ fi
 test_case "T3.26" "Pairwise: Ambient Bar Network Widget click transitions active Rail to Wi-Fi Submenu without flicker"
 assert_file_exists "${NET_WIDGET}"
 assert_file_exists "${OVERLAY_CTRL}"
-if grep -qE '(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}"; then
-    assert_grep -E 'function\s+(openWifiSubmenu|openSystemRailWithSubmenu)' "${OVERLAY_CTRL}" \
+if grep -qE '(openWifiSubmenu|openCommandCenterWithSubmenu)' "${NET_WIDGET}"; then
+    assert_grep -E 'function\s+(openWifiSubmenu|openCommandCenterWithSubmenu)' "${OVERLAY_CTRL}" \
         "OverlayController must support direct Wi-Fi submenu opening"
-    assert_grep -E '(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}" \
+    assert_grep -E '(openWifiSubmenu|openCommandCenterWithSubmenu)' "${NET_WIDGET}" \
         "NetworkWidget must trigger deep-linking method"
 else
     test_skip "Pending M2: Ambient Bar transition when rail open pending M2"
@@ -62,7 +62,7 @@ fi
 test_case "T3.27" "Pairwise: Settings.reducedMotion true suppresses submenu slide transitions"
 if grep -qE '(Settings\.reducedMotion|reducedMotion)' "${SYSTEM_RAIL}"; then
     assert_grep -E '(Settings\.reducedMotion|reducedMotion)' "${SYSTEM_RAIL}" \
-        "SystemRail must respect Settings.reducedMotion for view transitions"
+        "CommandCenter must respect Settings.reducedMotion for view transitions"
 else
     test_skip "Pending M2: Submenu reduced motion transition pending M2"
 fi

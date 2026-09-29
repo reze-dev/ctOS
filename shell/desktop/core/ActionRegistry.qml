@@ -262,7 +262,7 @@ Singleton {
             disabledNote: "",
             keywords: ["system", "rail", "settings", "volume", "audio", "network", "wifi", "power", "battery"],
             execute: function () {
-                OverlayController.openSystemRail();
+                OverlayController.openCommandCenter();
             }
         },
         {
@@ -279,7 +279,7 @@ Singleton {
             disabledNote: "",
             keywords: ["event", "log", "notifications", "alerts", "history", "bell"],
             execute: function () {
-                OverlayController.openEventLog();
+                OverlayController.openCommandCenter();
             }
         },
         {

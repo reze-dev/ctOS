@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 AUDIO_SVC="${PROJECT_ROOT}/shell/desktop/services/AudioService.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 
 test_case "T4.08" "Real-World Scenario 8: Full Audio and Mic Adjustment Cycle"
 assert_file_exists "${AUDIO_SVC}"

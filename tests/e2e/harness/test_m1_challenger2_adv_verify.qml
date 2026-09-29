@@ -78,17 +78,17 @@ Scope {
         });
         record("CH2.ACT.09", "Action 'screen' keyword match for Lock Session yields score <= 4", hasScreen);
 
-        const resSystemRail = ActionRegistry.search("system rail");
-        const hasSystemRail = resSystemRail.some(function (item) {
+        const resCommandCenter = ActionRegistry.search("system rail");
+        const hasCommandCenter = resCommandCenter.some(function (item) {
             return item.id === "action-system-rail" && item.score <= 3;
         });
-        record("CH2.ACT.10", "Action 'system rail' substring match yields score <= 3", hasSystemRail);
+        record("CH2.ACT.10", "Action 'system rail' substring match yields score <= 3", hasCommandCenter);
 
-        const resEventLog = ActionRegistry.search("event log");
-        const hasEventLog = resEventLog.some(function (item) {
+        const resCommandCenter = ActionRegistry.search("event log");
+        const hasCommandCenter = resCommandCenter.some(function (item) {
             return item.id === "action-event-log" && item.score <= 3;
         });
-        record("CH2.ACT.11", "Action 'event log' substring match yields score <= 3", hasEventLog);
+        record("CH2.ACT.11", "Action 'event log' substring match yields score <= 3", hasCommandCenter);
 
         const resCpu = ActionRegistry.search("cpu");
         const hasCpu = resCpu.some(function (item) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Tier 3 - Pairwise 16: Audio Mute + Volume Wheel Interaction
-# Interaction: AudioService (F8) + SystemRail / VolumeWidget (F8)
+# Interaction: AudioService (F8) + CommandCenter / VolumeWidget (F8)
 # ==============================================================================
 set -u
 set +e

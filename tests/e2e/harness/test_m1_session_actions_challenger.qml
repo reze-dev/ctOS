@@ -30,7 +30,7 @@ Scope {
         Loader {
             id: railLoader
             anchors.fill: parent
-            source: "file:///home/reze/Projects/ctOS/shell/desktop/surfaces/SystemRail.qml"
+            source: "file:///home/reze/Projects/ctOS/shell/desktop/surfaces/CommandCenter.qml"
         }
     }
 
@@ -74,20 +74,20 @@ Scope {
         onTriggered: {
             const rail = railLoader.item;
             if (!rail) {
-                console.error("SystemRail not loaded yet");
+                console.error("CommandCenter not loaded yet");
                 return;
             }
 
             try {
                 if (currentStep === 0) {
-                    console.log("=== STEP 0: Invariant Inspection of SystemRail & Process Nodes ===");
-                    assertCondition("CHAL.M1.01", "SystemRail root width is 360", rail.width === 360, "width=" + rail.width);
+                    console.log("=== STEP 0: Invariant Inspection of CommandCenter & Process Nodes ===");
+                    assertCondition("CHAL.M1.01", "CommandCenter root width is 360", rail.width === 360, "width=" + rail.width);
                     assertCondition("CHAL.M1.02", "Initial confirmationAction is empty string", rail.confirmationAction === "", "action=" + rail.confirmationAction);
                     assertCondition("CHAL.M1.03", "Initial isConfirming is false", rail.isConfirming === false, "isConfirming=" + rail.isConfirming);
 
                     // Inspect resources for declarative Process nodes
                     const res = rail.resources;
-                    assertCondition("CHAL.M1.04", "SystemRail defines resources", res && res.length >= 4, "count=" + (res ? res.length : 0));
+                    assertCondition("CHAL.M1.04", "CommandCenter defines resources", res && res.length >= 4, "count=" + (res ? res.length : 0));
 
                     for (let i = 0; i < res.length; i++) {
                         const item = res[i];
@@ -117,8 +117,8 @@ Scope {
 
                 } else if (currentStep === 1) {
                     console.log("=== STEP 1: Lock Session Action Flow ===");
-                    // Activate SystemRail overlay
-                    OverlayController.toggle(OverlayController.Surface.SystemRail);
+                    // Activate CommandCenter overlay
+                    OverlayController.toggle(OverlayController.Surface.CommandCenter);
                     assertCondition("CHAL.M1.13", "Overlay is active prior to lock", OverlayController.isOverlayActive === true, "active=" + OverlayController.isOverlayActive);
 
                     const lockMA = findMouseAreaForText(rail, "LOCK SESSION");
@@ -141,7 +141,7 @@ Scope {
 
                 } else if (currentStep === 3) {
                     console.log("=== STEP 3: Logout Confirmation & Safe Cancel Flow ===");
-                    OverlayController.toggle(OverlayController.Surface.SystemRail);
+                    OverlayController.toggle(OverlayController.Surface.CommandCenter);
                     const logoutMA = findMouseAreaForText(rail, "LOGOUT");
                     assertCondition("CHAL.M1.22", "logoutMouseArea found via visual tree search", logoutMA !== null, "found=" + (logoutMA !== null));
 
@@ -184,7 +184,7 @@ Scope {
 
                 } else if (currentStep === 5) {
                     console.log("=== STEP 5: Logout Confirmation Execution Flow ===");
-                    OverlayController.toggle(OverlayController.Surface.SystemRail);
+                    OverlayController.toggle(OverlayController.Surface.CommandCenter);
                     rail.triggerConfirmation("logout");
 
                     const confirmMA = findMouseAreaForText(rail, "CONFIRM // EXECUTE");
@@ -204,7 +204,7 @@ Scope {
                     console.log("=== STEP 6: Reboot Confirmation Execution Flow ===");
                     assertCondition("CHAL.M1.43", "logoutProcess returned to idle", logoutProc.running === false, "running=" + logoutProc.running);
 
-                    OverlayController.toggle(OverlayController.Surface.SystemRail);
+                    OverlayController.toggle(OverlayController.Surface.CommandCenter);
                     const rebootMA = findMouseAreaForText(rail, "REBOOT");
                     if (rebootMA) rebootMA.clicked(null);
 
@@ -223,7 +223,7 @@ Scope {
                     console.log("=== STEP 7: Power Off Confirmation Execution Flow ===");
                     assertCondition("CHAL.M1.50", "rebootProcess returned to idle", rebootProc.running === false, "running=" + rebootProc.running);
 
-                    OverlayController.toggle(OverlayController.Surface.SystemRail);
+                    OverlayController.toggle(OverlayController.Surface.CommandCenter);
                     const powerMA = findMouseAreaForText(rail, "POWER");
                     if (powerMA) powerMA.clicked(null);
 
@@ -241,7 +241,7 @@ Scope {
                     console.log("=== STEP 8: Adversarial Checks (Injection & Re-entrancy) ===");
                     assertCondition("CHAL.M1.56", "poweroffProcess returned to idle", poweroffProc.running === false, "running=" + poweroffProc.running);
 
-                    OverlayController.toggle(OverlayController.Surface.SystemRail);
+                    OverlayController.toggle(OverlayController.Surface.CommandCenter);
 
                     // Adversarial 1: Malicious action injection
                     rail.triggerConfirmation("inject; rm -rf /");

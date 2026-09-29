@@ -56,13 +56,13 @@ Scope {
         }
     }
 
-    // Host simulation for EventLog
+    // Host simulation for CommandCenter
     Item {
         id: eventLogHostContainer
         width: 360
         height: 800
 
-        EventLog {
+        CommandCenter {
             id: eventLogSurface
             anchors.fill: parent
         }
@@ -122,7 +122,7 @@ Scope {
                 clearSystemState();
                 for (let j = 1; j <= 100; ++j) {
                     if (j % 5 === 0) {
-                        OverlayController.toggleEventLog();
+                        OverlayController.toggleCommandCenter();
                     }
                     NotificationService._handleNotification({
                         id: 2000 + j,
@@ -698,22 +698,22 @@ Scope {
                 }
 
                 // Test 7.2: OverlayHost Exclusive vs None Focus Transition
-                // When EventLog is opened: Overlay is active
-                OverlayController.openEventLog();
-                if (OverlayController.isOverlayActive && OverlayController.activeSurface === OverlayController.Surface.EventLog) {
-                    recordPass("Focus_OverlayOpenedEventLog", "Overlay opened with Surface.EventLog (modal receives focus)");
+                // When CommandCenter is opened: Overlay is active
+                OverlayController.openCommandCenter();
+                if (OverlayController.isOverlayActive && OverlayController.activeSurface === OverlayController.Surface.CommandCenter) {
+                    recordPass("Focus_OverlayOpenedCommandCenter", "Overlay opened with Surface.CommandCenter (modal receives focus)");
                 } else {
-                    recordFailure("Focus_OverlayOpenedEventLog", "Overlay not active or wrong surface: " + OverlayController.activeSurface);
+                    recordFailure("Focus_OverlayOpenedCommandCenter", "Overlay not active or wrong surface: " + OverlayController.activeSurface);
                 }
 
-                // Verify EventLog surface has focus: true
+                // Verify CommandCenter surface has focus: true
                 if (eventLogSurface.focus === true) {
-                    recordPass("Focus_EventLogRootHasFocusTrue", "EventLog root FocusScope has focus: true for keyboard trapping");
+                    recordPass("Focus_CommandCenterRootHasFocusTrue", "CommandCenter root FocusScope has focus: true for keyboard trapping");
                 } else {
-                    recordFailure("Focus_EventLogRootHasFocusTrue", "EventLog root lacks focus: true");
+                    recordFailure("Focus_CommandCenterRootHasFocusTrue", "CommandCenter root lacks focus: true");
                 }
 
-                // When EventLog is closed: Overlay inactive
+                // When CommandCenter is closed: Overlay inactive
                 OverlayController.close();
                 if (!OverlayController.isOverlayActive && OverlayController.activeSurface === OverlayController.Surface.None) {
                     recordPass("Focus_OverlayClosedRestoresNone", "Overlay closed restores None surface (modal focus released)");

@@ -42,7 +42,7 @@ Verifies:
 9. AmbientBar Integration:
    - Declares signal toggleNetwork
    - networkMouseArea handles left-click (toggleNetwork) and right-click (toggleWifi)
-   - Decoupled from opening SystemRail directly on click
+   - Decoupled from opening CommandCenter directly on click
 10. Shell.qml Multi-Surface Overlay Wiring:
    - Declares networkVisible and networkScreen properties
    - Declares toggleNetwork and closeNetwork methods
@@ -52,8 +52,8 @@ Verifies:
    - Overlay preemption: OverlayController.onOverlayOpened closes network
    - Disconnect cleanup: dead screen reference resets networkVisible = false
    - Dual PanelWindow hosts: ctos-network-backdrop (WlrLayer.Top) and ctos-network-popup (WlrLayer.Overlay)
-11. SystemRail Invariance:
-   - SystemRail.qml remains completely untouched
+11. CommandCenter Invariance:
+   - CommandCenter.qml remains completely untouched
 12. Static Linter Validation:
    - qmllint on all touched files
 """
@@ -94,7 +94,7 @@ qmldir_path = os.path.join(COMPONENTS_DIR, "qmldir")
 bar_path = os.path.join(DESKTOP_DIR, "surfaces", "AmbientBar.qml")
 shell_path = os.path.join(SHELL_DIR, "shell.qml")
 net_svc_path = os.path.join(DESKTOP_DIR, "services", "NetworkService.qml")
-rail_path = os.path.join(DESKTOP_DIR, "surfaces", "SystemRail.qml")
+rail_path = os.path.join(DESKTOP_DIR, "surfaces", "CommandCenter.qml")
 
 check("WF.R3.FILE.01", "NetworkPopup.qml exists in components/", os.path.isfile(popup_path), popup_path)
 check("WF.R3.FILE.02", "components/qmldir exists", os.path.isfile(qmldir_path), qmldir_path)
@@ -272,7 +272,7 @@ check("WF.R3.BAR.MOUSE", "networkMouseArea handles left-click (toggleNetwork) an
 
 check("WF.R3.BAR.DECOUPLE", "networkMouseArea does not directly call openWifiSubmenu on click",
       "onClicked: OverlayController.openWifiSubmenu()" not in bar_content,
-      "decoupled from SystemRail")
+      "decoupled from CommandCenter")
 
 # ==============================================================================
 # 10. Shell.qml Multi-Surface Overlay Wiring

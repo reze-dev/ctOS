@@ -21,7 +21,6 @@ Singleton {
     readonly property string defaultCompositor: "hyprland"
     readonly property bool defaultFeaturesCommandDeck: true
     readonly property bool defaultFeaturesNotifications: true
-    readonly property bool defaultFeaturesSystemRail: true
 
     // =========================================================================
     // Default Constants (immutable fallback values)
@@ -40,7 +39,6 @@ Singleton {
     property bool featuresNotifications: true
     property int notificationCooldownSeconds: 30
     readonly property int defaultNotificationCooldownSeconds: 30
-    property bool featuresSystemRail: true
 
     // Indicator if configuration was successfully loaded from disk
     property bool isLoaded: false
@@ -114,15 +112,6 @@ Singleton {
                 featuresCommandDeck = data.features.commandDeck;
             } else {
                 featuresCommandDeck = defaultFeaturesCommandDeck;
-            }
-
-            // featuresSystemRail: supports flat key or nested features.systemRail
-            if (typeof data.featuresSystemRail === "boolean") {
-                featuresSystemRail = data.featuresSystemRail;
-            } else if (data.features && typeof data.features.systemRail === "boolean") {
-                featuresSystemRail = data.features.systemRail;
-            } else {
-                featuresSystemRail = defaultFeaturesSystemRail;
             }
 
             // featuresNotifications: supports flat key or nested features.notifications
@@ -319,7 +308,6 @@ Singleton {
 
         data.reducedMotion = root.reducedMotion;
         data.featuresCommandDeck = root.featuresCommandDeck;
-        data.featuresSystemRail = root.featuresSystemRail;
         data.featuresNotifications = root.featuresNotifications;
         data.notificationCooldownSeconds = root.notificationCooldownSeconds;
         data.barHeight = root.barHeight;
@@ -520,7 +508,6 @@ Singleton {
     function resetToDefaults(): void {
         reducedMotion = defaultReducedMotion;
         featuresCommandDeck = defaultFeaturesCommandDeck;
-        featuresSystemRail = defaultFeaturesSystemRail;
         featuresNotifications = defaultFeaturesNotifications;
         notificationCooldownSeconds = defaultNotificationCooldownSeconds;
         barHeight = defaultBarHeight;

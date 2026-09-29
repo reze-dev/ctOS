@@ -12,8 +12,13 @@ Item {
     readonly property string dateString: Qt.formatDateTime(systemClock.date, "yyyy-MM-dd")
     readonly property string timeString: Qt.formatDateTime(systemClock.date, "HH:mm")
 
-    implicitHeight: layout.implicitHeight
+    implicitHeight: 36
     implicitWidth: layout.implicitWidth
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.toggleCalendar()
+    }
 
     SystemClock {
         id: systemClock

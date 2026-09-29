@@ -29,7 +29,7 @@ test_case "T8.MASTER.09" "AC9: Individual [DISMISS] works per notification in Ev
 test_case "T8.MASTER.10" "AC10: ESC closes the Event Log overlay"
 test_case "T8.MASTER.11" "AC11: Toast popups do NOT steal keyboard focus from active window"
 test_case "T8.MASTER.12" "AC12: Multiple toasts stack vertically (max 3 visible)"
-test_case "T8.MASTER.13" "AC13: ctos-shell-msg toggleEventLog works via IPC"
+test_case "T8.MASTER.13" "AC13: ctos-shell-msg toggleCommandCenter works via IPC"
 
 MASTER_HARNESS="${HARNESS_DIR}/test_t8_acceptance_all.qml"
 if [[ -f "${MASTER_HARNESS}" ]]; then
@@ -66,9 +66,9 @@ else
     CURRENT_TEST_REASON="test_t8_notification_service.sh failed"
 fi
 
-test_case "T8.SUITE.02" "Feature Suite: EventLog Overlay Surface (test_t8_event_log.sh)"
+test_case "T8.SUITE.02" "Feature Suite: CommandCenter Overlay Surface (test_t8_event_log.sh)"
 if bash "${SCRIPT_DIR}/tier1_features/test_t8_event_log.sh" >/dev/null 2>&1; then
-    echo "  EventLog feature suite passed."
+    echo "  CommandCenter feature suite passed."
 else
     CURRENT_TEST_FAILED=1
     CURRENT_TEST_REASON="test_t8_event_log.sh failed"

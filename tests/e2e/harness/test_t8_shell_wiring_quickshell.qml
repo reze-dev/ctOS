@@ -7,13 +7,13 @@ import desktop.surfaces
 Scope {
     id: root
 
-    // Test EventLog surface component
+    // Test CommandCenter surface component
     Item {
         id: eventLogContainer
         width: 360
         height: 800
 
-        EventLog {
+        CommandCenter {
             id: eventLogSurface
             anchors.fill: parent
         }
@@ -47,47 +47,47 @@ Scope {
                 }
                 NotificationService.clearAll();
 
-                // 2. Verify EventLog component instantiated
+                // 2. Verify CommandCenter component instantiated
                 if (!eventLogSurface) {
-                    console.error("ASSERTION_FAILED: EventLog component failed to instantiate");
+                    console.error("ASSERTION_FAILED: CommandCenter component failed to instantiate");
                     Qt.quit();
                     return;
                 }
                 if (eventLogSurface.width !== 360 || eventLogSurface.implicitWidth !== 360) {
-                    console.error("ASSERTION_FAILED: EventLog surface width should be 360, got " + eventLogSurface.width);
+                    console.error("ASSERTION_FAILED: CommandCenter surface width should be 360, got " + eventLogSurface.width);
                     Qt.quit();
                     return;
                 }
 
-                // 3. Verify IPC toggleEventLog method contract on OverlayController
-                if (typeof OverlayController.toggleEventLog !== "function") {
-                    console.error("ASSERTION_FAILED: OverlayController.toggleEventLog is not a function");
+                // 3. Verify IPC toggleCommandCenter method contract on OverlayController
+                if (typeof OverlayController.toggleCommandCenter !== "function") {
+                    console.error("ASSERTION_FAILED: OverlayController.toggleCommandCenter is not a function");
                     Qt.quit();
                     return;
                 }
 
-                // Toggle EventLog open
-                OverlayController.toggleEventLog();
-                if (OverlayController.activeSurface !== OverlayController.Surface.EventLog) {
-                    console.error("ASSERTION_FAILED: activeSurface after toggleEventLog should be EventLog (3), got " + OverlayController.activeSurface);
+                // Toggle CommandCenter open
+                OverlayController.toggleCommandCenter();
+                if (OverlayController.activeSurface !== OverlayController.Surface.CommandCenter) {
+                    console.error("ASSERTION_FAILED: activeSurface after toggleCommandCenter should be CommandCenter (3), got " + OverlayController.activeSurface);
                     Qt.quit();
                     return;
                 }
                 if (!OverlayController.isOverlayActive) {
-                    console.error("ASSERTION_FAILED: isOverlayActive should be true when EventLog is open");
+                    console.error("ASSERTION_FAILED: isOverlayActive should be true when CommandCenter is open");
                     Qt.quit();
                     return;
                 }
 
-                // Toggle EventLog closed
-                OverlayController.toggleEventLog();
+                // Toggle CommandCenter closed
+                OverlayController.toggleCommandCenter();
                 if (OverlayController.activeSurface !== OverlayController.Surface.None) {
-                    console.error("ASSERTION_FAILED: activeSurface after second toggleEventLog should be None (0), got " + OverlayController.activeSurface);
+                    console.error("ASSERTION_FAILED: activeSurface after second toggleCommandCenter should be None (0), got " + OverlayController.activeSurface);
                     Qt.quit();
                     return;
                 }
                 if (OverlayController.isOverlayActive) {
-                    console.error("ASSERTION_FAILED: isOverlayActive should be false when EventLog is closed");
+                    console.error("ASSERTION_FAILED: isOverlayActive should be false when CommandCenter is closed");
                     Qt.quit();
                     return;
                 }

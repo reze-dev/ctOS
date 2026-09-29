@@ -18,7 +18,7 @@ Scope {
         Loader {
             id: railLoader
             anchors.fill: parent
-            source: "file:///home/reze/Projects/ctOS/shell/desktop/surfaces/SystemRail.qml"
+            source: "file:///home/reze/Projects/ctOS/shell/desktop/surfaces/CommandCenter.qml"
         }
     }
 
@@ -75,15 +75,15 @@ Scope {
                 typeof NetworkService._evaluateNetworkState === "function",
                 "typeof=" + typeof NetworkService._evaluateNetworkState);
 
-            // 2. SystemRail Instantiation
+            // 2. CommandCenter Instantiation
             const railSurface = railLoader.item;
-            assertCondition("M4.RUN.08", "SystemRail surface instantiated successfully",
+            assertCondition("M4.RUN.08", "CommandCenter surface instantiated successfully",
                 railSurface !== null && railSurface !== undefined,
                 "status=" + railLoader.status);
 
             if (railSurface) {
                 railSurface.navigateToWifi();
-                assertCondition("M4.RUN.09", "SystemRail routes to wifi submenu",
+                assertCondition("M4.RUN.09", "CommandCenter routes to wifi submenu",
                     railSurface.currentView === "wifi",
                     "currentView=" + railSurface.currentView);
             }

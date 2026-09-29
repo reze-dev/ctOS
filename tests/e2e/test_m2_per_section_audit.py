@@ -16,10 +16,10 @@ Audits:
      - centerSection (DynamicIsland)
      - networkSection (isHovered, openWifiSubmenu)
      - volumeSection (isHovered, toggleMute, stepVolume)
-     - batterySection (isHovered, visible bound, toggleSystemRail)
+     - batterySection (isHovered, visible bound, toggleCommandCenter)
      - bluetoothSection (slot ready for M3 between battery and clock)
      - clockSection (toggleCalendar)
-     - railSection (34x34, "=", toggleSystemRail)
+     - railSection (34x34, "=", toggleCommandCenter)
 4. Full hover handling and MouseAreas on each container.
 5. All text uses Theme.fontFamilyMonospace and all colors use Theme tokens.
 """
@@ -188,9 +188,9 @@ if os.path.isfile(ambient_bar_path):
           bool(re.search(r'visible\s*:\s*batteryWidget\.visible', bar_content)),
           "batterySection visible bound")
 
-    check("BAR.SEC.BAT.02", "batterySection click toggles SystemRail",
-          bool(re.search(r'OverlayController\.toggleSystemRail\(\)', bar_content)),
-          "OverlayController.toggleSystemRail() called")
+    check("BAR.SEC.BAT.02", "batterySection click toggles CommandCenter",
+          bool(re.search(r'OverlayController\.toggleCommandCenter\(\)', bar_content)),
+          "OverlayController.toggleCommandCenter() called")
 
     # Section 7: Bluetooth Section (Placeholder for M3)
     check("BAR.SEC.BT.01", "bluetoothSection slot positioned between battery and clock",

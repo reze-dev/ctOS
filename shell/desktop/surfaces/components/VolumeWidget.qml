@@ -20,7 +20,7 @@ Item {
         return volumePercent.toString() + "%";
     }
 
-    implicitHeight: layout.implicitHeight
+    implicitHeight: 36
     implicitWidth: layout.implicitWidth
 
     RowLayout {

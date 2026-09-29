@@ -156,6 +156,7 @@ Rectangle {
 
     property real targetH: Theme.barHeight - 6
 
+    // Fallback for tests: width: isExpanded ? expandedWidth : compactWidth
     width: targetW
     implicitWidth: width
     height: targetH

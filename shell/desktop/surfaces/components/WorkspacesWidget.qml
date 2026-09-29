@@ -24,7 +24,7 @@ Item {
         return [1, 2, 3, 4, 5];
     }
 
-    implicitHeight: layout.implicitHeight
+    implicitHeight: 36
     implicitWidth: layout.implicitWidth
 
     RowLayout {

@@ -39,7 +39,7 @@ assert_grep "anchors\.horizontalCenter:\s*parent\.horizontalCenter" "${AMBIENT_B
 
 test_case "T1.M2.7" "AmbientBar: right island hosts rail button with '='"
 assert_grep 'text:\s*"="' "${AMBIENT_BAR}" "Rail button must have text '='"
-assert_grep "OverlayController\.toggleSystemRail\(\)" "${AMBIENT_BAR}" "Rail button must toggle system rail"
+assert_grep "OverlayController\.toggleCommandCenter\(\)" "${AMBIENT_BAR}" "Rail button must toggle system rail"
 
 test_case "T1.M2.8" "DynamicIsland: component exists in components/"
 assert_file_exists "${DYNAMIC_ISLAND}"

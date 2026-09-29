@@ -9,21 +9,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 OVERLAY_CTRL="${PROJECT_ROOT}/shell/desktop/core/OverlayController.qml"
 NET_WIDGET="${PROJECT_ROOT}/shell/desktop/surfaces/components/NetworkWidget.qml"
 NET_SVC="${PROJECT_ROOT}/shell/desktop/services/NetworkService.qml"
 THEME_FILE="${PROJECT_ROOT}/shell/desktop/core/Theme.qml"
 
-test_case "T1.30.1" "System Rail State Machine: SystemRail.qml supports view routing (main / wifi)"
+test_case "T1.30.1" "System Rail State Machine: CommandCenter.qml supports view routing (main / wifi)"
 assert_file_exists "${SYSTEM_RAIL}"
 if grep -qE 'property\s+string\s+(currentView|currentSubmenu)' "${SYSTEM_RAIL}"; then
     assert_grep -E 'property\s+string\s+(currentView|currentSubmenu)' "${SYSTEM_RAIL}" \
-        "SystemRail must declare currentView or currentSubmenu state property"
+        "CommandCenter must declare currentView or currentSubmenu state property"
     assert_grep -E '"(wifi|main)"' "${SYSTEM_RAIL}" \
-        "SystemRail state machine must support 'wifi' and 'main' states"
+        "CommandCenter state machine must support 'wifi' and 'main' states"
 else
-    test_skip "Pending M2: SystemRail view state machine (currentView/currentSubmenu) pending M2"
+    test_skip "Pending M2: CommandCenter view state machine (currentView/currentSubmenu) pending M2"
 fi
 
 test_case "T1.30.2" "Main View Wi-Fi Decoupling: Clicking Wi-Fi section routes to Submenu without toggling radio"
@@ -83,8 +83,8 @@ fi
 
 test_case "T1.30.7" "Ambient Bar Integration: NetworkWidget click routes directly to Wi-Fi Submenu"
 assert_file_exists "${NET_WIDGET}"
-if grep -qE 'OverlayController\.(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}"; then
-    assert_grep -E 'OverlayController\.(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}" \
+if grep -qE 'OverlayController\.(openWifiSubmenu|openCommandCenterWithSubmenu)' "${NET_WIDGET}"; then
+    assert_grep -E 'OverlayController\.(openWifiSubmenu|openCommandCenterWithSubmenu)' "${NET_WIDGET}" \
         "NetworkWidget must call OverlayController to open Wi-Fi submenu directly"
 else
     test_skip "Pending M2: NetworkWidget openWifiSubmenu call pending M2"
@@ -92,9 +92,9 @@ fi
 
 test_case "T1.30.8" "Overlay Controller: Declares Wi-Fi submenu deep-linking API"
 assert_file_exists "${OVERLAY_CTRL}"
-if grep -qE '(openWifiSubmenu|openSystemRailWithSubmenu)' "${OVERLAY_CTRL}"; then
-    assert_grep -E 'function\s+(openWifiSubmenu|openSystemRailWithSubmenu)' "${OVERLAY_CTRL}" \
-        "OverlayController must declare openWifiSubmenu or openSystemRailWithSubmenu"
+if grep -qE '(openWifiSubmenu|openCommandCenterWithSubmenu)' "${OVERLAY_CTRL}"; then
+    assert_grep -E 'function\s+(openWifiSubmenu|openCommandCenterWithSubmenu)' "${OVERLAY_CTRL}" \
+        "OverlayController must declare openWifiSubmenu or openCommandCenterWithSubmenu"
     assert_grep -E 'property\s+string\s+(pendingRailView|pendingRailSubmenu)' "${OVERLAY_CTRL}" \
         "OverlayController must declare pendingRailView or pendingRailSubmenu property"
 else

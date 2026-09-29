@@ -16,16 +16,16 @@ test_case "T1.25.1" "AmbientBar Sync: AmbientBar.qml exists and contains '=' rai
 assert_file_exists "${AMBIENT_BAR}"
 assert_grep 'text:\s*"="' "${AMBIENT_BAR}" "AmbientBar must contain text '=' for railBtn"
 
-test_case "T1.25.2" "AmbientBar Sync: Clicking '=' calls OverlayController.toggleSystemRail()"
-assert_grep "OverlayController\.toggleSystemRail" "${AMBIENT_BAR}" "railBtn must invoke toggleSystemRail()"
+test_case "T1.25.2" "AmbientBar Sync: Clicking '=' calls OverlayController.toggleCommandCenter()"
+assert_grep "OverlayController\.toggleCommandCenter" "${AMBIENT_BAR}" "railBtn must invoke toggleCommandCenter()"
 
-test_case "T1.25.3" "AmbientBar Sync: OverlayController declares toggleSystemRail() method"
+test_case "T1.25.3" "AmbientBar Sync: OverlayController declares toggleCommandCenter() method"
 assert_file_exists "${OVERLAY_CTRL}"
-check_qml_method "${OVERLAY_CTRL}" "toggleSystemRail" || assert_grep "toggleSystemRail" "${OVERLAY_CTRL}" "toggleSystemRail method required"
+check_qml_method "${OVERLAY_CTRL}" "toggleCommandCenter" || assert_grep "toggleCommandCenter" "${OVERLAY_CTRL}" "toggleCommandCenter method required"
 
 test_case "T1.25.4" "AmbientBar Sync: Active state syncs with OverlayController.activeSurface"
 if grep -q "isRailOpen" "${AMBIENT_BAR}"; then
-    assert_grep -E "(activeSurface\s*===.*SystemRail|isRailOpen)" "${AMBIENT_BAR}" "railBtn must bind visual state to SystemRail surface"
+    assert_grep -E "(activeSurface\s*===.*CommandCenter|isRailOpen)" "${AMBIENT_BAR}" "railBtn must bind visual state to CommandCenter surface"
 else
     test_skip "Pending M2: railBtn reactive color sync pending M2"
 fi

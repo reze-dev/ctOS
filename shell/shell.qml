@@ -107,17 +107,15 @@ Scope {
             OverlayController.toggleCommandDeck();
         }
 
-        function toggleSystemRail(): void {
-            OverlayController.toggle(OverlayController.Surface.SystemRail);
+        function toggleCommandCenter(): void {
+            OverlayController.toggleCommandCenter();
         }
 
         function closeOverlay(): void {
             OverlayController.close();
         }
 
-        function toggleEventLog(): void {
-            OverlayController.toggleEventLog();
-        }
+        
 
         function toggleCalendar(): void {
             root.toggleCalendar(null);
@@ -605,18 +603,6 @@ Scope {
                 source: "desktop/surfaces/CommandDeck.qml"
             }
 
-            Loader {
-                id: systemRailLoader
-
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.top: parent.top
-                asynchronous: false
-                active: true
-                visible: OverlayController.activeSurface === OverlayController.Surface.SystemRail
-                source: "desktop/surfaces/SystemRail.qml"
-            }
-
             // EventLog moved to DynamicIsland
 
 
@@ -659,34 +645,6 @@ Scope {
             id: toastStack
             width: 340
             anchors.horizontalCenter: parent.horizontalCenter
-        }
-    }
-    PanelWindow {
-        id: eventLogPopupHost
-
-        screen: overlayHost.screen
-        color: "transparent"
-        visible: OverlayController.activeSurface === OverlayController.Surface.EventLog && overlayHost.screen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        WlrLayershell.namespace: "ctos-eventlog-popup"
-
-        anchors {
-            top: true
-        }
-        margins {
-            top: 3
-        }
-
-        implicitWidth: 360
-        implicitHeight: 508
-
-        EventLog {
-            id: eventLogPopup
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
         }
     }
 

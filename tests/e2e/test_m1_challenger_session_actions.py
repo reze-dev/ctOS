@@ -22,7 +22,7 @@ import subprocess
 import shutil
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-SYSTEM_RAIL_PATH = os.path.join(PROJECT_ROOT, "shell/desktop/surfaces/SystemRail.qml")
+SYSTEM_RAIL_PATH = os.path.join(PROJECT_ROOT, "shell/desktop/surfaces/CommandCenter.qml")
 HARNESS_PATH = os.path.join(PROJECT_ROOT, "tests/e2e/harness/test_m1_session_actions_challenger.qml")
 
 # Locate quickshell binary
@@ -60,11 +60,11 @@ def test_static_ast():
     with open(SYSTEM_RAIL_PATH, "r", encoding="utf-8") as f:
         content = f.read()
 
-    record("STAT.01", "import Quickshell.Io" in content, "SystemRail imports Quickshell.Io")
-    record("STAT.02", "id: lockProcess" in content, "SystemRail declares lockProcess")
-    record("STAT.03", "id: logoutProcess" in content, "SystemRail declares logoutProcess")
-    record("STAT.04", "id: rebootProcess" in content, "SystemRail declares rebootProcess")
-    record("STAT.05", "id: poweroffProcess" in content, "SystemRail declares poweroffProcess")
+    record("STAT.01", "import Quickshell.Io" in content, "CommandCenter imports Quickshell.Io")
+    record("STAT.02", "id: lockProcess" in content, "CommandCenter declares lockProcess")
+    record("STAT.03", "id: logoutProcess" in content, "CommandCenter declares logoutProcess")
+    record("STAT.04", "id: rebootProcess" in content, "CommandCenter declares rebootProcess")
+    record("STAT.05", "id: poweroffProcess" in content, "CommandCenter declares poweroffProcess")
 
     # Invariant: Zero running: true literal declarations
     import re
