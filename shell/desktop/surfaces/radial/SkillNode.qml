@@ -46,8 +46,8 @@ Item {
             pulseAnim.restart();
         } else {
             pulseAnim.stop();
-            pulseRing.scale = 1.0;
-            pulseRing.opacity = 0.0;
+            outerRing.scale = 1.0;
+            outerRing.opacity = 0.0;
         }
     }
 
@@ -70,7 +70,7 @@ Item {
             running: root.shouldPulse
             loops: Animation.Infinite
             NumberAnimation {
-                target: pulseRing
+                target: outerRing
                 property: "scale"
                 from: 1.0
                 to: 1.8
@@ -78,7 +78,7 @@ Item {
                 easing.type: Easing.OutCubic
             }
             NumberAnimation {
-                target: pulseRing
+                target: outerRing
                 property: "opacity"
                 from: 0.8
                 to: 0.0
