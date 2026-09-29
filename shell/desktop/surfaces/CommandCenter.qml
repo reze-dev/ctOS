@@ -2137,7 +2137,6 @@ FocusScope {
                 }
             }
         }
-    }
                             ColumnLayout {
         id: confirmationLayout
         anchors.fill: parent
@@ -2293,5 +2292,6 @@ FocusScope {
                     }
                 }
             }
+    }
     }
 }
