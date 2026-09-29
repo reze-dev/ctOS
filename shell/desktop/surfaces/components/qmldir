@@ -10,4 +10,4 @@ CalendarPopup 1.0 CalendarPopup.qml
 BluetoothWidget 1.0 BluetoothWidget.qml
 BluetoothPopup 1.0 BluetoothPopup.qml
 NetworkPopup 1.0 NetworkPopup.qml
-
+AccordionSection 1.0 AccordionSection.qml

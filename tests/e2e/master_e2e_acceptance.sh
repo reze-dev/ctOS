@@ -145,9 +145,9 @@ test_case "R6.4" "DynamicIsland: Auto-collapses after 4000ms timer interval"
 assert_grep 'interval: 4000' "${DYNAMIC_ISLAND}"
 assert_grep 'root\.isExpanded = false' "${DYNAMIC_ISLAND}"
 
-test_case "R6.5" "DynamicIsland: Click routes to Event Log overlay"
-assert_grep 'OverlayController\.(toggleEventLog|openEventLog)' "${DYNAMIC_ISLAND}" \
-    "DynamicIsland click must open or toggle Event Log"
+test_case "R6.5" "DynamicIsland: Click routes to Command Center overlay"
+assert_grep 'OverlayController\.(toggleCommandCenter|openCommandCenter)' "${DYNAMIC_ISLAND}" \
+    "DynamicIsland click must open or toggle Command Center"
 
 test_case "R6.6" "AmbientBar: Hosts DynamicIsland in center section"
 assert_grep 'DynamicIsland' "${AMBIENT_BAR}" \

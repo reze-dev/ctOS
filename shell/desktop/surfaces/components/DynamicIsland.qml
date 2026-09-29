@@ -29,7 +29,7 @@ Rectangle {
     property string latestAppName: ""
     property string latestSummary: ""
     property int latestUrgency: 1
-    readonly property bool isEventLogOpen: OverlayController.activeSurface === OverlayController.Surface.EventLog
+    readonly property bool isCommandCenterOpen: OverlayController.activeSurface === OverlayController.Surface.CommandCenter
 
     // =========================================================================
     // MPRIS Active Player Tracking & Equalizer State
@@ -167,8 +167,8 @@ Rectangle {
     border.width: Theme.borderWidth
     clip: true
 
-    // Approach A: When EventLog overlay is active, set opacity to 0
-    opacity: root.isEventLogOpen ? 0.0 : 1.0
+    // Approach A: When CommandCenter overlay is active, set opacity to 0
+    opacity: root.isCommandCenterOpen ? 0.0 : 1.0
 
     Behavior on opacity {
         NumberAnimation {
@@ -445,13 +445,13 @@ Rectangle {
             if (mouse.button === Qt.RightButton) {
                 NotificationService.toggleDnd();
             } else {
-                if (root.isEventLogOpen) {
+                if (root.isCommandCenterOpen) {
                     OverlayController.close();
                 } else {
                     collapseTimer.stop();
                     root.isExpanded = false;
                     root.state = root.hasMedia ? "media" : "compact";
-                    OverlayController.openEventLog();
+                    OverlayController.openCommandCenter();
                 }
             }
         }

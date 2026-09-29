@@ -691,6 +691,35 @@ Scope {
     }
 
     PanelWindow {
+        id: commandCenterPopupHost
+
+        screen: overlayHost.screen
+        color: "transparent"
+        visible: OverlayController.activeSurface === OverlayController.Surface.CommandCenter && overlayHost.screen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        WlrLayershell.namespace: "ctos-commandcenter-popup"
+
+        anchors {
+            top: true
+        }
+        margins {
+            top: 3
+        }
+
+        implicitWidth: commandCenterPopup.implicitWidth
+        implicitHeight: commandCenterPopup.implicitHeight
+
+        CommandCenter {
+            id: commandCenterPopup
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+        }
+    }
+
+    PanelWindow {
         id: calendarBackdropHost
 
         screen: root.calendarScreen
