@@ -337,6 +337,7 @@ FocusScope {
         surfaceHeight: root.height
         activeNodes: skillTree.activeNodes
         categoryCount: settingsModel.categoryCount
+        innerDeadZone: wheelMenu.innerRadius
 
         onCategoryChanged: function(idx) {
             root.focusedCategoryIndex = idx;
@@ -394,7 +395,7 @@ FocusScope {
                     root.focusedCategoryIndex = clickedCat;
                 }
             } else {
-                if (distFromCenter < 170) {
+                if (distFromCenter < wheelMenu.innerRadius) {
                     // Clicked center hub -> expand
                     root.isExpanded = true;
                 } else if (distFromCenter > 280) {
