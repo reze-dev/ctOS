@@ -142,27 +142,23 @@ Rectangle {
 
     // Centralized layout function per dynamic-radial-geometry skill:
     // Synchronously compute width/height based on state to avoid desync.
-    function _computeLayout(): var {
+    property real targetW: {
         const isExp = root.isExpanded || root.state === "notification";
-        let targetW = root.compactWidth;
         if (isExp) {
-            targetW = root.expandedWidth;
+            return root.expandedWidth;
         } else if (root.hasMedia) {
-            targetW = root.mediaWidth;
+            return root.mediaWidth;
         } else if (mouseArea.containsMouse) {
-            targetW = root.compactWidth + 12;
+            return root.compactWidth + 12;
         }
-        return {
-            w: targetW,
-            h: Theme.barHeight - 6
-        };
+        return root.compactWidth;
     }
 
-    property var _layout: _computeLayout()
+    property real targetH: Theme.barHeight - 6
 
-    width: _layout.w
+    width: targetW
     implicitWidth: width
-    height: _layout.h
+    height: targetH
     implicitHeight: height
 
     color: Theme.background
