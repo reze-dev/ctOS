@@ -286,7 +286,7 @@ FocusScope {
             return "notifications"; // Default open
         }
 
-        ColumnLayout {
+        Column {
             id: mainLayout
             anchors.left: parent.left
             anchors.right: parent.right
@@ -303,9 +303,70 @@ FocusScope {
                 }
             }
 
+            // Calendar Accordion
+            AccordionSection {
+                width: parent.width
+                isExpanded: panelContainer.expandedAccordion === "calendar"
+                headerComponent: Component {
+                    Rectangle {
+                        width: parent ? parent.width : 0
+                        height: 64
+                        color: panelContainer.expandedAccordion === "calendar" ? Theme.surfaceSelected : Theme.gray800
+                        border.color: panelContainer.expandedAccordion === "calendar" ? Theme.acidGreen : (headerCalMouse.containsMouse ? Theme.accent : Theme.gray700)
+                        border.width: Theme.borderWidth
+                        radius: Theme.radiusSmall
+
+                        MouseArea {
+                            id: headerCalMouse
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: panelContainer.expandedAccordion = "calendar"
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: Theme.paddingMedium
+                            spacing: Theme.spacingMedium
+
+                            Rectangle {
+                                Layout.preferredWidth: 8
+                                Layout.preferredHeight: 8
+                                radius: 4
+                                color: panelContainer.expandedAccordion === "calendar" ? Theme.acidGreen : Theme.gray600
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Text {
+                                    text: "SYSTEM CALENDAR"
+                                    color: panelContainer.expandedAccordion === "calendar" ? Theme.acidGreen : Theme.textPrimary
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    font.weight: Theme.fontWeightBold
+                                }
+                            }
+                        }
+                    }
+                }
+                contentComponent: Component {
+                    Item {
+                        width: parent ? parent.width : 0
+                        height: calPopup.implicitHeight
+                        CalendarPopup {
+                            id: calPopup
+                            anchors.centerIn: parent
+                            width: parent ? parent.width : 300
+                        }
+                    }
+                }
+            }
+
             // Notifications Accordion
             AccordionSection {
-                Layout.fillWidth: true
+                width: parent.width
                 isExpanded: panelContainer.expandedAccordion === "notifications"
                 headerComponent: Component {
                                     Rectangle {
@@ -609,9 +670,17 @@ FocusScope {
                         width: parent ? parent.width : 0
                         height: 64
                     color: NetworkService.wifiEnabled ? Theme.surfaceSelected : Theme.gray800
-                    border.color: NetworkService.wifiEnabled ? Theme.acidGreen : (swWifiMouse.containsMouse ? Theme.accent : Theme.gray700)
+                    border.color: NetworkService.wifiEnabled ? Theme.acidGreen : (headerWifiMouse.containsMouse ? Theme.accent : Theme.gray700)
                     border.width: Theme.borderWidth
                     radius: Theme.radiusSmall
+
+                    MouseArea {
+                        id: headerWifiMouse
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: panelContainer.expandedAccordion = "wifi"
+                    }
 
                     RowLayout {
                         anchors.fill: parent
@@ -1285,16 +1354,24 @@ FocusScope {
 
             // Bluetooth Accordion
             AccordionSection {
-                Layout.fillWidth: true
+                width: parent.width
                 isExpanded: panelContainer.expandedAccordion === "bluetooth"
                 headerComponent: Component {
                     Rectangle {
                         width: parent ? parent.width : 0
                         height: 64
                     color: BluetoothService.powered ? Theme.surfaceSelected : Theme.gray800
-                    border.color: BluetoothService.powered ? Theme.acidGreen : (swBtMouse.containsMouse ? Theme.accent : Theme.gray700)
+                    border.color: BluetoothService.powered ? Theme.acidGreen : (headerBluetoothMouse.containsMouse ? Theme.accent : Theme.gray700)
                     border.width: Theme.borderWidth
                     radius: Theme.radiusSmall
+
+                    MouseArea {
+                        id: headerBluetoothMouse
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: panelContainer.expandedAccordion = "bluetooth"
+                    }
 
                     RowLayout {
                         anchors.fill: parent
@@ -1384,16 +1461,24 @@ FocusScope {
 
             // Audio Accordion
             AccordionSection {
-                Layout.fillWidth: true
+                width: parent.width
                 isExpanded: panelContainer.expandedAccordion === "audio"
                 headerComponent: Component {
                     Rectangle {
                         width: parent ? parent.width : 0
                         height: 64
                     color: !AudioService.muted ? Theme.surfaceSelected : Theme.gray800
-                    border.color: !AudioService.muted ? Theme.acidGreen : (swAudioMouse.containsMouse ? Theme.accent : Theme.gray700)
+                    border.color: !AudioService.muted ? Theme.acidGreen : (headerAudioMouse.containsMouse ? Theme.accent : Theme.gray700)
                     border.width: Theme.borderWidth
                     radius: Theme.radiusSmall
+
+                    MouseArea {
+                        id: headerAudioMouse
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: panelContainer.expandedAccordion = "audio"
+                    }
 
                     RowLayout {
                         anchors.fill: parent
@@ -1878,17 +1963,25 @@ FocusScope {
 
             // Power Accordion
             AccordionSection {
-                Layout.fillWidth: true
+                width: parent.width
                 isExpanded: panelContainer.expandedAccordion === "power"
                 headerComponent: Component {
                     Rectangle {
                         width: parent ? parent.width : 0
                         height: 64
                         color: Theme.gray800
-                        border.color: PowerService.percentage < 20 ? Theme.warningRed : Theme.gray700
+                        border.color: PowerService.percentage < 20 ? Theme.warningRed : (headerPowerMouse.containsMouse ? Theme.accent : Theme.gray700)
                         border.width: Theme.borderWidth
                         radius: Theme.radiusSmall
                         
+                        MouseArea {
+                            id: headerPowerMouse
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: panelContainer.expandedAccordion = "power"
+                        }
+
                         RowLayout {
                             anchors.fill: parent
                             anchors.margins: Theme.paddingMedium
@@ -2255,8 +2348,8 @@ FocusScope {
 
             // Floating Radial Settings Node Access
             Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 38
+                width: parent.width
+                height: 38
                 color: radialMouse.containsMouse ? Theme.surfaceHover : Theme.surface
                 border.color: radialMouse.containsMouse ? Theme.accent : Theme.borderMuted
                 border.width: Theme.borderWidth
