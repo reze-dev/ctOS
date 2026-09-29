@@ -30,9 +30,10 @@ Rectangle {
     // Consume all clicks inside popup so backdrop does not dismiss
     MouseArea {
         anchors.fill: parent
+        z: -1
         hoverEnabled: true
         preventStealing: true
-        onClicked: mouse => mouse.accepted = true
+        onClicked: { mouse.accepted = true }
     }
 
     // Cyberpunk Corner Brackets
@@ -260,7 +261,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
 
-                    onClicked: root.closeRequested()
+                    onClicked: { console.log("CLOSE BUTTON CLICKED"); root.closeRequested(); }
                 }
             }
         }
