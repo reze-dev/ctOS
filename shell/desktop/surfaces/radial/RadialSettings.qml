@@ -151,20 +151,30 @@ FocusScope {
         onPaint: {
             var ctx = getContext("2d");
             ctx.clearRect(0, 0, width, height);
+
+            var step = 48;
+            ctx.fillStyle = Qt.rgba(0, 0, 0, 0.15);
+            for (var y = 0; y < height; y += step) {
+                for (var x = 0; x < width; x += step) {
+                    if (((x / step) + (y / step)) % 2 === 0) {
+                        ctx.fillRect(x, y, step, step);
+                    }
+                }
+            }
+
             ctx.strokeStyle = Theme.gray700;
             ctx.lineWidth = 0.5;
 
-            var step = 48;
-            for (var x = step; x < width; x += step) {
+            for (var x2 = step; x2 < width; x2 += step) {
                 ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
+                ctx.moveTo(x2, 0);
+                ctx.lineTo(x2, height);
                 ctx.stroke();
             }
-            for (var y = step; y < height; y += step) {
+            for (var y2 = step; y2 < height; y2 += step) {
                 ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
+                ctx.moveTo(0, y2);
+                ctx.lineTo(width, y2);
                 ctx.stroke();
             }
         }
