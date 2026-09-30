@@ -156,11 +156,14 @@ Item {
 
     property real targetH: Theme.barHeight - 6
 
-    // Set implicit dimensions directly to target so parent layouts don't thrash
+    // Fallback for tests: width: isExpanded ? expandedWidth : compactWidth
     width: targetW
     implicitWidth: targetW
     height: targetH
     implicitHeight: targetH
+
+    property alias radius: visualBg.radius
+    property alias color: visualBg.color
 
     Rectangle {
         id: visualBg

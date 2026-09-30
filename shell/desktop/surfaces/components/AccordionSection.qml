@@ -28,7 +28,7 @@ Item {
     implicitWidth: parent ? parent.width : undefined
     readonly property real _contentTargetHeight: contentLoader.item ? (contentLoader.item.implicitHeight > 0 ? contentLoader.item.implicitHeight : (contentLoader.item.height > 0 ? contentLoader.item.height : 0)) : 0
 
-    implicitHeight: headerLoader.height + (root.isExpanded ? _contentTargetHeight : 0)
+    implicitHeight: headerLoader.height + (root.isExpanded ? _contentTargetHeight + Theme.spacingMedium : 0)
 
     Loader {
         id: headerLoader
@@ -41,9 +41,17 @@ Item {
         id: contentContainer
         width: parent ? parent.width : undefined
         anchors.top: headerLoader.bottom
+        anchors.topMargin: root.isExpanded ? Theme.spacingMedium : 0
         clip: true
         height: root.isExpanded ? _contentTargetHeight : 0
         visible: height > 0 || root.isExpanded
+
+        Behavior on anchors.topMargin {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
+        }
 
         Behavior on height {
             NumberAnimation {
