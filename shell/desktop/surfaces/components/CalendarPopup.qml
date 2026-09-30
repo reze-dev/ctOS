@@ -40,6 +40,7 @@ Rectangle {
     CornerBrackets {
         id: cornerBrackets
         bracketColor: Theme.acidGreen
+        enabled: false
         z: 10
     }
 
@@ -261,7 +262,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
 
-                    onClicked: { console.log("CLOSE BUTTON CLICKED"); root.closeRequested(); }
+                    onClicked: root.closeRequested()
                 }
             }
         }
