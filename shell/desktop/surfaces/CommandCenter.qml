@@ -235,13 +235,20 @@ FocusScope {
         transitions: [
             Transition {
                 from: "closed"; to: "open"
-                NumberAnimation { properties: "width,height"; duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.InOutQuad }
+                NumberAnimation { properties: "width"; duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.InOutQuad }
             },
             Transition {
                 from: "open"; to: "closed"
-                NumberAnimation { properties: "width,height"; duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.InOutQuad }
+                NumberAnimation { properties: "width"; duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.InOutQuad }
             }
         ]
+
+        Behavior on height {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
+        }
 
         Behavior on radius {
             NumberAnimation {
@@ -438,6 +445,14 @@ FocusScope {
 
             Behavior on opacity {
                 NumberAnimation {
+                    duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                    easing.type: Easing.InOutQuad
+                }
+            }
+
+            move: Transition {
+                NumberAnimation {
+                    properties: "y"
                     duration: Settings.reducedMotion ? 0 : Theme.durationSlow
                     easing.type: Easing.InOutQuad
                 }
@@ -756,12 +771,12 @@ FocusScope {
                 }
             }
 
-            // 3. Wi-Fi Accordion
+            // 3. Network/Wi-Fi Accordion
             AccordionSection {
                 id: secWifi
                 width: parent ? parent.width : undefined
-                title: "// WI-FI"
-                icon: "wifi"
+                title: NetworkService.isEthernet ? "// NETWORK (ETHERNET)" : "// WI-FI"
+                icon: NetworkService.isEthernet ? "globe" : "wifi"
                 autoToggle: false
                 isExpanded: panelContainer.activeAccordion === "wifi"
                 onHeaderClicked: panelContainer.toggleAccordion("wifi")
@@ -776,31 +791,75 @@ FocusScope {
                         ColumnLayout {
                             anchors.fill: parent
 
-                                // Status Subheader
-        RowLayout {
-            Layout.fillWidth: true
+                            // Status Subheader
+                            RowLayout {
+                                Layout.fillWidth: true
 
-            Text {
-                Layout.fillWidth: true
-                color: Theme.textSecondary
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                font.weight: Theme.fontWeightBold
-                text: NetworkService.wifiEnabled ? "// AVAILABLE NETWORKS" : "// WI-FI ADAPTER OFF"
-            }
+                                Text {
+                                    Layout.fillWidth: true
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.weight: Theme.fontWeightBold
+                                    text: NetworkService.isEthernet ? "// WIRED CONNECTION ACTIVE" : (NetworkService.wifiEnabled ? "// AVAILABLE NETWORKS" : "// WI-FI ADAPTER OFF")
+                                }
 
-            Text {
-                color: NetworkService.isConnecting ? Theme.accent : Theme.textSecondary
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                font.weight: NetworkService.isConnecting ? Theme.fontWeightBold : Theme.fontWeightNormal
-                text: {
-                    if (!NetworkService.wifiEnabled) return "STANDBY";
-                    if (NetworkService.isConnecting) return "CONNECTING...";
-                    return NetworkService.availableNetworks ? NetworkService.availableNetworks.length + " FOUND" : "SCANNING...";
-                }
-            }
-        }
+                                Text {
+                                    color: NetworkService.isConnecting ? Theme.accent : Theme.textSecondary
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.weight: NetworkService.isConnecting ? Theme.fontWeightBold : Theme.fontWeightNormal
+                                    text: {
+                                        if (NetworkService.isEthernet) return "CONNECTED";
+                                        if (!NetworkService.wifiEnabled) return "STANDBY";
+                                        if (NetworkService.isConnecting) return "CONNECTING...";
+                                        return NetworkService.availableNetworks ? NetworkService.availableNetworks.length + " FOUND" : "SCANNING...";
+                                    }
+                                }
+                            }
+
+                            // Ethernet Active Connection Box
+                            Rectangle {
+                                id: ethernetActiveBox
+                                visible: NetworkService.isEthernet
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 36
+                                border.color: Theme.acidGreen
+                                border.width: Theme.borderWidth
+                                color: Theme.surfaceSelected
+                                radius: Theme.radiusSmall
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: Theme.paddingSmall
+                                    spacing: Theme.spacingSmall
+
+                                    CtosIcon {
+                                        active: true
+                                        name: "globe"
+                                        size: 14
+                                        color: Theme.acidGreen
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        color: Theme.acidGreen
+                                        elide: Text.ElideRight
+                                        font.family: Theme.fontFamilyMonospace
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        font.weight: Theme.fontWeightBold
+                                        text: NetworkService.networkName !== "--N/A--" && NetworkService.networkName !== "" ? NetworkService.networkName.toUpperCase() : "ETHERNET"
+                                    }
+
+                                    Text {
+                                        color: Theme.acidGreen
+                                        font.family: Theme.fontFamilyMonospace
+                                        font.pixelSize: Theme.fontSizeCaption
+                                        font.weight: Theme.fontWeightBold
+                                        text: "[CONNECTED]"
+                                    }
+                                }
+                            }
 
         // Active Connection Status Banner (Tier 2 Dedicated Banner)
         Rectangle {
@@ -892,7 +951,9 @@ FocusScope {
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeSmall
                 horizontalAlignment: Text.AlignHCenter
-                text: !NetworkService.wifiEnabled ? "WI-FI IS DISABLED\nUSE [ENABLE WI-FI] ABOVE" : "SCANNING NETWORKS..."
+                text: NetworkService.isEthernet 
+                      ? "// ETHERNET CONNECTED\n" + (!NetworkService.wifiEnabled ? "WI-FI IS DISABLED" : "NO WI-FI NETWORKS FOUND")
+                      : (!NetworkService.wifiEnabled ? "WI-FI IS DISABLED\nUSE [ENABLE WI-FI] ABOVE" : "SCANNING NETWORKS...")
             }
 
             ListView {

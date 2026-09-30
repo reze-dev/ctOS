@@ -11,6 +11,7 @@ Item {
     property string icon: ""
     property bool isExpanded: false
     property bool autoToggle: true
+    property bool animateHeight: true
     property Component contentComponent: null
     property Component headerAction: null
     property Item headerActionItem: null
@@ -24,39 +25,37 @@ Item {
 
     Layout.fillWidth: true
     width: parent ? parent.width : undefined
-    implicitWidth: mainColumn.implicitWidth
-    implicitHeight: mainColumn.implicitHeight
+    implicitWidth: parent ? parent.width : undefined
+    readonly property real _contentTargetHeight: contentLoader.item ? (contentLoader.item.implicitHeight > 0 ? contentLoader.item.implicitHeight : (contentLoader.item.height > 0 ? contentLoader.item.height : 0)) : 0
 
-    Column {
-        id: mainColumn
+    implicitHeight: headerLoader.height + (root.isExpanded ? _contentTargetHeight : 0)
+
+    Loader {
+        id: headerLoader
         width: parent ? parent.width : undefined
-        spacing: 0
+        anchors.top: parent.top
+        sourceComponent: root.headerComponent !== null ? root.headerComponent : defaultHeaderComponent
+    }
 
-        Loader {
-            id: headerLoader
-            width: parent ? parent.width : undefined
-            sourceComponent: root.headerComponent !== null ? root.headerComponent : defaultHeaderComponent
+    Item {
+        id: contentContainer
+        width: parent ? parent.width : undefined
+        anchors.top: headerLoader.bottom
+        clip: true
+        height: root.isExpanded ? _contentTargetHeight : 0
+        visible: height > 0 || root.isExpanded
+
+        Behavior on height {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
         }
 
-        Item {
-            id: contentContainer
+        Loader {
+            id: contentLoader
             width: parent ? parent.width : undefined
-            clip: true
-            height: root.isExpanded ? (contentLoader.item ? (contentLoader.item.implicitHeight > 0 ? contentLoader.item.implicitHeight : (contentLoader.item.height > 0 ? contentLoader.item.height : 0)) : 0) : 0
-            visible: height > 0 || root.isExpanded
-
-            Behavior on height {
-                NumberAnimation {
-                    duration: Settings.reducedMotion ? 0 : Theme.durationSlow
-                    easing.type: Easing.InOutQuad
-                }
-            }
-
-            Loader {
-                id: contentLoader
-                width: parent ? parent.width : undefined
-                sourceComponent: root.contentComponent
-            }
+            sourceComponent: root.contentComponent
         }
     }
 
