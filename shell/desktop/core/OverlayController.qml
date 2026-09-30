@@ -10,16 +10,18 @@ Singleton {
     enum OverlayType {
         None,
         CommandDeck,
-        RadialSettings,
-        CommandCenter
+        SystemRail,
+        CommandCenter,
+        RadialSettings
     }
 
     // Primary Overlay State Enum
     enum Surface {
         None,
         CommandDeck,
-        RadialSettings,
-        CommandCenter
+        SystemRail,
+        CommandCenter,
+        RadialSettings
     }
 
     property var _focusTargets: ({})
@@ -32,8 +34,9 @@ Singleton {
     property int activeSurface: OverlayController.Surface.None
     readonly property bool isOverlayActive: activeSurface !== OverlayController.Surface.None
     readonly property int surfaceCommandDeck: 1
-    readonly property int surfaceRadialSettings: 2
+    readonly property int surfaceSystemRail: 2
     readonly property int surfaceCommandCenter: 3
+    readonly property int surfaceRadialSettings: 4
 
     // Explicit constants for zero-ambiguity access
     readonly property int surfaceNone: 0
@@ -53,7 +56,7 @@ Singleton {
     // Internal Transition Logic
 
     function _isValidSurface(surface: int): bool {
-        if (surface < 0 || surface > OverlayController.Surface.CommandCenter) {
+        if (surface < 0 || surface > OverlayController.Surface.RadialSettings) {
             return false;
         }
         return true;

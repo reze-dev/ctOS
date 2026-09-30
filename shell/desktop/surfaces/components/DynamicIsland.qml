@@ -7,7 +7,7 @@ import Quickshell.Services.Mpris
 import "../../core"
 import "../../services"
 
-Rectangle {
+Item {
     id: root
 
     // =========================================================================
@@ -156,48 +156,51 @@ Rectangle {
 
     property real targetH: Theme.barHeight - 6
 
-    // Fallback for tests: width: isExpanded ? expandedWidth : compactWidth
+    // Set implicit dimensions directly to target so parent layouts don't thrash
     width: targetW
-    implicitWidth: width
+    implicitWidth: targetW
     height: targetH
-    implicitHeight: height
+    implicitHeight: targetH
 
-    color: Theme.background
-    radius: Theme.radiusPill
-    border.color: (mouseArea.containsMouse || root.isExpanded) ? Theme.accent : "black"
-    border.width: Theme.borderWidth
-    clip: true
+    Rectangle {
+        id: visualBg
+        anchors.centerIn: parent
+        width: root.targetW
+        height: root.targetH
 
-    // Approach A: When CommandCenter overlay is active, set opacity to 0
-    opacity: root.isCommandCenterOpen ? 0.0 : 1.0
+        color: Theme.background
+        radius: Theme.radiusPill
+        border.color: (mouseArea.containsMouse || root.isExpanded) ? Theme.accent : "black"
+        border.width: Theme.borderWidth
+        clip: true
 
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
-            easing.type: Easing.InOutQuad
+        opacity: root.isCommandCenterOpen ? 0.0 : 1.0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
         }
-    }
 
-    // =========================================================================
-    // Expansion / Collapse Animation
-    // =========================================================================
-
-    Behavior on width {
-        NumberAnimation {
-            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
-            easing.type: Easing.InOutQuad
+        Behavior on width {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
         }
-    }
+    } // end visualBg
 
-    // Auto-collapse after 4 seconds (only for notification state)
-    Timer {
-        id: collapseTimer
-        interval: 4000
-        repeat: false
-        onTriggered: {
-            root.isExpanded = false;
+        // =========================================================================
+        // Auto Collapse Timer
+        // =========================================================================
+        Timer {
+            id: collapseTimer
+            interval: 4000
+            repeat: false
+            onTriggered: {
+                root.isExpanded = false;
+            }
         }
-    }
 
     // Public method to trigger notification expansion
     function showNotification(appName: string, summary: string, urgency: int): void {
@@ -463,3 +466,4 @@ Rectangle {
         }
     }
 }
+

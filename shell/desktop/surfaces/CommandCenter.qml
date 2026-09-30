@@ -2470,7 +2470,7 @@ FocusScope {
                                     spacing: Theme.spacingSmall
 
                                     CtosIcon {
-                                        name: "settings"
+                                        name: "gear"
                                         size: 14
                                         color: Theme.textSecondary
                                     }
