@@ -25,13 +25,20 @@ Scope {
     property bool networkVisible: false
     property var networkScreen: null
 
+    signal calendarDismissRequested
+
+    property bool _calendarDismissing: false
+
     function toggleCalendar(targetScreen): void {
+        if (root._calendarDismissing) {
+            return;
+        }
+
         const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
 
         if (root.calendarVisible) {
             if (targetScreen === null || targetScreen === undefined || root.calendarScreen === resolved) {
-                root.calendarVisible = false;
-                root.calendarScreen = null;
+                root.closeCalendar();
             } else {
                 root.calendarScreen = resolved;
             }
@@ -44,8 +51,11 @@ Scope {
     }
 
     function closeCalendar(): void {
+        root._calendarDismissing = true;
         root.calendarVisible = false;
         root.calendarScreen = null;
+        root.calendarDismissRequested();
+        root._calendarDismissing = false;
     }
 
     function toggleBluetooth(targetScreen): void {
@@ -438,6 +448,7 @@ Scope {
 
         delegate: Component {
             AmbientBar {
+                id: ambientBar
                 required property var modelData
 
                 screen: modelData
@@ -445,6 +456,20 @@ Scope {
                 onToggleCalendar: root.toggleCalendar(modelData)
                 onToggleBluetooth: root.toggleBluetooth(modelData)
                 onToggleNetwork: root.toggleNetwork(modelData)
+
+                Connections {
+                    target: root
+
+                    function onCalendarDismissRequested(): void {
+                        ambientBar.closeCalendar();
+                    }
+
+                    function onCalendarVisibleChanged(): void {
+                        if (!root.calendarVisible) {
+                            ambientBar.closeCalendar();
+                        }
+                    }
+                }
             }
         }
     }
