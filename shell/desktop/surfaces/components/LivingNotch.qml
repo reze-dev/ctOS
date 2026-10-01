@@ -225,12 +225,16 @@ Item {
         }
     }
 
+    HoverHandler {
+        id: globalHover
+    }
+
     Timer {
         id: hoverDebounceTimer
         interval: 150
         repeat: false
         onTriggered: {
-            if (!mouseArea.containsMouse || !root.isInsidePill(mouseArea.mouseX, mouseArea.mouseY, root.width, root.height, visualBg.radius)) {
+            if (!globalHover.hovered) {
                 root._isHovered = false;
             }
         }
@@ -397,8 +401,8 @@ Item {
                     required property var modelData
 
                     readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
-                    readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active) : false
-                    readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused) : (wsId === CompositorService.focusedWorkspaceId)
+                    readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
+                    readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
                     readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
 
                     Layout.preferredWidth: isFocused ? 14 : 6
@@ -743,8 +747,8 @@ Item {
                         id: wsHoverCell
                         required property var modelData
                         readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
-                        readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active) : false
-                        readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused) : (wsId === CompositorService.focusedWorkspaceId)
+                        readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
+                        readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
                         readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
 
                         Layout.preferredWidth: 18
