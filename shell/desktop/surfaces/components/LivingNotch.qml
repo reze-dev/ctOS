@@ -230,7 +230,7 @@ Item {
         interval: 150
         repeat: false
         onTriggered: {
-            if (!mouseArea.containsMouse) {
+            if (!mouseArea.containsMouse || !root.isInsidePill(mouseArea.mouseX, mouseArea.mouseY, root.width, root.height, visualBg.radius)) {
                 root._isHovered = false;
             }
         }
@@ -244,6 +244,17 @@ Item {
             root._notificationActive = false;
             collapseTimer.stop();
         }
+    }
+
+    function isInsidePill(mx: real, my: real, w: real, h: real, r: real): bool {
+        if (mx < 0 || mx > w || my < 0 || my > h) return false;
+        if (mx >= r && mx <= w - r) return true;
+        if (my >= r && my <= h - r) return true;
+        const cx = mx < r ? r : w - r;
+        const cy = my < r ? r : h - r;
+        const dx = mx - cx;
+        const dy = my - cy;
+        return (dx * dx + dy * dy) <= (r * r);
     }
 
     function showNotification(appName: string, summary: string, urgency: int): void {
@@ -1078,10 +1089,31 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         z: -1
 
+        onPressed: (mouse) => {
+            if (!root.isInsidePill(mouse.x, mouse.y, root.width, root.height, visualBg.radius)) {
+                mouse.accepted = false;
+            }
+        }
+
+        onPositionChanged: (mouse) => {
+            if (root.isInsidePill(mouse.x, mouse.y, root.width, root.height, visualBg.radius)) {
+                hoverDebounceTimer.stop();
+                if (!root._isCalendarOpen) {
+                    root._isHovered = true;
+                }
+            } else {
+                if (root._isHovered) {
+                    hoverDebounceTimer.restart();
+                }
+            }
+        }
+
         onEntered: {
-            hoverDebounceTimer.stop();
-            if (!root._isCalendarOpen) {
-                root._isHovered = true;
+            if (root.isInsidePill(mouseX, mouseY, root.width, root.height, visualBg.radius)) {
+                hoverDebounceTimer.stop();
+                if (!root._isCalendarOpen) {
+                    root._isHovered = true;
+                }
             }
         }
 
@@ -1097,16 +1129,22 @@ Item {
                     collapseTimer.stop();
                     root._notificationActive = false;
                     root.isExpanded = false;
+                } else if (root.notchState === "compact") {
+                    root.closeCalendar();
+                    OverlayController.toggleCommandCenter();
+                    root.toggleCommandCenterRequested();
                 }
-                root.closeCalendar();
-                OverlayController.toggleCommandCenter();
-                root.toggleCommandCenterRequested();
             }
         }
 
         onWheel: (wheel) => {
-            const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-            AudioService.stepVolume(delta);
+            if (root.isInsidePill(wheel.x, wheel.y, root.width, root.height, visualBg.radius)) {
+                const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
+                AudioService.stepVolume(delta);
+                wheel.accepted = true;
+            } else {
+                wheel.accepted = false;
+            }
         }
     }
 }
