@@ -441,6 +441,11 @@ FocusScope {
                     icon: "wifi"
                     accent: Theme.accentBlue
                     collapsible: true
+                    // Collapsed by default, like the design: the header already
+                    // says which network you are on, and the rest of the list is
+                    // one click away. Expanded by default this card listed five
+                    // networks and pushed Bluetooth and Audio off the panel.
+                    expanded: false
 
                     action: Component {
                         ToggleSwitch {
@@ -507,8 +512,24 @@ FocusScope {
                             // find a network by; the rest are reachable by
                             // scanning once the ones you care about are
                             // remembered as known and sort to the top.
-                            readonly property int visibleCount: Math.min(netCount, 5)
-                            readonly property bool hasOverflow: netCount > visibleCount
+                            readonly property int connectedCount: {
+                                let n = 0;
+                                for (let i = 0; i < nets.length; i++) {
+                                    if (nets[i].connected)
+                                        n++;
+                                }
+                                return n;
+                            }
+
+                            // Collapsed, only the connected network is listed --
+                            // the one fact the header cannot show. Expanded, the
+                            // full list up to the cap.
+                            readonly property int visibleCount: cardWifi.expanded
+                                ? Math.min(netCount, 5)
+                                : Math.min(netCount, connectedCount)
+
+                            readonly property bool hasOverflow:
+                                cardWifi.expanded && netCount > visibleCount
 
                             // 22 for the scan row; 34 per network; 88 for an
                             // open password prompt; 26 for a forget
@@ -524,7 +545,9 @@ FocusScope {
                                       + (cardWifi.confirmingForgetSsid !== "" ? 26 : 0)
                                       + (hasOverflow ? 18 : 0)
                                       + Theme.spacingSmall
-                                        * (visibleCount + 1 + (hasOverflow ? 1 : 0))
+                                        * (cardWifi.expanded
+                                               ? (visibleCount + 1 + (hasOverflow ? 1 : 0))
+                                               : 0)
                                     : 0
                             height: implicitHeight
                             visible: height > 0
@@ -532,7 +555,8 @@ FocusScope {
                             Text {
                                 anchors.left: parent.left
                                 anchors.top: parent.top
-                                height: 22
+                                height: visible ? 22 : 0
+                                visible: cardWifi.expanded
                                 verticalAlignment: Text.AlignVCenter
                                 text: NetworkService.isScanning
                                     ? qsTr("Scanning...") : qsTr("Scan for networks")
@@ -572,7 +596,7 @@ FocusScope {
                                 anchors.left: parent.left
                                 anchors.top: parent.top
                                 width: 1
-                                height: 22
+                                height: cardWifi.expanded ? 22 : 0
                             }
 
                             Column {
