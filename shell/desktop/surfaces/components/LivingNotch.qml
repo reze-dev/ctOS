@@ -35,16 +35,15 @@ Item {
     property int latestUrgency: 1
 
     // State Dimensions
-    readonly property real compactWidth: 220
-    readonly property real hoverWidth: 380
-    readonly property real expandedWidth: 380
+    readonly property real compactWidth: Theme.notchWidthCompact
+    readonly property real hoverWidth: 320
     readonly property real mediaWidth: 280
     readonly property real notificationWidth: 320
     readonly property real calendarWidth: 360
 
     readonly property real compactHeight: Settings.barHeight
-    readonly property real hoverHeight: 60
-    readonly property real expandedHeight: 60
+    readonly property real hoverHeight: Theme.notchHeightExpanded
+    readonly property real expandedHeight: Theme.notchHeightExpanded
     readonly property real calendarHeight: 250
 
     // Public Signals
@@ -169,10 +168,10 @@ Item {
         }
     }
 
-    readonly property real targetRadius: {
-        if (root.notchState === "calendar" || root.notchState === "hover") return Theme.radiusMedium;
-        return Theme.radiusPill;
-    }
+    // Fully rounded ends at every size, per the target design. The previous
+    // version fell back to an 8px radius for the hover and calendar states,
+    // which drew a rectangle where a stadium was specified.
+    readonly property real targetRadius: root.height / 2
 
     // =========================================================================
     // Geometry & Spring Physics Animation Declarations
@@ -350,18 +349,54 @@ Item {
         precision: SystemClock.Seconds
     }
 
+    // -------------------------------------------------------------------------
+    // Border ring and surface.
+    //
+    // Rectangle.border takes a flat colour, so the three-stop gradient is a
+    // separate rounded rectangle sitting behind the surface, and the surface is
+    // inset by the border width. That yields a uniform ring because the inner
+    // radius is the outer radius minus the inset.
+    // -------------------------------------------------------------------------
+    readonly property color ringStart: root.latestUrgency === 2 && root.notchState === "notification"
+        ? Theme.danger
+        : Theme.accentBlue
+    readonly property color ringMid: Theme.accentViolet
+    readonly property color ringEnd: root.latestUrgency === 2 && root.notchState === "notification"
+        ? Theme.danger
+        : Theme.accentMagenta
+
+    Rectangle {
+        id: borderRing
+
+        anchors.fill: parent
+        radius: root.targetRadius
+        antialiasing: true
+
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.00; color: root.ringStart }
+            GradientStop { position: 0.50; color: root.ringMid }
+            GradientStop { position: 1.00; color: root.ringEnd }
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationNormal
+                easing.type: Easing.InOutQuad
+            }
+        }
+    }
+
     Rectangle {
         id: visualBg
+
         anchors.fill: parent
-        color: Theme.background
-        radius: root.targetRadius
-        border.width: Theme.borderWidth
-        border.color: {
-            if (root.notchState === "notification") return root.latestUrgency === 2 ? Theme.warningRed : Theme.accent;
-            if (root.notchState === "hover" || root.notchState === "calendar") return Theme.accent;
-            if (root._isHovered) return Theme.accent;
-            return Theme.borderMuted;
-        }
+        anchors.margins: Theme.borderWidthAccent
+        radius: Math.max(0, root.targetRadius - Theme.borderWidthAccent)
+        antialiasing: true
+
+        // Slightly translucent so the wallpaper reads through, per the design.
+        color: Qt.rgba(5 / 255, 14 / 255, 30 / 255, 0.94)
         clip: true
 
         Behavior on radius {
