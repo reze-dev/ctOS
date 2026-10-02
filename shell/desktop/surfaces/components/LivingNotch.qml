@@ -425,13 +425,10 @@ Item {
             color: compactLogoMouse.containsMouse ? Theme.surfaceHover : "transparent"
             Layout.alignment: Qt.AlignVCenter
 
-            Image {
+            HexMark {
                 anchors.centerIn: parent
-                width: 16
-                height: 16
-                source: "os-icon.svg"
-                sourceSize.width: 16
-                sourceSize.height: 16
+                width: 18
+                height: 18
             }
 
             MouseArea {
@@ -736,13 +733,10 @@ Item {
                 radius: Theme.radiusSmall
                 color: logoHoverMouse.containsMouse ? Theme.surfaceHover : "transparent"
 
-                Image {
+                HexMark {
                     anchors.centerIn: parent
-                    width: 16
-                    height: 16
-                    source: "os-icon.svg"
-                    sourceSize.width: 16
-                    sourceSize.height: 16
+                    width: 18
+                    height: 18
                 }
 
                 MouseArea {
