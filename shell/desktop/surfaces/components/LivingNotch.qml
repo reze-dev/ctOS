@@ -151,6 +151,13 @@ Item {
     }
 
     readonly property real targetWidth: {
+        // While the command centre is open, this bar is the panel's header,
+        // and the design draws that header as wide as the panel. At the 220px
+        // compact width there is nowhere to put the date, the indicators and
+        // the collapse control.
+        if (root.isCommandCenterOpen)
+            return Theme.commandCenterWidth;
+
         switch (root.notchState) {
         case "calendar": return root.calendarWidth;
         case "hover": return root.hoverWidth;
@@ -172,6 +179,11 @@ Item {
         }
     }
 
+    // A two-line date and clock, plus rows of indicators, need more than the
+    // 30px bar height while the panel is open.
+    readonly property real currentTargetHeight:
+        root.isCommandCenterOpen ? Theme.notchHeightExpanded : root.targetHeight
+
     // Fully rounded ends at every size, per the target design. The previous
     // version fell back to an 8px radius for the hover and calendar states,
     // which drew a rectangle where a stadium was specified.
@@ -182,9 +194,9 @@ Item {
     // =========================================================================
     clip: false
     width: targetWidth
-    height: targetHeight
+    height: currentTargetHeight
     implicitWidth: targetWidth
-    implicitHeight: targetHeight
+    implicitHeight: currentTargetHeight
 
     Behavior on width {
         enabled: !Settings.reducedMotion
@@ -439,62 +451,103 @@ Item {
             }
         }
 
-        // Workspace Indicator Dots (5 dots)
-        RowLayout {
-            spacing: Theme.spacingSmall
-            Layout.alignment: Qt.AlignVCenter
+        // Workspaces as numbered pills.
+      //
+      // The design numbers them and marks the active one with a filled magenta
+      // circle. The previous five-dot row could not say which workspace was
+      // which, and at 6px a dot has no room to carry a number at all.
+      RowLayout {
+          spacing: Theme.spacingXs
+          Layout.alignment: Qt.AlignVCenter
 
-            Repeater {
-                model: root.workspaceList
+          Repeater {
+              model: root.workspaceList
 
-                Item {
-                    id: wsCell
-                    required property var modelData
+              Item {
+                  id: wsCell
+                  required property var modelData
 
-                    readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
-                    readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                    readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                    readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
+                  readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
+                  readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
+                  readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
+                  readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
 
-                    Layout.preferredWidth: isFocused ? 14 : 6
-                    Layout.preferredHeight: 6
-                    Layout.alignment: Qt.AlignVCenter
+                  Layout.preferredWidth: isFocused ? 18 : wsLabel.implicitWidth + 6
+                  Layout.preferredHeight: 18
+                  Layout.alignment: Qt.AlignVCenter
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 3
-                        color: wsCell.isUrgent ? Theme.warningRed : (wsCell.isFocused ? Theme.acidGreen : (wsCell.isActive ? Theme.textPrimaryDim : Theme.gray600))
+                  Rectangle {
+                      anchors.fill: parent
+                      radius: height / 2
+                      color: wsCell.isFocused ? Theme.accent
+                          : (wsCell.isUrgent ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+                      border.width: Theme.borderWidth
+                      border.color: wsCell.isUrgent ? Theme.destructive : "transparent"
 
-                        Behavior on width {
-                            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
-                        }
-                    }
+                      Behavior on color {
+                          ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
+                      }
+                  }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -4
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: CompositorService.switchToWorkspace(wsCell.wsId)
-                    }
-                }
-            }
-        }
+                  Text {
+                      id: wsLabel
+                      anchors.centerIn: parent
+                      width: parent.width
+                      horizontalAlignment: Text.AlignHCenter
+                      text: wsCell.wsId
+                      color: wsCell.isFocused ? Theme.navyDeep
+                          : (wsCell.isActive ? Theme.textPrimary : Theme.textSecondary)
+                      font.family: Theme.fontFamilySans
+                      font.pixelSize: Theme.fontSizeCaption
+                      font.weight: Theme.fontWeightDemiBold
+                  }
 
-        Item { Layout.fillWidth: true }
+                  MouseArea {
+                      anchors.fill: parent
+                      anchors.margins: -4
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: CompositorService.switchToWorkspace(wsCell.wsId)
+                  }
+              }
+          }
+      }
 
-        // Monospace Clock (Click opens calendar)
+      // Divider between the workspace group and the clock, per the design.
+      Rectangle {
+          Layout.alignment: Qt.AlignVCenter
+          Layout.preferredWidth: Theme.borderWidth
+          Layout.preferredHeight: 22
+          visible: root.isCommandCenterOpen
+          color: Theme.border
+      }
+
+        // Date over clock. The design stacks a small date on a large time, which
+        // is also the only arrangement that fits both without shrinking the clock
+        // down to caption size.
         Item {
-            Layout.preferredWidth: compactClockText.implicitWidth
-            Layout.preferredHeight: compactClockText.implicitHeight
+            Layout.preferredWidth: Math.max(dateText.implicitWidth, timeText.implicitWidth)
+            Layout.preferredHeight: timeText.implicitHeight + dateText.implicitHeight + 2
             Layout.alignment: Qt.AlignVCenter
 
             Text {
-                id: compactClockText
-                anchors.centerIn: parent
-                text: Qt.formatDateTime(systemClock.date, "HH:mm")
+                id: dateText
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.formatDateTime(systemClock.date, "ddd dd MMM").toUpperCase()
+                color: Theme.textSecondary
+                font.family: Theme.fontFamilySans
+                font.pixelSize: Theme.fontSizeMicro
+                font.weight: Theme.fontWeightDemiBold
+            }
+
+            Text {
+                id: timeText
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.formatDateTime(systemClock.date, "HH:mm:ss")
                 color: Theme.textPrimary
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
+                font.family: Theme.fontFamilyMonoNumeric
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Theme.fontWeightDemiBold
             }
 
@@ -505,54 +558,117 @@ Item {
             }
         }
 
-        // Network Connected Indicator Dot (visible only when connected)
-        Rectangle {
-            Layout.alignment: Qt.AlignVCenter
-            width: 5
-            height: 5
-            radius: 2.5
-            // Connected is a health fact, so this is a status colour. It was
-            // accent, which made a healthy link read as selected.
-            color: Theme.statusGreen
-            visible: NetworkService.available && NetworkService.isConnected
-        }
 
-        Item { Layout.fillWidth: true }
+        // Indicator cluster: glyph over a value, values in the status colour.
 
-        // Dynamic Island Status Text
+      Item { Layout.fillWidth: true }
+      // Everything after this is pinned to the trailing edge.
+        //
+        // Replaces one connected/not-connected dot and an "// IDLE" string. The
+        // dot said whether the link was up; it could not say how good the link
+        // was, and it left the rest of the bar's right-hand side empty.
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
-            spacing: 4
+            spacing: Theme.spacingMedium
 
+            // Collapse control. Only while the panel is open: an idle notch has
+            // no room for it and nothing to collapse.
+            GlyphIcon {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.preferredWidth: 18
+                Layout.preferredHeight: 18
+                visible: root.isCommandCenterOpen
+                glyph: "chevron"
+                // Glyph points down; collapsing means going back up.
+                rotation: 180
+                color: Theme.textSecondary
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 1
+                visible: NetworkService.isConnected
+
+                GlyphIcon {
+                    Layout.alignment: Qt.AlignHCenter
+                    width: 16
+                    height: 16
+                    glyph: "wifi"
+                    color: Theme.textSecondary
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: NetworkService.signalStrength > 0
+                        ? Math.round(NetworkService.signalStrength * 100) + "%"
+                        : ""
+                    color: Theme.statusGreen
+                    font.family: Theme.fontFamilyMonoNumeric
+                    font.pixelSize: Theme.fontSizeMicro
+                    font.weight: Theme.fontWeightDemiBold
+                }
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 1
+                visible: AudioService.available
+
+                GlyphIcon {
+                    Layout.alignment: Qt.AlignHCenter
+                    width: 16
+                    height: 16
+                    glyph: "speaker"
+                    color: Theme.textSecondary
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: AudioService.muted ? "M" : Math.round(AudioService.volume * 100) + "%"
+                    color: Theme.statusGreen
+                    font.family: Theme.fontFamilyMonoNumeric
+                    font.pixelSize: Theme.fontSizeMicro
+                    font.weight: Theme.fontWeightDemiBold
+                }
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 1
+                visible: PowerService.isBatteryPresent
+
+                GlyphIcon {
+                    Layout.alignment: Qt.AlignHCenter
+                    width: 16
+                    height: 16
+                    glyph: "battery"
+                    color: PowerService.isCharging ? Theme.statusGreen : Theme.textSecondary
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Math.round(PowerService.percentage) + "%"
+                    color: Theme.statusGreen
+                    font.family: Theme.fontFamilyMonoNumeric
+                    font.pixelSize: Theme.fontSizeMicro
+                    font.weight: Theme.fontWeightDemiBold
+                }
+            }
+
+            // DND is kept: it is state the user set and needs to see at a glance.
             Text {
+                Layout.alignment: Qt.AlignVCenter
                 visible: NotificationService.doNotDisturb
-                text: "[DND]"
+                text: "DND"
                 color: Theme.warningRed
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
+                font.family: Theme.fontFamilySans
+                font.pixelSize: Theme.fontSizeMicro
                 font.weight: Theme.fontWeightBold
-            }
-
-            Text {
-                visible: !NotificationService.doNotDisturb && NotificationService.unreadCount > 0
-                text: NotificationService.unreadCount + " NOTIF"
-                color: Theme.textPrimary
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                font.weight: Theme.fontWeightNormal
-            }
-
-            Text {
-                visible: !NotificationService.doNotDisturb && NotificationService.unreadCount === 0
-                text: "// IDLE"
-                color: Theme.textMuted
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }
 
-    // =========================================================================
+
     // View 2: Media State (Play/Pause, Title // Artist, Equalizer, Clock)
     // =========================================================================
     RowLayout {

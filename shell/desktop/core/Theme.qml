@@ -160,6 +160,7 @@ Singleton {
 
     readonly property int fontSizeBody: 14
     readonly property int fontSizeCaption: 11
+    readonly property int fontSizeMicro: 9
     readonly property int fontSizeDisplay: 36
     readonly property int fontSizeLarge: 18
     readonly property int fontSizeQuery: 48
