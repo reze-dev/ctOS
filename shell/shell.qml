@@ -572,11 +572,13 @@ Scope {
             root.closeBluetooth();
             root.closeNetwork();
             overlayHost.screen = root.resolveTargetScreen();
+            OverlayController.setHostScreen(overlayHost.screen);
 
         }
 
         function onOverlayClosed(previousSurface: int): void {
             overlayHost.screen = null;
+            OverlayController.setHostScreen(null);
         }
     }
 
@@ -669,35 +671,6 @@ Scope {
             id: toastStack
             width: 340
             anchors.horizontalCenter: parent.horizontalCenter
-        }
-    }
-
-    PanelWindow {
-        id: commandCenterPopupHost
-
-        screen: overlayHost.screen
-        color: "transparent"
-        visible: Settings.featuresCommandCenter && OverlayController.activeSurface === OverlayController.Surface.CommandCenter && overlayHost.screen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        WlrLayershell.namespace: "ctos-commandcenter-popup"
-
-        anchors {
-            top: true
-        }
-        margins {
-            top: 3
-        }
-
-        implicitWidth: commandCenterPopup.implicitWidth
-        implicitHeight: commandCenterPopup.implicitHeight
-
-        CommandCenter {
-            id: commandCenterPopup
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
         }
     }
 

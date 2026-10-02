@@ -18,6 +18,12 @@
 #
 # Environment:
 #   CTOS_SHELL_QML   override the entry point (default: shell/shell.qml)
+#   CTOS_IPC         comma-separated IpcHandler functions to invoke after boot,
+#                    e.g. CTOS_IPC=toggleCommandCenter. Runs inside this
+#                    script's environment, which matters: the IPC socket lives
+#                    under XDG_RUNTIME_DIR and calling it from outside finds
+#                    nothing.
+#   CTOS_SETTLE      extra seconds to wait after the IPC calls
 #   CTOS_KEEP        set to 1 to leave the compositor running for inspection
 # ==============================================================================
 set -uo pipefail
@@ -157,6 +163,21 @@ fi
 echo "ctos-shot: starting quickshell on $ENTRY ..." >&2
 quickshell -p "$ENTRY" > "$RUNDIR/quickshell.log" 2>&1 &
 QS_PID=$!
+
+sleep 2
+
+# Drive the shell into a specific state before capturing. Overlay state is only
+# reachable over IPC, and the socket is per-XDG_RUNTIME_DIR, so this has to
+# happen here rather than from the caller.
+if [ -n "${CTOS_IPC:-}" ]; then
+    IFS=',' read -r -a CALLS <<< "$CTOS_IPC"
+    for fn in "${CALLS[@]}"; do
+        [ -z "$fn" ] && continue
+        echo "ctos-shot: ipc call ctos $fn ..." >&2
+        quickshell ipc -p "$ENTRY" call ctos "$fn" 2>&1 | sed 's/^/  /' >&2 || true
+    done
+    sleep "${CTOS_SETTLE:-3}"
+fi
 
 echo "ctos-shot: settling ${SETTLE}s ..." >&2
 sleep "$SETTLE"

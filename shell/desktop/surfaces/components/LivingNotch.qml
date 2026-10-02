@@ -206,14 +206,14 @@ Item {
         }
     }
 
-    // Opacity Handoff with CommandCenter
-    opacity: root.isCommandCenterOpen ? 0.0 : 1.0
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
-            easing.type: Easing.InOutQuad
-        }
-    }
+    // The notch stays visible while the CCC is open.
+    //
+    // It used to fade to zero here, which was correct when the CCC was a
+    // separate PanelWindow that *replaced* the bar. Now the CCC is a child of
+    // this window unfolding downward, and the design keeps the notch header
+    // pinned at the top of it -- that continuity is the whole point. Fading it
+    // out left the CCC floating with nothing attached above it.
+    opacity: 1.0
 
     // =========================================================================
     // Timers & Methods

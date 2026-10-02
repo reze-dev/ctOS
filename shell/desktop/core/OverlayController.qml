@@ -41,6 +41,20 @@ Singleton {
     // Explicit constants for zero-ambiguity access
     readonly property int surfaceNone: 0
 
+    // Output the active overlay belongs to, captured when it opens.
+    //
+    // Per-output surfaces need this to decide whether they are the host. The CCC
+    // used to live in its own PanelWindow in shell.qml which read overlayHost's
+    // screen directly; now it is a child of the notch's window, and each output
+    // has its own notch, so exactly one of them must claim it.
+    property var hostScreen: null
+
+    readonly property string hostScreenName: (hostScreen && hostScreen.name) ? hostScreen.name : ""
+
+    function setHostScreen(screen: var): void {
+        root.hostScreen = screen;
+    }
+
     property string pendingSessionAction: ""
     property string pendingRailView: ""
     property alias pendingRailSubmenu: root.pendingRailView
@@ -87,6 +101,7 @@ Singleton {
             overlayOpened(targetSurface);
             requestFocus(targetSurface);
         } else {
+            hostScreen = null;
             releaseFocus();
         }
 

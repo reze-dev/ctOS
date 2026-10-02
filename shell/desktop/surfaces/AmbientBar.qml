@@ -23,31 +23,71 @@ PanelWindow {
 
     color: "transparent"
 
+    // The CCC lives inside this window rather than in its own. Two
+    // layer-shell surfaces cannot read as one: the compositor separates them,
+    // so the notch's border and glow cannot wrap continuously across the join
+    // and there is a visible seam. Sharing the window is what makes the CCC
+    // look like the notch unfolding.
+    //
+    // Every output has its own AmbientBar, so exactly one of them claims the
+    // overlay by matching the screen it was opened on.
+    readonly property bool isCommandCenterHost:
+        Settings.featuresCommandCenter
+        && OverlayController.activeSurface === OverlayController.Surface.CommandCenter
+        && OverlayController.hostScreenName !== ""
+        && root.screen !== null
+        && OverlayController.hostScreenName === root.screen.name
+
     property bool toggleMask: false
 
-    Component {
-        id: maskComponent
-        Region {
-            Region {
-                x: livingNotch.x
-                y: livingNotch.y
-                width: livingNotch.width
-                height: livingNotch.height
-            }
-        }
+    // Input region: the pill, plus the CCC while it is open.
+    //
+    // Two regions rather than one union rectangle -- a single region spanning
+    // the column would make the empty gaps beside the pill and beside the CCC
+    // swallow clicks meant for the desktop.
+    //
+    // Declared inline rather than built with Component.createObject. The
+    // created-object form had no access to commandCenterHost, which is declared
+    // later in the file, and it could not stay bound as the host animated.
+    readonly property var activeMask:
+        root.isCommandCenterHost ? [notchRegion, cccRegion] : notchRegion
+
+    Region {
+        id: notchRegion
+        x: livingNotch.x
+        y: livingNotch.y
+        width: livingNotch.width
+        height: livingNotch.height
     }
 
-    property var maskA: maskComponent.createObject(root)
-    property var maskB: maskComponent.createObject(root)
+    Region {
+        id: cccRegion
+        x: commandCenterHost.x
+        y: commandCenterHost.y
+        width: commandCenterHost.width
+        height: commandCenterHost.height
+    }
 
-    mask: toggleMask ? maskA : maskB
+    mask: root.activeMask
 
+    // wlroots does not always recompute the input region when a region is
+    // resized in place, so nudging the property forces it.
     function flushWaylandMask() {
         toggleMask = !toggleMask;
+        mask = root.toggleMask ? root.activeMask : root.activeMask;
     }
 
     Connections {
         target: livingNotch
+        function onWidthChanged() { root.flushWaylandMask(); }
+        function onHeightChanged() { root.flushWaylandMask(); }
+        function onXChanged() { root.flushWaylandMask(); }
+        function onYChanged() { root.flushWaylandMask(); }
+    }
+
+    // The CCC animating open and closed changes the input region too.
+    Connections {
+        target: commandCenterHost
         function onWidthChanged() { root.flushWaylandMask(); }
         function onHeightChanged() { root.flushWaylandMask(); }
         function onXChanged() { root.flushWaylandMask(); }
@@ -60,8 +100,15 @@ PanelWindow {
 
     WlrLayershell.namespace: "ctos-bar"
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    implicitHeight: Math.max(Settings.barHeight, livingNotch.currentHeight) + Theme.notchHostPadding
+    // OnDemand only while the CCC is open. This surface otherwise takes no
+    // keyboard input at all, and claiming focus unconditionally would steal
+    // keystrokes from the desktop.
+    WlrLayershell.keyboardFocus: root.isCommandCenterHost
+        ? WlrKeyboardFocus.OnDemand
+        : WlrKeyboardFocus.None
+    implicitHeight: Math.max(Settings.barHeight, livingNotch.currentHeight)
+        + Theme.notchHostPadding
+        + (root.isCommandCenterHost ? commandCenterHost.height : 0)
 
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
@@ -95,6 +142,43 @@ PanelWindow {
             if (!root._closingFromShell) {
                 root.toggleCalendar();
             }
+        }
+    }
+
+    // =========================================================================
+    // Adaptive Command & Control Center
+    //
+    // Hosted here rather than in a PanelWindow of its own. Two layer-shell
+    // surfaces cannot read as one: the compositor separates them, so the
+    // notch's border and glow cannot wrap continuously across the join and
+    // there is a visible seam between them. Sharing this window is what makes
+    // the CCC look like the notch unfolding rather than a panel appearing.
+    //
+    // Every output has its own AmbientBar, so exactly one of them claims the
+    // overlay by matching the screen it was opened on.
+    // =========================================================================
+
+    Item {
+        id: commandCenterHost
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: livingNotch.bottom
+        width: Math.min(Theme.commandCenterWidth, root.width - Theme.spacing2Xl * 4)
+        height: root.isCommandCenterHost ? ccc.implicitHeight : 0
+        visible: root.isCommandCenterHost
+        clip: false
+
+        Behavior on height {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutCubic
+            }
+        }
+
+        CommandCenter {
+            id: ccc
+            width: parent.width
+            visible: root.isCommandCenterHost
         }
     }
 
