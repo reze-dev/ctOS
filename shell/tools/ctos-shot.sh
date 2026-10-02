@@ -24,7 +24,11 @@
 #                    under XDG_RUNTIME_DIR and calling it from outside finds
 #                    nothing.
 #   CTOS_SETTLE      extra seconds to wait after the IPC calls
+#   CTOS_PRE         shell command run inside the compositor environment just
+#                    before settling, for driving non-IPC state (notify-send etc.)
 #   CTOS_KEEP        set to 1 to leave the compositor running for inspection
+#   CTOS_SHARE_BUS   set to 1 to inherit the caller's D-Bus session bus instead
+#                    of starting a private one (breaks notification capture)
 # ==============================================================================
 set -uo pipefail
 
@@ -131,7 +135,18 @@ echo "ctos-shot: compositor up on \$WAYLAND_DISPLAY=$SWAY_DISPLAY" >&2
 # Absence of these is a legitimate condition the shell must survive, but the
 # notification server in particular wants a bus.
 # ------------------------------------------------------------------------------
-if command -v dbus-daemon >/dev/null 2>&1 && [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+# Always start a private session bus, even when one is inherited.
+#
+# Reusing the caller's bus makes the render non-hermetic, and specifically breaks
+# notifications: org.freedesktop.Notifications is a single well-known name, so
+# if the caller's desktop already has a notification server on it, the headless
+# shell cannot claim the name and notify-send delivers to the caller's server
+# instead. The notification card then renders empty no matter what is sent to it.
+#
+# Network and Bluetooth go through the system bus, so a private session bus does
+# not affect them. Set CTOS_SHARE_BUS=1 to inherit instead, when debugging
+# against the live session on purpose.
+if command -v dbus-daemon >/dev/null 2>&1 && [ "${CTOS_SHARE_BUS:-0}" != "1" ]; then
     dbus-daemon --session --fork --print-address=3 3> "$RUNDIR/dbus.addr" 2>/dev/null
     if [ -s "$RUNDIR/dbus.addr" ]; then
         export DBUS_SESSION_BUS_ADDRESS="$(cat "$RUNDIR/dbus.addr")"
@@ -177,6 +192,17 @@ if [ -n "${CTOS_IPC:-}" ]; then
         quickshell ipc -p "$ENTRY" call ctos "$fn" 2>&1 | sed 's/^/  /' >&2 || true
     done
     sleep "${CTOS_SETTLE:-3}"
+fi
+
+# Optionally drive service state that is not reachable over the shell's own IPC.
+# Runs inside the compositor environment, so anything that talks to the session
+# bus (notify-send, nmcli, bluetoothctl) works the same way it would in a live
+# shell. This is how the notification card gets verified with notifications in it
+# rather than only against its empty state.
+if [ -n "${CTOS_PRE:-}" ]; then
+    echo "ctos-shot: running CTOS_PRE ..." >&2
+    # shellcheck disable=SC2086
+    eval "$CTOS_PRE" 2>&1 | sed 's/^/  /' >&2 || true
 fi
 
 echo "ctos-shot: settling ${SETTLE}s ..." >&2
