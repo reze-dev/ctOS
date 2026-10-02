@@ -96,7 +96,7 @@ FocusScope {
             return;
 
         if (requestedCard === "notifications")      cardNotifications.expanded = true;
-        else if (requestedCard === "wifi")         cardConnectivity.expanded = true;
+        else if (requestedCard === "wifi")         cardWifi.expanded = true;
         else if (requestedCard === "bluetooth")    cardBluetooth.expanded = true;
         else if (requestedCard === "audio")        cardAudio.expanded = true;
         else if (requestedCard === "power")        cardPower.expanded = true;
@@ -430,9 +430,14 @@ FocusScope {
                 }
 
                 Card {
-                    id: cardConnectivity
+                    id: cardWifi
                     width: parent.width
                     title: qsTr("Wi-Fi")
+                    subtitle: NetworkService.isEthernet
+                        ? qsTr("Ethernet")
+                        : (NetworkService.isConnected && NetworkService.networkName !== ""
+                           ? NetworkService.networkName
+                           : (NetworkService.wifiEnabled ? "" : qsTr("Off")))
                     icon: "wifi"
                     accent: Theme.accentBlue
                     collapsible: true
@@ -441,6 +446,440 @@ FocusScope {
                         ToggleSwitch {
                             checked: NetworkService.wifiEnabled
                             onToggled: NetworkService.toggleWifi()
+                        }
+                    }
+
+                    // Selection state for the inline flows. Per-card rather than
+                    // global so closing and reopening the panel starts clean.
+                    property string selectedSsid: ""
+                    property string confirmingForgetSsid: ""
+
+                    readonly property bool passwordPromptOpen:
+                        selectedSsid !== "" && wifiNeedsPassword(selectedSsid)
+
+                    function wifiNeedsPassword(ssid: string): bool {
+                        const list = NetworkService.availableNetworks || [];
+                        for (let i = 0; i < list.length; i++) {
+                            if (list[i].ssid === ssid)
+                                return list[i].requiresPassword && !list[i].known;
+                        }
+                        return false;
+                    }
+
+                    function signalFor(ssid: string): real {
+                        const list = NetworkService.availableNetworks || [];
+                        for (let i = 0; i < list.length; i++) {
+                            if (list[i].ssid === ssid)
+                                return list[i].signalStrength;
+                        }
+                        return 0;
+                    }
+
+                    // Choose what clicking a network does. Selecting a secured
+                    // unknown network opens the prompt instead of connecting,
+                    // because there is no key to connect with.
+                    function activate(ssid: string, known: bool, connected: bool): void {
+                        if (connected)
+                            return;
+                        if (known) {
+                            NetworkService.connectToNetwork(ssid);
+                            return;
+                        }
+                        if (wifiNeedsPassword(ssid)) {
+                            selectedSsid = cardWifi.selectedSsid === ssid ? "" : ssid;
+                            confirmingForgetSsid = "";
+                        } else {
+                            NetworkService.connectToNetwork(ssid);
+                        }
+                    }
+
+                    contentComponent: Component {
+                        Item {
+                            id: wifiBody
+                            width: parent ? parent.width : undefined
+
+                            readonly property var nets: NetworkService.availableNetworks || []
+                            readonly property int netCount: nets.length
+
+                            // A dense urban environment lists twenty-odd
+                            // networks, and rendering every one of them gave the
+                            // Wi-Fi card the entire column. Five is enough to
+                            // find a network by; the rest are reachable by
+                            // scanning once the ones you care about are
+                            // remembered as known and sort to the top.
+                            readonly property int visibleCount: Math.min(netCount, 5)
+                            readonly property bool hasOverflow: netCount > visibleCount
+
+                            // 22 for the scan row; 34 per network; 88 for an
+                            // open password prompt; 26 for a forget
+                            // confirmation; 18 for the overflow note. The
+                            // trailing term is the Column's own spacing between
+                            // its children, which is not part of any child's
+                            // height and was being left out -- the last row and
+                            // the overflow note were clipped by the card.
+                            implicitHeight: NetworkService.wifiEnabled && NetworkService.available
+                                    ? 22 + Theme.spacingSmall * 2
+                                      + visibleCount * 34
+                                      + (cardWifi.passwordPromptOpen ? 88 : 0)
+                                      + (cardWifi.confirmingForgetSsid !== "" ? 26 : 0)
+                                      + (hasOverflow ? 18 : 0)
+                                      + Theme.spacingSmall
+                                        * (visibleCount + 1 + (hasOverflow ? 1 : 0))
+                                    : 0
+                            height: implicitHeight
+                            visible: height > 0
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                height: 22
+                                verticalAlignment: Text.AlignVCenter
+                                text: NetworkService.isScanning
+                                    ? qsTr("Scanning...") : qsTr("Scan for networks")
+                                color: scanHover.containsMouse
+                                    ? Theme.textPrimary : Theme.textSecondary
+                                font.family: Theme.fontFamilySans
+                                font.pixelSize: Theme.fontSizeCaption
+                                font.weight: Theme.fontWeightDemiBold
+
+                                MouseArea {
+                                    id: scanHover
+                                    anchors.fill: parent
+                                    anchors.margins: -4
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: NetworkService.toggleScan()
+                                }
+                            }
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: scanRowProxy.bottom
+                                anchors.topMargin: Theme.spacingSmall
+                                height: visible ? 30 : 0
+                                visible: NetworkService.available && wifiBody.netCount === 0
+                                verticalAlignment: Text.AlignVCenter
+                                text: NetworkService.isConnecting
+                                    ? qsTr("Connecting...") : qsTr("No networks found")
+                                color: Theme.textSecondary
+                                font.family: Theme.fontFamilySans
+                                font.pixelSize: Theme.fontSizeSmall
+                            }
+
+                            Item {
+                                id: scanRowProxy
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                width: 1
+                                height: 22
+                            }
+
+                            Column {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: scanRowProxy.bottom
+                                anchors.topMargin: Theme.spacingSmall
+                                spacing: Theme.spacingSmall
+
+                                Repeater {
+                                    // Index into the full list rather than a
+                                    // modelData delegate, so the visible rows can
+                                    // be a prefix of a longer array.
+                                    model: NetworkService.wifiEnabled && NetworkService.available
+                                        ? wifiBody.visibleCount : 0
+
+                                    delegate: Item {
+                                        id: netRow
+                                        required property int index
+
+                                        readonly property var net: wifiBody.nets[index]
+                                        readonly property string ssid: net.ssid
+                                        readonly property bool connected: net.connected
+                                        readonly property bool known: net.known
+                                        readonly property bool selected:
+                                            cardWifi.selectedSsid === ssid
+
+                                        width: wifiBody.width
+                                        height: 34
+
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: Theme.radiusMedium
+                                            color: netRow.connected || netRowHover.containsMouse
+                                                ? Theme.surfaceHover : Theme.surfaceElevated
+                                            border.width: Theme.borderWidth
+                                            border.color: netRow.selected
+                                                ? Theme.borderHover
+                                                : (netRow.connected ? Theme.statusGreen : Theme.border)
+
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: Settings.reducedMotion ? 0 : Theme.durationFast
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: netRowHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: cardWifi.activate(
+                                                netRow.ssid, netRow.known, netRow.connected)
+                                        }
+
+                                        GlyphIcon {
+                                            id: netGlyph
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: Theme.spacingMedium
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 16
+                                            height: 16
+                                            glyph: "wifi"
+                                            color: netRow.connected ? Theme.statusGreen
+                                                : (netRow.known ? Theme.textSecondary : Theme.textDisabled)
+                                        }
+
+                                        Text {
+                                            anchors.left: netGlyph.right
+                                            anchors.leftMargin: Theme.spacingSmall
+                                            anchors.right: strengthText.left
+                                            anchors.rightMargin: Theme.spacingSmall
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: netRow.ssid
+                                            color: netRow.connected || netRow.known
+                                                ? Theme.textPrimary : Theme.textSecondary
+                                            font.family: Theme.fontFamilySans
+                                            font.pixelSize: Theme.fontSizeSmall
+                                            font.weight: netRow.connected
+                                                ? Theme.fontWeightDemiBold : Theme.fontWeightNormal
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            id: strengthText
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: Theme.spacingMedium
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: Math.round(netRow.net.signalStrength * 100) + "%"
+                                            color: Theme.textSecondary
+                                            font.family: Theme.fontFamilyMonospace
+                                            font.pixelSize: Theme.fontSizeCaption
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    height: visible ? 18 : 0
+                                    visible: wifiBody.hasOverflow
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: qsTr("+ %1 more").arg(wifiBody.netCount - wifiBody.visibleCount)
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilySans
+                                    font.pixelSize: Theme.fontSizeCaption
+                                }
+
+                                // Password prompt, for a secured network with no
+                                // stored profile.
+                                Rectangle {
+                                    id: pwPanel
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    height: visible ? 88 : 0
+                                    visible: cardWifi.passwordPromptOpen
+                                    radius: Theme.radiusMedium
+                                    color: Theme.surfaceDeep
+                                    border.width: Theme.borderWidth
+                                    border.color: Theme.border
+
+                                    Text {
+                                        id: pwLabel
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: Theme.spacingSmall
+                                        anchors.top: parent.top
+                                        anchors.topMargin: Theme.spacingSmall
+                                        text: qsTr("Password for %1").arg(cardWifi.selectedSsid)
+                                        color: Theme.textSecondary
+                                        font.family: Theme.fontFamilySans
+                                        font.pixelSize: Theme.fontSizeCaption
+                                        elide: Text.ElideRight
+                                        width: parent.width - Theme.spacingSmall * 2
+                                    }
+
+                                    // Field background drawn as a sibling rather
+                                    // than a `background:` property, which is a
+                                    // QtQuick.Controls TextField feature -- and
+                                    // this is a core TextInput, so the whole card
+                                    // failed to load with "non-existent property".
+                                    Item {
+                                        id: pwField
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: Theme.spacingSmall
+                                        anchors.right: pwSubmit.left
+                                        anchors.rightMargin: Theme.spacingSmall
+                                        anchors.top: pwLabel.bottom
+                                        anchors.topMargin: Theme.spacingSmall
+                                        height: 28
+
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: Theme.radiusSmall
+                                            color: Theme.background
+                                            border.width: Theme.borderWidth
+                                            border.color: pwInput.activeFocus
+                                                ? Theme.borderHover : Theme.border
+                                        }
+
+                                        TextInput {
+                                            id: pwInput
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: Theme.spacingSmall
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: Theme.spacingSmall
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            color: Theme.textPrimary
+                                            font.family: Theme.fontFamilyMonospace
+                                            font.pixelSize: Theme.fontSizeSmall
+                                            echoMode: TextInput.Password
+                                            selectionColor: Theme.accentBlue
+                                            selectedTextColor: Theme.navyDeep
+                                            onAccepted: submitHover.triggered()
+
+                                            Text {
+                                                anchors.left: parent.left
+                                                anchors.leftMargin: Theme.spacingSmall
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                visible: pwInput.text === ""
+                                                text: qsTr("Network password")
+                                                color: Theme.textDisabled
+                                                font.family: Theme.fontFamilySans
+                                                font.pixelSize: Theme.fontSizeCaption
+                                            }
+                                        }
+                                    }
+
+                                    Row {
+                                        id: pwSubmit
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: Theme.spacingSmall
+                                        anchors.verticalCenter: pwInput.verticalCenter
+                                        width: pwSubmitLabel.implicitWidth + Theme.spacingMedium * 2
+                                        height: 26
+                                        property bool clicked: false
+
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: Theme.radiusSmall
+                                            color: submitHover.containsMouse ? Theme.accent : Theme.surfaceSelected
+                                            border.width: Theme.borderWidth
+                                            border.color: Theme.accent
+                                        }
+
+                                        Text {
+                                            id: pwSubmitLabel
+                                            anchors.centerIn: parent
+                                            text: qsTr("Join")
+                                            color: Theme.textPrimary
+                                            font.family: Theme.fontFamilySans
+                                            font.pixelSize: Theme.fontSizeCaption
+                                            font.weight: Theme.fontWeightDemiBold
+                                        }
+
+                                        MouseArea {
+                                            id: submitHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            // Submit is shared between the button and
+                                            // Enter in the field.
+                                            function triggered(): void {
+                                                if (pwInput.text === "")
+                                                    return;
+                                                NetworkService.connectToNetwork(
+                                                    cardWifi.selectedSsid, pwInput.text);
+                                                pwInput.text = "";
+                                                cardWifi.selectedSsid = "";
+                                            }
+                                            onClicked: {
+                                                if (pwInput.text === "")
+                                                    return;
+                                                NetworkService.connectToNetwork(
+                                                    cardWifi.selectedSsid, pwInput.text);
+                                                pwInput.text = "";
+                                                cardWifi.selectedSsid = "";
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Forget confirmation.
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    height: visible ? 26 : 0
+                                    visible: cardWifi.confirmingForgetSsid !== ""
+                                    radius: Theme.radiusSmall
+                                    color: Theme.surfaceDeep
+                                    border.width: Theme.borderWidth
+                                    border.color: Theme.destructive
+
+                                    Text {
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: Theme.spacingSmall
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: qsTr("Forget %1?").arg(cardWifi.confirmingForgetSsid)
+                                        color: Theme.destructive
+                                        font.family: Theme.fontFamilySans
+                                        font.pixelSize: Theme.fontSizeCaption
+                                        elide: Text.ElideRight
+                                        width: parent.width - 120
+                                    }
+
+                                    Text {
+                                        id: forgetYes
+                                        anchors.right: forgetNo.left
+                                        anchors.rightMargin: Theme.spacingSmall
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: qsTr("Yes")
+                                        color: Theme.destructive
+                                        font.family: Theme.fontFamilySans
+                                        font.pixelSize: Theme.fontSizeCaption
+                                        font.weight: Theme.fontWeightDemiBold
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -4
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                NetworkService.forgetNetwork(
+                                                    cardWifi.confirmingForgetSsid);
+                                                cardWifi.confirmingForgetSsid = "";
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        id: forgetNo
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: Theme.spacingSmall
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: qsTr("No")
+                                        color: Theme.textSecondary
+                                        font.family: Theme.fontFamilySans
+                                        font.pixelSize: Theme.fontSizeCaption
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -4
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: cardWifi.confirmingForgetSsid = ""
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -474,11 +913,13 @@ FocusScope {
                                 BluetoothService.powered
                                     ? BluetoothService.deviceModel.count : 0
 
-                            // Devices are 34 tall each; the scan row and the
-                            // empty message only appear when powered.
+                            // Devices are 34 tall each, the scan row is 22, the
+                            // empty message 34, and the trailing term is the
+                            // Column's spacing between its children.
                             implicitHeight: BluetoothService.powered
                                     ? 22 + (rowCount === 0 ? 34 : 0)
-                                      + rowCount * 34 + Theme.spacingSmall
+                                      + rowCount * 34
+                                      + Theme.spacingSmall * (1 + rowCount)
                                     : 0
                             height: implicitHeight
                             visible: BluetoothService.powered
