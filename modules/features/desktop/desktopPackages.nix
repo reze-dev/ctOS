@@ -38,6 +38,9 @@ in
       wl-clipboard
       zathura
       inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.ctos-shell
+
+      # Agent tooling for working on this configuration.
+      opencode
     ];
   };
 }

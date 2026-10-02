@@ -26,6 +26,20 @@
         export QT_QPA_PLATFORM=offscreen
         export QT_QUICK_BACKEND=software
       '';
+
+      # Headless layer-shell rendering.
+      #
+      # The shell is wlr-layer-shell only, so verifying it visually needs a real
+      # compositor -- Qt's offscreen platform cannot present a layer surface.
+      # sway with WLR_BACKENDS=headless and the pixman renderer gives one with
+      # no GPU and no X server, which is what makes this usable over SSH and in
+      # CI. See shell/tools/README.md.
+      headlessEnv = ''
+        export WLR_BACKENDS=headless
+        export WLR_RENDERER=pixman
+        export WLR_LIBINPUT_NO_DEVICES=1
+        export LIBGL_ALWAYS_SOFTWARE=1
+      '';
     in
     {
       devShells.default = pkgs.mkShell {
@@ -42,34 +56,73 @@
           jq
 
           # QML tooling. qtdeclarative provides qml, qmlscene, qmllint and
-          # qmltestrunner; qtshadertools carries the Qt Quick shader modules the
-          # software renderer needs for headless tests.
+          # qmltestrunner; qttools provides none of them. qtshadertools carries
+          # the Qt Quick shader modules the software renderer needs.
           qt6.qtdeclarative
           qt6.qtshadertools
           quickshell
+
+          # Headless compositor for layer-shell rendering, plus capture.
+          sway
+          grim
+          slurp
+          wayland-utils
+          xwayland-satellite
+          # swrast/llvmpipe, used when pixman is unavailable or when a shell
+          # surface needs real GL.
+          mesa
+
+          # Image inspection: sample exact pixel values out of a render and
+          # diff two of them. Pillow is what makes "is that actually #EB4ADF"
+          # a checkable question.
+          python3
+          python3Packages.pillow
+          imagemagick
+
+          # Fonts. Theme.fontFamily is "Maple Mono"; without the same faces the
+          # render does not match what the host draws.
+          fontconfig
+          maple-mono.truetype
+          nerd-fonts.jetbrains-mono
+          nerd-fonts.monaspace
+          nerd-fonts.caskaydia-cove
+          nerd-fonts.symbols-only
+
+          # Session bus. Several services degrade to available=false without
+          # one, which is worth exercising deliberately but makes unrelated
+          # failures noisier.
+          dbus
+
+          opencode
         ];
 
         shellHook = ''
           ${qtEnv}
+          ${headlessEnv}
+
+          export PATH="$PWD/shell/tools:$PATH"
 
           ctos-qmllint() {
             local fail=0
             while IFS= read -r f; do
-              if ! qmllint --bare -I shell "$f"; then
-                fail=1
-              fi
+              qmllint --bare --ignore-settings -I shell "$f" || fail=1
             done < <(find shell/desktop shell/greeter shell/shell.qml shell/greeter.qml -name '*.qml' | sort)
             return $fail
           }
 
-          export -f ctos-qmllint 2>/dev/null || true
+          ctos-shot() { "$PWD/shell/tools/ctos-shot.sh" "$@"; }
+          ctos-pick() { python3 "$PWD/shell/tools/ctos-pick.py" "$@"; }
 
           echo "❄️  ctOS development shell"
           echo ""
           echo "  nix flake check --impure   — run all checks"
           echo "  nix fmt                    — format all Nix files"
-          echo "  ctos-qmllint               — lint every QML file in the shell"
-          echo "  nix build .#ctos-shell     — build the shell package"
+          echo "  ctos-qmllint <file>        — lint a QML file"
+          echo "  ctos-shot                  — render the shell headless and screenshot it"
+          echo "  ctos-pick out.png          — dominant colours in a render"
+          echo "  ctos-pick out.png --at X,Y — exact pixel value"
+          echo ""
+          echo "  Headless compositor env is preset (sway + pixman)."
           echo ""
         '';
       };
