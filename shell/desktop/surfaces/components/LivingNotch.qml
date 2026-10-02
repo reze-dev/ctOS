@@ -21,14 +21,18 @@ Item {
     readonly property string notchState: root._resolvedState
 
     // Dynamic Island & Test Compatibility Properties
-    property bool isExpanded: root._notificationActive
+    // Test-compatibility alias. Read-only on purpose: it used to be a writable
+    // binding onto _notificationActive while also being assigned alongside it,
+    // which broke the binding and left two bools that had to be kept in sync by
+    // hand. notificationActive is the only writable state.
+    readonly property bool isExpanded: root.notificationActive
     property string state: root.notchState
-    property bool calendarOpen: root._isCalendarOpen
+    // Read-only alias for the same reason as isExpanded above.
+    readonly property bool _isCalendarOpen: root.calendarOpen
 
     // State Tracking Flags
     property bool _isHovered: false
-    property bool _isCalendarOpen: false
-    property bool _notificationActive: false
+    property bool notificationActive: false
 
     property string latestAppName: "System"
     property string latestSummary: ""
@@ -139,8 +143,8 @@ Item {
     // State Priority & Geometry Computations
     // =========================================================================
     readonly property string _resolvedState: {
-        if ((root._isCalendarOpen || root.calendarOpen) && !root.isCommandCenterOpen) return "calendar";
-        if ((root._notificationActive || root.isExpanded) && !NotificationService.doNotDisturb) return "notification";
+        if (root.calendarOpen && !root.isCommandCenterOpen) return "calendar";
+        if (root.notificationActive && !NotificationService.doNotDisturb) return "notification";
         if (root._isHovered && !root.isCommandCenterOpen) return "hover";
         if (root.hasMedia) return "media";
         return "compact";
@@ -219,8 +223,7 @@ Item {
         interval: 4000
         repeat: false
         onTriggered: {
-            root._notificationActive = false;
-            root.isExpanded = false;
+            root.notificationActive = false;
         }
     }
 
@@ -239,16 +242,6 @@ Item {
         }
     }
 
-    onIsExpandedChanged: {
-        if (root.isExpanded && !root._notificationActive) {
-            root._notificationActive = true;
-            collapseTimer.restart();
-        } else if (!root.isExpanded && root._notificationActive) {
-            root._notificationActive = false;
-            collapseTimer.stop();
-        }
-    }
-
     function isInsidePill(mx: real, my: real, w: real, h: real, r: real): bool {
         if (mx < 0 || mx > w || my < 0 || my > h) return false;
         if (mx >= r && mx <= w - r) return true;
@@ -264,8 +257,7 @@ Item {
         root.latestAppName = appName || "System";
         root.latestSummary = summary || "";
         root.latestUrgency = (urgency !== undefined) ? urgency : 1;
-        root._notificationActive = true;
-        root.isExpanded = true;
+        root.notificationActive = true;
         collapseTimer.restart();
     }
 
@@ -274,14 +266,12 @@ Item {
             OverlayController.close();
         }
         root.calendarOpen = !root.calendarOpen;
-        root._isCalendarOpen = root.calendarOpen;
-        root.calendarToggled(root._isCalendarOpen);
+        root.calendarToggled(root.calendarOpen);
     }
 
     function closeCalendar(): void {
-        if (root._isCalendarOpen || root.calendarOpen) {
+        if (root.calendarOpen) {
             root.calendarOpen = false;
-            root._isCalendarOpen = false;
             root.calendarToggled(false);
             root.closeCalendarRequested();
         }
@@ -300,10 +290,9 @@ Item {
         }
 
         function onDoNotDisturbChanged(): void {
-            if (NotificationService.doNotDisturb && root._notificationActive) {
+            if (NotificationService.doNotDisturb && root.notificationActive) {
                 collapseTimer.stop();
-                root._notificationActive = false;
-                root.isExpanded = false;
+                root.notificationActive = false;
             }
         }
     }
@@ -425,6 +414,34 @@ Item {
             NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
         }
 
+        // App Logo / CommandDeck entry point.
+        // The target design places this first in the idle state; it was only
+        // present in the hover row, so the resting notch had no identity and no
+        // CommandDeck target.
+        Rectangle {
+            Layout.preferredWidth: 20
+            Layout.preferredHeight: 20
+            radius: Theme.radiusSmall
+            color: compactLogoMouse.containsMouse ? Theme.surfaceHover : "transparent"
+            Layout.alignment: Qt.AlignVCenter
+
+            Image {
+                anchors.centerIn: parent
+                width: 16
+                height: 16
+                source: "os-icon.svg"
+                sourceSize.width: 16
+                sourceSize.height: 16
+            }
+
+            MouseArea {
+                id: compactLogoMouse
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.openCommandDeckRequested()
+            }
+        }
+
         // Workspace Indicator Dots (5 dots)
         RowLayout {
             spacing: Theme.spacingSmall
@@ -460,14 +477,7 @@ Item {
                         anchors.fill: parent
                         anchors.margins: -4
                         cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                        onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                        onExited: { hoverDebounceTimer.restart(); }
                         onClicked: CompositorService.switchToWorkspace(wsCell.wsId)
-                        onWheel: (wheel) => {
-                            const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                            AudioService.stepVolume(delta);
-                        }
                     }
                 }
             }
@@ -494,14 +504,7 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-                onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                onExited: { hoverDebounceTimer.restart(); }
                 onClicked: root.toggleCalendar()
-                onWheel: (wheel) => {
-                    const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                    AudioService.stepVolume(delta);
-                }
             }
         }
 
@@ -511,7 +514,9 @@ Item {
             width: 5
             height: 5
             radius: 2.5
-            color: Theme.acidGreen
+            // Connected is a health fact, so this is a status colour. It was
+            // accent, which made a healthy link read as selected.
+            color: Theme.statusGreen
             visible: NetworkService.available && NetworkService.isConnected
         }
 
@@ -584,17 +589,10 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-                onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                onExited: { hoverDebounceTimer.restart(); }
                 onClicked: {
                     if (root.activePlayer && typeof root.activePlayer.playPause === "function") {
                         root.activePlayer.playPause();
                     }
-                }
-                onWheel: (wheel) => {
-                    const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                    AudioService.stepVolume(delta);
                 }
             }
         }
@@ -649,14 +647,7 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-                onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                onExited: { hoverDebounceTimer.restart(); }
                 onClicked: root.toggleCalendar()
-                onWheel: (wheel) => {
-                    const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                    AudioService.stepVolume(delta);
-                }
             }
         }
     }
@@ -758,15 +749,8 @@ Item {
                     id: logoHoverMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
                     onClicked: {
                         root.openCommandDeckRequested();
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
                     }
                 }
             }
@@ -807,14 +791,7 @@ Item {
                             id: wsHoverMouse
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                            onExited: { hoverDebounceTimer.restart(); }
                             onClicked: CompositorService.switchToWorkspace(wsHoverCell.wsId)
-                            onWheel: (wheel) => {
-                                const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                                AudioService.stepVolume(delta);
-                            }
                         }
                     }
                 }
@@ -842,14 +819,7 @@ Item {
                     id: dateHoverMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
                     onClicked: root.toggleCalendar()
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
                 }
             }
         }
@@ -891,20 +861,13 @@ Item {
                     id: netHoverMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
                     onClicked: (mouse) => {
                         if (mouse.button === Qt.RightButton) {
                             NetworkService.toggleWifi();
                         } else {
                             root.toggleNetworkRequested();
                         }
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
                     }
                 }
             }
@@ -938,14 +901,7 @@ Item {
                     id: volHoverMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
                     onClicked: AudioService.toggleMute()
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
                 }
             }
 
@@ -978,15 +934,8 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
                     onClicked: {
                         root.toggleCommandCenterRequested();
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
                     }
                 }
             }
@@ -1023,20 +972,13 @@ Item {
                     id: btHoverMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
                     onClicked: (mouse) => {
                         if (mouse.button === Qt.RightButton) {
                             BluetoothService.togglePower();
                         } else {
                             root.toggleBluetoothRequested();
                         }
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
                     }
                 }
             }
@@ -1065,15 +1007,8 @@ Item {
                     id: railHoverMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
                     onClicked: {
                         root.toggleCommandCenterRequested();
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
                     }
                 }
             }
@@ -1102,7 +1037,7 @@ Item {
         Loader {
             id: calendarLoader
             anchors.fill: parent
-            active: root.notchState === "calendar" || root._isCalendarOpen
+            active: root.notchState === "calendar" || root.calendarOpen
             source: "NotchCalendarGrid.qml"
 
             onLoaded: {
@@ -1123,6 +1058,11 @@ Item {
         id: mouseArea
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
+        // Sole hover authority for the notch. The per-item targets below carry
+        // no hover handling at all: they only route clicks. That is deliberate.
+        // Their onEntered handlers were ungated -- they set _isHovered without
+        // the isInsidePill test applied here -- which is the hover-loop class
+        // this file needed two separate patches for.
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         z: -1
@@ -1165,8 +1105,7 @@ Item {
             } else {
                 if (root.notchState === "notification") {
                     collapseTimer.stop();
-                    root._notificationActive = false;
-                    root.isExpanded = false;
+                    root.notificationActive = false;
                 } else if (root.notchState === "compact") {
                     root.closeCalendar();
                     root.toggleCommandCenterRequested();
