@@ -428,7 +428,14 @@ Item {
         anchors.leftMargin: Theme.paddingLarge
         anchors.rightMargin: Theme.paddingLarge
         spacing: Theme.spacingSmall
-        opacity: (root.notchState === "compact") ? 1.0 : 0.0
+        // Serves both the idle and the hover state.
+        //
+        // There was a second, separate hover view with its own copies of the
+        // system bar and the system tray -- about 300 lines duplicating content
+        // that had already drifted out of sync with the compact view. Hover is
+        // the same row with more detail, which is what showDetail expresses, so
+        // it is the same view.
+        opacity: (root.notchState === "compact" || root.notchState === "hover") ? 1.0 : 0.0
         visible: opacity > 0.0
 
         Behavior on opacity {
@@ -670,6 +677,21 @@ Item {
                 }
             }
 
+            // Status word, which ends the bar. The design shows one in both the
+            // idle and expanded states: IDLE with nothing pending, otherwise
+            // what is pending.
+            Text {
+                Layout.alignment: Qt.AlignVCenter
+                visible: !NotificationService.doNotDisturb
+                text: NotificationService.unreadCount > 0
+                    ? NotificationService.unreadCount + " NEW"
+                    : (root.hasMedia ? (root.isPlaying ? "PLAYING" : "PAUSED") : "IDLE")
+                color: Theme.textSecondary
+                font.family: Theme.fontFamilySans
+                font.pixelSize: Theme.fontSizeMicro
+                font.weight: Theme.fontWeightDemiBold
+            }
+
             // DND is kept: it is state the user set and needs to see at a glance.
             Text {
                 Layout.alignment: Qt.AlignVCenter
@@ -833,310 +855,6 @@ Item {
             elide: Text.ElideRight
             maximumLineCount: 1
             wrapMode: Text.NoWrap
-        }
-    }
-
-    // =========================================================================
-    // View 4: Hover State (2 Rows: Row 1 System Bar, Row 2 Expanded System Tray)
-    // =========================================================================
-    ColumnLayout {
-        id: hoverView
-        anchors.fill: parent
-        anchors.margins: Theme.paddingSmall
-        spacing: 4
-        opacity: (root.notchState === "hover") ? 1.0 : 0.0
-        visible: opacity > 0.0
-
-        Behavior on opacity {
-            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
-        }
-
-        // --- Row 1: Logo/CommandDeck, Workspaces, Full Date + Time ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 24
-            spacing: Theme.spacingMedium
-
-            // Logo & CommandDeck trigger
-            Rectangle {
-                Layout.preferredWidth: 20
-                Layout.preferredHeight: 20
-                radius: Theme.radiusSmall
-                color: logoHoverMouse.containsMouse ? Theme.surfaceHover : "transparent"
-
-                HexMark {
-                    anchors.centerIn: parent
-                    width: 18
-                    height: 18
-                }
-
-                MouseArea {
-                    id: logoHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.openCommandDeckRequested();
-                    }
-                }
-            }
-
-            // Workspaces Cells
-            RowLayout {
-                spacing: 3
-                Layout.alignment: Qt.AlignVCenter
-
-                Repeater {
-                    model: root.workspaceList
-
-                    Rectangle {
-                        id: wsHoverCell
-                        required property var modelData
-                        readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
-                        readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                        readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                        readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
-
-                        Layout.preferredWidth: 18
-                        Layout.preferredHeight: 18
-                        radius: Theme.radiusSmall
-                        color: isFocused ? Theme.surfaceSelected : (wsHoverMouse.containsMouse ? Theme.surfaceHover : "transparent")
-                        border.color: isUrgent ? Theme.accentRed : (isFocused ? Theme.accent : Theme.borderMuted)
-                        border.width: Theme.borderWidth
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: String(wsHoverCell.wsId)
-                            color: wsHoverCell.isUrgent ? Theme.accentRed : (wsHoverCell.isFocused ? Theme.accent : (wsHoverCell.isActive ? Theme.textPrimary : Theme.textMuted))
-                            font.family: Theme.fontFamilyMonospace
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: wsHoverCell.isFocused ? Theme.fontWeightBold : Theme.fontWeightNormal
-                        }
-
-                        MouseArea {
-                            id: wsHoverMouse
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: CompositorService.switchToWorkspace(wsHoverCell.wsId)
-                        }
-                    }
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-
-            // Full Date + Time (Click opens calendar)
-            Item {
-                Layout.preferredWidth: dateHoverText.implicitWidth
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                Text {
-                    id: dateHoverText
-                    anchors.centerIn: parent
-                    text: Qt.formatDateTime(systemClock.date, "ddd dd MMM  HH:mm:ss").toUpperCase()
-                    color: dateHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.weight: Theme.fontWeightDemiBold
-                }
-
-                MouseArea {
-                    id: dateHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.toggleCalendar()
-                }
-            }
-        }
-
-        // --- Row 2: Expanded System Tray Indicators ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 24
-            spacing: Theme.spacingMedium
-
-            // Network Info
-            Item {
-                Layout.preferredWidth: netRow.implicitWidth
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: netRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: !NetworkService.isConnected ? "wifi-slash" : (NetworkService.isEthernet ? "network" : "wifi")
-                        color: netHoverMouse.containsMouse ? Theme.accent : (NetworkService.isConnected ? Theme.statusGreen : Theme.destructive)
-                    }
-
-                    Text {
-                        text: NetworkService.isConnected ? (NetworkService.networkName !== "" ? NetworkService.networkName : "NET") : "OFFLINE"
-                        color: netHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: 80
-                    }
-                }
-
-                MouseArea {
-                    id: netHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: (mouse) => {
-                        if (mouse.button === Qt.RightButton) {
-                            NetworkService.toggleWifi();
-                        } else {
-                            root.toggleNetworkRequested();
-                        }
-                    }
-                }
-            }
-
-            // Volume Info
-            Item {
-                Layout.preferredWidth: volRow.implicitWidth
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: volRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: AudioService.muted ? "volume-slash" : "volume"
-                        color: volHoverMouse.containsMouse ? Theme.accent : (AudioService.muted ? Theme.destructive : Theme.textSecondary)
-                    }
-
-                    Text {
-                        text: AudioService.muted ? "[MUTED]" : Math.round(AudioService.volume * 100) + "%"
-                        color: volHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
-                }
-
-                MouseArea {
-                    id: volHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: AudioService.toggleMute()
-                }
-            }
-
-            // Battery Info (Desktop omission: hidden when battery absent)
-            Item {
-                visible: PowerService.available && PowerService.isBatteryPresent
-                Layout.preferredWidth: visible ? batRow.implicitWidth : 0
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: batRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: PowerService.isCharging ? "battery-charging" : (PowerService.percentage <= 20 ? "battery-low" : "battery")
-                        color: PowerService.isCharging ? Theme.statusGreen : (PowerService.percentage <= 20 ? Theme.warningRed : Theme.textSecondary)
-                    }
-
-                    Text {
-                        text: Math.round(PowerService.percentage) + "%"
-                        color: PowerService.percentage <= 20 && !PowerService.isCharging ? Theme.warningRed : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.toggleCommandCenterRequested();
-                    }
-                }
-            }
-
-            // Bluetooth Info (Hidden when bluetooth hardware unavailable)
-            Item {
-                visible: BluetoothService.available
-                Layout.preferredWidth: visible ? btRow.implicitWidth : 0
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: btRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: BluetoothService.powered ? "bluetooth" : "bluetooth-slash"
-                        color: BluetoothService.isConnected ? Theme.statusGreen : (BluetoothService.powered ? Theme.textPrimary : Theme.textMuted)
-                    }
-
-                    Text {
-                        text: !BluetoothService.powered ? "OFF" : (BluetoothService.isConnected ? (BluetoothService.deviceName || "CONNECTED") : "ON")
-                        color: btHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: 80
-                    }
-                }
-
-                MouseArea {
-                    id: btHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: (mouse) => {
-                        if (mouse.button === Qt.RightButton) {
-                            BluetoothService.togglePower();
-                        } else {
-                            root.toggleBluetoothRequested();
-                        }
-                    }
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-
-            // Rail Toggle Glyph "="
-            Rectangle {
-                Layout.preferredWidth: 18
-                Layout.preferredHeight: 18
-                radius: Theme.radiusSmall
-                color: railHoverMouse.containsMouse ? Theme.surfaceHover : "transparent"
-                border.color: Theme.borderMuted
-                border.width: Theme.borderWidth
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "="
-                    color: Theme.accent
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeCaption
-                    font.weight: Theme.fontWeightBold
-                }
-
-                MouseArea {
-                    id: railHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.toggleCommandCenterRequested();
-                    }
-                }
-            }
         }
     }
 
