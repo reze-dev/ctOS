@@ -48,41 +48,60 @@ accent**. Green becomes a status role only. Magenta becomes attention.
 | `active` | `#1BFD9C` | `#EB4ADF` | follows `accent` |
 | `textAccent` | `#1BFD9C` | `#EB4ADF` | follows `accent` |
 | `borderActive` | `#1BFD9C` | `#EB4ADF` | follows `accent` |
-| `acidGreen` | `#1BFD9C` | `#4FE7A2` | **deprecated alias** for `statusGreen` |
+| `acidGreen` | `#1BFD9C` | `#EB4ADF` | **misnomer.** Resolves to magenta — see below |
 | `success` | `#1BFD9C` | `#4FE7A2` | status only |
 | `connected` | `#1BFD9C` | `#4FE7A2` | status only |
+| `available` | — | `#4FE7A2` | new; status only |
 | `warningRed` | `#FC3E38` | `#D1605D` | danger; matches `--danger` |
 | `destructive` | `#FC3E38` | `#D1605D` | follows `danger` |
 | `error` | `#FC3E38` | `#D1605D` | follows `danger` |
 | `warning` | `#FC3E38` | `#D1605D` | follows `danger` |
-| `border` | `#D9D9D9` | `#243D70` | **must be redefined**, not inherited from `gray200` |
-| `hairline` | `#D9D9D9` | `#243D70` | **must be redefined** |
-| `divider` | `#7A7A7A` | `#243D70` | **must be redefined** |
-| `ctosGray` | `#D9D9D9` | `#243D70` | **must be redefined** |
+| `border` | `#D9D9D9` | `#243D70` | **pinned directly**, no longer from `gray200` |
+| `hairline` | `#D9D9D9` | `#243D70` | **pinned directly** |
+| `divider` | `#7A7A7A` | `#243D70` | **pinned directly**, no longer from `gray500` |
+| `ctosGray` | `#D9D9D9` | `#243D70` | **pinned directly** |
+| `surfaceSelected` | `#1A2E24` | `#3A1B47` | was green-tinted; now magenta-tinted |
 
-### New tokens to add
+### `acidGreen` resolves to magenta, not green
+
+This is the one genuinely counter-intuitive decision in the token table, and the
+first draft of this document got it backwards.
+
+`acidGreen` has 127 call sites. Auditing them by meaning rather than by name:
+
+| Meaning | Sites | Resolves to |
+| --- | --- | --- |
+| borders, corner brackets, hover, focus rings | ~88 | magenta — attention |
+| connected / powered / charging / playing / not-overloaded | 39 | `statusGreen` — health |
+
+So `acidGreen` was never carrying a status meaning at the majority of its call
+sites; it was the generic accent. Aliasing it to `statusGreen` would have
+painted 88 borders and focus rings green. It therefore resolves to **magenta**,
+which is also why no call site outside those 39 needed editing — they inherit the
+correct colour through the token.
+
+The 39 status sites were converted to `statusGreen` explicitly. The token name is
+now a misnomer and should eventually be renamed to `accentLegacy` and then
+folded into `accent`; 88 remaining call sites make that a mechanical follow-up,
+not a blocker.
+
+### Tokens added
 
 ```
-readonly property color statusGreen:  "#4FE7A2"
-readonly property color accentMagenta: "#EB4ADF"
-readonly property color accentBlue:    "#4695F6"
-readonly property color accentViolet:  "#7362F5"
-readonly property color borderSubtle:  "#243D70"
-readonly property color surfaceDeep:   "#061121"
-readonly property color pageBackground: "#050E1E"
+statusGreen  accentMagenta  accentBlue  accentViolet   -- semantic roles
+pageBackground  surfaceDeep  borderSubtle               -- surfaces
+notchWidthCompact  notchHeightExpanded  notchHostPadding
+commandCenterWidth  commandCenterColumnGutter  commandCenterSectionRadius
+calendarWidth  calendarHeight  accordionHeaderHeight     -- geometry
+springStiffness  springDamping  springMass                -- motion
+radiusLarge  borderWidthAccent  danger  blue  violet  magenta  green  red
 ```
 
 ### Deprecation policy
 
-`acidGreen` keeps working as an alias for `statusGreen` so the existing 142 call
-sites do not break visually mid-migration. Call sites must not be *added*; each
-one migrated to `statusGreen`, `accentMagenta`, or `accentBlue` as appropriate.
-Remove the alias once the count reaches zero.
-
-`accent` currently has 142 direct references via `acidGreen`. Any reference that
-meant "this is selected/active/focused" must move to `accent`; any reference that
-meant "this is healthy/connected" must move to `statusGreen`. These are different
-intentions and the old single-green token could not distinguish them.
+New code must not reference `acidGreen`. Use `accent` / `accentMagenta` for
+attention and `statusGreen` for health. The alias exists only to avoid touching
+88 call sites during the palette change.
 
 ## Gradients
 

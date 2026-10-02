@@ -538,7 +538,7 @@ Item {
                 id: playPauseText
                 anchors.centerIn: parent
                 text: root.isPlaying ? "▶" : "⏸"
-                color: root.isPlaying ? Theme.acidGreen : Theme.textMuted
+                color: root.isPlaying ? Theme.statusGreen : Theme.textMuted
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Theme.fontWeightBold
@@ -589,7 +589,7 @@ Item {
                     Layout.preferredHeight: root.isPlaying
                         ? Math.max(3, Math.round((Math.sin((eqBar.index * 1.1) + root.visualizerPhase) * 0.4 + 0.5) * 14))
                         : 3
-                    color: root.isPlaying ? Theme.acidGreen : Theme.gray600
+                    color: root.isPlaying ? Theme.statusGreen : Theme.gray600
                     radius: 1
                 }
             }
@@ -837,7 +837,7 @@ Item {
                     CtosIcon {
                         size: 12
                         name: !NetworkService.isConnected ? "wifi-slash" : (NetworkService.isEthernet ? "network" : "wifi")
-                        color: netHoverMouse.containsMouse ? Theme.accent : (NetworkService.isConnected ? Theme.acidGreen : Theme.destructive)
+                        color: netHoverMouse.containsMouse ? Theme.accent : (NetworkService.isConnected ? Theme.statusGreen : Theme.destructive)
                     }
 
                     Text {
@@ -927,7 +927,7 @@ Item {
                     CtosIcon {
                         size: 12
                         name: PowerService.isCharging ? "battery-charging" : (PowerService.percentage <= 20 ? "battery-low" : "battery")
-                        color: PowerService.isCharging ? Theme.acidGreen : (PowerService.percentage <= 20 ? Theme.warningRed : Theme.textSecondary)
+                        color: PowerService.isCharging ? Theme.statusGreen : (PowerService.percentage <= 20 ? Theme.warningRed : Theme.textSecondary)
                     }
 
                     Text {
@@ -969,7 +969,7 @@ Item {
                     CtosIcon {
                         size: 12
                         name: BluetoothService.powered ? "bluetooth" : "bluetooth-slash"
-                        color: BluetoothService.isConnected ? Theme.acidGreen : (BluetoothService.powered ? Theme.textPrimary : Theme.textMuted)
+                        color: BluetoothService.isConnected ? Theme.statusGreen : (BluetoothService.powered ? Theme.textPrimary : Theme.textMuted)
                     }
 
                     Text {

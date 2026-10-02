@@ -15,7 +15,7 @@ Item {
     width: implicitWidth
     height: implicitHeight
 
-    property color bracketColor: root.isPlaying ? Theme.acidGreen : Theme.gray500
+    property color bracketColor: root.isPlaying ? Theme.statusGreen : Theme.gray500
 
     // Optional direct player override for testing / dynamic injection
     property var playerOverride: null
@@ -170,7 +170,7 @@ Item {
         id: bgSurface
         anchors.fill: parent
         color: Qt.rgba(14 / 255, 14 / 255, 14 / 255, 0.85)
-        border.color: root.isPlaying ? Theme.acidGreen : Theme.gray700
+        border.color: root.isPlaying ? Theme.statusGreen : Theme.gray700
         border.width: Theme.borderWidth
     }
 
@@ -205,7 +205,7 @@ Item {
 
             Text {
                 text: root.statusText
-                color: root.isPlaying ? Theme.acidGreen : Theme.textMuted
+                color: root.isPlaying ? Theme.statusGreen : Theme.textMuted
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeSmall
                 font.weight: Theme.fontWeightBold
@@ -223,7 +223,7 @@ Item {
         Text {
             Layout.fillWidth: true
             text: root.hasMedia ? root.interceptString : root.fallbackString
-            color: root.hasMedia ? Theme.acidGreen : Theme.textMuted
+            color: root.hasMedia ? Theme.statusGreen : Theme.textMuted
             font.family: Theme.fontFamilyMonospace
             font.pixelSize: Theme.fontSizeSmall
             font.weight: Theme.fontWeightBold
@@ -277,7 +277,7 @@ Item {
                     Layout.preferredHeight: root.isPlaying
                         ? Math.max(3, Math.round((Math.sin((barRect.index * 0.72) + root.visualizerPhase) * 0.35 + Math.cos((barRect.index * 1.25) - root.visualizerPhase * 1.3) * 0.25 + 0.5) * 16))
                         : 2
-                    color: root.isPlaying ? Theme.acidGreen : Theme.gray600
+                    color: root.isPlaying ? Theme.statusGreen : Theme.gray600
                 }
             }
         }

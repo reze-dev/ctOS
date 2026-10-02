@@ -19,7 +19,7 @@ Item {
     readonly property var cpuThreadLoads: SystemMonitorService.cpuThreadLoads
     readonly property int threadCount: root.cpuThreadLoads ? root.cpuThreadLoads.length : 0
     readonly property bool isOverload: root.cpuTotal >= 0.90
-    property color bracketColor: root.isOverload ? Theme.destructive : Theme.acidGreen
+    property color bracketColor: root.isOverload ? Theme.destructive : Theme.statusGreen
 
     // =========================================================================
     // State Tracking & Conditional Animations (Zero-Polling Compliant)
@@ -228,7 +228,7 @@ Item {
 
             Text {
                 text: "CPU " + Math.round(root.cpuTotal * 100) + "%"
-                color: root.isOverload ? Theme.destructive : Theme.acidGreen
+                color: root.isOverload ? Theme.destructive : Theme.statusGreen
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeSmall
                 font.weight: Theme.fontWeightBold

@@ -233,12 +233,12 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     size: 24
                     name: "wifi"
-                    color: (NetworkService.isScanning || NetworkService.isConnecting) ? Theme.acidGreen : Theme.textMuted
+                    color: (NetworkService.isScanning || NetworkService.isConnecting) ? Theme.statusGreen : Theme.textMuted
                 }
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
-                    color: (NetworkService.isScanning || NetworkService.isConnecting) ? Theme.acidGreen : Theme.textMuted
+                    color: (NetworkService.isScanning || NetworkService.isConnecting) ? Theme.statusGreen : Theme.textMuted
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
                     horizontalAlignment: Text.AlignHCenter

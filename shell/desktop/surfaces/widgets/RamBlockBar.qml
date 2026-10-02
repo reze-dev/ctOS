@@ -52,7 +52,7 @@ Item {
 
     // Framing Corner Brackets (Transitions to destructive red when RAM >= 80%)
     CornerBrackets {
-        bracketColor: root.isCritical ? Theme.destructive : Theme.acidGreen
+        bracketColor: root.isCritical ? Theme.destructive : Theme.statusGreen
     }
 
     // =========================================================================
@@ -110,7 +110,7 @@ Item {
                     // Color transitions to Theme.destructive when usage >= 80%
                     color: {
                         if (!isFilled) return Theme.gray900;
-                        return root.isCritical ? Theme.destructive : Theme.acidGreen;
+                        return root.isCritical ? Theme.destructive : Theme.statusGreen;
                     }
 
                     border.color: {

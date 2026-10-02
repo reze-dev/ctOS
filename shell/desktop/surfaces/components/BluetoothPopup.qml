@@ -230,12 +230,12 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     size: 24
                     name: "bluetooth"
-                    color: BluetoothService.isScanning ? Theme.acidGreen : Theme.textMuted
+                    color: BluetoothService.isScanning ? Theme.statusGreen : Theme.textMuted
                 }
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
-                    color: BluetoothService.isScanning ? Theme.acidGreen : Theme.textMuted
+                    color: BluetoothService.isScanning ? Theme.statusGreen : Theme.textMuted
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
                     horizontalAlignment: Text.AlignHCenter

@@ -344,14 +344,14 @@ FocusScope {
                 width: 60
                 height: 24
                 color: BluetoothService.powered ? Theme.surfaceSelected : (btToggleMouse.containsMouse ? Theme.surfaceHover : "transparent")
-                border.color: BluetoothService.powered ? Theme.acidGreen : Theme.borderMuted
+                border.color: BluetoothService.powered ? Theme.statusGreen : Theme.borderMuted
                 border.width: Theme.borderWidth
                 radius: Theme.radiusSmall
 
                 Text {
                     anchors.centerIn: parent
                     text: BluetoothService.powered ? "ON" : "OFF"
-                    color: BluetoothService.powered ? Theme.acidGreen : Theme.textSecondary
+                    color: BluetoothService.powered ? Theme.statusGreen : Theme.textSecondary
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
                     font.weight: Theme.fontWeightBold
@@ -379,14 +379,14 @@ FocusScope {
                 width: 70
                 height: 24
                 color: AudioService.muted ? Theme.surfaceSelected : (audioToggleMouse.containsMouse ? Theme.surfaceHover : "transparent")
-                border.color: AudioService.muted ? Theme.warningRed : Theme.acidGreen
+                border.color: AudioService.muted ? Theme.warningRed : Theme.statusGreen
                 border.width: Theme.borderWidth
                 radius: Theme.radiusSmall
 
                 Text {
                     anchors.centerIn: parent
                     text: AudioService.muted ? "MUTED" : "UNMUTE"
-                    color: AudioService.muted ? Theme.destructive : Theme.acidGreen
+                    color: AudioService.muted ? Theme.destructive : Theme.statusGreen
                     font.family: Theme.fontFamilyMonospace
                     font.pixelSize: Theme.fontSizeCaption
                     font.weight: Theme.fontWeightBold
@@ -960,7 +960,7 @@ FocusScope {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 36
-                        border.color: itemIsConnected ? Theme.acidGreen : (itemIsConnecting ? Theme.accent : (itemMouseArea.containsMouse ? Theme.accent : Theme.borderMuted))
+                        border.color: itemIsConnected ? Theme.statusGreen : (itemIsConnecting ? Theme.accent : (itemMouseArea.containsMouse ? Theme.accent : Theme.borderMuted))
                         border.width: Theme.borderWidth
                         color: itemIsConnected ? Theme.surfaceSelected : (itemIsConnecting ? Theme.surfaceSelected : (itemMouseArea.containsMouse ? Theme.surfaceHover : Theme.surface))
                         radius: Theme.radiusSmall
@@ -974,12 +974,12 @@ FocusScope {
                                 active: itemIsConnected || itemIsConnecting
                                 name: "wifi"
                                 size: 14
-                                color: (itemIsConnected || itemIsConnecting) ? Theme.acidGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
+                                color: (itemIsConnected || itemIsConnecting) ? Theme.statusGreen : (itemMouseArea.containsMouse ? Theme.accent : Theme.textSecondary)
                             }
 
                             Text {
                                 Layout.fillWidth: true
-                                color: (itemIsConnected || itemIsConnecting) ? Theme.acidGreen : Theme.textPrimary
+                                color: (itemIsConnected || itemIsConnecting) ? Theme.statusGreen : Theme.textPrimary
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamilyMonospace
                                 font.pixelSize: Theme.fontSizeSmall
@@ -1151,7 +1151,7 @@ FocusScope {
                             Rectangle {
                                 Layout.preferredHeight: 22
                                 Layout.preferredWidth: itemIsConnecting ? 92 : 68
-                                border.color: itemIsConnecting ? Theme.accent : Theme.acidGreen
+                                border.color: itemIsConnecting ? Theme.accent : Theme.statusGreen
                                 border.width: Theme.borderWidth
                                 color: itemIsConnecting ? Theme.surfaceSelected : (knownConnectMouseArea.containsMouse ? Theme.surfaceSelected : "transparent")
                                 radius: Theme.radiusSmall
@@ -1159,7 +1159,7 @@ FocusScope {
 
                                 Text {
                                     anchors.centerIn: parent
-                                    color: itemIsConnecting ? Theme.accent : Theme.acidGreen
+                                    color: itemIsConnecting ? Theme.accent : Theme.statusGreen
                                     font.family: Theme.fontFamilyMonospace
                                     font.pixelSize: 9
                                     font.weight: Theme.fontWeightBold
@@ -1370,7 +1370,7 @@ FocusScope {
                                 Rectangle {
                                     Layout.preferredHeight: 18
                                     Layout.preferredWidth: itemIsConnecting ? 92 : 62
-                                    border.color: itemIsConnecting ? Theme.accent : Theme.acidGreen
+                                    border.color: itemIsConnecting ? Theme.accent : Theme.statusGreen
                                     border.width: Theme.borderWidth
                                     color: itemIsConnecting ? Theme.surfaceSelected : (pwConnectArea.containsMouse ? Theme.surfaceSelected : "transparent")
                                     radius: Theme.radiusSmall
@@ -1378,7 +1378,7 @@ FocusScope {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        color: itemIsConnecting ? Theme.accent : Theme.acidGreen
+                                        color: itemIsConnecting ? Theme.accent : Theme.statusGreen
                                         font.family: Theme.fontFamilyMonospace
                                         font.pixelSize: 9
                                         font.weight: Theme.fontWeightBold
@@ -1526,12 +1526,12 @@ FocusScope {
                                     Layout.alignment: Qt.AlignHCenter
                                     size: 24
                                     name: "bluetooth"
-                                    color: BluetoothService.isScanning ? Theme.acidGreen : Theme.textMuted
+                                    color: BluetoothService.isScanning ? Theme.statusGreen : Theme.textMuted
                                 }
 
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
-                                    color: BluetoothService.isScanning ? Theme.acidGreen : Theme.textMuted
+                                    color: BluetoothService.isScanning ? Theme.statusGreen : Theme.textMuted
                                     font.family: Theme.fontFamilyMonospace
                                     font.pixelSize: Theme.fontSizeCaption
                                     horizontalAlignment: Text.AlignHCenter
@@ -1580,7 +1580,7 @@ FocusScope {
                                                 CtosIcon {
                                                     size: 14
                                                     name: "bluetooth"
-                                                    color: btPairedTile.modelData.connected ? Theme.acidGreen : Theme.textSecondary
+                                                    color: btPairedTile.modelData.connected ? Theme.statusGreen : Theme.textSecondary
                                                 }
 
                                                 ColumnLayout {
@@ -1589,7 +1589,7 @@ FocusScope {
 
                                                     Text {
                                                         Layout.fillWidth: true
-                                                        color: btPairedTile.modelData.connected ? Theme.acidGreen : Theme.textPrimary
+                                                        color: btPairedTile.modelData.connected ? Theme.statusGreen : Theme.textPrimary
                                                         font.family: Theme.fontFamilyMonospace
                                                         font.pixelSize: Theme.fontSizeCaption
                                                         font.weight: Theme.fontWeightBold
@@ -1822,7 +1822,7 @@ FocusScope {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         anchors.top: parent.top
-                        color: AudioService.muted ? Theme.destructive : Theme.acidGreen
+                        color: AudioService.muted ? Theme.destructive : Theme.statusGreen
                         radius: Theme.radiusSmall
                         width: Math.max(0, Math.min(parent.width, parent.width * AudioService.volume))
                     }
@@ -1993,7 +1993,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 140
                     color: Theme.gray800
-                    border.color: root.isPlaying ? Theme.acidGreen : Theme.gray700
+                    border.color: root.isPlaying ? Theme.statusGreen : Theme.gray700
                     border.width: Theme.borderWidth
                     radius: Theme.radiusSmall
 
@@ -2019,7 +2019,7 @@ FocusScope {
 
                             Text {
                                 text: root.isPlaying ? "STREAMING" : (root.activePlayer ? "PAUSED" : "OFFLINE")
-                                color: root.isPlaying ? Theme.acidGreen : Theme.textMuted
+                                color: root.isPlaying ? Theme.statusGreen : Theme.textMuted
                                 font.family: Theme.fontFamilyMonospace
                                 font.pixelSize: Theme.fontSizeCaption
                                 font.weight: Theme.fontWeightBold
@@ -2098,14 +2098,14 @@ FocusScope {
                                 Layout.preferredHeight: 28
                                 Layout.preferredWidth: 80
                                 color: root.isPlaying ? Theme.surfaceSelected : (playMouse.containsMouse ? Theme.surfaceHover : "transparent")
-                                border.color: root.isPlaying ? Theme.acidGreen : (playMouse.containsMouse ? Theme.accent : Theme.borderMuted)
+                                border.color: root.isPlaying ? Theme.statusGreen : (playMouse.containsMouse ? Theme.accent : Theme.borderMuted)
                                 border.width: Theme.borderWidth
                                 radius: Theme.radiusSmall
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: root.isPlaying ? "PAUSE" : "PLAY"
-                                    color: root.isPlaying ? Theme.acidGreen : (playMouse.containsMouse ? Theme.accent : Theme.textSecondary)
+                                    color: root.isPlaying ? Theme.statusGreen : (playMouse.containsMouse ? Theme.accent : Theme.textSecondary)
                                     font.family: Theme.fontFamilyMonospace
                                     font.pixelSize: Theme.fontSizeCaption
                                     font.weight: Theme.fontWeightBold
@@ -2173,7 +2173,7 @@ FocusScope {
                                     Layout.preferredHeight: root.isPlaying
                                         ? Math.max(3, Math.round((Math.sin((matrixEqBar.index * 0.8) + root.visualizerPhase) * 0.4 + 0.5) * 14))
                                         : 2
-                                    color: root.isPlaying ? Theme.acidGreen : Theme.gray600
+                                    color: root.isPlaying ? Theme.statusGreen : Theme.gray600
                                     radius: 1
                                 }
                             }
