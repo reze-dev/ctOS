@@ -26,9 +26,27 @@ FocusScope {
     readonly property bool isOpen:
         OverlayController.activeSurface === OverlayController.Surface.CommandCenter
 
-    // Which card to expand when the panel opens. Empty means "whatever was
-    // already open", so reopening does not reset the user's place.
+    // Which card a sub-surface request asked for ("power", "wifi"). Applied on
+    // open and then cleared, so it does not keep overriding the user's own
+    // expand and collapse afterwards.
     property string requestedCard: ""
+
+    // Cards default to open: the design shows the whole panel at once, and these
+    // bodies are sized to fit. Assignment rather than binding, because Card
+    // owns its own expanded state.
+    function applyRequestedCard(): void {
+        if (requestedCard === "")
+            return;
+
+        if (requestedCard === "notifications")      cardNotifications.expanded = true;
+        else if (requestedCard === "wifi")         cardConnectivity.expanded = true;
+        else if (requestedCard === "bluetooth")    cardBluetooth.expanded = true;
+        else if (requestedCard === "audio")        cardAudio.expanded = true;
+        else if (requestedCard === "power")        cardPower.expanded = true;
+        else if (requestedCard === "calendar")     cardCalendar.expanded = true;
+
+        requestedCard = "";
+    }
 
     implicitHeight: Math.min(Theme.commandCenterMaxHeight,
                              Theme.paddingXl * 2 + root.gridHeight)
@@ -51,6 +69,7 @@ FocusScope {
                 return;
 
             root.forceActiveFocus();
+            root.applyRequestedCard();
 
             // A sub-surface request (power menu, wifi rail) opens the panel with
             // the matching card already expanded.
@@ -107,10 +126,6 @@ FocusScope {
                     icon: "bell"
                     accent: Theme.accentBlue
                     collapsible: true
-                    expanded: root.requestedCard === "notifications"
-                        || root.requestedCard === ""
-                    onHeaderClicked: root.requestedCard =
-                        root.requestedCard === "notifications" ? "" : "notifications"
 
                     action: Component {
                         ToggleSwitch {
@@ -364,7 +379,6 @@ FocusScope {
                     icon: "wifi"
                     accent: Theme.accentBlue
                     collapsible: true
-                    expanded: root.requestedCard === "wifi"
 
                     action: Component {
                         ToggleSwitch {
@@ -381,7 +395,6 @@ FocusScope {
                     icon: "bluetooth"
                     accent: Theme.accentBlue
                     collapsible: true
-                    expanded: root.requestedCard === "bluetooth"
 
                     action: Component {
                         ToggleSwitch {
@@ -398,7 +411,6 @@ FocusScope {
                     icon: "speaker"
                     accent: Theme.accentBlue
                     collapsible: true
-                    expanded: root.requestedCard === "audio"
                 }
             }
 
@@ -413,10 +425,245 @@ FocusScope {
                     id: cardPower
                     width: parent.width
                     title: qsTr("Power & Session")
+                    subtitle: PowerService.isBatteryPresent
+                        ? Math.round(PowerService.percentage) + "%  "
+                          + (PowerService.isCharging ? qsTr("Charging") : PowerService.stateText)
+                        : ""
                     icon: "power"
                     accent: Theme.accentMagenta
                     collapsible: true
-                    expanded: root.requestedCard === "power"
+
+                    // Lock runs immediately -- it is reversible. The other three
+                    // end the session, so they ask first.
+                    readonly property var actions: [
+                        { key: "lock",      label: qsTr("Lock"),      glyph: "lock",   danger: false },
+                        { key: "logout",    label: qsTr("Logout"),    glyph: "logout", danger: false },
+                        { key: "reboot",    label: qsTr("Reboot"),    glyph: "reboot", danger: false },
+                        { key: "poweroff",  label: qsTr("Poweroff"),  glyph: "power",  danger: true }
+                    ]
+
+                    property string pendingAction: ""
+
+                    readonly property bool isConfirming: pendingAction !== ""
+
+                    function requestAction(key: string): void {
+                        if (key === "lock") {
+                            SessionService.executeAction(key);
+                        } else {
+                            root.pendingAction = key;
+                        }
+                    }
+
+                    // Label for the pending action, for the confirmation
+                    // prompt.
+                    //
+                    // Written as a lookup rather than inline
+                    // `actions.filter(...)[0]?.label`: QML's JavaScript engine
+                    // does not support optional chaining, and the failure is
+                    // silent -- the binding just evaluates to nothing and the
+                    // prompt renders with no question in it.
+                    function actionLabel(key: string): string {
+                        for (let i = 0; i < cardPower.actions.length; ++i) {
+                            if (cardPower.actions[i].key === key)
+                                return cardPower.actions[i].label;
+                        }
+                        return key;
+                    }
+
+                    function cancelConfirmation(): void {
+                        root.pendingAction = "";
+                    }
+
+                    function confirmAction(): void {
+                        const action = root.pendingAction;
+                        root.pendingAction = "";
+                        if (action !== "")
+                            SessionService.executeAction(action);
+                    }
+
+                    Keys.onEscapePressed: function (event) {
+                        if (cardPower.isConfirming) {
+                            event.accepted = true;
+                            cardPower.cancelConfirmation();
+                        }
+                    }
+
+                    contentComponent: Component {
+                        Item {
+                            width: parent ? parent.width : undefined
+                            implicitHeight: 76
+                            height: 76
+
+                            // Confirmation replaces the tiles rather than
+                            // stacking below them, so asking to power off does not
+                            // push the layout around underneath the question.
+                            Row {
+                                id: tileRow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                spacing: Theme.spacingSmall
+                                visible: !cardPower.isConfirming
+
+                                Repeater {
+                                    model: cardPower.actions
+                                    delegate: Rectangle {
+                                        id: tile
+                                        required property var modelData
+                                        width: (tileRow.width - Theme.spacingSmall * 3) / 4
+                                        height: 64
+                                        radius: Theme.radiusMedium
+
+                                        readonly property color tileColor:
+                                            modelData.danger ? Theme.destructive : Theme.surfaceElevated
+
+                                        color: modelData.danger
+                                            ? tileColor
+                                            : (tileHover.containsMouse ? Theme.surfaceHover : tileColor)
+                                        border.width: Theme.borderWidth
+                                        border.color: modelData.danger
+                                            ? tileColor
+                                            : (tileHover.containsMouse ? Theme.borderHover : Theme.border)
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
+                                        }
+
+                                        // Busy state: whichever action is running
+                                        // shows as disabled rather than allowing a
+                                        // second session command to be queued.
+                                        readonly property bool busy:
+                                            (modelData.key === "lock"      && SessionService.isLocking)
+                                         || (modelData.key === "logout"    && SessionService.isLoggingOut)
+                                         || (modelData.key === "reboot"    && SessionService.isRebooting)
+                                         || (modelData.key === "poweroff"  && SessionService.isPoweringOff)
+
+                                        opacity: tile.busy ? 0.5 : 1.0
+
+                                        GlyphIcon {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            anchors.top: parent.top
+                                            anchors.topMargin: Theme.spacingMedium
+                                            width: 20
+                                            height: 20
+                                            glyph: tile.modelData.glyph
+                                            color: tile.modelData.danger
+                                                ? Theme.textPrimary
+                                                : (tileHover.containsMouse ? Theme.textPrimary : Theme.textSecondary)
+                                        }
+
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            anchors.bottom: parent.bottom
+                                            anchors.bottomMargin: Theme.spacingSmall
+                                            text: tile.modelData.label
+                                            color: tile.modelData.danger
+                                                ? Theme.textPrimary
+                                                : (tileHover.containsMouse ? Theme.textPrimary : Theme.textSecondary)
+                                            font.family: Theme.fontFamilySans
+                                            font.pixelSize: Theme.fontSizeCaption
+                                            font.weight: Theme.fontWeightDemiBold
+                                        }
+
+                                        MouseArea {
+                                            id: tileHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            enabled: !tile.busy
+                                            onClicked: cardPower.requestAction(tile.modelData.key)
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Confirmation row. The question is anchored left
+                            // and the buttons right, rather than sharing a Row,
+                            // so the label can take whatever width is left over
+                            // instead of guessing the buttons' width.
+                            Item {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                height: 64
+                                visible: cardPower.isConfirming
+
+                                Text {
+                                    id: confirmLabel
+                                    anchors.left: parent.left
+                                    anchors.right: confirmButtons.left
+                                    anchors.rightMargin: Theme.spacingMedium
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: cardPower.actionLabel(cardPower.pendingAction) + "?"
+                                    color: Theme.destructive
+                                    font.family: Theme.fontFamilySans
+                                    font.pixelSize: Theme.fontSizeBody
+                                    font.weight: Theme.fontWeightDemiBold
+                                    elide: Text.ElideRight
+                                }
+
+                                Row {
+                                    id: confirmButtons
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: Theme.spacingSmall
+
+                                    Rectangle {
+                                        width: 84
+                                        height: 40
+                                        radius: Theme.radiusMedium
+                                        color: cancelHover.containsMouse ? Theme.surfaceHover : "transparent"
+                                        border.width: Theme.borderWidth
+                                        border.color: Theme.border
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: qsTr("Cancel")
+                                            color: Theme.textSecondary
+                                            font.family: Theme.fontFamilySans
+                                            font.pixelSize: Theme.fontSizeSmall
+                                        }
+
+                                        MouseArea {
+                                            id: cancelHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: cardPower.cancelConfirmation()
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 84
+                                        height: 40
+                                        radius: Theme.radiusMedium
+                                        color: confirmHover.containsMouse
+                                               ? Qt.lighter(Theme.destructive, 1.15)
+                                               : Theme.destructive
+                                        border.width: Theme.borderWidth
+                                        border.color: Theme.destructive
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: qsTr("Confirm")
+                                            color: Theme.textPrimary
+                                            font.family: Theme.fontFamilySans
+                                            font.pixelSize: Theme.fontSizeSmall
+                                            font.weight: Theme.fontWeightDemiBold
+                                        }
+
+                                        MouseArea {
+                                            id: confirmHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: cardPower.confirmAction()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Card {
@@ -426,7 +673,6 @@ FocusScope {
                     icon: "calendar"
                     accent: Theme.accentBlue
                     collapsible: true
-                    expanded: root.requestedCard === "calendar"
                 }
 
                 Card {

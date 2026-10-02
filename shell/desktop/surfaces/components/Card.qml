@@ -19,6 +19,10 @@ Item {
 
     property string title: ""
 
+    // Optional dim second line in the header, for the card's headline state
+    // rather than a value that belongs in the body.
+    property string subtitle: ""
+
     // Semantic glyph name, resolved by GlyphIcon. Empty hides the tile.
     property string icon: ""
 
@@ -33,8 +37,10 @@ Item {
 
     property Component contentComponent: null
 
-    // Disclosure state. A card with no collapsible body simply leaves these
-    // alone -- expanded defaults true, so read-only cards need no thought.
+    // Disclosure state. A card owns this and toggles it itself on a header
+    // click; callers should not bind it, because a binding here is silently
+    // destroyed by that first click. To open a card programmatically, assign to
+    // it after construction rather than binding.
     property bool collapsible: false
     property bool expanded: true
 
@@ -106,19 +112,36 @@ Item {
             }
         }
 
-        Text {
-            id: titleText
+        // Title, with an optional dim second line for state ("85% - Charging").
+        Column {
+            id: titleStack
             anchors.left: iconTile.right
             anchors.leftMargin: root.icon !== "" ? Theme.spacingMedium : Theme.cardPadding
             anchors.right: trailing.left
             anchors.rightMargin: Theme.spacingSmall
             anchors.verticalCenter: parent.verticalCenter
-            text: root.title
-            color: Theme.textPrimary
-            font.family: Theme.fontFamilySans
-            font.pixelSize: Theme.fontSizeBody
-            font.weight: Theme.fontWeightDemiBold
-            elide: Text.ElideRight
+            spacing: 1
+
+            Text {
+                id: titleText
+                width: parent.width
+                text: root.title
+                color: Theme.textPrimary
+                font.family: Theme.fontFamilySans
+                font.pixelSize: Theme.fontSizeBody
+                font.weight: Theme.fontWeightDemiBold
+                elide: Text.ElideRight
+            }
+
+            Text {
+                width: parent.width
+                visible: root.subtitle !== ""
+                text: root.subtitle
+                color: Theme.textSecondary
+                font.family: Theme.fontFamilySans
+                font.pixelSize: Theme.fontSizeCaption
+                elide: Text.ElideRight
+            }
         }
 
         // Trailing slot: the chevron when collapsible, otherwise whatever the
