@@ -2,8 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Mpris
 import "../core"
 import "../services"
@@ -140,31 +138,6 @@ FocusScope {
         loops: Animation.Infinite
         running: root.isOpen && panelContainer.expandedAccordion === "audio" && root.isPlaying && !Settings.reducedMotion
     }
-
-    Process {
-        id: lockProcess
-        command: ["loginctl", "lock-session"]
-        running: false
-    }
-
-    Process {
-        id: logoutProcess
-        command: ["hyprctl", "dispatch", "exit"]
-        running: false
-    }
-
-    Process {
-        id: rebootProcess
-        command: ["systemctl", "reboot"]
-        running: false
-    }
-
-    Process {
-        id: poweroffProcess
-        command: ["systemctl", "poweroff"]
-        running: false
-    }
-
 
     property string confirmationAction: ""
     readonly property bool isConfirming: confirmationAction !== ""
@@ -2337,7 +2310,10 @@ FocusScope {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     hoverEnabled: true
-                                    onClicked: lockProcess.running = true
+                                    onClicked: {
+                                        OverlayController.close();
+                                        SessionService.lock();
+                                    }
                                 }
                             }
 

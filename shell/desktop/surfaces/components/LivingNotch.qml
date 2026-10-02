@@ -725,7 +725,6 @@ Item {
                     onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
                     onExited: { hoverDebounceTimer.restart(); }
                     onClicked: {
-                        OverlayController.openCommandDeck();
                         root.openCommandDeckRequested();
                     }
                     onWheel: (wheel) => {
@@ -946,7 +945,6 @@ Item {
                     onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
                     onExited: { hoverDebounceTimer.restart(); }
                     onClicked: {
-                        OverlayController.toggleCommandCenter();
                         root.toggleCommandCenterRequested();
                     }
                     onWheel: (wheel) => {
@@ -1034,7 +1032,6 @@ Item {
                     onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
                     onExited: { hoverDebounceTimer.restart(); }
                     onClicked: {
-                        OverlayController.toggleCommandCenter();
                         root.toggleCommandCenterRequested();
                     }
                     onWheel: (wheel) => {
@@ -1135,7 +1132,6 @@ Item {
                     root.isExpanded = false;
                 } else if (root.notchState === "compact") {
                     root.closeCalendar();
-                    OverlayController.toggleCommandCenter();
                     root.toggleCommandCenterRequested();
                 }
             }
