@@ -144,6 +144,16 @@ Singleton {
     readonly property string fontFamilyFallback: "monospace"
     readonly property string fontFamilyMonospace: "Maple Mono"
 
+    // UI text is set in a proportional sans; the mono face is for data only
+    // (clocks, counters, throughput, timestamps).
+    //
+    // The design uses a proportional face for anything a person reads as a
+    // label and reserves the mono face for numbers that must line up in a
+    // column. Setting labels in mono is legible but reads as a terminal, which
+    // is the difference between the panel looking finished and looking like
+    // diagnostics output.
+    readonly property string fontFamilySans: "Inter"
+
     readonly property int fontSizeBody: 14
     readonly property int fontSizeCaption: 11
     readonly property int fontSizeDisplay: 36
@@ -245,7 +255,16 @@ Singleton {
     readonly property int commandCenterMaxHeight: 620
 
     readonly property int commandCenterColumnGutter: 12
+
+    // Card chrome. The section radius was defined here from the start and then
+    // never applied -- the CCC was still drawing its cards at radiusSmall.
     readonly property int commandCenterSectionRadius: 12
+    readonly property int cardPadding: 12
+    readonly property int cardIconTile: 24
+
+    // Hovered card border. Cards lift by their border rather than by their fill,
+    // so the hover reads without the tile shifting colour under the text.
+    readonly property color borderHover: root.accentBlue
 
     readonly property int calendarWidth: 1080
     readonly property int calendarHeight: 600
