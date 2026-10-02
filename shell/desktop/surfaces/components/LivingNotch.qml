@@ -346,6 +346,8 @@ Item {
     // =========================================================================
     SystemClock {
         id: systemClock
+        // Plural form, not Qt's documented "SecondPrecision": the documented
+        // names resolve to undefined on this Qt. See CalendarPopup.qml.
         precision: SystemClock.Seconds
     }
 

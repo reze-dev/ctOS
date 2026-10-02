@@ -55,6 +55,8 @@ Rectangle {
 
     SystemClock {
         id: systemClock
+        // Plural form, not Qt's documented "MinutePrecision": the documented
+        // names resolve to undefined on this Qt. See CalendarPopup.qml.
         precision: SystemClock.Minutes
     }
 

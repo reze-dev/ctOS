@@ -10,6 +10,8 @@ Item {
 
     SystemClock {
         id: clock
+        // Plural form, not Qt's documented "SecondPrecision": the documented
+        // names resolve to undefined on this Qt.
         precision: SystemClock.Seconds
     }
 
