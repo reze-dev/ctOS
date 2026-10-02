@@ -11,8 +11,18 @@ Singleton {
     // Public Interface Contract
     // =========================================================================
 
-    // Backend health indicator (true when procfs files are accessible)
-    property bool available: true
+    // Backend health indicator (true when procfs files are accessible).
+    //
+    // Derived from consecutive read failures rather than assigned directly: the
+    // sampler is gated on this property, so setting it false on the first
+    // failure stopped the timer that would have produced the recovery, and the
+    // shell stayed permanently offline after one transient error.
+    readonly property bool available: _consecutiveFailures < maxConsecutiveFailures
+
+    // Tolerance for transient procfs read errors before reporting offline.
+    readonly property int maxConsecutiveFailures: 3
+    property int _consecutiveFailures: 0
+    property bool _warnedUnavailable: false
 
     // CPU Telemetry: per-thread utilization [0.0, 1.0] and aggregate [0.0, 1.0]
     property list<real> cpuThreadLoads: []
@@ -57,7 +67,9 @@ Singleton {
     Timer {
         id: sampleTimer
         interval: root.refreshInterval
-        running: root.available
+        // Runs regardless of availability: the sampler is what re-probes, so
+        // gating it on the health flag it maintains is circular.
+        running: true
         repeat: true
         onTriggered: root.refresh()
     }
@@ -70,35 +82,53 @@ Singleton {
         id: statFile
         path: "/proc/stat"
         printErrors: false
-        onLoaded: root._parseCpuStat(statFile.text())
-        onLoadFailed: function (error) {
-            root.available = false;
+        onLoaded: {
+            root._recordSuccess();
+            root._parseCpuStat(statFile.text());
         }
+        onLoadFailed: root._recordFailure()
     }
 
     FileView {
         id: memFile
         path: "/proc/meminfo"
         printErrors: false
-        onLoaded: root._parseMemInfo(memFile.text())
-        onLoadFailed: function (error) {
-            root.available = false;
+        onLoaded: {
+            root._recordSuccess();
+            root._parseMemInfo(memFile.text());
         }
+        onLoadFailed: root._recordFailure()
     }
 
     FileView {
         id: netFile
         path: "/proc/net/dev"
         printErrors: false
-        onLoaded: root._parseNetDev(netFile.text())
-        onLoadFailed: function (error) {
-            root.available = false;
+        onLoaded: {
+            root._recordSuccess();
+            root._parseNetDev(netFile.text());
         }
+        onLoadFailed: root._recordFailure()
     }
 
     // =========================================================================
     // Public Methods
     // =========================================================================
+
+    function _recordFailure(): void {
+        _consecutiveFailures++;
+        if (!root.available && !root._warnedUnavailable) {
+            _warnedUnavailable = true;
+            console.warn("[SystemMonitorService] procfs unreadable after "
+                + root._consecutiveFailures + " consecutive attempts; telemetry offline. "
+                + "Last known values are retained.");
+        }
+    }
+
+    function _recordSuccess(): void {
+        _consecutiveFailures = 0;
+        _warnedUnavailable = false;
+    }
 
     function refresh(): void {
         statFile.reload();
