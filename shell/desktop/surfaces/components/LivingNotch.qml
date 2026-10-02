@@ -15,6 +15,13 @@ Item {
     // Public Contract
     // =========================================================================
     property string monitorName: ""
+    // Detail level. Idle is one line: clock, glyphs, no numbers. The design's
+    // expanded state "breathes open with more details" -- a date line, seconds
+    // on the clock, and a percentage under each indicator glyph. Carrying all of
+    // that in the idle bar too is part of why it needed 470px to stop wrapping.
+    readonly property bool showDetail:
+        root.isCommandCenterOpen || root.notchState === "hover"
+
     readonly property bool isCommandCenterOpen: OverlayController.activeSurface === OverlayController.Surface.CommandCenter
     readonly property real currentWidth: root.width
     readonly property real currentHeight: root.height
@@ -40,7 +47,9 @@ Item {
 
     // State Dimensions
     readonly property real compactWidth: Theme.notchWidthCompact
-    readonly property real hoverWidth: 320
+    // Hover adds the date line and the indicator percentages on top of the idle
+    // row, so it needs more room, but not twice as much.
+    readonly property real hoverWidth: 620
     readonly property real mediaWidth: 280
     readonly property real notificationWidth: 320
     readonly property real calendarWidth: 360
@@ -526,13 +535,15 @@ Item {
         // down to caption size.
         Item {
             Layout.preferredWidth: Math.max(dateText.implicitWidth, timeText.implicitWidth)
-            Layout.preferredHeight: timeText.implicitHeight + dateText.implicitHeight + 2
+            Layout.preferredHeight: timeText.implicitHeight
+                + (root.showDetail ? dateText.implicitHeight + 2 : 0)
             Layout.alignment: Qt.AlignVCenter
 
             Text {
                 id: dateText
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
+                visible: root.showDetail
                 text: Qt.formatDateTime(systemClock.date, "ddd dd MMM").toUpperCase()
                 color: Theme.textSecondary
                 font.family: Theme.fontFamilySans
@@ -544,7 +555,8 @@ Item {
                 id: timeText
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Qt.formatDateTime(systemClock.date, "HH:mm:ss")
+                text: Qt.formatDateTime(systemClock.date,
+                        root.showDetail ? "HH:mm:ss" : "HH:mm")
                 color: Theme.textPrimary
                 font.family: Theme.fontFamilyMonoNumeric
                 font.pixelSize: Theme.fontSizeBody
@@ -599,6 +611,7 @@ Item {
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
+                    visible: root.showDetail
                     text: NetworkService.signalStrength > 0
                         ? Math.round(NetworkService.signalStrength * 100) + "%"
                         : ""
@@ -624,6 +637,7 @@ Item {
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
+                    visible: root.showDetail
                     text: AudioService.muted ? "M" : Math.round(AudioService.volume * 100) + "%"
                     color: Theme.statusGreen
                     font.family: Theme.fontFamilyMonoNumeric
@@ -647,6 +661,7 @@ Item {
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
+                    visible: root.showDetail
                     text: Math.round(PowerService.percentage) + "%"
                     color: Theme.statusGreen
                     font.family: Theme.fontFamilyMonoNumeric

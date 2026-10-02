@@ -584,6 +584,17 @@ Scope {
         }
     }
 
+    // Surfaces that render *inside* the scrim host and so need it.
+    //
+    // The command centre is not one of them: it is a child of AmbientBar on the
+    // Top layer, which is below this window's Overlay layer. Gating this host on
+    // isOverlayActive therefore raised a full-screen scrim, with a full-screen
+    // MouseArea, directly over the command centre -- dimming it and swallowing
+    // every click aimed at it.
+    readonly property bool scrimHostedSurfaces:
+        OverlayController.activeSurface === OverlayController.Surface.CommandDeck
+        || OverlayController.activeSurface === OverlayController.Surface.RadialSettings
+
     PanelWindow {
         id: overlayHost
 
@@ -595,9 +606,9 @@ Scope {
         }
 
         color: "transparent"
-        visible: OverlayController.isOverlayActive && overlayHost.screen !== null
+        visible: root.scrimHostedSurfaces && overlayHost.screen !== null
 
-        WlrLayershell.keyboardFocus: OverlayController.isOverlayActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: root.scrimHostedSurfaces ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "ctos-overlay"
 

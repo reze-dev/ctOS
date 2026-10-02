@@ -241,7 +241,12 @@ Singleton {
     // The notch's resting height is user-configurable and lives in Settings,
     // not here. Theme holds design tokens; a value the user can change does not
     // belong in a token table. Consumers read Settings.barHeight directly.
-    readonly property int notchWidthCompact: 220
+    // The idle notch carries the hexagon, five numbered workspace pills, a
+    // divider, the clock, a second divider and the indicator glyphs -- all on
+    // one line, per the design. At the old 220px the RowLayout compressed every
+    // child to fit and the text wrapped to one character per line, which is what
+    // the closed notch looked like.
+    readonly property int notchWidthCompact: 470
     readonly property int notchHeightExpanded: 60
 
     // CCC accordion header height. Deliberately independent of the notch
