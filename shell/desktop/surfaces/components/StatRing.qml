@@ -26,14 +26,19 @@ Item {
     property string valueText: ""
     property string caption: ""
 
-    // Text colour sits outside the Canvas: Canvas text would be unselectable,
-    // unstyled by the font tokens, and would have to be redrawn on every
-    // telemetry tick along with the arc.
-    readonly property color valueColor:
-        !SystemMonitorService.available ? Theme.textDisabled : Theme.textPrimary
+    // Colour of the percentage in the middle. Defaults to the arc's own colour
+    // so a ring and its number cannot disagree: the design sets each percentage
+    // in the colour of its arc, and a neutral grey number next to a coloured arc
+    // reads as two unrelated facts.
+    property color valueColor: ringColor
+
+    // Falls back to a muted tone when the sampler is offline, so a dead ring is
+    // visibly dead rather than confidently reporting zero.
+    readonly property color effectiveValueColor:
+        SystemMonitorService.available ? root.valueColor : Theme.textDisabled
 
     implicitWidth: 56
-    implicitHeight: caption !== "" ? 76 : 58
+    implicitHeight: caption !== "" ? 78 : 60
 
     // Real sizes, not just implicit ones. Row and Flow measure themselves from
     // their children's *height*, not from child implicitHeight, so a StatRing
@@ -46,6 +51,8 @@ Item {
         id: ring
         width: Math.min(56, root.width)
         height: width
+        anchors.top: captionText.visible ? captionText.bottom : parent.top
+        anchors.topMargin: Theme.spacingSmall
         antialiasing: true
 
         onPaint: {
@@ -90,23 +97,29 @@ Item {
         }
     }
 
+    // Caption above the ring. The design treats CPU / Memory / Disk as column
+    // headers with their rings beneath, which also puts the number nearest the
+    // label it belongs to.
     Text {
-        anchors.centerIn: ring
-        text: root.valueText
-        color: root.valueColor
-        font.family: Theme.fontFamilyMonospace
-        font.pixelSize: Theme.fontSizeCaption
-        font.weight: Theme.fontWeightBold
-    }
-
-    Text {
-        anchors.top: ring.bottom
-        anchors.topMargin: Theme.spacingSmall
+        id: captionText
+        anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
         text: root.caption
         visible: root.caption !== ""
         color: Theme.textSecondary
-        font.family: Theme.fontFamilyMonospace
+        font.family: Theme.fontFamilySans
+        font.pixelSize: Theme.fontSizeCaption
+        font.weight: Theme.fontWeightDemiBold
+        elide: Text.ElideRight
+    }
+
+    Text {
+        anchors.centerIn: ring
+        text: root.valueText
+        color: root.effectiveValueColor
+        font.family: Theme.fontFamilyMonoNumeric
         font.pixelSize: Theme.fontSizeCaption
         font.weight: Theme.fontWeightBold
     }

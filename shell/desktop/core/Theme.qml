@@ -154,6 +154,10 @@ Singleton {
     // diagnostics output.
     readonly property string fontFamilySans: "Inter"
 
+    // Monospaced digits, so a percentage ticking from 9% to 10% does not shift
+    // the ring's label sideways every second.
+    readonly property string fontFamilyMonoNumeric: "Maple Mono"
+
     readonly property int fontSizeBody: 14
     readonly property int fontSizeCaption: 11
     readonly property int fontSizeDisplay: 36
