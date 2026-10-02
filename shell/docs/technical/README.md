@@ -4,11 +4,14 @@ These documents turn the approved design into an implementation baseline. They a
 
 | Document | Purpose |
 | --- | --- |
-| [Repository audit](repository-audit.md) | Current codebase inventory, reusable assets, constraints, and migration risks. |
 | [Technical decision log](decision-log.md) | Accepted implementation decisions and deferred decisions. |
-| [Delivery tracker](delivery-tracker.md) | Ordered milestones, definition of done, and the current implementation state. |
+| [Delivery tracker](delivery-tracker.md) | Ordered phases, definition of done, and the current implementation state. |
 | [Validation strategy](validation-strategy.md) | Checks and manual acceptance evidence required for each milestone. |
 | [Engineering guidelines](engineering-guidelines.md) | Rules for implementing ctOS without coupling, unsafe runtime behavior, or undocumented scope growth. |
+
+The design target these implement is [`../target/`](../target/README.md). The
+pre-Nix repository audit was removed: it described a `bar.qml` prototype layout
+that no longer exists.
 
 ## Update rules
 

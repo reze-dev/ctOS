@@ -22,7 +22,7 @@ Instead of relying on bloated desktop environments or a mishmash of uncoordinate
 
 ### // KEY FEATURES
 
-- `[+]` **Custom Quickshell Desktop** — Includes a massive `SystemRail` for hardware/session controls, an `AmbientBar`, and an instantaneous `CommandDeck` runner.
+- `[+]` **Custom Quickshell Desktop** — A single unified Living Notch that breathes open on hover and unfolds into an Adaptive Command & Control Center, plus an instantaneous `CommandDeck` runner.
 - `[+]` **Immersive Greetd Login** — A fully custom graphical login screen featuring a hacker boot sequence and glitch shaders.
 - `[+]` **Wayland Compositors** — Highly-tuned, modular integrations for both **Hyprland** and **Niri**.
 - `[+]` **Performance Optimized** — The QML shell is heavily optimized: surfaces are kept in RAM, Javascript search models are pre-computed, and aggressive background logging is disabled for a snappy UX.
@@ -77,12 +77,19 @@ ctOS/
 │   └── terminals/             # Kitty, Ghostty
 │
 ├── shell/                     # The ctOS Quickshell Desktop Environment
-│   ├── desktop/               # QML Surfaces (CommandDeck, SystemRail, AmbientBar)
-│   ├── greeter/               # Custom Greetd login screen
-│   └── common/                # Shared QML singletons, loggers, and services
+│   ├── shell.qml              # Desktop entry point; owns every PanelWindow
+│   ├── desktop/               # QML: core (tokens, overlay, settings), services,
+│   │                          #   adapters (hyprland), surfaces (notch, CCC)
+│   ├── greeter/               # Custom Greetd login screen (separate boundary)
+│   ├── docs/target/           # Authoritative design spec + reference images
+│   └── nix/                   # package.nix + Home Manager module
+│
+├── tests/                     # QML e2e harnesses (not yet in `nix flake check`)
 │
 └── assets/                    # GRUB themes, Plymouth splashes, SVG iconography
 ```
+
+See [`shell/docs/target/`](shell/docs/target/) for the shell design specification.
 
 ---
 

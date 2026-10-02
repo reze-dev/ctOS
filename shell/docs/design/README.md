@@ -1,30 +1,42 @@
 # ctOS design package
 
-This directory is the source of truth for the ctOS desktop-shell redesign. It describes the intended product before implementation so that feature work can be evaluated against the same decisions.
+Product and structural intent for the desktop shell.
+
+**The visual and behavioural target is [`../target/`](../target/README.md).**
+Where these documents and the target disagree, the target is correct.
 
 | Document | Purpose |
 | --- | --- |
-| [Vision](vision.md) | Product identity, visual grammar, scope, and accessibility rules. |
-| [Interaction specification](interaction-spec.md) | Surface behavior, input model, shortcuts, and state transitions. |
-| [Architecture](architecture.md) | Runtime boundaries, data flow, services, and failure behavior. |
+| [Target specification](../target/README.md) | Authoritative design: images, geometry, colour, behaviour, implementation order. |
+| [Vision](vision.md) | Product identity, visual grammar, scope. |
+| [Interaction specification](interaction-spec.md) | Input routing, state machines, session safety. |
+| [Architecture](architecture.md) | Runtime boundaries, single-surface hosting, service contract. |
 | [Nix integration](nix-module.md) | Flake/Home Manager packaging and configuration contract. |
 
 Implementation-facing material lives in the sibling [technical package](../technical/README.md).
 
-## Locked v1 decisions
+## Locked decisions
 
 - ctOS is a personal, NixOS-first Quickshell rice.
 - Hyprland is the only supported compositor in v1.
-- The desktop is minimal by default; ctOS’s rich visual language is reserved for on-demand panels.
-- The shell uses a fixed dark ctOS-inspired theme, not dynamic wallpaper theming.
-- The current greeter and lockscreen are preserved and packaged, not redesigned.
-- The primary public integration is a Home Manager module exported from a flake-parts-organized flake.
+- **The notch is the only top-edge surface.** No tray, no second bar.
+- The CCC is the notch unfolding, hosted in the notch's own window — not a
+  separate panel or popup.
+- The shell uses a fixed dark navy/neon theme defined in
+  [`../target/colors.md`](../target/colors.md). No dynamic wallpaper theming.
+- The greeter and lockscreen are preserved and packaged, not redesigned.
+- The primary public integration is a Home Manager module exported from a
+  flake-parts-organized flake.
 
-Deferred work is intentionally not an implicit v1 commitment: Niri, overview, file search, clipboard history, screenshot/recording controls, dynamic theming, and a full media panel.
+## Known divergences
 
-## Future Enhancements (v2 Roadmap)
-- **Network / Wi-Fi Popup**: A drop-down to list and connect to specific SSIDs.
-- **Audio Mixer & Sink Selector**: A drop-down to switch audio output devices and control microphone input volume/mute.
-- **Clipboard History Manager**: A utility surface to track and paste recent clipboard copies.
-- **Power Profile Manager**: A drop-down attached to the Battery widget to toggle system power states (Performance, Balanced, Power-Saver).
-- **Packet Analyzer Widget**: A live scrolling stream of network traffic (powered by `tshark`) to provide a real-time tactical overview of network activity.
+Tracked so they are not mistaken for oversights:
+
+- `programs.ctOS` exposes only `enable`. The contract in
+  [nix-module.md](nix-module.md) is unimplemented, and no module generates
+  `settings.json`.
+- `Theme.barHeight` (36) and `Settings.barHeight` (32) disagree. Being
+  reconciled.
+- The shipped keybinding for `Super+Space` opens the Command Deck, not the CCC.
+- Brightness and power-profile services described in earlier revisions of the
+  architecture document do not exist and are not in scope.

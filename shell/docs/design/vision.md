@@ -1,54 +1,68 @@
-# ctOS desktop shell — vision
+# ctOS shell — vision
 
 ## Product statement
 
-**ctOS is a calm Wayland desktop that reveals a live operations interface when summoned.** It is a personal NixOS/Hyprland rice built with Quickshell. It takes inspiration from ctOS’s interface grammar—machine identity, terse signals, grids, segmented controls, and verification states—without reproducing game screens or claiming affiliation.
-
-The desktop must remain pleasant to use for long work sessions. Visual spectacle is an interaction response, not permanent background noise.
-
-## Audience and platform
-
-- Primary audience: the maintainer’s personal NixOS configuration.
-- Runtime target: NixOS with Hyprland and Wayland.
-- Input target: keyboard-first, with every v1 interaction also usable by mouse.
-- Development hosts may differ from NixOS; they are not supported deployment targets.
+**ctOS is a calm Wayland desktop whose entire top surface is one shape that
+changes according to what you are doing.** A single notch rests at the top of
+every output, breathes open on hover, and unfolds into a full command centre on
+click. There is no other bar, no tray, and no cluster of independent popups.
 
 ## Experience model
 
-| Layer | Purpose | Visual intensity |
+| State | Surface | Intensity |
 | --- | --- | --- |
-| Ambient | Bar, state indicators, OSDs, brief notification toasts | Quiet, low contrast, compact |
-| Utility | Command Deck, System Rail, Event Log | Functional panels with ctOS framing |
-| Immersive | Future overview and optional dashboard | Rich grid, telemetry, and staged motion |
+| Idle | 220 × 30 notch | quiet, near-black, one gradient edge |
+| Hover | 320 × 60 notch | adds a second content row |
+| Open | Command & Control Center | the working surface — dense on demand |
+| Deep | Calendar C | full-width, month + timeline |
 
-Only ambient and utility layers are included in v1. At rest, the user sees one thin bar per output and the wallpaper. All dense information is intentional and on demand.
+At rest the user sees a small pill and the wallpaper. Everything else is a
+consequence of an explicit action.
 
 ## Visual grammar
 
-- **Base:** near-black surfaces, subtle grid/noise, hairline dividers, square or minimally rounded geometry.
-- **Typography:** a legible monospace family for identifiers, values, and metadata; reserve large type for the active command/query, not decoration.
-- **Color:** neutral grayscale carries almost all content. Acid green means active, connected, verified, selected, or recording. Red means error, warning, or destructive action. Color never supplies meaning alone.
-- **Identity:** use neutral ctOS-inspired terms such as `NODE`, `SESSION`, `EVENT LOG`, and `COMMAND DECK`; avoid copied in-game text, layouts, or assets.
-- **Density:** labels are short and values are scannable. Details expand inside panels rather than crowding the bar.
-- **Wallpaper:** v1 ships a curated fixed dark wallpaper selection. Wallpaper-derived palettes are out of scope.
+- **Base:** deep navy, never neutral grey. Surfaces are `#050E1E` through
+  `#0A192C`; cards are `#061121`.
+- **Identity:** a single horizontal gradient — blue `#4695F6` → violet `#7362F5` →
+  magenta `#EB4ADF` — runs along the notch and CCC border. It is the shell's
+  signature and appears nowhere else at that weight.
+- **Meaning of colour:**
+  - magenta = active, selected, focused, today
+  - blue = interactive affordance, live value
+  - green = healthy, connected, positive **only**
+  - red = destructive **only**
+- Green is not the accent. This is the central change from the shell's previous
+  identity, where a single green meant everything at once.
+- **Typography:** monospace throughout. Large type is reserved for the clock and
+  active query, never decoration.
+- **Geometry:** stadium-shaped pill at rest; 12–16 px radii on cards; hairline
+  borders; generous internal padding.
+- **Glow:** present but restrained. A shell, not a nightclub.
 
-## Motion and accessibility
+## Motion
 
-- Opening a utility surface may use a short scan/assemble transition; closing is immediate or nearly immediate.
-- Motion communicates hierarchy and state only. It must not delay typing, clicking, or closing.
-- `reducedMotion` removes decorative scans, staggered content, and persistent noise while retaining essential focus/state changes.
-- All controls expose visible keyboard focus, accessible text labels/tooltips where useful, and readable contrast independent of green/red accents.
-- The shell must remain usable when a font, battery, network, media player, or optional backend is unavailable.
+Motion communicates state change only. Springs drive the notch on both axes with
+a slight overshoot; accordions interpolate height; content crossfades. No
+persistent ambient animation except a subtle NOW marker in Calendar C.
 
-## v1 outcome and non-goals
+Motion must never delay input. `reducedMotion` removes all of it.
 
-The v1 daily-driver experience consists of an ambient bar, Command Deck, System Rail, volume/brightness OSDs, native notifications with history, ambient playback state, and declarative packaging of the existing greeter.
+## Identity and originality
 
-V1 explicitly does not include Niri support, a window overview, clipboard history, file search, screenshot/recording workflows, dynamic theming, a media-control panel, or broad cross-distro support.
+The shell uses original terms and construction. It is inspired by the general
+grammar of tactical interfaces — terse labels, grids, segmented controls,
+verification states — without reproducing game screens, layouts, or assets, and
+without claiming affiliation.
 
-## Future Enhancements (v2 Roadmap)
-- **Network / Wi-Fi Popup**: A drop-down to list and connect to specific SSIDs.
-- **Audio Mixer & Sink Selector**: A drop-down to switch audio output devices and control microphone input volume/mute.
-- **Clipboard History Manager**: A utility surface to track and paste recent clipboard copies.
-- **Power Profile Manager**: A drop-down attached to the Battery widget to toggle system power states (Performance, Balanced, Power-Saver).
-- **Packet Analyzer Widget**: A live scrolling stream of network traffic (powered by `tshark`) to provide a real-time tactical overview of network activity.
+## Scope
+
+**In:** the unified notch, the CCC, Calendar C, Command Deck, notifications,
+session controls with confirmation, and declarative packaging including the
+existing greeter.
+
+**Out:** Niri support, window overview, clipboard history, file search, screenshot
+workflows, dynamic wallpaper theming, and any second top-edge surface.
+
+The radial settings skill tree and the floating desktop telemetry widgets predate
+this target and are retained unchanged. They are not part of the target design
+and their removal is a separate decision.

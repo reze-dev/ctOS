@@ -1,77 +1,85 @@
 # ctOS delivery tracker
 
-**Status key:** `done` = acceptance evidence exists; `active` = current focus; `todo` = not started; `blocked` = external dependency or decision prevents work.
+Replaces the previous T0–T8 milestone list, which described a bar-and-panel
+architecture that no longer exists. The plan now follows the implementation order
+in [`../target/neon-notch-spec.md`](../target/neon-notch-spec.md) §7.
 
-| Milestone | Status | Exit gate |
+**Status key:** `done` · `active` · `todo` · `blocked`
+
+## Phase A — Foundations
+
+| # | Item | Status |
 | --- | --- | --- |
-| T0 — Design baseline | done | Product, interaction, architecture, Nix, audit, technical decisions, and validation documents exist. |
-| T1 — Nix package and module | done | Flake evaluates; package builds; Home Manager module installs and starts the shell service. |
-| T2 — Shell foundation | todo | `shell.qml`, generated settings, design tokens, OverlayController, and per-output window lifecycle work. |
-| T3 — Hyprland ambient bar | todo | Reactive workspace/focused-window state and compact system state render on each output without UI-owned polling. |
-| T4 — Command Deck | todo | Keyboard/mouse application and action search satisfies the interaction specification. |
-| T5 — System Rail and OSDs | todo | Audio, mic, brightness, network, battery/power, and session confirmation work or degrade safely. |
-| T6 — Notifications and Event Log | todo | ctOS owns notification delivery, toast behavior, history, and do-not-disturb. |
-| T7 — Greeter packaging and documentation | active | Existing greeter is opt-in packageable and docs describe Nix activation/recovery without changing auth behavior. |
-| T8 — V1 acceptance | todo | All validation gates pass in the ctos NixOS/Hyprland configuration. |
+| A0 | Design baseline: target spec, colour system, reference images | done |
+| A1 | Reconcile `shell/docs/` with the target; delete superseded documents | done |
+| A2 | Fix CCC double-toggle so click → CCC actually opens | todo |
+| A3 | Route session actions through `SessionService`; delete duplicate `Process` objects | todo |
+| A4 | Delete dead code: `legacyCompatibilityLayer`, `DynamicIsland.qml`, duplicate calendar grids, orphan files | todo |
+| A5 | Rebase `Theme.qml` on the navy ramp; add neon tokens; keep legacy aliases | todo |
+| A6 | Reconcile `Theme.barHeight` / `Settings.barHeight` to one source of truth | todo |
 
-## T1 — Nix package and module
+A2 and A3 are small and unblock visual evaluation. A4 must land before Calendar C
+is built so the duplicated date math is not extended a third time.
 
-- [x] Create a flake-parts flake exporting a ctOS package and `homeManagerModules.default`.
-- [x] Define the initial `programs.ctOS` option skeleton from the Nix integration design.
-- [x] Package QML and resources with a stable `${package}/share/ctos` install path.
-- [x] Add a systemd user service for the desktop shell with bounded restart behavior.
-- [x] Add a minimal `shell.qml` smoke entry that starts without greeter imports.
-- [x] Record successful `nix flake check --no-build` and `nix build .#ctos-shell` evidence in the validation log.
-- [x] Add the declarative `awww` daemon and default bundled wallpaper service to the desktop profile.
+## Phase B — Notch
 
-T1 evidence (2026-09-02): `nix flake check --no-build` passed, `nix build .#ctos-shell` passed, and the built output contains `share/ctos/shell.qml`. Graphical service startup remains a manual acceptance step on the Hyprland host.
+| # | Item | Status |
+| --- | --- | --- |
+| B1 | Idle state re-skin: 220 × 30 stadium pill, gradient border, glow | todo |
+| B2 | Expanded state: 320 × 60, two-row date/time block, spring animation | todo |
+| B3 | `reducedMotion` honoured by every animating surface | todo |
+| B4 | Hover / CCC-open pin state machine — no flicker | todo |
 
-T7 progress (2026-09-02): the Makima host now opts into `ctos.features.greeter.enable`; evaluation confirms Greetd launches Cage and the packaged `greeter.qml`, with `/etc/ctos/greeter.config.json` generated declaratively. Live PAM authentication and Hyprland handoff were verified on the host (2026-09-03); recovery/documentation work remains.
+## Phase C — Command & Control Center
 
-Wallpaper progress (2026-09-03): the desktop profile starts `awww-daemon` and applies the bundled `wallpaper-v1.png` through a retrying user service. The initial systemd ordering cycle was fixed and the units now require a live host acceptance check.
+| # | Item | Status |
+| --- | --- | --- |
+| C1 | Single-surface hosting: CCC inside `AmbientBar`, window grows downward | todo |
+| C2 | Extend `flushWaylandMask()` to cover CCC bounds | todo |
+| C3 | Two-column layout, 760 px, content-driven height | todo |
+| C4 | Section: Notifications (count, DND, list, urgency) | todo |
+| C5 | Section: Power & Session (4 tiles, danger poweroff, inline confirmation) | todo |
+| C6 | Section: Audio (slider + media card with transport) | todo |
+| C7 | Section: Wi-Fi and Bluetooth | todo |
+| C8 | Section: System Status (CPU / Memory / Disk / Network) | blocked on A-scope: disk telemetry missing |
+| C9 | Context-aware priority expansion | todo |
 
-## T2 — Shell foundation
+C1 is the architectural keystone. Until the CCC is hosted in the notch's own
+window, the "one surface" requirement cannot be met regardless of layout work.
 
-- [ ] Create the `desktop/core`, `desktop/services`, `desktop/surfaces`, and `desktop/adapters/hyprland` boundaries.
-- [ ] Move or recreate generic design tokens without a greeter import.
-- [ ] Implement generated-settings loading and feature toggles.
-- [ ] Implement OverlayController ownership, focus handoff, `Escape`, and background-close behavior.
-- [ ] Implement per-output window creation and output-removal cleanup.
+## Phase D — Calendar C
 
-## T3 — Hyprland ambient bar
+| # | Item | Status |
+| --- | --- | --- |
+| D0 | Decide event backend | blocked — no decision recorded |
+| D1 | `CalendarService` with an `eventsForDate()` projection | todo |
+| D2 | Month grid: navigation, Today, gradient current-day marker, event dots | todo |
+| D3 | Day timeline: times, coloured segments, source, `⋮` menu, relative-time pill | todo |
+| D4 | NOW marker | todo |
+| D5 | `+ Add Event` | todo — may ship disabled until a write path exists |
 
-- [ ] Implement reactive Hyprland workspace and focused-window adapter state.
-- [ ] Implement per-output ambient bar layout and unavailable-state handling.
-- [ ] Implement audio, network, battery, time, and ambient MPRIS indicators.
-- [ ] Preserve wheel volume adjustment with safe bounds and mute behavior.
-- [ ] Remove desktop dependency on the prototype CPU/RAM polling loops.
+## Phase E — Hardening
 
-## T4 — Command Deck
+| # | Item | Status |
+| --- | --- | --- |
+| E1 | Services: capture `stderr`, handle `exited`, bound retries, log once on degrade | todo |
+| E2 | `SystemMonitorService`: fix the one-way `available` latch | todo |
+| E3 | `NetworkService`: stop passing Wi-Fi secrets as process arguments | todo |
+| E4 | `NetworkTracerService`: real `available` probe; stop defaulting `ss` on | todo |
+| E5 | DPI scale token in `Theme.qml`; retire absolute pixel literals | todo |
+| E6 | `programs.ctOS` generates `settings.json`; implement the documented contract | todo |
+| E7 | QML linting and execution wired into `nix flake check` / CI | todo |
+| E8 | `Settings.barHeight` no longer conflicts with the notch geometry | todo |
 
-- [ ] Implement shared action registry and launch contract.
-- [ ] Load/search desktop applications and built-in actions with specified ranking/grouping.
-- [ ] Implement keyboard focus, arrows, Enter, Escape, and equivalent mouse behavior.
-- [ ] Route destructive session results to confirmation instead of direct execution.
+`tests/` contains roughly 20,000 lines of QML e2e harness across four tiers and is
+entirely outside CI. A4 will invalidate a portion of it; E7 should follow so the
+remainder is actually exercised.
 
-## T5 — System Rail and OSDs
+## Out of scope
 
-- [ ] Implement right-rail routing for system controls and Event Log.
-- [ ] Implement PipeWire output/mic controls and compact volume OSD.
-- [ ] Implement brightness adapter/control/OSD with unavailable fallback.
-- [ ] Implement NetworkManager status/network selection without storing secrets.
-- [ ] Implement battery and power-profile state with unavailable fallback.
-- [ ] Implement lock and confirmed logout/reboot/power-off actions.
+Retained unchanged, not part of the target design:
 
-## T6 — Notifications and Event Log
+- Radial settings skill tree (`desktop/surfaces/radial/`)
+- Floating desktop telemetry widgets (`desktop/surfaces/widgets/`)
 
-- [ ] Claim/configure native notification ownership only when the feature is enabled.
-- [ ] Implement urgency-aware non-blocking toasts.
-- [ ] Implement session-local Event Log, dismiss-one, clear-all, and do-not-disturb.
-- [ ] Verify no duplicate notification daemon owns the session bus name.
-
-## T7–T8 — Release readiness
-
-- [x] Package the preserved greeter only behind its opt-in feature.
-- [ ] Update user-facing README/install guidance after the Nix path is proven.
-- [ ] Exercise all manual acceptance scenarios in the validation strategy.
-- [ ] Record known limitations and deferred features for the first usable release.
+Their removal is a separate decision.

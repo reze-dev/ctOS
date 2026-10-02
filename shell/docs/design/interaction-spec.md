@@ -1,61 +1,104 @@
-# ctOS v1 interaction specification
+# ctOS shell — interaction specification
 
-## Global behavior
+Visual target: [`../target/`](../target/README.md). Geometry, colour and section
+contents are specified there and are not repeated here. This document covers
+input routing, state transitions and safety rules.
 
-ctOS has one primary overlay at a time. Opening the Command Deck, System Rail, or Event Log closes another primary overlay first. A click on the desktop background or `Escape` closes the active overlay. Closing never discards a completed action or notification history.
+## One primary surface at a time
 
-The bar exists on each active output. Workspace and focused-window data correspond to that output where Hyprland exposes it; otherwise ctOS shows global focused state without fabricating per-monitor data.
+The notch is always present. On top of it, at most one of the following is open:
+Command Deck, CCC, Calendar C.
 
-Suggested default bindings are part of the Home Manager module and remain overridable:
+Opening one closes another. `Escape` and an outside click both close the active
+surface. Closing never discards notification history or a completed action.
+
+The Command Deck and the CCC are opened by **different** targets and must never be
+ambiguous:
+
+| Target | Opens |
+| --- | --- |
+| Notch **logo** | Command Deck |
+| Notch **body** (idle or expanded) | CCC |
+| Notch **clock** | Calendar C |
+| Notch **workspace slot** | switches workspace; does not open a surface |
+
+## Notch state machine
+
+```
+IDLE ──hover──► EXPANDED ──pointer leave──► IDLE
+  │                 │
+  └──click──► CCC_OPEN ──collapse / Esc / outside──► EXPANDED
+```
+
+`EXPANDED` and `CCC_OPEN` are mutually exclusive. While `CCC_OPEN`, pointer exit
+must not collapse the notch. Any implementation that lets hover-collapse and
+CCC-open run concurrently produces flicker — this has been regressed before and
+the pin is not optional.
+
+Notification arrival and media playback are *content* changes within the current
+state, not separate states. They do not alter the hover contract.
+
+## Output selection
+
+The CCC and Calendar C open on the output that was focused at the moment of the
+click. If that output disappears while the surface is open, the surface closes and
+state returns to the remaining desktop. No stale screen reference may keep a
+surface alive.
+
+## Input handling
+
+The notch changes size during hover, so pointer hit-testing must follow the
+*visible rounded pill*, not the item's rectangular bounds. A rectangular test
+re-triggers hover in the corners as the pill grows and produces a hover loop.
+
+- Hover is tracked with a `HoverHandler`, not a `MouseArea`. `MouseArea` both
+  consumes button events and reports hover, which conflicts with the button
+  routing the notch needs.
+- Button routing stays on a `MouseArea` placed behind the content, which rejects
+  presses outside the pill.
+- Clicking inside a surface must not be swallowed by the surface that dismisses
+  on outside click. Use a dismissal layer beneath the panel plus an accept
+  consumer inside it.
+- Wheel over the notch or CCC header adjusts volume in 5 % steps.
+
+## Keyboard
 
 | Action | Default binding |
 | --- | --- |
 | Toggle Command Deck | `Super` |
-| Toggle System Rail | `Super+Space` |
-| Toggle Event Log | `Super+N` |
+| Toggle CCC | `Super+Space` |
+| Toggle Calendar C | `Super+N` |
 | Lock session | `Super+L` |
 
-The module must avoid silently replacing a user binding; documented overrides and disabling generated bindings are supported.
+These are proposed defaults exposed through the Home Manager module and must be
+overridable without the module silently replacing a user binding. Note that
+`Super+Space` currently maps to `toggleCommandDeck` in the shipped config; that
+mapping must change to match this table.
 
-## Ambient bar
+Command Deck keyboard model: focus starts in the query field; arrows move
+selection; `Enter` activates; `Escape` closes. Mouse behaviour must match.
 
-The bar is a thin, low-contrast per-output panel. It shows:
+## Session safety
 
-- workspace state and the focused workspace;
-- focused application identity when it adds context;
-- compact network, output-volume, battery, and time state;
-- an active-media marker when an MPRIS player is playing.
-
-CPU, RAM, expanded network names, and detailed media controls do not remain visible. Clicking an actionable state opens its corresponding utility surface; scroll on the volume indicator adjusts output volume. Missing state is omitted or represented by an unambiguous unavailable indicator, never invented sample data.
-
-## Command Deck
-
-The centered Command Deck opens with focus already in its query field. It is a hybrid command palette:
-
-- normal text searches installed desktop applications;
-- built-in actions include opening ctOS surfaces, lock, and session actions;
-- arrow keys change selection, `Enter` activates it, and `Escape` closes the deck;
-- mouse selection and activation match keyboard behavior;
-- results are grouped as Applications and Actions, ordered by exact/prefix match then stable desktop-entry order;
-- no files, clipboard records, shell execution, or arbitrary command evaluation occur in v1.
-
-Launching an application or completing an action closes the Deck. Destructive session actions are routed to the System Rail confirmation step rather than executing directly from a search result.
-
-## System Rail and session safety
-
-The right-side System Rail contains output volume/mute, microphone volume/mute, brightness, Wi-Fi state and available networks, battery state, power profile, do-not-disturb, and session actions. It is a focused control surface, not a telemetry dashboard.
-
-- Audio and microphone support click mute and wheel/slider adjustment.
-- Brightness supports slider and hardware-key OSD adjustment where a brightness backend exists.
-- Wi-Fi shows its connected state and requests a connection only through the configured NetworkManager backend; secrets are never displayed or stored by ctOS.
-- Power-profile controls appear only when a power-profile backend is available.
 - **Lock** executes immediately.
-- **Logout**, **reboot**, and **power off** replace the action list with an explicit in-panel confirmation state. `Escape` or Cancel returns safely; Confirm executes the selected action.
+- **Logout**, **reboot** and **power off** replace the action row with an explicit
+  in-panel confirmation. `Escape` or Cancel returns safely.
+- Power off is the only element rendered in the danger colour.
+- All four go through `SessionService`. No surface may spawn the underlying
+  command itself.
 
-## Notifications, OSDs, and media
+## Notifications
 
-ctOS is the sole notification server when its notifications feature is enabled. Incoming notifications create a brief, non-blocking toast and an Event Log record. The Event Log opens in the right rail, supports dismiss-one and clear-all, and visually distinguishes urgency. Do-not-disturb suppresses toasts but retains history.
+ctOS is the notification server when the feature is enabled. An incoming
+notification creates a brief toast and a history record. Do-not-disturb suppresses
+toasts and retains history. Urgency is conveyed by icon tint and an edge stripe,
+not by recolouring text.
 
-Volume and brightness changes show compact, short-lived OSDs. OSDs never steal keyboard focus and are suppressed or simplified under reduced motion.
+## Accessibility
 
-When a player is actively playing, the bar shows an ambient title/player marker. V1 does not provide playback controls or a media panel.
+`Settings.reducedMotion` collapses all durations and disables springs. Every
+surface must honour it — this is currently not true of the radial subsystem or
+the notification urgency pulse.
+
+Meaning is never carried by colour alone. All controls expose visible focus and
+readable contrast independent of the accent.
