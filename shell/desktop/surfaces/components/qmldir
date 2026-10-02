@@ -11,3 +11,4 @@ SystemStatusSection 1.0 SystemStatusSection.qml
 Card 1.0 Card.qml
 ToggleSwitch 1.0 ToggleSwitch.qml
 GlyphIcon 1.0 GlyphIcon.qml
+LevelSlider 1.0 LevelSlider.qml

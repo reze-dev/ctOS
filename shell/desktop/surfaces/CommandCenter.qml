@@ -34,6 +34,63 @@ FocusScope {
     // Cards default to open: the design shows the whole panel at once, and these
     // bodies are sized to fit. Assignment rather than binding, because Card
     // owns its own expanded state.
+    // =====================================================================
+    // Media Player Selection
+    // =====================================================================
+
+    // Reading Mpris.players.values is not reactive to a player's own property
+    // changes, so activePlayer needs an explicit trigger to re-evaluate when a
+    // track changes or playback state flips. The watcher below bumps it.
+    property int _mprisTrigger: 0
+
+    Repeater {
+        model: Mpris.players.values
+
+        Item {
+            id: mprisWatcher
+            required property var modelData
+
+            Connections {
+                target: mprisWatcher.modelData
+
+                function onPlaybackStateChanged(): void { root._mprisTrigger++; }
+                function onTrackTitleChanged(): void    { root._mprisTrigger++; }
+                function onTrackArtistChanged(): void   { root._mprisTrigger++; }
+            }
+        }
+    }
+
+    // Preference order: something actually playing, then something paused that
+    // has a title (so the panel does not jump to a bare idle player), then any
+    // paused player, then whatever is there.
+    readonly property var activePlayer: {
+        const trigger = root._mprisTrigger;
+        const list = Mpris.players.values;
+        if (!list || list.length === 0)
+            return null;
+
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            if (p && p.playbackState === MprisPlaybackState.Playing)
+                return p;
+        }
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            if (p && p.playbackState === MprisPlaybackState.Paused
+                    && p.trackTitle && p.trackTitle.trim() !== "")
+                return p;
+        }
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            if (p && p.playbackState === MprisPlaybackState.Paused)
+                return p;
+        }
+        return list[0] || null;
+    }
+
+    readonly property bool isPlaying:
+        activePlayer !== null && activePlayer.playbackState === MprisPlaybackState.Playing
+
     function applyRequestedCard(): void {
         if (requestedCard === "")
             return;
@@ -408,9 +465,254 @@ FocusScope {
                     id: cardAudio
                     width: parent.width
                     title: qsTr("Audio & Media")
+                    subtitle: AudioService.available && AudioService.sinkName !== ""
+                        ? AudioService.sinkName : ""
                     icon: "speaker"
                     accent: Theme.accentBlue
                     collapsible: true
+
+                    action: Component {
+                        ToggleSwitch {
+                            checked: !AudioService.muted
+                            onToggled: AudioService.toggleMute()
+                        }
+                    }
+
+                    contentComponent: Component {
+                        Item {
+                            id: audioBody
+                            width: parent ? parent.width : undefined
+                            // Stated rather than derived from the transport's
+                            // position: 16 for the volume row, 52 for the
+                            // transport, 12 of gap, plus 24 more when the
+                            // microphone row is present.
+                            implicitHeight: AudioService.micAvailable ? 104 : 80
+                            height: implicitHeight
+
+                            // Output level.
+                            Row {
+                                id: outputRow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                spacing: Theme.spacingSmall
+
+                                GlyphIcon {
+                                    width: 16
+                                    height: 16
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    glyph: "speaker"
+                                    color: AudioService.muted ? Theme.destructive : Theme.textSecondary
+                                }
+
+                                LevelSlider {
+                                    id: outputSlider
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width - 16 - 40 - Theme.spacingSmall * 2
+                                    value: AudioService.volume
+                                    fillColor: AudioService.muted ? Theme.textDisabled : Theme.accentViolet
+                                    onMoved: function (level) { AudioService.setVolume(level); }
+                                }
+
+                                Text {
+                                    width: 40
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    horizontalAlignment: Text.AlignRight
+                                    text: Math.round(AudioService.volume * 100) + "%"
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                }
+                            }
+
+                            // Microphone, only where there is one. A permanently
+                            // visible dead control is worse than no control.
+                            Row {
+                                id: micRow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: outputRow.bottom
+                                anchors.topMargin: Theme.spacingMedium
+                                spacing: Theme.spacingSmall
+                                visible: AudioService.micAvailable
+
+                                GlyphIcon {
+                                    width: 16
+                                    height: 16
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    glyph: "speaker"
+                                    color: AudioService.micMuted ? Theme.destructive : Theme.textSecondary
+                                }
+
+                                LevelSlider {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width - 16 - 40 - Theme.spacingSmall * 2
+                                    value: AudioService.micVolume
+                                    fillColor: AudioService.micMuted ? Theme.textDisabled : Theme.accentBlue
+                                    onMoved: function (level) { AudioService.setMicVolume(level); }
+                                }
+
+                                Text {
+                                    width: 40
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    horizontalAlignment: Text.AlignRight
+                                    text: Math.round(AudioService.micVolume * 100) + "%"
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                }
+                            }
+
+                            // Transport.
+                            Rectangle {
+                                id: transport
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: AudioService.micAvailable ? micRow.bottom : outputRow.bottom
+                                anchors.topMargin: Theme.spacingMedium
+                                height: 52
+                                radius: Theme.radiusMedium
+                                color: Theme.surfaceElevated
+                                border.width: Theme.borderWidth
+                                border.color: Theme.border
+
+                                // Clipped by a Rectangle rather than a rounded
+                                // Image: Image has no radius of its own, and an
+                                // opacity mask for one 40px thumbnail is not
+                                // worth the extra render pass.
+                                Rectangle {
+                                    id: art
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: Theme.spacingSmall
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 40
+                                    height: 40
+                                    radius: Theme.radiusSmall
+                                    clip: true
+                                    color: Theme.surfaceHover
+                                    border.width: Theme.borderWidth
+                                    border.color: Theme.border
+
+                                    Image {
+                                        anchors.fill: parent
+                                        fillMode: Image.PreserveAspectCrop
+                                        visible: status === Image.Ready
+                                        source: root.activePlayer !== null
+                                            && root.activePlayer.trackArtUrl !== ""
+                                            ? root.activePlayer.trackArtUrl : ""
+                                    }
+
+                                    // Stands in when there is no art, so the row
+                                    // keeps its rhythm.
+                                    GlyphIcon {
+                                        anchors.centerIn: parent
+                                        width: 18
+                                        height: 18
+                                        visible: art.children.length === 1
+                                            || (art.children[0].visible === false)
+                                        glyph: "speaker"
+                                        color: Theme.textDisabled
+                                    }
+                                }
+
+                                Column {
+                                    anchors.left: art.right
+                                    anchors.leftMargin: Theme.spacingSmall
+                                    anchors.right: transportButtons.left
+                                    anchors.rightMargin: Theme.spacingSmall
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 1
+
+                                    Text {
+                                        width: parent.width
+                                        text: root.activePlayer !== null
+                                            && root.activePlayer.trackTitle !== ""
+                                            ? root.activePlayer.trackTitle.trim()
+                                            : qsTr("Nothing playing")
+                                        color: root.activePlayer !== null
+                                            ? Theme.textPrimary : Theme.textSecondary
+                                        font.family: Theme.fontFamilySans
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        font.weight: Theme.fontWeightDemiBold
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        width: parent.width
+                                        text: root.activePlayer !== null
+                                            && root.activePlayer.trackArtist !== ""
+                                            ? root.activePlayer.trackArtist.trim()
+                                            : (root.activePlayer !== null
+                                               ? root.activePlayer.identity : "")
+                                        color: Theme.textSecondary
+                                        font.family: Theme.fontFamilySans
+                                        font.pixelSize: Theme.fontSizeCaption
+                                        elide: Text.ElideRight
+                                    }
+                                }
+
+                                Row {
+                                    id: transportButtons
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: Theme.spacingSmall
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: Theme.spacingXs
+
+                                    // Disabled rather than hidden when the player
+                                    // cannot do it, so the row does not reflow as
+                                    // capabilities change.
+                                    Repeater {
+                                        model: [
+                                            { act: "previous", glyph: "chevron",  rot: 90,  enabled: root.activePlayer !== null && root.activePlayer.canGoPrevious },
+                                            { act: "toggle",  glyph: "play",    rot: 0,   enabled: root.activePlayer !== null && root.activePlayer.canControl },
+                                            { act: "next",     glyph: "chevron", rot: -90, enabled: root.activePlayer !== null && root.activePlayer.canGoNext }
+                                        ]
+                                        delegate: Item {
+                                            id: btn
+                                            required property var modelData
+                                            width: 28
+                                            height: 28
+
+                                            readonly property bool actionEnabled:
+                                                modelData.enabled && !SessionService.isBusy
+
+                                            GlyphIcon {
+                                                anchors.centerIn: parent
+                                                width: 16
+                                                height: 16
+                                                glyph: btn.modelData.act === "toggle"
+                                                    ? (root.isPlaying ? "pause" : "play")
+                                                    : btn.modelData.glyph
+                                                rotation: btn.modelData.rot
+                                                color: btn.actionEnabled
+                                                    ? (btnHover.containsMouse ? Theme.textPrimary : Theme.textSecondary)
+                                                    : Theme.textDisabled
+                                            }
+
+                                            MouseArea {
+                                                id: btnHover
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                enabled: btn.actionEnabled
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    const p = root.activePlayer;
+                                                    if (p === null)
+                                                        return;
+                                                    if (btn.modelData.act === "previous")
+                                                        p.previous();
+                                                    else if (btn.modelData.act === "next")
+                                                        p.next();
+                                                    else
+                                                        p.togglePlaying();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

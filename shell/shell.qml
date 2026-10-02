@@ -571,6 +571,8 @@ Scope {
             root.closeCalendar();
             root.closeBluetooth();
             root.closeNetwork();
+            // Anything already toasting would sit on top of the opening overlay.
+            NotificationService.dismissToasts();
             overlayHost.screen = root.resolveTargetScreen();
             OverlayController.setHostScreen(overlayHost.screen);
 
