@@ -949,7 +949,14 @@ Item {
                 if (root.notchState === "notification") {
                     collapseTimer.stop();
                     root.notificationActive = false;
-                } else if (root.notchState === "compact") {
+                } else if (root.notchState === "compact" || root.notchState === "hover") {
+                    // "hover" has to be in this list, and it was missing. Hovering
+                    // is what expands the notch, so by release time the state is
+                    // "hover" and a "compact"-only test could never be true -- the
+                    // click was swallowed instead of opening the command centre.
+                    // Reachability is the point: the pointer is over the pill for
+                    // every click, so "compact" only ever held for a notch the
+                    // user was not touching.
                     root.closeCalendar();
                     root.toggleCommandCenterRequested();
                 }
