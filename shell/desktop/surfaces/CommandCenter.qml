@@ -2215,6 +2215,11 @@ FocusScope {
                         }
                     }
                 }
+                // System Status (quick)
+                SystemStatusSection {
+                    width: parent ? parent.width : undefined
+                }
+
                 // Power & Session (lock / logout / reboot / poweroff)
                 AccordionSection {
                     id: secPower
