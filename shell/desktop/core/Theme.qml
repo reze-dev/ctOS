@@ -235,6 +235,15 @@ Singleton {
 
     // CCC body. Width is clamped per-output at runtime.
     readonly property int commandCenterWidth: 760
+
+    // Below this the two columns stop being readable, so the clamp in
+    // AmbientBar floors here rather than letting the gutter eat the content.
+    readonly property int commandCenterMinWidth: 420
+
+    // The CCC is a dropdown off the notch, so it cannot run to the bottom of
+    // the screen. Content past this scrolls instead.
+    readonly property int commandCenterMaxHeight: 620
+
     readonly property int commandCenterColumnGutter: 12
     readonly property int commandCenterSectionRadius: 12
 

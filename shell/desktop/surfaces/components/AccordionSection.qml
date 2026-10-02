@@ -26,7 +26,26 @@ Item {
     Layout.fillWidth: true
     width: parent ? parent.width : undefined
     implicitWidth: parent ? parent.width : undefined
-    readonly property real _contentTargetHeight: contentLoader.item ? (contentLoader.item.implicitHeight > 0 ? contentLoader.item.implicitHeight : (contentLoader.item.height > 0 ? contentLoader.item.height : 0)) : 0
+    // Cap on expanded content height.
+    //
+    // Section content is frequently a ListView, which reports the height it was
+    // given rather than the height of its contents. Without a cap, expanding
+    // one section in a two-column layout hands it the whole panel and the
+    // neighbouring column collapses to a stub.
+    //
+    // Content past this is clipped by contentContainer; sections that need to
+    // scroll past it (notification history, device lists) already own an inner
+    // Flickable, so nothing becomes unreachable.
+    property int maxContentHeight: 240
+
+    readonly property real _contentTargetHeight: {
+        const raw = contentLoader.item
+            ? (contentLoader.item.implicitHeight > 0
+               ? contentLoader.item.implicitHeight
+               : (contentLoader.item.height > 0 ? contentLoader.item.height : 0))
+            : 0;
+        return Math.min(raw, maxContentHeight);
+    }
 
     implicitHeight: headerLoader.height + (root.isExpanded ? _contentTargetHeight + Theme.spacingMedium : 0)
 

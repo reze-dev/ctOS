@@ -38,65 +38,51 @@ PanelWindow {
         && root.screen !== null
         && OverlayController.hostScreenName === root.screen.name
 
-    property bool toggleMask: false
-
     // Input region: the pill, plus the CCC while it is open.
     //
-    // Two regions rather than one union rectangle -- a single region spanning
+    // WindowInterface.mask is a single Region, not a list. Multiple rectangles
+    // go in as nested Regions inside it -- assigning a JS array to mask fails
+    // with "Cannot assign QJSValue to PendingRegion*", because array elements
+    // arrive as QJSValue rather than Region pointers.
+    //
+    // Two sub-regions rather than one union rectangle: a single region spanning
     // the column would make the empty gaps beside the pill and beside the CCC
     // swallow clicks meant for the desktop.
     //
     // Declared inline rather than built with Component.createObject. The
     // created-object form had no access to commandCenterHost, which is declared
     // later in the file, and it could not stay bound as the host animated.
-    readonly property var activeMask:
-        root.isCommandCenterHost ? [notchRegion, cccRegion] : notchRegion
-
     Region {
-        id: notchRegion
-        x: livingNotch.x
-        y: livingNotch.y
-        width: livingNotch.width
-        height: livingNotch.height
+        id: windowRegion
+
+        Region {
+            id: notchRegion
+            x: livingNotch.x
+            y: livingNotch.y
+            width: livingNotch.width
+            height: livingNotch.height
+        }
+
+        Region {
+            id: cccRegion
+            x: commandCenterHost.x
+            y: commandCenterHost.y
+            width: commandCenterHost.width
+            height: commandCenterHost.height
+        }
     }
 
-    Region {
-        id: cccRegion
-        x: commandCenterHost.x
-        y: commandCenterHost.y
-        width: commandCenterHost.width
-        height: commandCenterHost.height
-    }
-
-    mask: root.activeMask
-
-    // wlroots does not always recompute the input region when a region is
-    // resized in place, so nudging the property forces it.
-    function flushWaylandMask() {
-        toggleMask = !toggleMask;
-        mask = root.toggleMask ? root.activeMask : root.activeMask;
-    }
+    mask: windowRegion
 
     Connections {
         target: livingNotch
-        function onWidthChanged() { root.flushWaylandMask(); }
-        function onHeightChanged() { root.flushWaylandMask(); }
-        function onXChanged() { root.flushWaylandMask(); }
-        function onYChanged() { root.flushWaylandMask(); }
     }
 
     // The CCC animating open and closed changes the input region too.
     Connections {
         target: commandCenterHost
-        function onWidthChanged() { root.flushWaylandMask(); }
-        function onHeightChanged() { root.flushWaylandMask(); }
-        function onXChanged() { root.flushWaylandMask(); }
-        function onYChanged() { root.flushWaylandMask(); }
     }
 
-    Component.onCompleted: {
-        root.flushWaylandMask();
-    }
 
     WlrLayershell.namespace: "ctos-bar"
     WlrLayershell.layer: WlrLayer.Top
@@ -163,7 +149,8 @@ PanelWindow {
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: livingNotch.bottom
-        width: Math.min(Theme.commandCenterWidth, root.width - Theme.spacing2Xl * 4)
+        width: Math.max(Theme.commandCenterMinWidth,
+                         Math.min(Theme.commandCenterWidth, root.width - Theme.spacing2Xl * 4))
         height: root.isCommandCenterHost ? ccc.implicitHeight : 0
         visible: root.isCommandCenterHost
         clip: false
