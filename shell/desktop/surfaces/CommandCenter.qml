@@ -449,6 +449,11 @@ FocusScope {
                     id: cardBluetooth
                     width: parent.width
                     title: qsTr("Bluetooth")
+                    subtitle: BluetoothService.powered
+                        ? (BluetoothService.isConnected && BluetoothService.deviceName !== ""
+                           ? BluetoothService.deviceName
+                           : qsTr("%1 paired").arg(BluetoothService.pairedDevices.count))
+                        : qsTr("Off")
                     icon: "bluetooth"
                     accent: Theme.accentBlue
                     collapsible: true
@@ -457,6 +462,189 @@ FocusScope {
                         ToggleSwitch {
                             checked: BluetoothService.powered
                             onToggled: BluetoothService.togglePower()
+                        }
+                    }
+
+                    contentComponent: Component {
+                        Item {
+                            id: btBody
+                            width: parent ? parent.width : undefined
+
+                            readonly property int rowCount:
+                                BluetoothService.powered
+                                    ? BluetoothService.deviceModel.count : 0
+
+                            // Devices are 34 tall each; the scan row and the
+                            // empty message only appear when powered.
+                            implicitHeight: BluetoothService.powered
+                                    ? 22 + (rowCount === 0 ? 34 : 0)
+                                      + rowCount * 34 + Theme.spacingSmall
+                                    : 0
+                            height: implicitHeight
+                            visible: BluetoothService.powered
+
+                            Row {
+                                id: scanRow
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                height: 22
+                                spacing: Theme.spacingSmall
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: BluetoothService.isScanning
+                                        ? qsTr("Scanning...") : qsTr("Scan for devices")
+                                    color: scanHover.containsMouse
+                                        ? Theme.textPrimary : Theme.textSecondary
+                                    font.family: Theme.fontFamilySans
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.weight: Theme.fontWeightDemiBold
+
+                                    MouseArea {
+                                        id: scanHover
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: BluetoothService.toggleScan()
+                                    }
+                                }
+                            }
+
+                            Column {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: scanRow.bottom
+                                anchors.topMargin: Theme.spacingSmall
+                                spacing: Theme.spacingSmall
+
+                                Text {
+                                    width: parent.width
+                                    height: visible ? 34 : 0
+                                    visible: btBody.rowCount === 0
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: qsTr("No paired devices")
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilySans
+                                    font.pixelSize: Theme.fontSizeSmall
+                                }
+
+                                Repeater {
+                                    model: BluetoothService.powered
+                                        ? BluetoothService.deviceModel : null
+
+                                    delegate: Rectangle {
+                                        id: btRow
+                                        required property string mac
+                                        required property string name
+                                        required property bool connected
+                                        required property bool paired
+
+                                        width: btBody.width
+                                        height: 34
+                                        radius: Theme.radiusMedium
+                                        color: rowHover.containsMouse ? Theme.surfaceHover : Theme.surfaceElevated
+                                        border.width: Theme.borderWidth
+                                        border.color: Theme.border
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
+                                        }
+
+                                        MouseArea {
+                                            id: rowHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            acceptedButtons: Qt.NoButton
+                                        }
+
+                                        GlyphIcon {
+                                            id: btGlyph
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: Theme.spacingMedium
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 16
+                                            height: 16
+                                            glyph: "bluetooth"
+                                            color: btRow.connected ? Theme.statusGreen : Theme.textSecondary
+                                        }
+
+                                        Column {
+                                            anchors.left: btGlyph.right
+                                            anchors.leftMargin: Theme.spacingSmall
+                                            anchors.right: actionBtn.left
+                                            anchors.rightMargin: Theme.spacingSmall
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            spacing: 0
+
+                                            Text {
+                                                width: parent.width
+                                                text: btRow.name.length > 0 ? btRow.name : btRow.mac
+                                                color: Theme.textPrimary
+                                                font.family: Theme.fontFamilySans
+                                                font.pixelSize: Theme.fontSizeSmall
+                                                font.weight: Theme.fontWeightDemiBold
+                                                elide: Text.ElideRight
+                                            }
+
+                                            Text {
+                                                width: parent.width
+                                                text: btRow.connected ? qsTr("Connected")
+                                                    : btRow.paired ? qsTr("Paired")
+                                                    : qsTr("Available")
+                                                color: btRow.connected ? Theme.statusGreen : Theme.textSecondary
+                                                font.family: Theme.fontFamilySans
+                                                font.pixelSize: Theme.fontSizeCaption
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+
+                                        // One button, whose action follows the
+                                        // device's state rather than four
+                                        // controls per row.
+                                        Rectangle {
+                                            id: actionBtn
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: Theme.spacingSmall
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: actionLabel.implicitWidth + Theme.spacingMedium * 2
+                                            height: 24
+                                            radius: Theme.radiusSmall
+                                            color: actionHover.containsMouse ? Theme.surfaceHover : "transparent"
+                                            border.width: Theme.borderWidth
+                                            border.color: btRow.connected ? Theme.destructive : Theme.border
+
+                                            Text {
+                                                id: actionLabel
+                                                anchors.centerIn: parent
+                                                text: btRow.connected ? qsTr("Disconnect")
+                                                    : btRow.paired ? qsTr("Connect")
+                                                    : qsTr("Pair")
+                                                color: btRow.connected
+                                                    ? Theme.destructive : Theme.textSecondary
+                                                font.family: Theme.fontFamilySans
+                                                font.pixelSize: Theme.fontSizeCaption
+                                                font.weight: Theme.fontWeightDemiBold
+                                            }
+
+                                            MouseArea {
+                                                id: actionHover
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (btRow.connected)
+                                                        BluetoothService.disconnectDevice(btRow.mac);
+                                                    else if (btRow.paired)
+                                                        BluetoothService.connectDevice(btRow.mac);
+                                                    else
+                                                        BluetoothService.pairDevice(btRow.mac);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
