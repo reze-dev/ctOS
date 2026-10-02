@@ -261,6 +261,7 @@ Singleton {
     readonly property int commandCenterSectionRadius: 12
     readonly property int cardPadding: 12
     readonly property int cardIconTile: 24
+    readonly property int cardGap: 10
 
     // Hovered card border. Cards lift by their border rather than by their fill,
     // so the hover reads without the tile shifting colour under the text.

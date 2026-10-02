@@ -142,7 +142,10 @@ Item {
                     height: width
                     glyph: "chevron"
                     color: Theme.textSecondary
-                    rotation: root.expanded ? 180 : 0
+                    // Glyph draws pointing down. Expanded shows it unrotated
+                    // (further down the card is visible), collapsed flips it up
+                    // to indicate the card opens downward.
+                    rotation: root.expanded ? 0 : 180
 
                     Behavior on rotation {
                         NumberAnimation {
