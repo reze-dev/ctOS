@@ -169,7 +169,7 @@ Item {
     Rectangle {
         id: bgSurface
         anchors.fill: parent
-        color: Qt.rgba(14 / 255, 14 / 255, 14 / 255, 0.85)
+        color: Theme.surfaceScrim
         border.color: root.isPlaying ? Theme.statusGreen : Theme.gray700
         border.width: Theme.borderWidth
     }

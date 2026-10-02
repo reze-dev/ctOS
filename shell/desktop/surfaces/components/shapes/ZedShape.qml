@@ -1,11 +1,14 @@
 import QtQuick
 import QtQuick.Shapes
+import "../../../core"
 
 Item {
     id: root
 
     property real size: 24
-    property color color: "#1BFD9C"
+    // Always overridden by CuratedAppShape; the default only needs to not
+    // be stale. It used to carry the pre-rebrand acid green.
+    property color color: Theme.accentMagenta
     property real strokeWidth: 1.2
     property bool active: false
 

@@ -45,7 +45,7 @@ Item {
     Rectangle {
         id: bgSurface
         anchors.fill: parent
-        color: Qt.rgba(14 / 255, 14 / 255, 14 / 255, 0.85)
+        color: Theme.surfaceScrim
         border.color: root.isCritical ? Theme.destructive : Theme.gray700
         border.width: Theme.borderWidth
     }
@@ -115,7 +115,7 @@ Item {
 
                     border.color: {
                         if (!isFilled) return Theme.gray700;
-                        return root.isCritical ? Theme.destructive : Qt.rgba(27 / 255, 253 / 255, 156 / 255, 0.85);
+                        return root.isCritical ? Theme.destructive : Qt.alpha(Theme.statusGreen, 0.85);
                     }
                     border.width: Theme.borderWidth
                 }

@@ -84,6 +84,28 @@ Singleton {
     readonly property color surfaceDeep: root.navyCard
     readonly property color borderSubtle: root.navyBorder
 
+    // Translucent panel surfaces. The desktop telemetry widgets float over the
+    // wallpaper, so their background is a scrim rather than an opaque fill.
+    // This was a hardcoded #0E0E0E at 0.85 in eight files, which is why they
+    // stayed neutral grey through the palette change.
+    // Canvas drawing APIs (ctx.fillStyle / strokeStyle) take CSS colour
+    // strings, not QML colours, so a handful of tokens exist in string form.
+    // CpuHexGrid and NetworkFlowMatrix draw with Canvas and previously
+    // hardcoded the old palette, which is why they stayed green-on-grey
+    // through the rebrand.
+    readonly property string accentMagentaHex: "#EB4ADF"
+    readonly property string statusGreenHex: "#4FE7A2"
+    readonly property string dangerHex: "#D1605D"
+    readonly property string dangerDimHex: "#5A2422"
+    readonly property string textDimHex: "#606A9B"
+    readonly property string gray300Hex: "#9AA7CC"
+    readonly property string gray700Hex: "#1A2647"
+
+    readonly property color surfaceScrim: Qt.rgba(root.navySurface.r, root.navySurface.g, root.navySurface.b, 0.85)
+
+    // The notch body. Slightly translucent so the wallpaper reads through.
+    readonly property color notchSurface: Qt.rgba(root.navyDeep.r, root.navyDeep.g, root.navyDeep.b, 0.94)
+
     readonly property color background: root.navyDeep
     readonly property color backgroundBase: root.navyDeep
     readonly property color backgroundDark: root.navyDeep

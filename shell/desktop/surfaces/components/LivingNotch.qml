@@ -398,7 +398,7 @@ Item {
         antialiasing: true
 
         // Slightly translucent so the wallpaper reads through, per the design.
-        color: Qt.rgba(5 / 255, 14 / 255, 30 / 255, 0.94)
+        color: Theme.notchSurface
         clip: true
 
         Behavior on radius {

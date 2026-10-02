@@ -90,7 +90,7 @@ Item {
     Rectangle {
         id: bgSurface
         anchors.fill: parent
-        color: Qt.rgba(14 / 255, 14 / 255, 14 / 255, 0.85)
+        color: Theme.surfaceScrim
         border.color: Theme.gray700
         border.width: Theme.borderWidth
     }
@@ -173,7 +173,7 @@ Item {
                 ctx.clearRect(0, 0, w, h);
 
                 if (!SystemMonitorService.available) {
-                    ctx.fillStyle = "#7A7A7A";
+                    ctx.fillStyle = Theme.textDimHex;
                     ctx.font = "12px JetBrainsMono Nerd Font, monospace";
                     ctx.textAlign = "center";
                     ctx.fillText("NETWORK OFFLINE", w / 2, h / 2);
@@ -183,7 +183,7 @@ Item {
                 // -------------------------------------------------------------
                 // 1. Wireframe Grid Lines (Theme.gray700: #202020)
                 // -------------------------------------------------------------
-                ctx.strokeStyle = "#202020";
+                ctx.strokeStyle = Theme.gray700Hex;
                 ctx.lineWidth = 1.0;
 
                 // Horizontal wireframe grid lines (4 equal divisions)
@@ -233,7 +233,7 @@ Item {
                 // -------------------------------------------------------------
                 // 3. Draw TX Line (Theme.gray300: #C3C3C3)
                 // -------------------------------------------------------------
-                ctx.strokeStyle = "#C3C3C3";
+                ctx.strokeStyle = Theme.gray300Hex;
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 for (let i = 0; i < n; ++i) {
@@ -259,7 +259,7 @@ Item {
                 ctx.fill();
 
                 // Crisp RX Stroke
-                ctx.strokeStyle = "#1BFD9C";
+                ctx.strokeStyle = Theme.statusGreenHex;
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 for (let i = 0; i < n; ++i) {

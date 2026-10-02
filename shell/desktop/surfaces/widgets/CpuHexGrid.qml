@@ -195,7 +195,7 @@ Item {
     // Background Surface
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(14 / 255, 14 / 255, 14 / 255, 0.85)
+        color: Theme.surfaceScrim
         border.color: root.isOverload ? Theme.destructive : Theme.gray700
         border.width: Theme.borderWidth
     }
@@ -264,7 +264,7 @@ Item {
                 ctx.clearRect(0, 0, width, height);
 
                 if (!SystemMonitorService.available) {
-                    ctx.fillStyle = "#7A7A7A";
+                    ctx.fillStyle = Theme.textDimHex;
                     ctx.font = "12px JetBrainsMono Nerd Font, monospace";
                     ctx.textAlign = "center";
                     ctx.fillText("TELEMETRY OFFLINE", width / 2, height / 2);
@@ -274,7 +274,7 @@ Item {
                 const loads = root.cpuThreadLoads || [];
                 const count = loads.length;
                 if (count === 0) {
-                    ctx.fillStyle = "#7A7A7A";
+                    ctx.fillStyle = Theme.textDimHex;
                     ctx.font = "12px JetBrainsMono Nerd Font, monospace";
                     ctx.textAlign = "center";
                     ctx.fillText("SCANNING THREADS...", width / 2, height / 2);
@@ -321,21 +321,21 @@ Item {
                         ctx.lineWidth = 1.0;
                         ctx.stroke();
                     } else if (load >= 0.99) {
-                        ctx.fillStyle = root.flickerState ? "#FC3E38" : "#801010";
-                        ctx.strokeStyle = "#FC3E38";
+                        ctx.fillStyle = root.flickerState ? Theme.dangerHex : Theme.dangerDimHex;
+                        ctx.strokeStyle = Theme.dangerHex;
                         ctx.lineWidth = 1.5;
                         ctx.fill();
                         ctx.stroke();
                     } else if (load >= 0.80) {
                         const alpha = 0.75 * root.pulseAlpha;
                         ctx.fillStyle = "rgba(27, 253, 156, " + alpha.toFixed(2) + ")";
-                        ctx.strokeStyle = "#1BFD9C";
+                        ctx.strokeStyle = Theme.statusGreenHex;
                         ctx.lineWidth = 1.5;
                         ctx.fill();
                         ctx.stroke();
                     } else if (load >= 0.40) {
                         ctx.fillStyle = "rgba(27, 253, 156, 0.70)";
-                        ctx.strokeStyle = "#1BFD9C";
+                        ctx.strokeStyle = Theme.statusGreenHex;
                         ctx.lineWidth = 1.2;
                         ctx.fill();
                         ctx.stroke();
@@ -347,7 +347,7 @@ Item {
                         ctx.stroke();
                     } else {
                         ctx.fillStyle = "transparent";
-                        ctx.strokeStyle = "#202020";
+                        ctx.strokeStyle = Theme.gray700Hex;
                         ctx.lineWidth = 1.0;
                         ctx.stroke();
                     }
