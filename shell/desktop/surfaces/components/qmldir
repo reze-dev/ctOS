@@ -2,12 +2,10 @@ CtosIcon 1.0 CtosIcon.qml
 CalendarPopup 1.0 CalendarPopup.qml
 BluetoothPopup 1.0 BluetoothPopup.qml
 NetworkPopup 1.0 NetworkPopup.qml
-AccordionSection 1.0 AccordionSection.qml
 NotchCalendarGrid 1.0 NotchCalendarGrid.qml
 LivingNotch 1.0 LivingNotch.qml
 HexMark 1.0 HexMark.qml
 StatRing 1.0 StatRing.qml
-SystemStatusSection 1.0 SystemStatusSection.qml
 Card 1.0 Card.qml
 ToggleSwitch 1.0 ToggleSwitch.qml
 GlyphIcon 1.0 GlyphIcon.qml
