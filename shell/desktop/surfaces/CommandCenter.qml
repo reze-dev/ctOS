@@ -470,9 +470,17 @@ FocusScope {
 
                     contentComponent: Component {
                         Item {
-                            width: parent ? parent.width : undefined
-                            implicitHeight: 320
-                            height: 320
+                            id: notificationsBody
+
+                            // Height follows the notification count instead of
+                            // being a fixed 320. At a fixed height an empty
+                            // notification list reserved a third of the whole
+                            // panel for the words "NO NOTIFICATIONS", and in a
+                            // two-column layout that pushed everything below it
+                            // down. 128 covers the empty state plus the count
+                            // row and footer; 96 is about one card.
+                            implicitHeight: Math.min(320, 128 + NotificationService.history.count * 96)
+                            height: implicitHeight
 
                             ColumnLayout {
                                 anchors.fill: parent
