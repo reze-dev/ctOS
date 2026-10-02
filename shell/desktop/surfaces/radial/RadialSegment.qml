@@ -23,14 +23,20 @@ Item {
     property real _lastTargetAngle: -90.0 + index * (360.0 / Math.max(1, typeof categoryCount !== "undefined" ? categoryCount : 8))
     property var layoutInfo: RadialGeometry.getSegmentTargetLayout(
         index, 
-        typeof globalFocusedIndex !== "undefined" ? globalFocusedIndex : 0, 
+        _focusedIndex, 
         typeof categoryCount !== "undefined" ? categoryCount : 8, 
         2.0, 
         90.0, 
         _lastTargetAngle
     )
 
-    onLayoutInfoChanged: {
+    // The focused index is what actually moves a segment, so latch the
+    // continuity hint on that. Writing it from onLayoutInfoChanged made
+    // layoutInfo depend on a property its own handler mutated, which is a
+    // binding loop.
+    readonly property int _focusedIndex: typeof globalFocusedIndex !== "undefined" ? globalFocusedIndex : 0
+
+    on_FocusedIndexChanged: {
         if (layoutInfo && layoutInfo.centerAngle !== undefined) {
             _lastTargetAngle = layoutInfo.centerAngle;
         }

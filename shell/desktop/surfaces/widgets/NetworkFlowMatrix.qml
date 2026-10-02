@@ -119,35 +119,27 @@ Item {
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Theme.fontWeightMedium
-            }
-
-            Item {
+                // The title absorbs the slack and yields when the value needs
+                // the room. Without this the row overflows the 280px widget and
+                // the rate is cut off mid-glyph at the right edge.
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                elide: Text.ElideRight
             }
 
-            // RX Speed Label (Theme.acidGreen)
+            // RX / TX rates. Capped so an unusually large or unit-suffixed
+            // rate cannot push the row past the widget.
             Text {
                 text: "↓ " + root.formatRate(SystemMonitorService.netRxBytesPerSec)
-                color: Theme.acidGreen
+                         + "  ↑ " + root.formatRate(SystemMonitorService.netTxBytesPerSec)
+                color: Theme.statusGreen
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeSmall
                 font.weight: Theme.fontWeightMedium
-            }
-
-            Text {
-                text: " "
-                color: Theme.gray700
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
-            }
-
-            // TX Speed Label (Theme.gray300)
-            Text {
-                text: "↑ " + root.formatRate(SystemMonitorService.netTxBytesPerSec)
-                color: Theme.gray300
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Theme.fontWeightMedium
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
+                Layout.preferredWidth: implicitWidth
+                Layout.maximumWidth: 150
             }
         }
 

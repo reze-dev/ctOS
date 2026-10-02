@@ -73,6 +73,8 @@ Item {
                 id: previewSubtree
                 required property int index
                 readonly property int categoryIdx: previewSubtree.index
+                // Referenced by onFocusedCategoryIndexChanged below.
+                readonly property int focusedCategoryIndex: root.focusedCategoryIndex
                 
                 property real _lastTargetAngle: -90.0 + previewSubtree.index * (360.0 / Math.max(1, root.model ? root.model.categoryCount : 8))
                 property var layoutInfo: RadialGeometry.getSegmentTargetLayout(
@@ -84,7 +86,13 @@ Item {
                     _lastTargetAngle
                 )
 
-                onLayoutInfoChanged: {
+                // Continuity hint for the shortest angular path. This used to
+                // be written from onLayoutInfoChanged, which made layoutInfo
+                // depend on a property its own change handler mutated -- a
+                // binding loop that fired continuously on every load. Latch on
+                // the category change instead, which is when the target
+                // actually moves.
+                onFocusedCategoryIndexChanged: {
                     if (layoutInfo && layoutInfo.centerAngle !== undefined) {
                         _lastTargetAngle = layoutInfo.centerAngle;
                     }
