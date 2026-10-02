@@ -42,7 +42,7 @@ Item {
     readonly property real notificationWidth: 320
     readonly property real calendarWidth: 360
 
-    readonly property real compactHeight: Theme.barHeight - 6 // 30px
+    readonly property real compactHeight: Settings.barHeight
     readonly property real hoverHeight: 60
     readonly property real expandedHeight: 60
     readonly property real calendarHeight: 250

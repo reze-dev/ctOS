@@ -241,7 +241,7 @@ Item {
                     lockReason: "",
                     requires: [],
                     pos: { x: 59, y: -28 },
-                    edges: ["dt-command-deck", "dt-system-rail"],
+                    edges: ["dt-command-deck", "dt-command-center"],
                     controlType: "readonly",
                     value: function() { return 1; },
                     valueText: function() { return SessionService.compositorName.toUpperCase(); },
@@ -268,21 +268,21 @@ Item {
                     }
                 },
                 {
-                    id: "dt-system-rail",
-                    title: "SYSTEM RAIL",
-                    subtitle: "DT.03 // SIDE HUB",
+                    id: "dt-command-center",
+                    title: "COMMAND CENTER",
+                    subtitle: "DT.03 // CCC",
                     icon: "power",
-                    description: "Collapsible side panel with hardware controls and audio routing.",
+                    description: "Adaptive Command & Control Center: hardware controls and audio routing.",
                     locked: false,
                     lockReason: "",
                     requires: ["dt-compositor"],
                     pos: { x: 248, y: 106 },
                     edges: [],
                     controlType: "toggle",
-                    value: function() { return Settings.featuresSystemRail; },
-                    valueText: function() { return Settings.featuresSystemRail ? "ENABLED" : "DISABLED"; },
+                    value: function() { return Settings.featuresCommandCenter; },
+                    valueText: function() { return Settings.featuresCommandCenter ? "ENABLED" : "DISABLED"; },
                     execute: function() {
-                        Settings.featuresSystemRail = !Settings.featuresSystemRail;
+                        Settings.featuresCommandCenter = !Settings.featuresCommandCenter;
                         Settings.save();
                         root.revision++;
                     }

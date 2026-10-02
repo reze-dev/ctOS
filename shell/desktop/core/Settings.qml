@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    property int barHeight: 32
+    property int barHeight: 30
     property string compositor: "hyprland"
 
     // =========================================================================
@@ -17,9 +17,10 @@ Singleton {
     // User-configurable path pointing to user settings file.
     // Defaults to "~/.config/ctos/settings.json". Never hardcodes /etc/ctos.
     property string configPath: "~/.config/ctos/settings.json"
-    readonly property int defaultBarHeight: 32
+    readonly property int defaultBarHeight: 30
     readonly property string defaultCompositor: "hyprland"
     readonly property bool defaultFeaturesCommandDeck: true
+    readonly property bool defaultFeaturesCommandCenter: true
     readonly property bool defaultFeaturesNotifications: true
 
     // =========================================================================
@@ -36,6 +37,7 @@ Singleton {
     readonly property bool defaultWidgetAudioSurveillanceVisible: true
     readonly property bool defaultWidgetTargetProfilerVisible: true
     property bool featuresCommandDeck: true
+    property bool featuresCommandCenter: true
     property bool featuresNotifications: true
     property int notificationCooldownSeconds: 30
     readonly property int defaultNotificationCooldownSeconds: 30
@@ -112,6 +114,15 @@ Singleton {
                 featuresCommandDeck = data.features.commandDeck;
             } else {
                 featuresCommandDeck = defaultFeaturesCommandDeck;
+            }
+
+            // featuresCommandCenter: supports flat key or nested features.commandCenter
+            if (typeof data.featuresCommandCenter === "boolean") {
+                featuresCommandCenter = data.featuresCommandCenter;
+            } else if (data.features && typeof data.features.commandCenter === "boolean") {
+                featuresCommandCenter = data.features.commandCenter;
+            } else {
+                featuresCommandCenter = defaultFeaturesCommandCenter;
             }
 
             // featuresNotifications: supports flat key or nested features.notifications
@@ -308,6 +319,7 @@ Singleton {
 
         data.reducedMotion = root.reducedMotion;
         data.featuresCommandDeck = root.featuresCommandDeck;
+        data.featuresCommandCenter = root.featuresCommandCenter;
         data.featuresNotifications = root.featuresNotifications;
         data.notificationCooldownSeconds = root.notificationCooldownSeconds;
         data.barHeight = root.barHeight;
@@ -508,6 +520,7 @@ Singleton {
     function resetToDefaults(): void {
         reducedMotion = defaultReducedMotion;
         featuresCommandDeck = defaultFeaturesCommandDeck;
+        featuresCommandCenter = defaultFeaturesCommandCenter;
         featuresNotifications = defaultFeaturesNotifications;
         notificationCooldownSeconds = defaultNotificationCooldownSeconds;
         barHeight = defaultBarHeight;

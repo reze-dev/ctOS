@@ -34,7 +34,18 @@ Singleton {
 
     // SECTION Dimensions & Layout Constants
 
-    readonly property int barHeight: 36
+    // Vertical breathing room around the notch inside its host window.
+    // The host window is anchored with a top margin, so this padding is what
+    // separates the notch's bottom edge from any surface positioned below it.
+    readonly property int notchHostPadding: 6
+
+    // The notch's resting height is user-configurable and lives in Settings,
+    // not here. Theme holds design tokens; a value the user can change does not
+    // belong in a token table. Consumers read Settings.barHeight directly.
+
+    // CCC accordion header height. Deliberately independent of the notch height:
+    // an accordion header is not a bar.
+    readonly property int accordionHeaderHeight: 36
     readonly property int barPaddingHorizontal: 8
     readonly property int barPaddingVertical: 0
     readonly property color border: root.gray200

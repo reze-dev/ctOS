@@ -199,7 +199,7 @@ Scope {
                     right: Settings.getWidgetAnchor("cpuHexGrid", "right", true)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("cpuHexGrid", "top", Theme.barHeight + Theme.spacingXl)
+                    top: Settings.getWidgetMargin("cpuHexGrid", "top", Settings.barHeight + Theme.spacingXl)
                     bottom: Settings.getWidgetMargin("cpuHexGrid", "bottom", 0)
                     left: Settings.getWidgetMargin("cpuHexGrid", "left", 0)
                     right: Settings.getWidgetMargin("cpuHexGrid", "right", Theme.spacing2Xl)
@@ -243,8 +243,8 @@ Scope {
                     right: Settings.getWidgetAnchor("ramBlockBar", "right", true)
                 }
                 margins {
-                    // Default fallback: top: Settings.widgetCpuHexGridVisible ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl)
-                    top: Settings.hasWidgetMargin("ramBlockBar", "top") ? Settings.getWidgetMargin("ramBlockBar", "top", 0) : (Settings.widgetCpuHexGridVisible ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl))
+                    // Default fallback: top: Settings.widgetCpuHexGridVisible ? (Settings.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl)
+                    top: Settings.hasWidgetMargin("ramBlockBar", "top") ? Settings.getWidgetMargin("ramBlockBar", "top", 0) : (Settings.widgetCpuHexGridVisible ? (Settings.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl))
                     bottom: Settings.getWidgetMargin("ramBlockBar", "bottom", 0)
                     left: Settings.getWidgetMargin("ramBlockBar", "left", 0)
                     right: Settings.getWidgetMargin("ramBlockBar", "right", Theme.spacing2Xl)
@@ -333,7 +333,7 @@ Scope {
                     right: Settings.getWidgetAnchor("targetProfiler", "right", false)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("targetProfiler", "top", Theme.barHeight + Theme.spacingXl)
+                    top: Settings.getWidgetMargin("targetProfiler", "top", Settings.barHeight + Theme.spacingXl)
                     bottom: Settings.getWidgetMargin("targetProfiler", "bottom", 0)
                     left: Settings.getWidgetMargin("targetProfiler", "left", Theme.spacing2Xl)
                     right: Settings.getWidgetMargin("targetProfiler", "right", 0)
@@ -377,8 +377,8 @@ Scope {
                     right: Settings.getWidgetAnchor("networkTracer", "right", false)
                 }
                 margins {
-                    // Default fallback: top: Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl)
-                    top: Settings.hasWidgetMargin("networkTracer", "top") ? Settings.getWidgetMargin("networkTracer", "top", 0) : (Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl))
+                    // Default fallback: top: Settings.widgetTargetProfilerVisible ? (Settings.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl)
+                    top: Settings.hasWidgetMargin("networkTracer", "top") ? Settings.getWidgetMargin("networkTracer", "top", 0) : (Settings.widgetTargetProfilerVisible ? (Settings.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl))
                     bottom: Settings.getWidgetMargin("networkTracer", "bottom", 0)
                     left: Settings.getWidgetMargin("networkTracer", "left", Theme.spacing2Xl)
                     right: Settings.getWidgetMargin("networkTracer", "right", 0)
@@ -422,7 +422,7 @@ Scope {
                     right: Settings.getWidgetAnchor("audioSurveillance", "right", true)
                 }
                 margins {
-                    top: Settings.hasWidgetMargin("audioSurveillance", "top") ? Settings.getWidgetMargin("audioSurveillance", "top", 0) : (Theme.barHeight + Theme.spacingXl + (Settings.widgetCpuHexGridVisible ? 200 + Theme.spacingXl : 0) + (Settings.widgetRamBlockBarVisible ? 110 + Theme.spacingXl : 0))
+                    top: Settings.hasWidgetMargin("audioSurveillance", "top") ? Settings.getWidgetMargin("audioSurveillance", "top", 0) : (Settings.barHeight + Theme.spacingXl + (Settings.widgetCpuHexGridVisible ? 200 + Theme.spacingXl : 0) + (Settings.widgetRamBlockBarVisible ? 110 + Theme.spacingXl : 0))
                     bottom: Settings.getWidgetMargin("audioSurveillance", "bottom", 0)
                     left: Settings.getWidgetMargin("audioSurveillance", "left", 0)
                     right: Settings.getWidgetMargin("audioSurveillance", "right", Theme.spacing2Xl)
@@ -623,12 +623,11 @@ Scope {
 
                 anchors.centerIn: parent
                 asynchronous: false
-                active: true
+                active: Settings.featuresCommandDeck
                 visible: OverlayController.activeSurface === OverlayController.Surface.CommandDeck
                 source: "desktop/surfaces/CommandDeck.qml"
             }
 
-            // EventLog moved to DynamicIsland
 
 
             Loader {
@@ -659,7 +658,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.spacingMedium
+            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
             right: Theme.spacingMedium
         }
 
@@ -678,7 +677,7 @@ Scope {
 
         screen: overlayHost.screen
         color: "transparent"
-        visible: OverlayController.activeSurface === OverlayController.Surface.CommandCenter && overlayHost.screen !== null
+        visible: Settings.featuresCommandCenter && OverlayController.activeSurface === OverlayController.Surface.CommandCenter && overlayHost.screen !== null
         exclusionMode: ExclusionMode.Ignore
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -747,7 +746,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.spacingMedium
+            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
             right: Theme.barPaddingHorizontal
         }
 
@@ -806,7 +805,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.spacingMedium
+            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
             right: Theme.barPaddingHorizontal + 60
         }
 
@@ -865,7 +864,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.spacingMedium
+            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
             right: Theme.barPaddingHorizontal + 160
         }
 

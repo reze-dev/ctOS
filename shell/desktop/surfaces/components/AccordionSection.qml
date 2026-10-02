@@ -73,7 +73,7 @@ Item {
         Rectangle {
             id: headerBg
             width: parent ? parent.width : undefined
-            height: Theme.barHeight > 0 ? Theme.barHeight : 36
+            height: Theme.accordionHeaderHeight
             color: headerMouseArea.containsMouse ? Theme.surfaceHover : (root.isExpanded ? Theme.surfaceActive : Theme.surface)
             border.color: root.isExpanded ? Theme.accent : Theme.borderMuted
             border.width: Theme.borderWidth
