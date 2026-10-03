@@ -53,6 +53,7 @@ Item {
         case "wifi": return "\uE63E";        // wifi
         case "bluetooth": return "\uE1A7";   // bluetooth
         case "speaker": return "\uE050";     // volume_up
+        case "mic": return "\uE029";        // mic
         case "calendar": return "\uE878";    // event
         case "sliders": return "\uE429";     // tune
         case "power": return "\uE8AC";       // power_settings_new

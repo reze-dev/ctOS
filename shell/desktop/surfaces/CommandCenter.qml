@@ -1193,7 +1193,10 @@ FocusScope {
                                     width: 16
                                     height: 16
                                     anchors.verticalCenter: parent.verticalCenter
-                                    glyph: "speaker"
+                                    // mic, not speaker: both rows were labelled
+                                    // with the same glyph, so the capture level
+                                    // and the output level were indistinguishable.
+                                    glyph: "mic"
                                     color: AudioService.micMuted ? Theme.destructive : Theme.textSecondary
                                 }
 
