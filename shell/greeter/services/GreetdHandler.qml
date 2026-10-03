@@ -88,23 +88,9 @@ Singleton {
 
     function finish() {
         const sessionCmd = SessionManager.getLaunchCommand();
-
-        // Settings.launchCommand (general.launchOverride) wins over the desktop
-        // entry's own Exec.
-        //
-        // It used to be the other way round, with the desktop entry consulted
-        // first and launchOverride only as a fallback. That made launchOverride
-        // dead for every session that ships a .desktop file -- which is nearly
-        // all of them -- and it is how the Hyprland session ended up launching
-        // the bare start-hyprland binary, bypassing the wrapper that sets up the
-        // session. Niri appeared to work only because its Exec is itself a
-        // wrapper script.
-        const override = Settings.launchCommand;
-        const launchCommand = (override && override.length)
-            ? override
-            : (sessionCmd && sessionCmd.length
-                ? sessionCmd
-                : Env.getArray("LAUNCH_COMMAND"));
+        const launchCommand = sessionCmd && sessionCmd.length
+            ? sessionCmd
+            : (Settings.launchCommand?.length ? Settings.launchCommand : Env.getArray("LAUNCH_COMMAND"));
         const exitCommand = SessionManager.getExitCommand();
 
         logger.info(`Launching: ${launchCommand.join(" ")}`);
