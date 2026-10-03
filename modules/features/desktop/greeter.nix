@@ -11,6 +11,28 @@ let
   desktopCommand = pkgs.writeShellScript "ctos-start-hyprland" ''
     set -u
 
+    # Graphics driver discovery.
+    #
+    # This machine has an NVIDIA dGPU (card0) and an AMD APU (card1), and the
+    # NVIDIA userspace is installed -- /run/opengl-driver carries libEGL_nvidia,
+    # lib/gbm/nvidia-drm_gbm.so and both EGL vendor ICDs. Nothing points at it:
+    # NIX_DRIVER_DIRS and __EGL_VENDOR_LIBRARY_FILENAMES are unset everywhere,
+    # and /run/current-system/sw/lib has only the NVIDIA GTK and Wayland-client
+    # libraries, none of the GL ones.
+    #
+    # So GBM cannot open a device on the NVIDIA card and Hyprland aborts with
+    # "Cannot open backend: no allocator available". Niri is unaffected because it
+    # renders on the AMD APU through Mesa from its own closure and never needs
+    # the NVIDIA path.
+    #
+    # Set here rather than system-wide because this launcher is the only thing
+    # that starts the Hyprland session -- it runs after the greeter has already
+    # come up, so it cannot affect greeter start-up -- and because a global
+    # LD_LIBRARY_PATH risks shadowing the rest of the system.
+    export NIX_DRIVER_DIRS="/run/opengl-driver/lib''${NIX_DRIVER_DIRS:+:''${NIX_DRIVER_DIRS}}"
+    export LD_LIBRARY_PATH="/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:''${LD_LIBRARY_PATH}}"
+    export __EGL_VENDOR_LIBRARY_FILENAMES="/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json:/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json"
+
     ${lib.optionalString config.ctos.debug.enable ''
       log=/tmp/ctos-desktop-session.log
       exec >>"$log" 2>&1
