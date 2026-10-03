@@ -101,70 +101,10 @@ Singleton {
             return;
         }
 
-        // Only when there is a session to hand over from. A greeter sitting at a
-        // login prompt has no running desktop, and getExitCommand() is empty.
-        if (exitCommand.length) {
-            // Quit the outgoing session *before* starting the next one, and wait
-            // for it to let go of the DRM devices.
-            //
-            // The order used to be launch-then-quit, which loses a race the
-            // newcomer cannot win: a compositor cannot open a GBM allocator
-            // while another compositor still holds /dev/dri/card*, so it aborts
-            // with "Cannot open backend: no allocator available" -- which is
-            // exactly how switching into Hyprland failed.
-            logger.info("Handing over from a running session; quitting it first.");
-            Quickshell.execDetached(exitCommand);
-            handover.launchCommand = launchCommand;
-            handover.restart();
-            return;
-        }
-
         Greetd.launch(launchCommand);
-    }
 
-    // Polls until nothing holds the DRM card nodes, then launches. Bounded
-    // because a session that never lets go must not strand the greeter with no
-    // way to start anything.
-    Process {
-        id: drmProbe
-        running: false
-        command: ["sh", "-c", "ls -l /proc/*/fd 2>/dev/null | grep -l card >/dev/null 2>&1; echo $?"]
-    }
-
-    Timer {
-        id: handover
-        interval: 400
-        repeat: true
-        running: false
-
-        property var launchCommand: []
-        property int attempts: 0
-
-        onTriggered: {
-            handover.attempts += 1;
-            drmProbe.running = true;
-
-            // If the probe has not produced output the devices look free; give
-            // up after ~10s and launch anyway rather than loop forever.
-            if (handover.attempts >= 25) {
-                handover.stop();
-                drmProbe.running = false;
-                logger.warn("DRM still held after waiting; launching anyway.");
-                Greetd.launch(handover.launchCommand);
-                return;
-            }
-        }
-    }
-
-    Connections {
-        target: drmProbe
-        function onExited(exitCode: int): void {
-            drmProbe.running = false;
-            if (handover.running && exitCode !== 0) {
-                handover.stop();
-                logger.info("DRM released; launching.");
-                Greetd.launch(handover.launchCommand);
-            }
+        if (exitCommand.length) {
+            Quickshell.execDetached(exitCommand);
         }
     }
 }
