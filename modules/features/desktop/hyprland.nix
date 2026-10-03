@@ -43,18 +43,32 @@ let
           hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
           hl.env("HYPRCURSOR_SIZE", "20")
 
-          -- Hyprland 0.56 renders through aquamarine, not wlroots, and
-          -- aquamarine builds its GBM allocator from the first DRM node that
-          -- opens successfully. On this machine that is the NVIDIA dGPU
-          -- (card0), and gbm_create_device() returns NULL there, so startup
-          -- dies with "Cannot create a GBM Allocator" followed by "Cannot open
-          -- backend: no allocator available".
+          -- Hyprland 0.56 renders through aquamarine, not wlroots.
           --
-          -- AQ_DRM_DEVICES is aquamarine's own override; the first entry
-          -- becomes the primary GPU. The AMD APU is card1 and is what Niri
-          -- already renders on successfully, so put it first and keep the
-          -- NVIDIA card available as a secondary.
-          hl.env("AQ_DRM_DEVICES", "/dev/dri/card1:/dev/dri/card0")
+          -- From the aquamarine log of a failing greeter start-up:
+          --   drm: gpu /dev/dri/card1 becomes primary drm
+          --   drm: Starting backend for /dev/dri/card0, with driver nvidia-drm
+          --         with primary /dev/dri/card1
+          --   Couldn't open a GBM device at fd 40
+          --   Cannot create a GBM Allocator: gbm failed to create a device.
+          --   CRIT: Cannot open backend: no allocator available
+          --
+          -- So DRM itself opens fine and card1 (the AMD APU) is already
+          -- primary, but aquamarine still brings the backend up on card0 with
+          -- nvidia-drm, and gbm_create_device() fails on the NVIDIA node
+          -- because the NVIDIA GBM userspace is not on the session's library
+          -- path. The result is no allocator and an abort.
+          --
+          -- AQ_DRM_DEVICES is aquamarine's own override. Restricting it to the
+          -- AMD APU keeps the backend off the NVIDIA card entirely, which is
+          -- what Niri already does successfully on this machine. This is an
+          -- Optimus laptop (GeForce GTX 1650 Ti + Renoir APU) and the internal
+          -- panel is driven by the APU.
+          --
+          -- Note /dev/dri numbering is not what it looks like: card1 is the AMD
+          -- APU (PCI 05:00.0) while renderD128 is *also* the APU and renderD129
+          -- is the NVIDIA card.
+          hl.env("AQ_DRM_DEVICES", "/dev/dri/card1")
 
           ${lib.optionalString debugEnabled ''
           -- 0.56 defaults debug.disable_logs to true, so Hyprland prints
