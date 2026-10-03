@@ -27,6 +27,9 @@
 #   CTOS_PRE         shell command run inside the compositor environment just
 #                    before settling, for driving non-IPC state (notify-send etc.)
 #   CTOS_KEEP        set to 1 to leave the compositor running for inspection
+#   CTOS_INPUT       set to 1 to let libinput see real/virtual input devices, so
+#                    an injected uinput pointer (ydotool) can drive hover and
+#                    clicks. Off by default so host input cannot perturb a render
 #   CTOS_SHARE_BUS   set to 1 to inherit the caller's D-Bus session bus instead
 #                    of starting a private one (breaks notification capture)
 # ==============================================================================
@@ -62,7 +65,17 @@ export WLR_BACKENDS=headless
 # The headless backend creates no outputs unless asked to.
 export WLR_HEADLESS_OUTPUTS=1
 export WLR_RENDERER=pixman
-export WLR_LIBINPUT_NO_DEVICES=1
+# Devices are off by default so a render cannot be perturbed by the host's real
+# keyboard or mouse. CTOS_INPUT=1 turns them back on, which is what lets an
+# injected uinput device (ydotool) reach the compositor as a genuine pointer:
+# with the flag set, sway's seat reports "devices": [] and the cursor can be
+# moved in sway's model but no motion or button event is ever delivered to a
+# client, so hover and click cannot be exercised at all.
+if [ "${CTOS_INPUT:-0}" = "1" ]; then
+    unset WLR_LIBINPUT_NO_DEVICES
+else
+    export WLR_LIBINPUT_NO_DEVICES=1
+fi
 export LIBGL_ALWAYS_SOFTWARE=1
 
 # The devshell presets QT_QPA_PLATFORM=offscreen for qmllint and qmltestrunner.
