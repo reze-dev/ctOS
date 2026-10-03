@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.ctos.features.hyprland;
+  debugEnabled = config.ctos.debug.enable;
 
   hmHyprlandModule =
     {
@@ -42,12 +43,45 @@ let
           hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
           hl.env("HYPRCURSOR_SIZE", "20")
 
+          -- Hyprland 0.56 renders through aquamarine, not wlroots, and
+          -- aquamarine builds its GBM allocator from the first DRM node that
+          -- opens successfully. On this machine that is the NVIDIA dGPU
+          -- (card0), and gbm_create_device() returns NULL there, so startup
+          -- dies with "Cannot create a GBM Allocator" followed by "Cannot open
+          -- backend: no allocator available".
+          --
+          -- AQ_DRM_DEVICES is aquamarine's own override; the first entry
+          -- becomes the primary GPU. The AMD APU is card1 and is what Niri
+          -- already renders on successfully, so put it first and keep the
+          -- NVIDIA card available as a secondary.
+          hl.env("AQ_DRM_DEVICES", "/dev/dri/card1:/dev/dri/card0")
+
+          ${lib.optionalString debugEnabled ''
+          -- 0.56 defaults debug.disable_logs to true, so Hyprland prints
+          -- nothing at all unless logs are explicitly re-enabled. Combined
+          -- with the launcher redirecting stderr, a failing start-up used to
+          -- produce a completely empty log.
+          hl.env("HYPRLAND_TRACE", "1")
+          hl.env("AQ_TRACE", "1")
+          ''}
+
           hl.on("hyprland.start", function()
               hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target")
               hl.exec_cmd("systemctl --user start hyprpolkitagent")
           end)
 
           hl.config({
+              ${lib.optionalString debugEnabled ''
+              -- enable_stdout_logs is only honoured when disable_logs is false,
+              -- so both are needed to get anything on stdout.
+              debug = {
+                  disable_logs = false,
+                  enable_stdout_logs = true,
+                  disable_time = false,
+                  suppress_errors = false,
+                  error_limit = 20,
+              },
+              ''}
               general = {
                   gaps_in = 3,
                   gaps_out = 5,
