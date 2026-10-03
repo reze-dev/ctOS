@@ -79,10 +79,21 @@ let
           hl.env("AQ_TRACE", "1")
           ''}
 
-          hl.on("hyprland.start", function()
-              hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target")
-              hl.exec_cmd("systemctl --user start hyprpolkitagent")
-          end)
+hl.on("hyprland.start", function()
+                -- nixos-fake-graphical-session.target, the same target niri
+                -- starts.
+                --
+                -- This used to start and stop hyprland-session.target, but the
+                -- nixpkgs Hyprland package installs no systemd user units, so
+                -- that target does not exist and systemctl fails with "Unit
+                -- hyprland-session.target not found". Nothing then pulled in
+                -- graphical-session.target, which is where ctos.service,
+                -- ctos-awww-daemon.service and ctos-wallpaper.service live --
+                -- hence a Hyprland session with no shell, no awww and no
+                -- wallpaper.
+                hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start nixos-fake-graphical-session.target")
+                hl.exec_cmd("systemctl --user start hyprpolkitagent")
+            end)
 
           hl.config({
               ${lib.optionalString debugEnabled ''
