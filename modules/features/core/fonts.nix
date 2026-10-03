@@ -13,6 +13,10 @@ in
   config = lib.mkIf cfg.enable {
     fonts.packages = with pkgs; [
       inter
+      # Functional glyphs for the shell, referenced by family name as
+      # "Material Icons Outlined" (see Theme.fontFamilyMaterialIcons).
+      # Apache-2.0, as is the rest of this list.
+      material-icons
       noto-fonts-cjk-sans
       source-han-sans
       source-han-serif

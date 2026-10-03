@@ -1316,9 +1316,9 @@ FocusScope {
                                     // capabilities change.
                                     Repeater {
                                         model: [
-                                            { act: "previous", glyph: "chevron",  rot: 90,  enabled: root.activePlayer !== null && root.activePlayer.canGoPrevious },
-                                            { act: "toggle",  glyph: "play",    rot: 0,   enabled: root.activePlayer !== null && root.activePlayer.canControl },
-                                            { act: "next",     glyph: "chevron", rot: -90, enabled: root.activePlayer !== null && root.activePlayer.canGoNext }
+                                            { act: "previous", glyph: "skipPrevious", rot: 0,  enabled: root.activePlayer !== null && root.activePlayer.canGoPrevious },
+                                            { act: "toggle",  glyph: "play",         rot: 0,  enabled: root.activePlayer !== null && root.activePlayer.canControl },
+                                            { act: "next",     glyph: "skipNext",     rot: 0,  enabled: root.activePlayer !== null && root.activePlayer.canGoNext }
                                         ]
                                         delegate: Item {
                                             id: btn

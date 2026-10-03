@@ -158,6 +158,14 @@ Singleton {
     // the ring's label sideways every second.
     readonly property string fontFamilyMonoNumeric: "Maple Mono"
 
+    // Google's Material Icons, Outlined weight. Installed by the core fonts
+    // module; the five shipped faces (Regular, Outlined, Round, Sharp, TwoTone)
+    // are separate families, so the weight has to be named rather than implied.
+    //
+    // Outlined because the glyphs sit on a dark translucent panel at 16-20px,
+    // where the filled faces read as solid blocks and lose their internal detail.
+    readonly property string fontFamilyMaterialIcons: "Material Icons Outlined"
+
     readonly property int fontSizeBody: 14
     readonly property int fontSizeCaption: 11
     readonly property int fontSizeMicro: 9
