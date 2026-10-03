@@ -11,6 +11,15 @@ let
   desktopCommand = pkgs.writeShellScript "ctos-start-hyprland" ''
     set -u
 
+    # The greeter runs under cage and is itself a Wayland client, so a
+    # WAYLAND_DISPLAY can be inherited this far. Hyprland tries the Wayland
+    # backend before DRM when it can see one, and on a session switch that
+    # display is the outgoing compositor's: it fails, and then the DRM fallback
+    # has to win the devices from a compositor that is still holding them. Clear
+    # it so the session goes straight to DRM, which is the only backend it can
+    # actually use here.
+    unset WAYLAND_DISPLAY DISPLAY
+
     ${lib.optionalString config.ctos.debug.enable ''
       log=/tmp/ctos-desktop-session.log
       exec >>"$log" 2>&1
