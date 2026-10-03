@@ -33,6 +33,56 @@ Singleton {
     // Internal focused workspace tracking for fallback and Niri operation
     property int _localFocusedWorkspaceId: 1
 
+    // Niri's real workspace ids, from `niri msg -j workspaces`.
+    property var _niriWorkspaceIds: []
+    property string _niriJsonBuffer: ""
+
+    function _applyNiriWorkspaces(text) {
+        let parsed;
+        try {
+            parsed = JSON.parse(text);
+        } catch (e) {
+            // A partial read, or niri not up yet. The next poll replaces it.
+            return false;
+        }
+
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            return true;
+        }
+
+        const ids = [];
+        let focused = -1;
+
+        for (let i = 0; i < parsed.length; ++i) {
+            const ws = parsed[i];
+            if (!ws) {
+                continue;
+            }
+            if (typeof ws.id === "number") {
+                ids.push(ws.id);
+            }
+            if (ws.is_focused === true) {
+                focused = ws.id;
+            }
+        }
+
+        if (ids.length > 0) {
+            ids.sort(function (a, b) { return a - b; });
+            root._niriWorkspaceIds = ids;
+        }
+
+        // Only trust the shell's own optimistic update once niri has told us
+        // something different. Without this the notch kept showing the workspace
+        // last clicked in the notch, and ignored every switch made with a
+        // keybinding or a gesture.
+        if (focused > 0 && focused !== root._localFocusedWorkspaceId) {
+            root._localFocusedWorkspaceId = focused;
+            root.workspaceChanged(focused);
+        }
+
+        return true;
+    }
+
     // Focused workspace ID (defaults to 1 if available, or -1 when unavailable)
     readonly property int focusedWorkspaceId: {
         if (root._adapter && root._adapter.available && !root.isNiri) {
@@ -44,8 +94,16 @@ Singleton {
     }
 
     // Reactive list of workspace objects or IDs
-    // When _adapter is unavailable or when running under Niri, provides a deterministic stable list of 5 workspaces (ids 1..5)
+    //
+    // Under Niri this used to be a hardcoded [1,2,3,4,5], which is a guess: niri
+    // creates workspaces on demand and their ids are not contiguous, so the
+    // notch drew five pills for a session that had two. The real list comes from
+    // `niri msg -j workspaces` below, with the fixed list only as a fallback for
+    // before the first poll lands.
     readonly property var workspaces: {
+        if (root.isNiri && root._niriWorkspaceIds.length > 0) {
+            return root._niriWorkspaceIds;
+        }
         if (root._adapter && root._adapter.available && !root.isNiri) {
             const list = root._adapter.workspaces;
             if (list && list.length > 0) {
@@ -80,6 +138,46 @@ Singleton {
         id: niriFocusProcess
         command: ["niri", "msg", "action", "focus-workspace", "1"]
         running: false
+    }
+
+    // Niri has no D-Bus or socket the shell can subscribe to for workspace
+    // changes, so the state is polled. Cheap: one `niri msg -j workspaces` per
+    // second, and only while niri is the compositor.
+    Process {
+        id: niriWorkspacePoll
+        command: ["niri", "msg", "-j", "workspaces"]
+        running: false
+
+        // niri emits compact JSON on a single line, so one chunk is normally the
+        // whole document. Parsed opportunistically: a partial read fails to parse
+        // and the buffer keeps filling, and the poll clears it either way.
+        //
+        // No stream-finished signal to hang this off -- SplitParser in
+        // Quickshell 0.3.1 only has onRead, and assigning onStreamFinished fails
+        // the whole load with "Cannot assign to non-existent property", which
+        // takes every service that imports this one down with it.
+        stdout: SplitParser {
+            onRead: data => {
+                root._niriJsonBuffer += data;
+                if (root._applyNiriWorkspaces(root._niriJsonBuffer)) {
+                    root._niriJsonBuffer = "";
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.isNiri
+        triggeredOnStart: true
+
+        onTriggered: {
+            if (!niriWorkspacePoll.running) {
+                root._niriJsonBuffer = "";
+                niriWorkspacePoll.running = true;
+            }
+        }
     }
 
     // =========================================================================
