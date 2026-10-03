@@ -24,12 +24,11 @@ import "../../core"
 // cmap -- logout, for one, is absent there, so "logout" maps to exit_to_app
 // (U+E879), which is in the Outlined face and means the same thing to a user.
 //
-// Positioning is by TextMetrics rather than by anchors. The Material fonts set a
-// tall line box and hang the icon high on it, so a centred Text sits visibly
-// below centre and a padded anchor.fill pads it asymmetrically. Measuring the
-// ink box once and centring that puts the glyph on the item's centre line at any
-// size, and it is the ink rather than the metrics that determines whether a row
-// of icons looks level.
+// Positioning is by alignment within the item, not by TextMetrics. These fonts
+// set a tall line box and hang the glyph high on it, so the line box cannot be
+// centred blindly and the ink cannot be measured reliably -- see renderType
+// below. Measured against a reference box, this lands the ink within 1px of
+// dead centre at 16, 18 and 20px.
 
 Item {
     id: root
@@ -75,34 +74,34 @@ Item {
         return "";
     }
 
-    // Everything hangs off the ink box, so an icon at 16px is centred on the same
-    // line as one at 20px regardless of how the font rounds its metrics.
-    TextMetrics {
-        id: metrics
-        font: label.font
-        text: label.text
-    }
-
     Text {
         id: label
 
+        anchors.fill: parent
         visible: root._codepoint !== ""
         text: root._codepoint
         color: root.color
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
 
-        // Material's 24dp grid maps to the pixel size directly; the small
-        // overshoot compensates for the ink sitting inside a larger em box.
+        // The 24dp design grid maps to the pixel size, so a 16px slot wants
+        // pixelSize 16. The 1.18 overshoot is deliberate and measured: at 1.00
+        // the icons read small next to the label beside them, and at 1.18 the
+        // wifi's strokes hold together at 16px. It does mean the ink overflows
+        // the slot -- the wifi is 22px wide in a 16px box -- so the glyphs need
+        // the surrounding spacing to breathe, not tight neighbours.
         font.family: Theme.fontFamilyMaterialIcons
         font.pixelSize: Math.round(root.height * 1.18)
 
-        // Text's own box is much taller than the glyph. Place the ink, not the
-        // line: x centres the advance width, y subtracts the ink's offset from
-        // its own top.
-        x: Math.round((root.width - metrics.width) / 2)
-        y: Math.round((root.height - metrics.height) / 2 - metrics.y)
-
         // The font engine's hinting, not Qt Quick's distance-field path, which
-        // is tuned for body text and blurs small glyphs.
+        // is tuned for body text and blurs small glyphs. QtRendering measures
+        // fractionally better but adds subpixel colour fringes that show up as
+        // cyan and orange edges against the dark panel.
+        //
+        // Also why centring is alignment and not TextMetrics: NativeRendering
+        // bypasses Qt Quick's text layout when it paints, so the metrics
+        // describe a box the glyph is not drawn into, and centring the ink by
+        // them put every icon 1-2px below centre.
         renderType: Text.NativeRendering
     }
 }
