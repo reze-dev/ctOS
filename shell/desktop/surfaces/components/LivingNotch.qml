@@ -210,7 +210,13 @@ Item {
     // Fully rounded ends at every size, per the target design. The previous
     // version fell back to an 8px radius for the hover and calendar states,
     // which drew a rectangle where a stadium was specified.
-    readonly property real targetRadius: root.height / 2
+    // Corner radius. A stadium at every size, per the design -- except while the
+    // command centre is open, where the header is only as tall as the notch and a
+    // height/2 radius would be 36px of it. Squaring that off lets the panel tuck
+    // up under the header by the same amount and hide those corners, which is
+    // what makes the two read as one surface. A radius that large would instead
+    // cover the bottom half of the header's own content.
+    readonly property real targetRadius: root.isCommandCenterOpen ? 18 : root.height / 2
 
     // =========================================================================
     // Geometry & Spring Physics Animation Declarations

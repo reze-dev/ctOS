@@ -272,7 +272,7 @@ Singleton {
     readonly property int accordionHeaderHeight: 36
 
     // CCC body. Width is clamped per-output at runtime.
-    readonly property int commandCenterWidth: 760
+    readonly property int commandCenterWidth: 680
 
     // Below this the two columns stop being readable, so the clamp in
     // AmbientBar floors here rather than letting the gutter eat the content.
