@@ -61,7 +61,11 @@ done
 
 RUNDIR="$(mktemp -d /tmp/ctos-shot.XXXXXX)"
 export XDG_RUNTIME_DIR="$RUNDIR"
-export WLR_BACKENDS=headless
+# headless by default. CTOS_WLR_BACKENDS=wayland nests inside an existing
+# compositor instead, which is the only way to get real input: wlroots' headless
+# backend has no libinput session at all, so even with a uinput device present
+# and CTOS_INPUT=1 sway reports "devices": [] and no pointer event is delivered.
+export WLR_BACKENDS="${CTOS_WLR_BACKENDS:-headless}"
 # The headless backend creates no outputs unless asked to.
 export WLR_HEADLESS_OUTPUTS=1
 export WLR_RENDERER=pixman
