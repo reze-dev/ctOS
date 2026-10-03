@@ -48,13 +48,17 @@ Item {
     // State Dimensions
     readonly property real compactWidth: Theme.notchWidthCompact
     // Hover adds the date line and the indicator percentages on top of the idle
-    // row, so it needs more room, but not twice as much.
-    readonly property real hoverWidth: 620
+    // row, so it needs more room, but not twice as much. The hover content
+    // measures ~411px, so 480 keeps a margin without stretching the pill into
+    // the letterbox the 620px width produced.
+    readonly property real hoverWidth: 480
     readonly property real mediaWidth: 280
     readonly property real notificationWidth: 320
     readonly property real calendarWidth: 360
 
-    readonly property real compactHeight: Settings.barHeight
+    // The notch's own token, not Settings.barHeight: see Theme.notchWidthCompact
+    // for why the pill's proportions must not follow a settings slider.
+    readonly property real compactHeight: Theme.notchHeightCompact
     readonly property real hoverHeight: Theme.notchHeightExpanded
     readonly property real expandedHeight: Theme.notchHeightExpanded
     readonly property real calendarHeight: 250

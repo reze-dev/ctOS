@@ -246,16 +246,26 @@ Singleton {
     // the notch's bottom edge from any surface positioned below it.
     readonly property int notchHostPadding: 6
 
-    // The notch's resting height is user-configurable and lives in Settings,
-    // not here. Theme holds design tokens; a value the user can change does not
-    // belong in a token table. Consumers read Settings.barHeight directly.
-    // The idle notch carries the hexagon, five numbered workspace pills, a
+    // The notch's resting height is a design decision, not a user setting, so it
+    // lives here rather than in Settings. It used to read Settings.barHeight,
+    // which coupled the pill's proportions to a slider in the radial settings
+    // (range 28-48) and to whatever barHeight the user's config last persisted --
+    // 470x30 is 15.7:1, and 360x28 would be 12.9:1, both far past the 8.5:1 the
+    // design draws. Settings.barHeight still governs the flat bar and the
+    // desktop widgets; the notch no longer follows it.
+    //
+    // The idle bar carries the hexagon, five numbered workspace pills, a
     // divider, the clock, a second divider and the indicator glyphs -- all on
-    // one line, per the design. At the old 220px the RowLayout compressed every
-    // child to fit and the text wrapped to one character per line, which is what
-    // the closed notch looked like.
-    readonly property int notchWidthCompact: 470
-    readonly property int notchHeightExpanded: 60
+    // one line, per the design. That content measures 253px, so the old 220px
+    // compressed every child to fit and the text wrapped to one character per
+    // line. 360 leaves the content its 253 plus margins.
+    readonly property int notchWidthCompact: 360
+
+    // Heights and widths are set as a pair against the target's proportions:
+    // 8.5:1 idle and 6.6:1 expanded. At the old 470x30 and 620x60 the pill was
+    // 15.7:1 and 10.3:1, a letterbox rather than a capsule.
+    readonly property int notchHeightCompact: 42
+    readonly property int notchHeightExpanded: 72
 
     // CCC accordion header height. Deliberately independent of the notch
     // height: an accordion header is not a bar.

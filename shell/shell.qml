@@ -584,6 +584,17 @@ Scope {
         }
     }
 
+    // Where content below the bar starts, as an anchor offset from the top.
+    //
+    // The max, not Settings.barHeight alone: the notch's resting height is a
+    // design token (Theme.notchHeightCompact) and no longer tracks that setting,
+    // so anchoring to the setting alone let a 42px pill overlap the toasts --
+    // by 1px at the barHeight this config happens to have persisted, and by 9px
+    // at the bottom of the radial slider's range.
+    readonly property int barContentTop:
+        Math.max(Settings.barHeight, Theme.notchHeightCompact)
+        + Theme.notchHostPadding + Theme.spacingMedium
+
     // Surfaces that render *inside* the scrim host and so need it.
     //
     // The command centre is not one of them: it is a child of AmbientBar on the
@@ -673,7 +684,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
+            top: root.barContentTop
             right: Theme.spacingMedium
         }
 
@@ -732,7 +743,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
+            top: root.barContentTop
             right: Theme.barPaddingHorizontal
         }
 
@@ -791,7 +802,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
+            top: root.barContentTop
             right: Theme.barPaddingHorizontal + 60
         }
 
@@ -850,7 +861,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.notchHostPadding + Theme.spacingMedium
+            top: root.barContentTop
             right: Theme.barPaddingHorizontal + 160
         }
 
