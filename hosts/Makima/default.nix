@@ -32,10 +32,13 @@
       "libvirtd"
       "docker"
       "wireshark"
+      "input"
     ];
     shell = pkgs.zsh;
     hashedPassword = "$6$7uVH9VA23imtOFPs$Rx7oc7xoN5gxBqdB6pg1ZG7xqAeX4LIzLuKjPExFOySTdfmVGdDbCD.4K/dtLLbUbdpcNJ8W5OYpeknaij6mM.";
   };
+
+  services.udev.extraRules = "SUBSYSTEM==\"misc\", KERNEL==\"uinput\", MODE=\"0660\", GROUP=\"input\", OPTIONS+=\"static_node=uinput\"";
 
   # ctOS profiles
   ctos.profiles = {
@@ -62,6 +65,12 @@
 
   programs.wireshark.enable = true;
   programs.wireshark.package = pkgs.wireshark-cli;
+
+  # Verbose logging for the Hyprland login failure. The desktop launcher dumps
+  # its full environment to /tmp/ctos-desktop-session.log before exec'ing
+  # start-hyprland, and cage runs with -D -d, so a login attempt leaves enough
+  # to see what the session actually got. Turn this off once Hyprland is up.
+  ctos.debug.enable = true;
 
   networking.hostName = "Makima";
   system.stateVersion = "26.11";

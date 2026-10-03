@@ -38,6 +38,13 @@ let
       exec >>"$log" 2>&1
       echo "ctOS desktop launcher: $(${pkgs.coreutils}/bin/date --iso-8601=seconds)"
       ${pkgs.coreutils}/bin/env
+      echo "--- dri nodes visible to this session ---"
+      ${pkgs.coreutils}/bin/ls -l /dev/dri 2>&1 || true
+      echo "--- nvidia gl/gbm userspace present? ---"
+      ${pkgs.coreutils}/bin/ls /run/opengl-driver/lib 2>&1 | ${pkgs.gnugrep}/bin/grep -E "EGL_nvidia|gbm" || echo "NONE"
+      ${pkgs.coreutils}/bin/ls /run/opengl-driver/lib/gbm 2>&1 || true
+      echo "--- egl vendor icds ---"
+      ${pkgs.coreutils}/bin/ls /run/opengl-driver/share/glvnd/egl_vendor.d 2>&1 || true
     ''}
 
     ${lib.optionalString (!config.ctos.debug.enable) ''
