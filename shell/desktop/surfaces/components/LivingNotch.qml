@@ -41,6 +41,16 @@ Item {
     property bool _isHovered: false
     property bool notificationActive: false
 
+    // Whether the inline calendar grid is open.
+    //
+    // This was never declared, and the file both reads and writes it: the
+    // _isCalendarOpen alias, _resolvedState, the Loader's active binding, and
+    // toggleCalendar()/closeCalendar(). QML silently creates a dynamic property
+    // on the first assignment, so it appeared to work, but every read before
+    // that returned undefined -- which is what produced
+    // "Unable to assign [undefined] to bool" here and at the Loader.
+    property bool calendarOpen: false
+
     property string latestAppName: "System"
     property string latestSummary: ""
     property int latestUrgency: 1
