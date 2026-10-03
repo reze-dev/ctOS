@@ -256,9 +256,30 @@ in
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [ hmHyprlandModule ];
 
-    programs.hyprland = {
-      enable = true;
-      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+programs.hyprland = {
+        enable = true;
+
+        # From the system nixpkgs rather than the Hyprland git flake input.
+        #
+        # The flake input carries its own nixpkgs, so Hyprland and aquamarine
+        # were linked against glibc-2.42 while the system's Mesa is built
+        # against glibc-2.44. Hyprland therefore starts with glibc 2.42 mapped,
+        # and when GBM tries to dlopen the driver's dri_gbm.so it pulls in
+        # mesa's libgallium, which requires GLIBC_2.43:
+        #
+        #   MESA-LOADER: failed to open dri:
+        #     .../glibc-2.42-84/lib/libm.so.6: version `GLIBC_2.43' not found
+        #     (required by .../mesa-26.2.3/lib/libgallium-26.2.3.so)
+        #
+        # gbm_create_device() then returns NULL and start-up dies with
+        # "Cannot create a GBM Allocator" / "no allocator available". Niri is
+        # unaffected because it comes from the system nixpkgs and so runs
+        # against glibc 2.44.
+        #
+        # No environment variable can paper over this: glibc resolves its
+        # dlopen search path once at startup, and the GLIBC_2.43 requirement is
+        # absolute. The two closures have to be built against the same glibc.
+        package = pkgs.hyprland;
       xwayland.enable = true;
     };
 
