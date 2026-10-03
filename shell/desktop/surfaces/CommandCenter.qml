@@ -1624,14 +1624,21 @@ FocusScope {
                     }
                 }
 
-                Card {
-                    id: cardCalendar
-                    width: parent.width
-                    title: qsTr("Calendar & Events")
-                    icon: "calendar"
-                    accent: Theme.accentBlue
-                    collapsible: true
-                }
+Card {
+                      id: cardCalendar
+                      width: parent.width
+                      title: qsTr("Calendar & Events")
+                      // Count of calendars actually contributing, so an empty
+                      // title bar is distinguishable from "nothing scheduled".
+                      subtitle: CalendarService.calendarCount > 0
+                          ? qsTr("%1 file(s)").arg(CalendarService.calendarCount)
+                          : ""
+                      icon: "calendar"
+                      accent: Theme.accentBlue
+                      collapsible: true
+
+                      contentComponent: CalendarAgenda {}
+                  }
 
                 Card {
                     id: cardSystemStatus

@@ -1,5 +1,6 @@
 CtosIcon 1.0 CtosIcon.qml
 CalendarPopup 1.0 CalendarPopup.qml
+CalendarAgenda 1.0 CalendarAgenda.qml
 BluetoothPopup 1.0 BluetoothPopup.qml
 NetworkPopup 1.0 NetworkPopup.qml
 NotchCalendarGrid 1.0 NotchCalendarGrid.qml
