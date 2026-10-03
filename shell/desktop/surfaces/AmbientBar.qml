@@ -55,6 +55,21 @@ PanelWindow {
     Region {
         id: windowRegion
 
+        // While the CCC is open the window grows to cover the whole screen and
+        // this region claims all of it, so clicks outside the panel reach us
+        // instead of falling through to whatever is underneath. Without it the
+        // mask is only the notch and the CCC, and an outside click is delivered
+        // to the app below -- there is no way for us to see it.
+        //
+        // Zero-sized while closed, so the desktop stays clickable as before.
+        Region {
+            id: backdropRegion
+            x: 0
+            y: 0
+            width: root.isCommandCenterHost ? root.width : 0
+            height: root.isCommandCenterHost ? root.height : 0
+        }
+
         Region {
             id: notchRegion
             x: livingNotch.x
@@ -94,9 +109,20 @@ PanelWindow {
     WlrLayershell.keyboardFocus: root.isCommandCenterHost
         ? WlrKeyboardFocus.OnDemand
         : WlrKeyboardFocus.None
-    implicitHeight: Math.max(Settings.barHeight, livingNotch.currentHeight)
+    // Height of the bar on its own: the notch, its padding, and the CCC when
+    // joined underneath it.
+    readonly property real collapsedHeight:
+        Math.max(Settings.barHeight, livingNotch.currentHeight)
         + Theme.notchHostPadding
         + (root.isCommandCenterHost ? commandCenterHost.height - root.cccJoinOverlap : 0)
+
+    // While the CCC is open the surface covers the screen instead, so that the
+    // backdrop region above has somewhere to live and outside clicks are ours to
+    // receive. Anchored to the top with left/right/top set, so this is the full
+    // screen minus the 3px top margin.
+    implicitHeight: root.isCommandCenterHost && root.screen !== null
+        ? root.screen.height
+        : root.collapsedHeight
 
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
@@ -114,6 +140,25 @@ PanelWindow {
     // =========================================================================
     // Active Living Notch Component
     // =========================================================================
+
+    // Outside-click dismissal for the CCC.
+    //
+    // z: -1 puts this under the notch and the CCC, which are declared later, so
+    // clicks on those still reach them -- the panel's own MouseAreas and the
+    // notch's single hover/click authority are unaffected. What lands here is
+    // everything else on the screen.
+    //
+    // Only active while the CCC is open: invisible items take no input, so a
+    // closed bar does not swallow clicks meant for the desktop.
+    MouseArea {
+        id: outsideClickCatcher
+
+        anchors.fill: parent
+        visible: root.isCommandCenterHost
+        z: -1
+
+        onClicked: OverlayController.handleBackdropClick()
+    }
 
     LivingNotch {
         id: livingNotch
