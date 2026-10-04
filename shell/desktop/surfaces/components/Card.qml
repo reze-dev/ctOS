@@ -49,19 +49,25 @@ Item {
     // Header height tracks the icon tile plus padding, so raising the tile size
     // raises the header rather than clipping it.
     readonly property int headerHeight: Theme.cardIconTile + Theme.spacingSmall * 2
-    // Bottom gap under the content. Matched to contentTopPadding so that moving
-    // space from below the content to above it leaves the card's total height
-    // exactly as it was: at 12px down here the reservation grew by 4px per card,
-    // and with five cards in the command centre's left column that was enough to
-    // push System Status past the panel and slice its rings in half.
-    readonly property int contentPadding: Theme.spacingMedium
-    // Gap between the header and the first line of content. Declared alongside
-    // contentPadding so the height reservation and the content's actual offset
-    // read from one place: the reservation was already counting a gap here, but
-    // the content area had no top margin to match it, so the space landed under
-    // the content instead of over it and the top edge sat flush against the
-    // header.
-    readonly property int contentTopPadding: Theme.spacingMedium
+    // Bottom gap under the content, and the gap that was missing above it.
+    //
+    // These two are a redistribution, not an addition: 12 above and 4 below sums
+    // to the 16 the card already reserved, so every card keeps the height it had
+    // and the left column still clears the panel. That matters because the column
+    // had only ~3px of slack against the panel cap -- an earlier attempt that added
+    // 8 above while leaving 12 below pushed System Status past the cap and sliced
+    // its rings in half.
+    //
+    // Above the content is where the space belongs. The heading is a fixed 32px
+    // bar and the content below it was butting straight against that edge, which
+    // read as the content belonging to the header rather than to the card body.
+    // Twelve matches the card's left and right padding, so the content sits in a
+    // consistent inset on three sides.
+    //
+    // Below it, twelve was slack: the content ended and then the card kept going,
+    // which left the body looking bottom-heavy.
+    readonly property int contentPadding: Theme.spacingSmall
+    readonly property int contentTopPadding: Theme.cardPadding
 
     readonly property real contentHeight: contentLoader.item
         ? (contentLoader.item.implicitHeight > 0
