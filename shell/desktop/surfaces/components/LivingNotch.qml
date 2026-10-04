@@ -56,7 +56,24 @@ Item {
     property int latestUrgency: 1
 
     // State Dimensions
-    readonly property real compactWidth: Theme.notchWidthCompact
+    // Derived from the content rather than the old fixed 360.
+    //
+    // The clock is centred on the notch, so the pill needs half its width free on
+    // each side of it. Whichever side group is wider sets that half, and the
+    // clock band sits between them:
+    //
+    //   |<- max(left, right) ->|<- clock band ->|<- max(left, right) ->|
+    //
+    // At 360 this left dead space at both ends once the clock moved out of the
+    // flow, which is the whole reason the pill looked over-wide.
+    readonly property real compactWidth: Math.max(
+        Theme.notchWidthCompactMin,
+        Math.max(root.leftContentWidth, root.rightContentWidth) * 2
+            + root.clockBand + Theme.paddingLarge * 2)
+
+    readonly property real leftContentWidth:
+        compactLogo.width + Theme.spacingSmall + workspaceStrip.implicitWidth
+    readonly property real rightContentWidth: indicatorCluster.implicitWidth
     // Hover adds the date line and the indicator percentages on top of the idle
     // row, so it needs more room, but not twice as much. The hover content
     // measures ~411px, so 480 keeps a margin without stretching the pill into
@@ -66,7 +83,7 @@ Item {
     readonly property real notificationWidth: 320
     readonly property real calendarWidth: 360
 
-    // The notch's own token, not Settings.barHeight: see Theme.notchWidthCompact
+    // The notch's own token, not Settings.barHeight: see Theme.notchWidthCompactMin
     // for why the pill's proportions must not follow a settings slider.
     readonly property real compactHeight: Theme.notchHeightCompact
     readonly property real hoverHeight: Theme.notchHeightExpanded
@@ -442,12 +459,12 @@ Item {
     // =========================================================================
     // View 1: Compact State (Workspaces, Monospace Clock, Net Dot, Status)
     // =========================================================================
-    RowLayout {
-        id: compactView
-        anchors.fill: parent
-        anchors.leftMargin: Theme.paddingLarge
-        anchors.rightMargin: Theme.paddingLarge
-        spacing: Theme.spacingSmall
+RowLayout {
+          id: compactView
+          anchors.fill: parent
+          anchors.leftMargin: Theme.paddingLarge
+          anchors.rightMargin: Theme.paddingLarge
+          spacing: Theme.spacingSmall
         // Serves both the idle and the hover state.
         //
         // There was a second, separate hover view with its own copies of the
@@ -467,13 +484,14 @@ Item {
         // present in the hover row, so the resting notch had no identity and no
         // CommandDeck target.
         Rectangle {
-            Layout.preferredWidth: 20
-            Layout.preferredHeight: 20
-            radius: Theme.radiusSmall
-            color: compactLogoMouse.containsMouse ? Theme.surfaceHover : "transparent"
-            Layout.alignment: Qt.AlignVCenter
+              id: compactLogo
+              Layout.preferredWidth: 20
+              Layout.preferredHeight: 20
+              radius: Theme.radiusSmall
+              color: compactLogoMouse.containsMouse ? Theme.surfaceHover : "transparent"
+              Layout.alignment: Qt.AlignVCenter
 
-GlyphIcon {
+              GlyphIcon {
                   anchors.centerIn: parent
                   width: 18
                   height: 18
@@ -481,13 +499,13 @@ GlyphIcon {
                   color: Theme.textPrimary
               }
 
-            MouseArea {
-                id: compactLogoMouse
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openCommandDeckRequested()
-            }
-        }
+              MouseArea {
+                  id: compactLogoMouse
+                  anchors.fill: parent
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.openCommandDeckRequested()
+              }
+          }
 
         // Workspaces as numbered pills.
       //
@@ -495,7 +513,7 @@ GlyphIcon {
       // circle. The previous five-dot row could not say which workspace was
       // which, and at 6px a dot has no room to carry a number at all.
       RowLayout {
-          spacing: Theme.spacingXs
+          id: workspaceStrip
           Layout.alignment: Qt.AlignVCenter
 
           Repeater {
@@ -550,56 +568,6 @@ GlyphIcon {
           }
       }
 
-      // Divider between the workspace group and the clock, per the design.
-      Rectangle {
-          Layout.alignment: Qt.AlignVCenter
-          Layout.preferredWidth: Theme.borderWidth
-          Layout.preferredHeight: 22
-          visible: root.isCommandCenterOpen
-          color: Theme.border
-      }
-
-        // Date over clock. The design stacks a small date on a large time, which
-        // is also the only arrangement that fits both without shrinking the clock
-        // down to caption size.
-        Item {
-            Layout.preferredWidth: Math.max(dateText.implicitWidth, timeText.implicitWidth)
-            Layout.preferredHeight: timeText.implicitHeight
-                + (root.showDetail ? dateText.implicitHeight + 2 : 0)
-            Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                id: dateText
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: root.showDetail
-                text: Qt.formatDateTime(systemClock.date, "ddd dd MMM").toUpperCase()
-                color: Theme.textSecondary
-                font.family: Theme.fontFamilySans
-                font.pixelSize: Theme.fontSizeMicro
-                font.weight: Theme.fontWeightDemiBold
-            }
-
-            Text {
-                id: timeText
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: Qt.formatDateTime(systemClock.date,
-                        root.showDetail ? "HH:mm:ss" : "HH:mm")
-                color: Theme.textPrimary
-                font.family: Theme.fontFamilyMonoNumeric
-                font.pixelSize: Theme.fontSizeBody
-                font.weight: Theme.fontWeightDemiBold
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.toggleCalendar()
-            }
-        }
-
-
         // Indicator cluster: glyph over a value, values in the status colour.
 
       Item { Layout.fillWidth: true }
@@ -609,6 +577,9 @@ GlyphIcon {
         // dot said whether the link was up; it could not say how good the link
         // was, and it left the rest of the bar's right-hand side empty.
         RowLayout {
+            id: indicatorCluster
+            Layout.maximumWidth: root.sideColumnMax
+            clip: true
             Layout.alignment: Qt.AlignVCenter
             spacing: Theme.spacingMedium
 
@@ -728,7 +699,106 @@ GlyphIcon {
     }
 
 
-    // View 2: Media State (Play/Pause, Title // Artist, Equalizer, Clock)
+    // =========================================================================
+  // Centred clock
+  //
+  // Sits on the notch's centre line rather than in the compact row's flow. In
+  // the row it came after the workspace pills, so the clock drifted right as
+  // the pill count grew and the indicator cluster was pushed to the trailing
+  // edge by a single flexible spacer -- the two ends drifted apart and the
+  // middle never lined up with anything.
+  //
+  // centring it in the row would not have fixed that either. With one flexible
+  // spacer on each side of the clock, the clock's centre lands at
+  // (notchWidth + leftContent - rightContent) / 2, so it is only truly centred
+  // when the left and right groups happen to be the same width. The workspace
+  // strip and the indicator cluster are not.
+  //
+  // So the clock is a sibling, anchored to the centre, and compactView is inset
+  // on both sides by half the clock's width. That reserves a band exactly the
+  // width of the clock, which means the row cannot paint into it at any content
+  // width -- the two can never overlap, whatever the pill count does.
+  //
+  // The two dividers move with it. In the row they bracketed the clock to
+  // separate it from the pills; left behind in the flow they would be a rule at
+  // the end of the workspace group with nothing beside it.
+  Row {
+      id: centeredClock
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: Theme.spacingMedium
+      // Mirrors compactView, which is faded rather than hidden.
+      opacity: compactView.opacity
+      visible: compactView.visible && opacity > 0
+
+      Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Theme.borderWidth
+          height: 22
+          visible: root.isCommandCenterOpen
+          color: Theme.border
+      }
+
+      // Date over clock. The design stacks a small date on a large time, which
+      // is also the only arrangement that fits both without shrinking the clock
+      // down to caption size.
+      Item {
+          width: Math.max(clockDate.implicitWidth, clockTime.implicitWidth)
+          height: clockTime.implicitHeight
+                 + (root.showDetail ? clockDate.implicitHeight + 2 : 0)
+
+          Text {
+              id: clockDate
+              anchors.top: parent.top
+              anchors.horizontalCenter: parent.horizontalCenter
+              visible: root.showDetail
+              text: Qt.formatDateTime(systemClock.date, "ddd dd MMM").toUpperCase()
+              color: Theme.textSecondary
+              font.family: Theme.fontFamilySans
+              font.pixelSize: Theme.fontSizeMicro
+              font.weight: Theme.fontWeightDemiBold
+          }
+
+          Text {
+              id: clockTime
+              anchors.bottom: parent.bottom
+              anchors.horizontalCenter: parent.horizontalCenter
+              text: Qt.formatDateTime(systemClock.date,
+                      root.showDetail ? "HH:mm:ss" : "HH:mm")
+              color: Theme.textPrimary
+              font.family: Theme.fontFamilyMonoNumeric
+              font.pixelSize: Theme.fontSizeBody
+              font.weight: Theme.fontWeightDemiBold
+          }
+
+          MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.toggleCalendar()
+          }
+      }
+
+      Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Theme.borderWidth
+          height: 22
+          visible: root.isCommandCenterOpen
+          color: Theme.border
+      }
+  }
+
+  // Band reserved for the centred clock, plus a little breathing room. compactView
+  // is inset by half of this on each side, so the row's usable width is the notch
+  // minus the clock's band.
+  readonly property real clockBand: centeredClock.width + Theme.spacingLarge
+
+  // Half the width each side group may occupy, so neither can reach the centred
+  // clock. Derived from the notch width rather than from compactView, because
+  // reading the row's own width inside its layout would be a binding loop.
+  readonly property real sideColumnMax: Math.max(root.leftContentWidth,
+      root.rightContentWidth)
+
+  // View 2: Media State (Play/Pause, Title // Artist, Equalizer, Clock)
     // =========================================================================
     RowLayout {
         id: mediaView

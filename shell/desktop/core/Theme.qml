@@ -310,17 +310,19 @@ Singleton {
     // The notch's resting height is a design decision, not a user setting, so it
     // lives here rather than in Settings. It used to read Settings.barHeight,
     // which coupled the pill's proportions to a slider in the radial settings
-    // (range 28-48) and to whatever barHeight the user's config last persisted --
-    // 470x30 is 15.7:1, and 360x28 would be 12.9:1, both far past the 8.5:1 the
-    // design draws. Settings.barHeight still governs the flat bar and the
-    // desktop widgets; the notch no longer follows it.
+    // (range 28-48) and to whatever barHeight the user's config last persisted.
+    // Settings.barHeight still governs the flat bar and the desktop widgets; the
+    // notch no longer follows it.
     //
-    // The idle bar carries the hexagon, five numbered workspace pills, a
-    // divider, the clock, a second divider and the indicator glyphs -- all on
-    // one line, per the design. That content measures 253px, so the old 220px
-    // compressed every child to fit and the text wrapped to one character per
-    // line. 360 leaves the content its 253 plus margins.
-    readonly property int notchWidthCompact: 360
+    // This is only a floor, not the resting width. The pill measures itself from
+    // its content now that the clock is centred on it -- see LivingNotch's
+    // compactWidth, which sizes to the wider of the two side groups plus the
+    // clock band. The fixed 360 this replaces left dead space at both ends once
+    // the clock moved out of the row's flow. The floor stops the pill collapsing
+    // to nothing when a session has very few workspaces or a very short battery
+    // string, which would otherwise make the notch visibly twitch as that content
+    // changed.
+    readonly property int notchWidthCompactMin: 260
 
     // Heights and widths are set as a pair against the target's proportions:
     // 8.5:1 idle and 6.6:1 expanded. At the old 470x30 and 620x60 the pill was
