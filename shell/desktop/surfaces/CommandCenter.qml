@@ -1499,7 +1499,19 @@ FocusScope {
                         if (key === "lock") {
                             SessionService.executeAction(key);
                         } else {
-                            root.pendingAction = key;
+                            // `pendingAction` is declared on this card, so write
+                            // it through the card's own id. These four sites said
+                            // `root.pendingAction`, and `root` is the command
+                            // centre, which has no such property -- the assignment
+                            // threw "Cannot assign to non-existent property" and
+                            // aborted the function, so the confirmation never
+                            // armed and Logout, Reboot and Poweroff did nothing.
+                            //
+                            // Unqualified does not work either: `isConfirming` reads
+                            // `pendingAction` fine because a binding is evaluated in
+                            // the object's scope, but a bare assignment inside a
+                            // function body is plain JavaScript and binds a global.
+                            cardPower.pendingAction = key;
                         }
                     }
 
@@ -1520,12 +1532,12 @@ FocusScope {
                     }
 
                     function cancelConfirmation(): void {
-                        root.pendingAction = "";
+                        cardPower.pendingAction = "";
                     }
 
                     function confirmAction(): void {
-                        const action = root.pendingAction;
-                        root.pendingAction = "";
+                        const action = cardPower.pendingAction;
+                        cardPower.pendingAction = "";
                         if (action !== "")
                             SessionService.executeAction(action);
                     }
