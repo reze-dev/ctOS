@@ -49,23 +49,20 @@ Item {
     // Header height tracks the icon tile plus padding, so raising the tile size
     // raises the header rather than clipping it.
     readonly property int headerHeight: Theme.cardIconTile + Theme.spacingSmall * 2
-// Vertical insets, inside the card.
-//
-// The card had none at all above the header and twelve below the content, so the
-// heading sat against the top border while the body ended in a pool of slack --
-// top-tight and bottom-heavy. topInset opens the top edge; contentPadding trims
-// the bottom.
-//
-// 12 + 4 is the sixteen the card already reserved, so every card keeps its exact
-// height. That is the whole reason for the split: the left column had ~3px of
-// slack against the panel cap, and an earlier attempt that added 8 above while
-// leaving 12 below pushed System Status past the cap and sliced its rings in
-// half.
-//
-// Collapsed cards have no content below the header, so they take the top inset
-// mirrored underneath instead of a 4px stub -- otherwise a collapsed card would
-// be the only one in the column sitting off-centre.
-readonly property int topInset: Theme.cardPadding
+// Vertical insets, inside the card. Every card uses these two values and no
+    // others, so a collapsed card and an expanded one are padded identically.
+    //
+    // The card had none at all above the header and twelve below the content, so
+    // the heading sat against the top border while the body ended in a pool of
+    // slack -- top-tight and bottom-heavy. topInset opens the top edge;
+    // contentPadding trims the bottom.
+    //
+    // 12 + 4 is the sixteen the card already reserved, so every card keeps its
+    // exact height. That is the whole reason for the split: the left column had
+    // ~3px of slack against the panel cap, and an earlier attempt that added 8
+    // above while leaving 12 below pushed System Status past the cap and sliced
+    // its rings in half.
+    readonly property int topInset: Theme.cardPadding
     readonly property int contentPadding: Theme.spacingSmall
 
     readonly property real contentHeight: contentLoader.item
@@ -75,8 +72,13 @@ readonly property int topInset: Theme.cardPadding
         : 0
 
     implicitWidth: parent ? parent.width : undefined
+    // Both insets apply whether or not there is content, so a collapsed card is
+    // padded exactly like an expanded one. The old ternary substituted topInset
+    // for the bottom gap when empty, which made collapsed cards 12/12 and
+    // expanded ones 12/4 -- the inconsistency this removes.
     implicitHeight: topInset + headerHeight
-                     + (contentHeight > 0 ? contentHeight + contentPadding : topInset)
+                     + (contentHeight > 0 ? contentHeight : 0)
+                     + contentPadding
     width: parent ? parent.width : undefined
     height: implicitHeight
 
