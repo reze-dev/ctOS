@@ -31,6 +31,16 @@ Singleton {
     readonly property bool isEthernet: connectionType === "ethernet"
     readonly property bool isWifi: connectionType === "wifi"
 
+    // Wireless-scoped state, computed independently of the wired-first priority
+    // above. connectionType answers "which transport is serving traffic right
+    // now", which is the right question for a generic status indicator but the
+    // wrong one for a card titled "Wi-Fi" whose body lists wireless networks:
+    // with enp2s0 up, connectionType resolves to "ethernet" and a Wi-Fi card
+    // reading it would announce "Ethernet" above a list of Wi-Fi networks.
+    // Callers that care about the radio specifically must use these instead.
+    property bool wifiConnected: false
+    property string wifiNetworkName: ""
+
     // Active network identifier (SSID or interface ID); explicit "--N/A--" when offline
     property string networkName: "--N/A--"
 
@@ -80,7 +90,67 @@ Singleton {
     // Reactive State Evaluation
     // =========================================================================
 
+    // Wireless-only evaluation. Scans for an associated Wi-Fi interface and its
+    // active network, deliberately ignoring wired devices, so the answer stays
+    // correct on a machine that is also plugged in. Kept separate from
+    // _evaluateNetworkState rather than folded into it so the wired-first
+    // transport ladder below is not perturbed.
+    function _evaluateWifiState(): void {
+        if (!root.available || !Networking.devices) {
+            _applyWifiState(false, "");
+            return;
+        }
+
+        const devices = Networking.devices.values;
+        if (!devices || devices.length === 0) {
+            _applyWifiState(false, "");
+            return;
+        }
+
+        for (let i = 0; i < devices.length; i++) {
+            const dev = devices[i];
+            if (!dev || dev.type !== DeviceType.Wifi || !dev.connected) {
+                continue;
+            }
+
+            let activeSsid = "";
+            if (dev.networks && dev.networks.values) {
+                for (let j = 0; j < dev.networks.values.length; j++) {
+                    const net = dev.networks.values[j];
+                    if (net && net.connected) {
+                        activeSsid = net.name;
+                        break;
+                    }
+                }
+            }
+            if (!activeSsid && dev.name) {
+                activeSsid = dev.name;
+            }
+
+            _applyWifiState(true, activeSsid);
+            return;
+        }
+
+        _applyWifiState(false, "");
+    }
+
+    function _applyWifiState(connected: bool, ssid: string): void {
+        // sanitizeName maps empty input to "--N/A--", which would then be
+        // rendered as a literal network name. An associated interface with no
+        // resolvable SSID stays empty here so the card can fall back to a
+        // generic "Connected" rather than displaying the placeholder.
+        const clean = connected && ssid !== "" ? root.sanitizeName(ssid) : "";
+        if (root.wifiConnected !== connected || root.wifiNetworkName !== clean) {
+            root.wifiConnected = connected;
+            root.wifiNetworkName = clean;
+        }
+    }
+
     function _evaluateNetworkState(): void {
+        // Refresh the wireless-scoped view first so it is never stale by the
+        // time the transport ladder below returns.
+        _evaluateWifiState();
+
         if (!root.available || !Networking.devices) {
             _applyDisconnectedState();
             return;

@@ -433,11 +433,15 @@ FocusScope {
                     id: cardWifi
                     width: parent.width
                     title: qsTr("Wi-Fi")
-                    subtitle: NetworkService.isEthernet
-                        ? qsTr("Ethernet")
-                        : (NetworkService.isConnected && NetworkService.networkName !== ""
-                           ? NetworkService.networkName
-                           : (NetworkService.wifiEnabled ? "" : qsTr("Off")))
+                    // Reports the wireless link only. This card's body lists
+                    // wireless networks, so a header driven by the global
+                    // wired-first connectionType made it announce "Ethernet"
+                    // above a list of Wi-Fi networks.
+                    subtitle: NetworkService.wifiConnected
+                        ? (NetworkService.wifiNetworkName !== ""
+                           ? NetworkService.wifiNetworkName
+                           : qsTr("Connected"))
+                        : (NetworkService.wifiEnabled ? "" : qsTr("Off"))
                     icon: "wifi"
                     accent: Theme.accentBlue
                     collapsible: true
