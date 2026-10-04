@@ -55,19 +55,37 @@ PanelWindow {
     Region {
         id: windowRegion
 
-        // While the CCC is open the window grows to cover the whole screen and
-        // this region claims all of it, so clicks outside the panel reach us
-        // instead of falling through to whatever is underneath. Without it the
-        // mask is only the notch and the CCC, and an outside click is delivered
-        // to the app below -- there is no way for us to see it.
+        // Four sub-regions covering everything outside the panel, so a click there
+        // reaches us and can dismiss. While the CCC is open the window covers the
+        // screen, so these have room to exist; while it is closed they are all
+        // zero-sized and only the notch and CCC regions remain.
         //
-        // Zero-sized while closed, so the desktop stays clickable as before.
+        // Without any region out here the compositor has nothing to deliver an
+        // outside click to, so it goes to whatever is underneath and there is no
+        // way for us to see it.
         Region {
-            id: backdropRegion
             x: 0
             y: 0
-            width: root.isCommandCenterHost ? root.width : 0
-            height: root.isCommandCenterHost ? root.height : 0
+            width: root.dismissing ? root.dismissLeft : 0
+            height: root.dismissing ? root.height : 0
+        }
+        Region {
+            x: root.dismissRight
+            y: 0
+            width: root.dismissing ? Math.max(0, root.width - root.dismissRight) : 0
+            height: root.dismissing ? root.height : 0
+        }
+        Region {
+            x: root.dismissLeft
+            y: 0
+            width: root.dismissing ? Math.max(0, root.dismissRight - root.dismissLeft) : 0
+            height: root.dismissing ? root.dismissTop : 0
+        }
+        Region {
+            x: root.dismissLeft
+            y: root.dismissBottom
+            width: root.dismissing ? Math.max(0, root.dismissRight - root.dismissLeft) : 0
+            height: root.dismissing ? Math.max(0, root.height - root.dismissBottom) : 0
         }
 
         Region {
@@ -141,23 +159,58 @@ PanelWindow {
     // Active Living Notch Component
     // =========================================================================
 
-    // Outside-click dismissal for the CCC.
+    // The notch and the CCC together occupy one axis-aligned box. The dismiss
+    // target is everything outside it, so the catcher never overlaps a control.
     //
-    // z: -1 puts this under the notch and the CCC, which are declared later, so
-    // clicks on those still reach them -- the panel's own MouseAreas and the
-    // notch's single hover/click authority are unaffected. What lands here is
-    // everything else on the screen.
-    //
-    // Only active while the CCC is open: invisible items take no input, so a
-    // closed bar does not swallow clicks meant for the desktop.
-    MouseArea {
-        id: outsideClickCatcher
+    // A single full-screen MouseArea with z: -1 was tried first and does not
+    // work: the catcher stayed the topmost item under the cursor even at z: -1,
+    // so every toggle, list row and power button in the panel was swallowed and
+    // the click just closed the panel. z is not a reliable way to put a
+    // screen-sized item behind a subtree here, so the geometry is used instead --
+    // the catcher simply does not cover the panel.
+    readonly property real dismissLeft:
+        Math.max(0, Math.min(livingNotch.x, commandCenterHost.x))
+    readonly property real dismissRight:
+        Math.min(root.width, Math.max(livingNotch.x + livingNotch.width,
+                                      commandCenterHost.x + commandCenterHost.width))
+    readonly property real dismissTop:
+        Math.max(0, Math.min(livingNotch.y, commandCenterHost.y))
+    readonly property real dismissBottom:
+        Math.min(root.height, Math.max(livingNotch.y + livingNotch.height,
+                                       commandCenterHost.y + commandCenterHost.height))
 
-        anchors.fill: parent
-        visible: root.isCommandCenterHost
-        z: -1
+    readonly property bool dismissing: root.isCommandCenterHost
 
+    component DismissArea: MouseArea {
+        visible: root.dismissing
         onClicked: OverlayController.handleBackdropClick()
+    }
+
+    // Left, right, above and below the panel. Zero-sized while closed, so the
+    // desktop is clickable exactly as before.
+    DismissArea {
+        x: 0
+        y: 0
+        width: root.dismissLeft
+        height: root.height
+    }
+    DismissArea {
+        x: root.dismissRight
+        y: 0
+        width: Math.max(0, root.width - root.dismissRight)
+        height: root.height
+    }
+    DismissArea {
+        x: root.dismissLeft
+        y: 0
+        width: Math.max(0, root.dismissRight - root.dismissLeft)
+        height: root.dismissTop
+    }
+    DismissArea {
+        x: root.dismissLeft
+        y: root.dismissBottom
+        width: Math.max(0, root.dismissRight - root.dismissLeft)
+        height: Math.max(0, root.height - root.dismissBottom)
     }
 
     LivingNotch {

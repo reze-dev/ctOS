@@ -159,8 +159,9 @@ Item {
                 anchors.centerIn: parent
                 spacing: Theme.spacingSmall
 
-                GlyphIcon {
-                    visible: root.collapsible
+GlyphIcon {
+                      id: chevronIcon
+                      visible: root.collapsible
                     width: Theme.spacing2Xl - Theme.spacingSmall
                     height: width
                     glyph: "chevron"
@@ -187,21 +188,46 @@ Item {
             }
         }
 
-        MouseArea {
-            id: hoverArea
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: root.collapsible
-            // Only the chevron invites the click, so only the chevron takes it.
-            // A card with a toggle in the header must not also toggle open when
-            // that toggle is clicked, which is what a full-width MouseArea here
-            // would do.
-            acceptedButtons: root.collapsible ? Qt.LeftButton : Qt.NoButton
-            onClicked: {
-                root.expanded = !root.expanded;
-                root.headerClicked();
-            }
-        }
+MouseArea {
+              id: hoverArea
+              anchors.left: parent.left
+              anchors.top: parent.top
+              anchors.bottom: parent.bottom
+              // Stops short of the trailing slot rather than filling the header.
+              // That slot holds the chevron and any `action`, which for the Wi-Fi
+              // and Bluetooth cards is the on/off ToggleSwitch. Filling the header
+              // swallowed clicks on those switches: the click collapsed the card
+              // instead of toggling Wi-Fi or Bluetooth, so every header control in
+              // the panel looked dead.
+              anchors.right: trailing.left
+              anchors.rightMargin: Theme.spacingSmall
+              hoverEnabled: true
+              enabled: root.collapsible
+              acceptedButtons: root.collapsible ? Qt.LeftButton : Qt.NoButton
+              onClicked: {
+                  root.expanded = !root.expanded;
+                  root.headerClicked();
+              }
+          }
+
+          // The chevron keeps its own click target, since the header area above
+          // no longer reaches it. Anchored to the icon rather than to `trailing`,
+          // because trailing also contains the action slot.
+          MouseArea {
+              id: chevronArea
+              anchors.centerIn: chevronIcon
+              width: chevronIcon.width
+              height: chevronIcon.height
+              visible: root.collapsible
+              hoverEnabled: true
+              enabled: root.collapsible
+              acceptedButtons: root.collapsible ? Qt.LeftButton : Qt.NoButton
+              cursorShape: Qt.PointingHandCursor
+              onClicked: {
+                  root.expanded = !root.expanded;
+                  root.headerClicked();
+              }
+          }
     }
 
     // -------------------------------------------------------------- content
