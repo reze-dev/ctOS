@@ -509,6 +509,10 @@ RowLayout {
 
                   GlyphIcon {
                       anchors.fill: parent
+                      // The 18px slot stays -- it is also the hover target, which
+                      // should not shrink with the mark. 14 / (18 * 1.18) lands
+                      // the glyph on the same 14px font the clock sets.
+                      opticalScale: 0.66
                       glyph: "hexagon"
                       color: Theme.textPrimary
                   }
@@ -618,6 +622,7 @@ RowLayout {
                 Layout.preferredWidth: 18
                 Layout.preferredHeight: 18
                 visible: root.isCommandCenterOpen
+                opticalScale: 0.66
                 glyph: "chevron"
                 // Glyph points down; collapsing means going back up.
                 rotation: 180
@@ -637,6 +642,9 @@ RowLayout {
                     // effect at all, and GlyphIcon sizes its font from height.
                     Layout.preferredWidth: 15
                     Layout.preferredHeight: 15
+                    // 0.78 brings the wifi's ink to the volume's, measured at
+                    // 1.27x, and stops it overrunning the slot.
+                    opticalScale: 0.79
                     glyph: "wifi"
                     color: Theme.textSecondary
                 }
@@ -665,8 +673,9 @@ RowLayout {
                     // ColumnLayout, which owns the child's height and discards a
                     // direct assignment -- an earlier width/height: 14 here had no
                     // effect at all, and GlyphIcon sizes its font from height.
-                    Layout.preferredWidth: 13
-                    Layout.preferredHeight: 13
+                    Layout.preferredWidth: 15
+                    Layout.preferredHeight: 15
+                    opticalScale: 0.79
                     glyph: "speaker"
                     color: Theme.textSecondary
                 }
@@ -693,8 +702,9 @@ RowLayout {
                     // ColumnLayout, which owns the child's height and discards a
                     // direct assignment -- an earlier width/height: 14 here had no
                     // effect at all, and GlyphIcon sizes its font from height.
-                    Layout.preferredWidth: 13
-                    Layout.preferredHeight: 13
+                    Layout.preferredWidth: 15
+                    Layout.preferredHeight: 15
+                    opticalScale: 0.79
                     glyph: "battery"
                     color: PowerService.isCharging ? Theme.statusGreen : Theme.textSecondary
                 }

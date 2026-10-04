@@ -44,6 +44,19 @@ Item {
 
     property color color: Theme.textPrimary
 
+    // Optical size correction, for glyphs whose ink fills the 24dp em.
+    //
+    // font.pixelSize is derived from this item's height, which sizes the em box
+    // and not the drawing inside it. Most Material glyphs are inset from the em,
+    // so one slot size makes them look alike -- but some are not. `wifi` fills
+    // the em almost edge to edge, so at the same slot it draws about 1.27x the ink
+    // of `speaker` and overruns its slot by roughly 2px a side, which is what
+    // clipped its arcs against the clock.
+    //
+    // Correcting per glyph keeps the comparison honest. A uniform shrink would
+    // have made every other icon in the tree smaller to accommodate one glyph.
+    property real opticalScale: 1.0
+
     implicitWidth: 20
     implicitHeight: implicitWidth
 
@@ -104,7 +117,7 @@ Item {
         // the slot -- the wifi is 22px wide in a 16px box -- so the glyphs need
         // the surrounding spacing to breathe, not tight neighbours.
         font.family: Theme.fontFamilyMaterialIcons
-        font.pixelSize: Math.round(root.height * 1.18)
+        font.pixelSize: Math.round(root.height * 1.18 * root.opticalScale)
 
         // The font engine's hinting, not Qt Quick's distance-field path, which
         // is tuned for body text and blurs small glyphs. QtRendering measures
