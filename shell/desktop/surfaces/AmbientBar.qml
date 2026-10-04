@@ -132,7 +132,7 @@ PanelWindow {
     readonly property real collapsedHeight:
         Math.max(Settings.barHeight, livingNotch.currentHeight)
         + Theme.notchHostPadding
-        + (root.isCommandCenterHost ? commandCenterHost.height - root.cccJoinOverlap : 0)
+        + (root.isCommandCenterHost ? commandCenterHost.height : 0)
 
     // While the CCC is open the surface covers the screen instead, so that the
     // backdrop region above has somewhere to live and outside clicks are ours to
@@ -244,26 +244,26 @@ PanelWindow {
     // overlay by matching the screen it was opened on.
     // =========================================================================
 
-    // How far the panel tucks up under the notch.
-    //
-    // The design draws the CCC as the notch unfolding: one continuous rounded
-    // shape with a divider between the header row and the content, not a pill
-    // sitting on a separate panel. Drawn as two shapes they read as two objects,
-    // with the notch's rounded bottom corners pinching against the panel's
-    // rounded top ones.
-    //
-    // Overlapping by the notch's own radius hides those corners behind the
-    // panel, which is opaque and sits after the notch in stacking order. The
-    // two fills are the same navy -- the notch's at 94% alpha, the panel's
-    // opaque -- so the covered corners do not show.
-    readonly property real cccJoinOverlap: root.isCommandCenterHost ? livingNotch.targetRadius : 0
+    // The panel starts exactly where the notch ends: no tuck, no overlap.
+//
+// It used to overlap by the notch's own radius, on the theory that the two
+// should read as one continuous shape -- the notch unfolding rather than a pill
+// sitting on a panel. Hiding the notch's rounded bottom corners behind the
+// opaque panel did produce one shape, but it read as a panel sliding underneath
+// the pill rather than as a single surface, because the notch's own rounded
+// corners were doing the hiding. Aligning the two edges instead makes the join
+// explicit: the notch's bottom edge is the panel's top edge, and each keeps its
+// own corners.
+//
+// Nothing needs a seam marker here. The divider that used to mark the notch's
+// lower edge only made sense while the panel's top was hidden behind the notch;
+// the panel's own border is the line now.
 
     Item {
         id: commandCenterHost
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: livingNotch.bottom
-        anchors.topMargin: -root.cccJoinOverlap
         width: Math.max(Theme.commandCenterMinWidth,
                          Math.min(Theme.commandCenterWidth, root.width - Theme.spacing2Xl * 4))
         height: root.isCommandCenterHost ? ccc.implicitHeight : 0
@@ -281,17 +281,6 @@ PanelWindow {
             id: ccc
             width: parent.width
             visible: root.isCommandCenterHost
-        }
-
-        // The header/content divider from the design. It sits at the notch's
-        // lower edge, which after the overlap is this far down the panel.
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: root.cccJoinOverlap
-            width: parent.width - Theme.paddingXl * 2
-            height: Theme.borderWidth
-            color: Theme.border
-            visible: root.cccJoinOverlap > 0
         }
     }
 
