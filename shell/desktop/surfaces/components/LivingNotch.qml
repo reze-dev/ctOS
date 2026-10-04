@@ -631,8 +631,12 @@ RowLayout {
 
                 GlyphIcon {
                     Layout.alignment: Qt.AlignHCenter
-                    width: 14
-                    height: 14
+                    // Layout.preferred*, not width/height. These sit in a
+                    // ColumnLayout, which owns the child's height and discards a
+                    // direct assignment -- an earlier width/height: 14 here had no
+                    // effect at all, and GlyphIcon sizes its font from height.
+                    Layout.preferredWidth: 15
+                    Layout.preferredHeight: 15
                     glyph: "wifi"
                     color: Theme.textSecondary
                 }
@@ -657,8 +661,12 @@ RowLayout {
 
                 GlyphIcon {
                     Layout.alignment: Qt.AlignHCenter
-                    width: 14
-                    height: 14
+                    // Layout.preferred*, not width/height. These sit in a
+                    // ColumnLayout, which owns the child's height and discards a
+                    // direct assignment -- an earlier width/height: 14 here had no
+                    // effect at all, and GlyphIcon sizes its font from height.
+                    Layout.preferredWidth: 13
+                    Layout.preferredHeight: 13
                     glyph: "speaker"
                     color: Theme.textSecondary
                 }
@@ -681,8 +689,12 @@ RowLayout {
 
                 GlyphIcon {
                     Layout.alignment: Qt.AlignHCenter
-                    width: 14
-                    height: 14
+                    // Layout.preferred*, not width/height. These sit in a
+                    // ColumnLayout, which owns the child's height and discards a
+                    // direct assignment -- an earlier width/height: 14 here had no
+                    // effect at all, and GlyphIcon sizes its font from height.
+                    Layout.preferredWidth: 13
+                    Layout.preferredHeight: 13
                     glyph: "battery"
                     color: PowerService.isCharging ? Theme.statusGreen : Theme.textSecondary
                 }
