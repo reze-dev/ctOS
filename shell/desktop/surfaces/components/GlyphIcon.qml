@@ -71,6 +71,18 @@ Item {
         case "pause": return "\uE034";       // pause
         case "skipPrevious": return "\uE045"; // skip_previous
         case "skipNext": return "\uE044";     // skip_next
+        // The shell's identity mark, replacing the hand-drawn HexMark.
+        //
+        // Material Symbols only -- the classic Material Icons Outlined face has
+        // no hexagon at all, which is why the identity mark had to be drawn as
+        // Shape paths until now.
+        //
+        // U+EB39, read out of the font's cmap rather than its glyph order. The
+        // glyph-order index for "hexagon" is 0x2B9, which looks plausible and is
+        // not a codepoint: U+02B9 is absent from the cmap, so Qt fell back to
+        // another font and drew U+02B9 -- MODIFIER LETTER EXTRA-HIGH TONE BAR --
+        // which is a stray vertical stroke where the logo should be.
+        case "hexagon": return "\uEB39";     // hexagon
         }
         return "";
     }

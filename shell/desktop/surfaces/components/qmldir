@@ -5,7 +5,6 @@ BluetoothPopup 1.0 BluetoothPopup.qml
 NetworkPopup 1.0 NetworkPopup.qml
 NotchCalendarGrid 1.0 NotchCalendarGrid.qml
 LivingNotch 1.0 LivingNotch.qml
-HexMark 1.0 HexMark.qml
 StatRing 1.0 StatRing.qml
 Card 1.0 Card.qml
 ToggleSwitch 1.0 ToggleSwitch.qml

@@ -473,11 +473,13 @@ Item {
             color: compactLogoMouse.containsMouse ? Theme.surfaceHover : "transparent"
             Layout.alignment: Qt.AlignVCenter
 
-            HexMark {
-                anchors.centerIn: parent
-                width: 18
-                height: 18
-            }
+GlyphIcon {
+                  anchors.centerIn: parent
+                  width: 18
+                  height: 18
+                  glyph: "hexagon"
+                  color: Theme.textPrimary
+              }
 
             MouseArea {
                 id: compactLogoMouse

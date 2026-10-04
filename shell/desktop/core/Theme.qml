@@ -215,13 +215,17 @@ Singleton {
     // the ring's label sideways every second.
     readonly property string fontFamilyMonoNumeric: "Maple Mono"
 
-    // Google's Material Icons, Outlined weight. Installed by the core fonts
-    // module; the five shipped faces (Regular, Outlined, Round, Sharp, TwoTone)
-    // are separate families, so the weight has to be named rather than implied.
+    // Material Symbols, Outlined. Supersedes the classic Material Icons face,
+    // which had no hexagon to replace the shell's identity mark with.
     //
     // Outlined because the glyphs sit on a dark translucent panel at 16-20px,
-    // where the filled faces read as solid blocks and lose their internal detail.
-    readonly property string fontFamilyMaterialIcons: "Material Icons Outlined"
+    // where the filled faces read as solid blocks. The Outlined, Rounded and
+    // Sharp faces are separate families, so the shape has to be named.
+    //
+    // This is a variable font (FILL, GRAD, opsz, wght). The defaults -- FILL 0,
+    // GRAD 0, wght 400 -- are what Outlined means, so no variation settings are
+    // needed to get the intended weight.
+    readonly property string fontFamilyMaterialIcons: "Material Symbols Outlined"
 
     readonly property int fontSizeBody: 14
     readonly property int fontSizeCaption: 11
