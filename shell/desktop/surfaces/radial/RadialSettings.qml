@@ -135,12 +135,15 @@ FocusScope {
     // Background Scrim & Tactical Grid
     // =========================================================================
 
-    Rectangle {
-        id: scrimBackdrop
-        anchors.fill: parent
-        color: Qt.rgba(13/255, 58/255, 143/255, 1.0)
-        opacity: 0.95
-    }
+Rectangle {
+          id: scrimBackdrop
+          anchors.fill: parent
+          // Was a hardcoded rgb(13, 58, 143) navy. The radial settings panel is
+          // the one surface that was never routed through Theme, so it kept the
+          // previous palette through every theme change.
+          color: Theme.roseBase
+          opacity: 0.95
+      }
 
     // Cybernetic Grid Background
     Canvas {
