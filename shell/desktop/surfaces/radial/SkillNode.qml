@@ -94,9 +94,20 @@ Item {
         id: nodeDisc
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: (!root.isPreview || root.isSelected || root.isHovered) ? "black" : Theme.gray900
+        // Was `(... ? "black" : Theme.gray900)`.
+        //
+        // The "black" branch cannot become gray900: gray900 *is* the page
+        // background, so every branch node disc went the same colour as the
+        // scrim behind it and vanished. "black" had been standing in for
+        // "something darker than the page", and surface is the palette's answer
+        // to that -- one step up from bg rather than a literal that only ever
+        // worked on a near-black palette.
+        //
+        // The preview branch keeps gray900, which is intentional: an unselected
+        // preview node is meant to recede into the grid.
+        color: (!root.isPreview || root.isSelected || root.isHovered) ? Theme.surface : Theme.gray900
         border.width: (!root.isPreview) ? 0 : ((root.isSelected || root.isHovered) ? 2 : 1)
-        border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? "white" : (root.isPreview ? Theme.gray800 : Theme.gray700))
+        border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? Theme.textPrimary : (root.isPreview ? Theme.gray800 : Theme.gray700))
 
         Behavior on border.color {
             ColorAnimation { duration: Theme.durationFast }
@@ -111,7 +122,7 @@ Item {
             anchors.centerIn: parent
             size: root.isPreview ? 24 : Math.max(20, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
-            color: root.locked ? Theme.warningRed : ((!root.isPreview || root.isSelected || root.isHovered) ? "white" : (root.isPreview ? Theme.gray800 : Theme.gray500))
+            color: root.locked ? Theme.warningRed : ((!root.isPreview || root.isSelected || root.isHovered) ? Theme.textPrimary : (root.isPreview ? Theme.gray800 : Theme.gray500))
             visible: !root.isPreview || root.isSelected
 
             Behavior on color {

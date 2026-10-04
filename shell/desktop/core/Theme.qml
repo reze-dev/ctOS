@@ -2,67 +2,128 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import "./palettes/PinePalette.js" as PinePalette
+import "./palettes/AcidPalette.js" as AcidPalette
 
 // Design tokens for the Living Notch / command centre.
 //
-// Palette provenance: a Rosé Pine derivative taken from the nvchad/base46 theme
-// (M.base_30 and M.base_16), not the official Rosé Pine release. It reads deeper
-// and more muted than official Main -- its base is #13111e against Main's
-// #191724 -- which is the "darker" look this was after.
-//
-// Note the official variants, for reference: Main is the darkest of the three
-// (base relative luminance 0.0095, versus Moon's 0.0171). Moon is lighter, not
-// darker. So this palette is not "Rosé Pine Moon"; it is a third, darker thing,
-// and the values below come from base46.
-//
 // The rule this file exists to enforce: colour is referenced by role, never
-// inlined. Semantic aliases sit on top of a raw palette so a future theme swap is
-// a change to the block below and nothing else.
+// inlined. There are three layers, and only the bottom one holds values:
+//
+//   palettes/*.js   22 named slots per palette. The only place a hex lives.
+//   pal* below      one token per slot, wrapped in Qt.color.
+//   everything else aliases those, so the ~90 call-facing tokens are a naming
+//                   layer and never a source of colour.
+//
+// Two palettes ship: ctos-pine, the default, and ctos-dark, the acid one. Both
+// are dark; see AcidPalette.js on why "dark" names the acid one.
 //
 // Role assignments, and why they are not simply "the nearest colour":
 //
-//   Iris is the accent: active, selected, focused, today. Rosé Pine's `love` is
-//   its red, so spending it on the accent would leave destructive actions with
-//   nothing to distinguish them -- the Poweroff button and the focus ring would
-//   be the same colour.
-//   Love is health-failing: destructive, error, danger.
-//   Pine is health: connected, charging, positive.
-//   Foam is the cool secondary: informational, hover borders.
-//   Gold is the warm notice: warnings and amber states.
+//   The accent slot is active, selected, focused.
+//   The love slot is health-failing: destructive, error, danger.
+//   The status slot is health: connected, charging, positive.
+//   The cool slot is the cool secondary: informational, hover borders.
+//   The warning slot is the warm notice: warnings and amber states.
 //
-// These are different intentions and must not be interchanged.
+// These are different intentions and must not be interchanged. Note that
+// ctos-dark sets both `accent` and `status` to #1BFD9C, which collapses that
+// distinction for that palette only -- the slots stay separate so that setting
+// them apart later is a one-value change.
 Singleton {
     id: root
 
     // =========================================================================
-    // Palette — raw values
+    // Palette selection
+    //
+    // Read once from Settings and validated, rather than assumed. Every token
+    // below resolves through root.palette, so switching Settings.theme at
+    // runtime repaints the shell without a restart -- which is what the radial's
+    // appearance picker writes.
     // =========================================================================
 
-    // Surfaces, deepest to lightest. base46 has a much tighter, darker ladder
-    // than Rosé Pine's: darker_black for the page, black for cards, one_bg for
-    // anything raised, line for hover, grey/light_grey for borders.
-    readonly property color palBase: "#13111e"           // base46 darker_black
-    readonly property color palSurface: "#191724"        // base46 black / base00
-    readonly property color palOverlay: "#262431"         // base46 one_bg
-    readonly property color palMuted: "#6E6A86"           // base03
-    readonly property color palSubtle: "#908CAA"          // base04
-    readonly property color palText: "#E0DEF4"            // base46 white / base05
-    readonly property color palLove: "#EB6F92"            // base46 red / base08
-    readonly property color palGold: "#F6C177"            // base46 yellow / base09
-    readonly property color palRose: "#EBBCBA"            // base0A
-    readonly property color palPine: "#31748F"            // base0B
-    readonly property color palFoam: "#8BBEC7"            // base46 blue
-    readonly property color palIris: "#C4A7E7"            // base46 purple / base0D
-    readonly property color palHighlightLow: "#2E2C39"    // base46 line
-    readonly property color palHighlightMed: "#3F3D4A"    // base46 grey
-    readonly property color palHighlightHigh: "#5D5B68"   // base46 light_grey
+    // Where an unusable configuration lands. Pine, not acid: it is the default
+    // the shell ships as, so falling back to it is invisible, and it is the
+    // palette every token was designed against.
+    readonly property string _fallbackTheme: "ctos-pine"
 
-    // Deliberately not used from base46's base_30: green (#ABE9B3) and
-    // vibrant_green (#b5f3bd). Those are nvim-tree highlight colours; at 95%-in-a-
-    // ring sizes they are far too bright for a status readout, so palPine stays
-    // on base0B. Also unused: baby_pink, pink, sun, teal, cyan, nord_blue,
-    // statusline_bg, one_bg2, one_bg3, grey_fg, grey_fg2, pmenu_bg, folder_bg.
-    // Several exist only to serve neovim's own UI.
+    readonly property var _registry: ({
+        "ctos-pine": PinePalette.slots(),
+        "ctos-dark": AcidPalette.slots()
+    })
+
+    // The 22 slots a palette must define.
+    //
+    // Checked rather than assumed because a missing slot does not fail. It
+    // resolves to undefined, Qt.color(undefined) is transparent black, and the
+    // result is an invisible border or unreadable text with nothing in the log.
+    // That is precisely how the Canvas widgets stayed green-on-grey through the
+    // last rebrand: they read hex strings that nothing validated.
+    readonly property var _requiredSlots: [
+        "bg", "surface", "raised", "hover", "active", "selected",
+        "border", "borderMuted", "divider",
+        "text", "textDim", "textMuted", "textDisabled", "textInverse",
+        "accent", "status", "destructive", "warning", "cool", "love",
+        "destructiveDim", "radialBackdrop"
+    ]
+
+    readonly property string themeName: {
+        const requested = Settings.theme;
+
+        if (typeof requested !== "string" || requested.length === 0) {
+            console.warn("Theme: no theme set in Settings; using " + root._fallbackTheme + ".");
+            return root._fallbackTheme;
+        }
+
+        if (!root._registry.hasOwnProperty(requested)) {
+            console.error("Theme: theme '" + requested + "' is not a known palette (have: "
+                + Object.keys(root._registry).join(", ") + "); falling back to " + root._fallbackTheme + ".");
+            return root._fallbackTheme;
+        }
+
+        const missing = [];
+        for (let i = 0; i < root._requiredSlots.length; ++i) {
+            const slot = root._requiredSlots[i];
+            const v = root._registry[requested][slot];
+            if (typeof v !== "string" || v.length === 0) {
+                missing.push(slot);
+            }
+        }
+        if (missing.length > 0) {
+            console.error("Theme: palette '" + requested + "' is missing " + missing.length
+                + " required slot(s) [" + missing.join(", ") + "]; falling back to " + root._fallbackTheme + ".");
+            return root._fallbackTheme;
+        }
+
+        return requested;
+    }
+
+    readonly property var palette: root._registry[root.themeName]
+
+    // =========================================================================
+    // Palette roots -- one token per slot, and the only colours defined here
+    // =========================================================================
+
+    readonly property color palBase: Qt.color(root.palette.bg)
+    readonly property color palSurface: Qt.color(root.palette.surface)
+    readonly property color palOverlay: Qt.color(root.palette.raised)
+    readonly property color palMuted: Qt.color(root.palette.borderMuted)
+    readonly property color palSubtle: Qt.color(root.palette.textMuted)
+    readonly property color palText: Qt.color(root.palette.text)
+    readonly property color palLove: Qt.color(root.palette.love)
+    readonly property color palDestructive: Qt.color(root.palette.destructive)
+    readonly property color palGold: Qt.color(root.palette.warning)
+    readonly property color palPine: Qt.color(root.palette.status)
+    readonly property color palFoam: Qt.color(root.palette.cool)
+    readonly property color palIris: Qt.color(root.palette.accent)
+    readonly property color palHighlightLow: Qt.color(root.palette.hover)
+    readonly property color palHighlightMed: Qt.color(root.palette.active)
+    readonly property color palSelected: Qt.color(root.palette.selected)
+    readonly property color palRadialBackdrop: Qt.color(root.palette.radialBackdrop)
+
+    // Retired, and deliberately not re-added as slots: palRose (#EBBCBA) and
+    // palHighlightHigh (#5D5B68) had no call sites anywhere in the tree. Two
+    // fewer slots to keep honest.
 
     // Legacy raw names, kept because the role tokens below are defined in terms
     // of them and because a handful of call sites outside this file still reach
@@ -72,7 +133,16 @@ Singleton {
     readonly property color violet: root.palIris
     readonly property color magenta: root.palIris
     readonly property color green: root.palPine
-    readonly property color red: root.palLove
+
+    // The destructive slot, not the love one.
+    //
+    // These two are the same colour in ctos-pine (#EB6F92) and different in
+    // ctos-dark (#FC3E38 against #1BFD9C), which is what makes this worth being
+    // explicit about. Aliasing `red` to the love root -- as it was -- left
+    // destructive, error, danger and warningRed rendering accent green under
+    // acid, which is precisely the failure the palette split was supposed to
+    // rule out. `love` below reads the love slot directly instead.
+    readonly property color red: root.palDestructive
 
     // Surface ramp, darkest to lightest.
     readonly property color navyDeep: root.palBase
@@ -82,8 +152,26 @@ Singleton {
     readonly property color navyElevated: root.palOverlay
     readonly property color navyHover: root.palHighlightLow
     readonly property color navyActive: root.palHighlightMed
-    readonly property color navySelected: root.palOverlay
+    readonly property color navySelected: root.palSelected
     readonly property color textCool: root.palText
+
+    // Named textDim, but it is the *border*-muted slot, not the text-muted one.
+    //
+    // The slots distinguish borderMuted (#6E6A86 in pine) from textMuted
+    // (#908CAA). Before the split, Theme.textDim and Theme.textMuted were both
+    // #6E6A86 -- the tree conflated the two roles. Mapping these tokens to the
+    // same-named slots would have quietly lightened every muted label in pine,
+    // so they keep the value they have always rendered with and the slots stay
+    // honest about which role they carry. Concretely, under ctos-pine:
+    //
+    //   Theme.textDim        -> palette.borderMuted  (#6E6A86)
+    //   Theme.textMuted      -> palette.borderMuted  (#6E6A86)
+    //   Theme.textPrimaryDim -> palette.textDim      (#C8C5DC)
+    //   Theme.textPrimaryDimmer -> palette.textMuted (#908CAA)
+    //
+    // The naming is a wart and the obvious fix is to rename the slots to match
+    // the tokens rather than the reverse. That is a breaking change for
+    // Settings-adjacent config and was not done as part of the extraction.
     readonly property color textDim: root.palMuted
 
     // =========================================================================
@@ -130,7 +218,7 @@ Singleton {
     // deliberately: the palette's love is its warm pink, and spending it on the
     // shell's mark rather than reusing a token whose meaning is "this failed"
     // keeps the file's role vocabulary honest.
-    readonly property color love: root.red
+    readonly property color love: root.palLove
 
     // Workspace selection, in pine.
     //
@@ -155,23 +243,40 @@ Singleton {
 
     // Translucent panel surfaces. The desktop telemetry widgets float over the
     // wallpaper, so their background is a scrim rather than an opaque fill.
-    // This was a hardcoded #0E0E0E at 0.85 in eight files, which is why they
-    // stayed neutral grey through the palette change.
-    // Canvas drawing APIs (ctx.fillStyle / strokeStyle) take CSS colour
-    // strings, not QML colours, so a handful of tokens exist in string form.
-    // CpuHexGrid and NetworkFlowMatrix draw with Canvas and previously
-    // hardcoded the old palette, which is why they stayed green-on-grey
-    // through the rebrand.
-    readonly property string accentMagentaHex: "#C4A7E7"
-    readonly property string statusGreenHex: "#31748F"
-    readonly property string dangerHex: "#EB6F92"
-    // Love dimmed toward base, for the muted half of a destructive pair.
-    readonly property string dangerDimHex: "#5E3246"
-    readonly property string textDimHex: "#6E6A86"
-    readonly property string gray300Hex: "#908CAA"
-    readonly property string gray700Hex: "#2E2C39"
-
     readonly property color surfaceScrim: Qt.rgba(root.navySurface.r, root.navySurface.g, root.navySurface.b, 0.85)
+
+    // String forms, for Canvas.
+    //
+    // Canvas drawing APIs (ctx.fillStyle / strokeStyle) take CSS colour strings,
+    // not QML colours, so these cannot be the colour tokens above. Each is a
+    // direct read of the slot its colour-token namesake resolves to -- they are
+    // the same value by construction, not by convention.
+    //
+    // CpuHexGrid and NetworkFlowMatrix are the reason this block exists at all.
+    // They draw with Canvas and used to hardcode the palette inline, which is
+    // why they stayed green-on-grey through the last rebrand while everything
+    // around them changed: nothing outside those two files referenced Theme.
+    readonly property string accentMagentaHex: root.palette.accent
+    readonly property string statusGreenHex: root.palette.status
+    readonly property string dangerHex: root.palette.destructive
+    readonly property string dangerDimHex: root.palette.destructiveDim
+    readonly property string textDimHex: root.palette.borderMuted
+    readonly property string gray300Hex: root.palette.textMuted
+    readonly property string gray700Hex: root.palette.hover
+
+    // A CSS rgba() string for a colour at a given alpha.
+    //
+    // Canvas cannot be handed a QML colour, so every translucent draw has to
+    // become a string. These call sites used to spell the rgba() out by hand,
+    // which is how six of them ended up still carrying the pre-rebrand acid
+    // green: a hand-written rgba(27, 253, 156, ...) is invisible to grep for
+    // palette drift, because it never mentions a token at all. Routing them
+    // through here means an alpha draw follows the palette like any other.
+    function withAlpha(c, a) {
+        return "rgba(" + Math.round(c.r * 255) + ", "
+            + Math.round(c.g * 255) + ", "
+            + Math.round(c.b * 255) + ", " + a + ")";
+    }
 
     // The notch body. Slightly translucent so the wallpaper reads through.
     readonly property color notchSurface: Qt.rgba(root.navyDeep.r, root.navyDeep.g, root.navyDeep.b, 0.94)
@@ -188,27 +293,33 @@ Singleton {
     readonly property color surfaceActive: root.navyActive
     readonly property color surfaceSelected: root.navySelected
 
-    // Borders and dividers. These are dark blue, not the old light grey:
-    // inheriting them from gray200/gray500 put a pale line on a dark surface.
-    readonly property color border: root.navyBorder
-    readonly property color hairline: root.navyBorder
-    readonly property color divider: root.navyBorder
-    readonly property color ctosGray: root.navyBorder
-    readonly property color borderMuted: root.textDim
+    // Borders and dividers.
+    //
+    // `border` and `divider` are separate slots that currently hold the same
+    // value in both palettes. They are kept apart because they mean different
+    // things -- a divider is a separator between rows, a border is the edge of a
+    // control -- and because the acid palette is where they would diverge if
+    // they were going to.
+    readonly property color border: Qt.color(root.palette.border)
+    readonly property color hairline: Qt.color(root.palette.border)
+    readonly property color divider: Qt.color(root.palette.divider)
+    readonly property color ctosGray: Qt.color(root.palette.border)
+    readonly property color borderMuted: Qt.color(root.palette.borderMuted)
 
     // =========================================================================
     // Typography
     // =========================================================================
 
     readonly property color textPrimary: root.textCool
-    // Rosé Pine has no second and third text steps, so these are text stepped
-    // toward muted rather than invented hues.
-    readonly property color textPrimaryDim: "#C8C5DC"
+    // Neither palette has a second and third text step of its own, so these are
+    // text stepped toward muted rather than invented hues. See the note on
+    // root.textDim for why the two muted slots resolve as they do.
+    readonly property color textPrimaryDim: Qt.color(root.palette.textDim)
     readonly property color textPrimaryDimmer: root.palSubtle
     readonly property color textSecondary: root.textDim
     readonly property color textMuted: root.textDim
-    readonly property color textDisabled: root.palHighlightMed
-    readonly property color textInverse: root.navyDeep
+    readonly property color textDisabled: Qt.color(root.palette.textDisabled)
+    readonly property color textInverse: Qt.color(root.palette.textInverse)
     readonly property color unavailable: root.textDim
 
     readonly property var fontFamilies: ["Maple Mono", "JetBrainsMono Nerd Font", "JetBrains Mono", "Monaspace Neon", "CaskaydiaCove Nerd Font", "monospace"]
@@ -259,17 +370,24 @@ Singleton {
     readonly property int fontWeightNormal: 400
 
     // =========================================================================
-    // Neutral ramp — Rosé Pine's neutral ladder, not grey
+    // Neutral ramp
+    //
+    // An alias layer, not a palette root. These are the most widely used tokens
+    // in the tree and the worst-named: gray700 is a hover surface, gray900 is
+    // the page background, gray600 is a border, and only gray50/100/200 are
+    // actually text steps. They survive because call sites are everywhere, but
+    // each resolves to the slot that means the same thing -- which is what lets
+    // the neutral ladder follow the active palette instead of pinning it.
     // =========================================================================
 
     readonly property color gray50: root.palText
-    readonly property color gray100: "#C8C5DC"
+    readonly property color gray100: Qt.color(root.palette.textDim)
     readonly property color gray200: root.textCool
     readonly property color gray300: root.palSubtle
     readonly property color gray400: root.palMuted
     readonly property color gray500: root.textDim
-    readonly property color gray600: root.palHighlightMed
-    readonly property color gray700: root.palHighlightLow
+    readonly property color gray600: root.navyBorder
+    readonly property color gray700: root.navyHover
     readonly property color gray800: root.navySurface
     readonly property color gray900: root.navyDeep
 

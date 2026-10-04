@@ -237,10 +237,10 @@ Item {
                 ctx.stroke();
 
                 // -------------------------------------------------------------
-                // 4. Draw RX Area Glow & Line (Theme.acidGreen: #1BFD9C)
+                // 4. Draw RX Area Glow & Line (Theme.statusGreen)
                 // -------------------------------------------------------------
                 // Faint tactical gradient fill under RX curve
-                ctx.fillStyle = "rgba(27, 253, 156, 0.08)";
+                ctx.fillStyle = Theme.withAlpha(Theme.statusGreen, 0.08);
                 ctx.beginPath();
                 ctx.moveTo(startOffset, h - 2);
                 for (let i = 0; i < n; ++i) {

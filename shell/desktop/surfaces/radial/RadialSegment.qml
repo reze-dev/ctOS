@@ -90,7 +90,7 @@ Item {
             id: sectorPath
             strokeWidth: 2.0
             strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : "transparent")
-            fillColor: (root.isFocused || root.isSelected) ? Theme.gray50 : "black"
+            fillColor: (root.isFocused || root.isSelected) ? Theme.gray50 : Theme.gray900
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.MiterJoin
 
@@ -135,7 +135,7 @@ Item {
             anchors.centerIn: parent
             size: 22
             name: root.iconName
-            color: (root.isFocused || root.isSelected) ? "black" : Theme.gray300
+            color: (root.isFocused || root.isSelected) ? Theme.gray900 : Theme.gray300
 
             Behavior on color {
                 ColorAnimation { duration: Theme.durationFast }

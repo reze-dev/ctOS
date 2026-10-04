@@ -1,128 +1,181 @@
-# Neon Notch — Colour System
+# ctOS Colour System
 
-Source of truth for `shell/desktop/core/Theme.qml`. Values transcribed from the
-four reference images in `images/`.
+Source of truth for `shell/desktop/core/Theme.qml` and the palettes it selects
+between, in `shell/desktop/core/palettes/`.
 
-## Palette
+This document previously described a navy palette (`#050E1E` base, `#EB4ADF`
+magenta accent) that the code no longer contains. The tables below are generated
+from the palette files and were checked against `Theme`'s resolved token values
+under both palettes.
 
-| Role | Token | Hex |
+## Architecture
+
+Three layers, and only the bottom one holds a hex:
+
+| Layer | Where | What it is |
 | --- | --- | --- |
-| Page background | `--bg` | `#050E1E` |
-| Panel body | `--surface` | `#0A192C` |
-| Card / deep surface | `--surface-2` | `#061121` |
-| Subtle border, divider | `--border` | `#243D70` |
-| Primary accent (blue) | `--blue` | `#4695F6` |
-| Secondary accent (violet) | `--violet` | `#7362F5` |
-| Highlight (magenta) | `--magenta` | `#EB4ADF` |
-| Status positive (green) | `--green` | `#4FE7A2` |
-| Text primary | `--text` | `#BACADA` |
-| Text muted | `--muted` | `#606A9B` |
-| Danger | `--danger` | `#D1605D` |
+| Slots | `palettes/*.js` | 22 named slots per palette. The only place a colour value exists. |
+| Roots | `Theme.qml`, `pal*` | One token per slot, wrapped in `Qt.color`. |
+| Aliases | `Theme.qml`, everything else | ~90 call-facing tokens pointing at the roots. |
 
-## Navy ramp
+A theme change is therefore a change to `Settings.theme` and nothing else. Every
+alias re-resolves, which is why switching repaints the shell without a restart.
 
-Replaces the neutral grayscale ramp. Every `Theme.gray*` reference resolves into
-this ramp, so the whole shell shifts to cool navy without touching call sites.
+## Palettes
 
-| Token | Old | New | Use |
+`ctos-pine` is the default. `ctos-dark` is the acid palette and predates the
+navy rebrand, which is where its name comes from — it is not the darker of the
+two, and both are dark.
+
+| Slot | `ctos-pine` | `ctos-dark` | Role |
 | --- | --- | --- | --- |
-| `gray50` | `#FFFFFF` | `#EDF3FF` | maximum-contrast text |
-| `gray100` | `#CACACA` | `#D6E0F5` | primary text, dim |
-| `gray200` | `#D9D9D9` | `#BACADA` | primary text |
-| `gray300` | `#C3C3C3` | `#9AA7CC` | text, dimmer |
-| `gray400` | `#9E9E9E` | `#7A88B4` | text, disabled |
-| `gray500` | `#7A7A7A` | `#606A9B` | muted text, secondary border |
-| `gray600` | `#4A4A4A` | `#3D4877` | disabled text, deep border |
-| `gray700` | `#202020` | `#1A2647` | elevated surface |
-| `gray800` | `#0E0E0E` | `#0A192C` | surface |
-| `gray900` | `#080808` | `#050E1E` | background |
+| `bg` | `#13111E` | `#0E0E0E` | page background |
+| `surface` | `#191724` | `#202020` | card, panel body |
+| `raised` | `#262431` | `#333333` | anything lifted off the page |
+| `hover` | `#2E2C39` | `#2A2A2A` | hover state |
+| `active` | `#3F3D4A` | `#333333` | pressed / selected border |
+| `selected` | `#262431` | `#1A2E24` | selected row. Tinted in acid, grey in pine |
+| `border` | `#3F3D4A` | `#3F3D4A` | control edge |
+| `borderMuted` | `#6E6A86` | `#7A7A7A` | de-emphasised edge |
+| `divider` | `#3F3D4A` | `#3F3D4A` | separator between rows |
+| `text` | `#E0DEF4` | `#FFFFFF` | primary text |
+| `textDim` | `#C8C5DC` | `#CACACA` | secondary text |
+| `textMuted` | `#908CAA` | `#9E9E9E` | tertiary text |
+| `textDisabled` | `#3F3D4A` | `#4A4A4A` | disabled text |
+| `textInverse` | `#13111E` | `#0E0E0E` | text on an accent fill |
+| `accent` | `#C4A7E7` | `#1BFD9C` | active, selected, focused |
+| `status` | `#31748F` | `#1BFD9C` | connected, charging, positive |
+| `destructive` | `#EB6F92` | `#FC3E38` | error, danger |
+| `warning` | `#F6C177` | `#FF964F` | caution |
+| `cool` | `#8BBEC7` | `#66B2B2` | informational secondary |
+| `love` | `#EB6F92` | `#1BFD9C` | the notch's identity mark |
+| `destructiveDim` | `#5E3246` | `#6D211F` | muted half of a destructive pair |
+| `radialBackdrop` | `#2A2313` | `#0C2126` | the radial settings surface's own floor |
 
-## Semantic mapping — this is a remap, not a swap
+Notes that do not fit in a cell:
 
-The important consequence of the new palette is that **green stops being the
-accent**. Green becomes a status role only. Magenta becomes attention.
+- **`radialBackdrop` is not `bg`.** The radial covers the whole screen while it is
+  open and reads as its own place, so it takes a palette-specific floor —
+  bronze under pine, deep teal under acid — instead of sharing the desktop's page
+  background. Its grid checkerboard is tinted from the same slot, or the grid
+  would sit a different hue on the floor. Both values are dark enough for the
+  light text and grid that sit on them.
+- **`border` and `divider` are separate slots that hold the same value in both
+  palettes.** They are kept apart because they mean different things and
+  because acid is where they would diverge if they were going to.
+- **`selected` is the only tinted surface.** Acid's `#1A2E24` is a desaturated
+  green so a selected row reads as *selected* rather than merely brighter. Pine
+  cannot afford it: pine's `selected` is also its `raised`, and tinting it would
+  drag every raised surface green with it.
+- **`accent` and `status` are the same value in acid** (`#1BFD9C`). That collapses
+  the accent/status distinction for that palette only. The slots stay separate so
+  pulling them apart later is a one-value change.
+- **`destructiveDim` in acid is derived**, not picked: `#FC3E38` at 40% toward
+  `#0E0E0E`. No acid-era equivalent existed — the slot was introduced with the
+  navy rebrand — so it is expressed as a ratio so it keeps tracking
+  `destructive` and `bg`.
+- `ctos-pine` is a Rosé Pine derivative from nvchad's base46 theme, not the
+  official Rosé Pine release. Its base is `#13111E` against official Main's
+  `#191724`, so it reads deeper and more muted. Per-slot provenance is in
+  `PinePalette.js`'s `notes()`.
 
-| Token | Old value | New value | Note |
-| --- | --- | --- | --- |
-| `accent` | `#1BFD9C` | `#EB4ADF` | **semantic change.** Active workspace, current day, selection |
-| `active` | `#1BFD9C` | `#EB4ADF` | follows `accent` |
-| `textAccent` | `#1BFD9C` | `#EB4ADF` | follows `accent` |
-| `borderActive` | `#1BFD9C` | `#EB4ADF` | follows `accent` |
-| `acidGreen` | `#1BFD9C` | `#EB4ADF` | **misnomer.** Resolves to magenta — see below |
-| `success` | `#1BFD9C` | `#4FE7A2` | status only |
-| `connected` | `#1BFD9C` | `#4FE7A2` | status only |
-| `available` | — | `#4FE7A2` | new; status only |
-| `warningRed` | `#FC3E38` | `#D1605D` | danger; matches `--danger` |
-| `destructive` | `#FC3E38` | `#D1605D` | follows `danger` |
-| `error` | `#FC3E38` | `#D1605D` | follows `danger` |
-| `warning` | `#FC3E38` | `#D1605D` | follows `danger` |
-| `border` | `#D9D9D9` | `#243D70` | **pinned directly**, no longer from `gray200` |
-| `hairline` | `#D9D9D9` | `#243D70` | **pinned directly** |
-| `divider` | `#7A7A7A` | `#243D70` | **pinned directly**, no longer from `gray500` |
-| `ctosGray` | `#D9D9D9` | `#243D70` | **pinned directly** |
-| `surfaceSelected` | `#1A2E24` | `#3A1B47` | was green-tinted; now magenta-tinted |
+## Validation
 
-### `acidGreen` resolves to magenta, not green
+`Theme.themeName` resolves `Settings.theme` against its registry and checks that
+all 22 slots are present and non-empty. An unknown name or an incomplete palette
+falls back to `ctos-pine` with a `console.error` naming the problem.
 
-This is the one genuinely counter-intuitive decision in the token table, and the
-first draft of this document got it backwards.
+This is checked rather than assumed because a missing slot does not fail — it
+resolves to `undefined`, `Qt.color(undefined)` is transparent black, and the
+visible result is an invisible border or unreadable text with nothing in the log.
 
-`acidGreen` has 127 call sites. Auditing them by meaning rather than by name:
+## Token naming: two known warts
 
-| Meaning | Sites | Resolves to |
+Both are preserved deliberately rather than fixed, because fixing either changes
+rendering or breaks call sites, and neither is worth that in a palette extraction.
+
+### `acidGreen` is not green
+
+`Theme.acidGreen` and `Theme.accentGreen` both resolve to the **accent** slot.
+Under pine that is lavender; under acid it happens to be green. The name is
+accurate only by coincidence in one of the two palettes.
+
+It is kept because it has ~127 call sites. Audited by meaning rather than name,
+the large majority are borders, corner brackets, hover and focus rings — the
+generic accent — and only about 39 are genuine status sites, which now use
+`statusGreen` explicitly. Aliasing it to `statusGreen` would paint ~88 borders
+and focus rings green.
+
+New code must not reference it. Use `accent` / `accentMagenta` for attention and
+`statusGreen` for health.
+
+### `textMuted` resolves to the *border*-muted slot
+
+The slots distinguish `borderMuted` (`#6E6A86` in pine) from `textMuted`
+(`#908CAA`). Before the split, `Theme.textDim` and `Theme.textMuted` were both
+`#6E6A86` — the tree conflated the two roles.
+
+Mapping the tokens to the same-named slots would have quietly lightened every
+muted label in pine, so the tokens keep the value they have always rendered with:
+
+| Token | Resolves to | Pine value |
 | --- | --- | --- |
-| borders, corner brackets, hover, focus rings | ~88 | magenta — attention |
-| connected / powered / charging / playing / not-overloaded | 39 | `statusGreen` — health |
+| `Theme.textDim` | `palette.borderMuted` | `#6E6A86` |
+| `Theme.textMuted` | `palette.borderMuted` | `#6E6A86` |
+| `Theme.textPrimaryDim` | `palette.textDim` | `#C8C5DC` |
+| `Theme.textPrimaryDimmer` | `palette.textMuted` | `#908CAA` |
 
-So `acidGreen` was never carrying a status meaning at the majority of its call
-sites; it was the generic accent. Aliasing it to `statusGreen` would have
-painted 88 borders and focus rings green. It therefore resolves to **magenta**,
-which is also why no call site outside those 39 needed editing — they inherit the
-correct colour through the token.
+The clean fix is to rename the slots to match the tokens rather than the reverse,
+but that is a breaking change for anything that names a slot in config.
 
-The 39 status sites were converted to `statusGreen` explicitly. The token name is
-now a misnomer and should eventually be renamed to `accentLegacy` and then
-folded into `accent`; 88 remaining call sites make that a mechanical follow-up,
-not a blocker.
+## `gray50`–`gray900` are an alias layer, not a ramp
 
-### Tokens added
+These are the most-used tokens in the tree and the worst-named: `gray700` is a
+hover surface, `gray900` is the page background, `gray600` is a border, and only
+`gray50`/`100`/`200` are text steps. Each resolves to the slot that means the same
+thing, which is what lets the neutral ladder follow the active palette instead of
+pinning it.
 
-```
-statusGreen  accentMagenta  accentBlue  accentViolet   -- semantic roles
-pageBackground  surfaceDeep  borderSubtle               -- surfaces
-notchWidthCompact  notchHeightExpanded  notchHostPadding
-commandCenterWidth  commandCenterColumnGutter  commandCenterSectionRadius
-calendarWidth  calendarHeight  accordionHeaderHeight     -- geometry
-springStiffness  springDamping  springMass                -- motion
-radiusLarge  borderWidthAccent  danger  blue  violet  magenta  green  red
-```
+| Token | Slot | Pine | Acid |
+| --- | --- | --- | --- |
+| `gray50` | `text` | `#E0DEF4` | `#FFFFFF` |
+| `gray100` | `textDim` | `#C8C5DC` | `#CACACA` |
+| `gray200` | `text` | `#E0DEF4` | `#FFFFFF` |
+| `gray300` | `textMuted` | `#908CAA` | `#9E9E9E` |
+| `gray400` | `borderMuted` | `#6E6A86` | `#7A7A7A` |
+| `gray500` | `borderMuted` | `#6E6A86` | `#7A7A7A` |
+| `gray600` | `border` | `#3F3D4A` | `#3F3D4A` |
+| `gray700` | `hover` | `#2E2C39` | `#2A2A2A` |
+| `gray800` | `surface` | `#191724` | `#202020` |
+| `gray900` | `bg` | `#13111E` | `#0E0E0E` |
 
-### Deprecation policy
+`border`, `ctosGray`, `divider` and `hairline` are the four tokens that resolve
+identically in both palettes.
 
-New code must not reference `acidGreen`. Use `accent` / `accentMagenta` for
-attention and `statusGreen` for health. The alias exists only to avoid touching
-88 call sites during the palette change.
+## Canvas colours
+
+Canvas drawing APIs take CSS colour strings, not QML colours, so a small set of
+string-form tokens exists: `accentMagentaHex`, `statusGreenHex`, `dangerHex`,
+`dangerDimHex`, `textDimHex`, `gray300Hex`, `gray700Hex`. Each is a direct read
+of the slot its colour-token namesake resolves to.
+
+For translucent draws use `Theme.withAlpha(colour, a)`. Six call sites in
+`CpuHexGrid.qml` and one in `NetworkFlowMatrix.qml` used to hand-write
+`rgba(27, 253, 156, …)` — invisible to a grep for palette drift, because the
+literal never mentioned a token. That is how those two widgets stayed green
+through the last rebrand while everything around them changed.
 
 ## Gradients
 
-The notch and CCC border is a horizontal three-stop gradient:
-
-```
-#4695F6  →  #7362F5  →  #EB4ADF
-```
-
-Current-day marker in the calendar is a two-stop radial/linear blend:
-
-```
-#EB4ADF  →  #7362F5
-```
-
-Volume slider track: `#7362F5` → `#4695F6`, left to right.
+The notch ring is a three-stop horizontal gradient, `cool → accent → accent`
+(`accentBlue → accentViolet → accentMagenta`, or `danger` at both ends while a
+notification is at urgency 2). Because the mid and end stops resolve to the same
+slot, only the left half of the ring carries a hue shift: teal→lavender in pine,
+teal→green in acid.
 
 ## Out-of-band colour
 
-108 hex fills exist across the SVG assets in `shell/`, and 33 literal hex values
-appear in 14 QML files outside `Theme.qml`. Both bypass the token system and will
-survive a `Theme.qml` rewrite unchanged. They are inventory work, tracked
-separately from the palette change; icon fills should be recoloured to
-`currentColor` or a token reference where the icon permits.
+The QML tree is clean: no hex literal outside the palette files, and no
+`"black"`/`"white"` in QML. The remaining literals are the SVG assets in
+`shell/desktop/assets/icons/`, whose `fill="white"` is the tinting mechanism —
+`CtosIcon.color` recolours them — not a palette leak.

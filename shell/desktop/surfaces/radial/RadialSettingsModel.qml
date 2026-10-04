@@ -9,6 +9,31 @@ Item {
     // Reactive counter to trigger view refreshes when settings mutate
     property int revision: 0
 
+    // =========================================================================
+    // Palette options
+    //
+    // Display label -> persisted value, kept here rather than inline on the node
+    // so valueText() and execute() can both read them. A node object literal has
+    // no binding for itself, so an inline list would force these functions to
+    // reach through `this`, which works right up until it is destructured.
+    //
+    // The values are Settings.theme strings and must match Theme._registry's
+    // keys. Theme falls back loudly to ctos-pine on anything it does not
+    // recognise, so a typo here shows up as the picker disagreeing with the
+    // shell rather than as an error at the point of the mistake.
+    // =========================================================================
+    readonly property var paletteOptions: [
+        { label: "PINE", value: "ctos-pine" },
+        { label: "ACID", value: "ctos-dark" }
+    ]
+
+    function paletteLabel(value) {
+        for (var i = 0; i < root.paletteOptions.length; ++i) {
+            if (root.paletteOptions[i].value === value) return root.paletteOptions[i].label;
+        }
+        return String(value);
+    }
+
     Connections {
         target: Settings
         function onSettingsSaved(): void {
@@ -202,21 +227,45 @@ Item {
                         root.revision++;
                     }
                 },
-                {
+                                {
                     id: "app-palette",
-                    title: "ACID ACCENT",
+                    title: "COLORWAY",
                     subtitle: "APP.04 // COLORWAY",
-                    icon: "brightness",
-                    description: "Primary phosphor luminescence wavelength (Acid Green).",
+                    icon: "palette",
+                    description: "Shell palette. Repaints every surface immediately; no restart.",
                     locked: false,
                     lockReason: "",
-                    requires: ["app-motion"],
+                    requires: [],
                     pos: { x: 387, y: -130 },
                     edges: [],
-                    controlType: "readonly",
-                    value: function() { return 1; },
-                    valueText: function() { return "ACID GREEN"; },
-                    execute: function() {}
+                    controlType: "picker",
+                    options: root.paletteOptions,
+                    value: function() { return Settings.theme; },
+                    valueText: function() { return root.paletteLabel(Settings.theme); },
+                    execute: function(val) {
+                        // No argument means "advance", which is what ENTER reaches
+                        // through ContextPanel.executeCurrentNode(). A picker cannot
+                        // be arrow-driven -- NavigationController already spends
+                        // Left/Right on moving between nodes -- so cycling on ENTER
+                        // and selecting by click are the two paths.
+                        var opts = root.paletteOptions;
+                        var target = val;
+                        if (typeof target !== "string" || target.length === 0) {
+                            var idx = 0;
+                            for (var k = 0; k < opts.length; ++k) {
+                                if (opts[k].value === Settings.theme) { idx = k; break; }
+                            }
+                            target = opts[(idx + 1) % opts.length].value;
+                        }
+                        if (target === Settings.theme) return;
+                        Settings.theme = target;
+                        Settings.save();
+                        // Settings writes the file asynchronously; bump the model
+                        // revision as well so the chips restyle on the same frame
+                        // as the Theme repaint rather than a beat later.
+                        root.revision++;
+                        console.log("[RadialSettingsModel] THEME_SET: " + target);
+                    }
                 }
             ]
         },

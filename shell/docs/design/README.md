@@ -22,8 +22,12 @@ Implementation-facing material lives in the sibling [technical package](../techn
 - **The notch is the only top-edge surface.** No tray, no second bar.
 - The CCC is the notch unfolding, hosted in the notch's own window — not a
   separate panel or popup.
-- The shell uses a fixed dark navy/neon theme defined in
-  [`../target/colors.md`](../target/colors.md). No dynamic wallpaper theming.
+- The shell ships two palettes, `ctos-pine` (default) and `ctos-dark`, both
+  defined as 22 named slots in
+  [`../desktop/core/palettes/`](../desktop/core/palettes) and documented in
+  [`../target/colors.md`](../target/colors.md). The active palette is a user
+  setting, switchable from the radial's appearance panel without a restart.
+  Dynamic *wallpaper-derived* theming remains out of scope.
 - The greeter and lockscreen are preserved and packaged, not redesigned.
 - The primary public integration is a Home Manager module exported from a
   flake-parts-organized flake.

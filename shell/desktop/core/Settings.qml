@@ -28,7 +28,16 @@ Singleton {
     // =========================================================================
 
     readonly property bool defaultReducedMotion: false
-    readonly property string defaultTheme: "ctos-dark"
+    // ctos-pine, not ctos-dark, despite the latter's name. Pine is the palette
+    // every token was designed against and the one the shell ships as; acid is
+    // the alternative you opt into from the radial's appearance picker.
+    //
+    // This is the value Theme renders before the config file has been read, so
+    // it also decides the colour of the first frame. A user who has chosen acid
+    // therefore sees one frame of pine before the switch, which is why the
+    // picker is the thing that writes this key rather than anything that reads
+    // it at startup.
+    readonly property string defaultTheme: "ctos-pine"
     readonly property string defaultWallpaper: ""
     readonly property bool defaultWidgetCpuHexGridVisible: true
     readonly property bool defaultWidgetNetworkFlowVisible: true
@@ -72,7 +81,7 @@ Singleton {
         }
         return target;
     }
-    property string theme: "ctos-dark"
+    property string theme: "ctos-pine"
     property string wallpaper: ""
 
     signal settingsLoadFailed(int error)

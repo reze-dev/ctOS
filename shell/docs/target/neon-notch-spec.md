@@ -182,8 +182,9 @@ the notch's own window, which grows downward.** See
 
 ### 3.3 Sections
 
-Each section is a card: 12 px radius, `--surface-deep` fill, 1 px `--border-subtle`,
-12 px internal padding.
+Each section is a card: 12 px radius (`Theme.commandCenterSectionRadius`),
+`Theme.surfaceDeep` fill, 1 px `Theme.borderSubtle`, 12 px internal padding
+(`Theme.cardPadding`).
 
 | Section | Column | Header content | Body |
 | --- | --- | --- | --- |

@@ -21,20 +21,27 @@ consequence of an explicit action.
 
 ## Visual grammar
 
-- **Base:** deep navy, never neutral grey. Surfaces are `#050E1E` through
-  `#0A192C`; cards are `#061121`.
-- **Identity:** a single horizontal gradient — blue `#4695F6` → violet `#7362F5` →
-  magenta `#EB4ADF` — runs along the notch and CCC border. It is the shell's
-  signature and appears nowhere else at that weight.
-- **Meaning of colour:**
-  - magenta = active, selected, focused, today
-  - blue = interactive affordance, live value
-  - green = healthy, connected, positive **only**
-  - red = destructive **only**
-- Green is not the accent. This is the central change from the shell's previous
-  identity, where a single green meant everything at once.
-- **Typography:** monospace throughout. Large type is reserved for the clock and
-  active query, never decoration.
+- **Base:** deep and low-chroma, never a flat neutral. Two palettes ship;
+  `ctos-pine` is a Rosé Pine derivative and `ctos-dark` a neutral grey with one
+  green-tinted surface. Neither is "the" palette -- the shell picks one from
+  `Settings.theme`.
+- **Identity:** a horizontal gradient along the notch and CCC border, running
+  `cool → accent → accent`. Because the mid and end stops resolve to the same
+  slot, only the left half carries a hue shift: teal→lavender in pine,
+  teal→green in acid.
+- **Meaning of colour** is per-role and identical in both palettes:
+  - `accent` = active, selected, focused, today
+  - `cool` = interactive affordance, live value
+  - `status` = healthy, connected, positive
+  - `destructive` = error, danger **only**
+  - `warning` = caution
+- The accent is not green. That was the central change from the shell's first
+  identity, where one green meant everything at once. It holds in pine, where
+  the accent is lavender. In acid the accent happens to be green again, but by
+  coincidence of that palette rather than by intent — the slots are separate so
+  pulling them apart is a one-value change.
+- **Typography:** monospace for data, a proportional sans for labels. Large type
+  is reserved for the clock and active query, never decoration.
 - **Geometry:** stadium-shaped pill at rest; 12–16 px radii on cards; hairline
   borders; generous internal padding.
 - **Glow:** present but restrained. A shell, not a nightclub.
@@ -63,6 +70,12 @@ existing greeter.
 **Out:** Niri support, window overview, clipboard history, file search, screenshot
 workflows, dynamic wallpaper theming, and any second top-edge surface.
 
-The radial settings skill tree and the floating desktop telemetry widgets predate
-this target and are retained unchanged. They are not part of the target design
-and their removal is a separate decision.
+The radial settings skill tree is now a target surface rather than a retained
+prototype. It is where the shell's own settings live, including the palette
+switch, so it is held to the same rules as the notch and the CCC: its controls
+are real, its values are read from and written to Settings, and its lock states
+name a requirement they actually enforce.
+
+The floating desktop telemetry widgets still predate this target and are
+retained unchanged. They are not part of the target design and their removal is
+a separate decision.

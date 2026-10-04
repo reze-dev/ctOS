@@ -136,15 +136,17 @@ FocusScope {
     // =========================================================================
 
 Rectangle {
-          id: scrimBackdrop
-          anchors.fill: parent
-          // Was a hardcoded rgb(13, 58, 143) navy -- the one surface that was
-          // never routed through Theme, so it kept the previous palette through
-          // every theme change. palBase carries that same role as the backdrop
-          // tone; the grid canvas below is drawn on top of it.
-          color: Theme.palBase
-          opacity: 0.95
-      }
+            id: scrimBackdrop
+            anchors.fill: parent
+            // Its own slot, not palBase. The radial covers the whole screen while
+            // it is open and reads as a separate place, so it takes a
+            // palette-specific floor -- bronze under pine, deep teal under acid --
+            // rather than sharing the desktop's page background. The grid below
+            // and the ContextPanel both sit on top of this and read from the same
+            // token, so the whole surface tints together.
+            color: Theme.palRadialBackdrop
+            opacity: 0.95
+        }
 
     // Cybernetic Grid Background
     Canvas {
@@ -157,7 +159,10 @@ Rectangle {
             ctx.clearRect(0, 0, width, height);
 
             var step = 48;
-            ctx.fillStyle = Qt.rgba(0, 0, 0, 0.15);
+            // Tinted from the backdrop, not from bg. Both are dark and the
+            // checkerboard is only 15% alpha, so using bg here would leave a
+            // faintly blue-grey checker on top of a bronze or teal floor.
+            ctx.fillStyle = Theme.withAlpha(Theme.palRadialBackdrop, 0.55);
             for (var y = 0; y < height; y += step) {
                 for (var x = 0; x < width; x += step) {
                     if (((x / step) + (y / step)) % 2 === 0) {

@@ -27,6 +27,19 @@ Item {
         return typeof currentNode.value === "function" && Boolean(currentNode.value());
     }
 
+    // Whether a status pill means anything for this control.
+    //
+    // isActive is Boolean(value()), which is the right question for a toggle and
+    // a slider and nonsense for a picker: a picker's value() is the name of the
+    // selected option, so every option is truthy and the pill would read
+    // "ONLINE // ACTIVE" no matter which one was chosen. Rather than make picker
+    // nodes lie about their value to satisfy the pill, the pill stands down.
+    readonly property bool showsStatusPill:
+        currentNode
+        && currentNode.controlType !== "picker"
+        && currentNode.controlType !== "readonly"
+        && !root.isLocked
+
     width: parent ? Math.min(440, Math.max(340, parent.width * 0.3)) : 440
     anchors.top: parent ? parent.top : undefined
     anchors.bottom: parent ? parent.bottom : undefined
@@ -141,7 +154,12 @@ Item {
         }
 
         // Status Pill Badge
+        //
+        // Hidden where it would be meaningless -- see root.showsStatusPill. A
+        // readonly node states its value in the control area below, and a picker
+        // states it beside the SELECT OPTION caption.
         Rectangle {
+            visible: root.showsStatusPill
             Layout.preferredHeight: 24
             Layout.preferredWidth: statusText.implicitWidth + 16
             radius: Theme.radiusSmall

@@ -317,7 +317,7 @@ Item {
                     // 5 visual states + offline core
                     if (isOffline) {
                         ctx.fillStyle = "transparent";
-                        ctx.strokeStyle = "rgba(32, 32, 32, 0.40)";
+                        ctx.strokeStyle = Theme.withAlpha(Theme.border, 0.40);
                         ctx.lineWidth = 1.0;
                         ctx.stroke();
                     } else if (load >= 0.99) {
@@ -328,20 +328,20 @@ Item {
                         ctx.stroke();
                     } else if (load >= 0.80) {
                         const alpha = 0.75 * root.pulseAlpha;
-                        ctx.fillStyle = "rgba(27, 253, 156, " + alpha.toFixed(2) + ")";
+                        ctx.fillStyle = Theme.withAlpha(Theme.statusGreen, alpha.toFixed(2));
                         ctx.strokeStyle = Theme.statusGreenHex;
                         ctx.lineWidth = 1.5;
                         ctx.fill();
                         ctx.stroke();
                     } else if (load >= 0.40) {
-                        ctx.fillStyle = "rgba(27, 253, 156, 0.70)";
+                        ctx.fillStyle = Theme.withAlpha(Theme.statusGreen, 0.70);
                         ctx.strokeStyle = Theme.statusGreenHex;
                         ctx.lineWidth = 1.2;
                         ctx.fill();
                         ctx.stroke();
                     } else if (load >= 0.05) {
-                        ctx.fillStyle = "rgba(27, 253, 156, 0.25)";
-                        ctx.strokeStyle = "rgba(27, 253, 156, 0.50)";
+                        ctx.fillStyle = Theme.withAlpha(Theme.statusGreen, 0.25);
+                        ctx.strokeStyle = Theme.withAlpha(Theme.statusGreen, 0.50);
                         ctx.lineWidth = 1.0;
                         ctx.fill();
                         ctx.stroke();

@@ -15,11 +15,17 @@ in [`../target/neon-notch-spec.md`](../target/neon-notch-spec.md) §7.
 | A2 | Fix CCC double-toggle so click → CCC actually opens | todo |
 | A3 | Route session actions through `SessionService`; delete duplicate `Process` objects | todo |
 | A4 | Delete dead code: `legacyCompatibilityLayer`, `DynamicIsland.qml`, duplicate calendar grids, orphan files | todo |
-| A5 | Rebase `Theme.qml` on the navy ramp; add neon tokens; keep legacy aliases | todo |
+| A5 | Rebase `Theme.qml` on the navy ramp; add neon tokens; keep legacy aliases | done — superseded |
 | A6 | Reconcile `Theme.barHeight` / `Settings.barHeight` to one source of truth | todo |
 
 A2 and A3 are small and unblock visual evaluation. A4 must land before Calendar C
 is built so the duplicated date math is not extended a third time.
+
+A5 was closed as superseded rather than completed: the navy ramp it asked for is
+not the palette the shell ended up with. It was replaced by extracting the
+existing pine palette into `core/palettes/PinePalette.js`, adding the acid
+palette alongside it as `AcidPalette.js`, and reducing `Theme.qml` to aliases over
+21 validated slots. Two user-selectable palettes, not one navy ramp.
 
 ## Phase B — Notch
 
