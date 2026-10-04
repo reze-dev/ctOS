@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Services.Mpris
 import "../../adapters/hyprland"
@@ -503,9 +504,56 @@ RowLayout {
               Layout.alignment: Qt.AlignVCenter
 
               Item {
+                  id: logoMark
                   anchors.centerIn: parent
                   width: 18
                   height: 18
+
+                  // Rose fill, with the glyph's outline kept as the edge.
+                  //
+                  // hexagon.fill is not usable as a codepoint: Material Symbols
+                  // ships it as the FILL axis of the variable font rather than as
+                  // a separate glyph, and QML's Text cannot set variation axes.
+                  // So the fill is drawn here and the glyph is kept for its edges
+                  // alone.
+                  //
+                  // Orientation is taken from the glyph rather than assumed. Its
+                  // ink measures 22x16 device px inside this 18px slot and is
+                  // widest at the vertical middle, so it is a flat-top hexagon with
+                  // vertices left and right -- not the pointy-top one the old
+                  // hand-drawn mark used. Hence vertices from 0 degrees.
+                  readonly property real fillInset: 2.6
+                  readonly property var fillVerts: _hexVerts(
+                      Math.min(width, height) / 2 - fillInset)
+
+                  function _hexVerts(r: real): var {
+                      const cx = width / 2;
+                      const cy = height / 2;
+                      const out = [];
+                      for (let i = 0; i < 6; ++i) {
+                          const a = (i * 60) * Math.PI / 180;
+                          out.push(cx + r * Math.cos(a));
+                          out.push(cy + r * Math.sin(a));
+                      }
+                      return out;
+                  }
+
+                  Shape {
+                      anchors.fill: parent
+                      preferredRendererType: Shape.GeometryRenderer
+                      antialiasing: true
+
+                      ShapePath {
+                          fillColor: Theme.markFill
+                          startX: logoMark.fillVerts[0]
+                          startY: logoMark.fillVerts[1]
+                          PathLine { x: logoMark.fillVerts[2];  y: logoMark.fillVerts[3] }
+                          PathLine { x: logoMark.fillVerts[4];  y: logoMark.fillVerts[5] }
+                          PathLine { x: logoMark.fillVerts[6];  y: logoMark.fillVerts[7] }
+                          PathLine { x: logoMark.fillVerts[8];  y: logoMark.fillVerts[9] }
+                          PathLine { x: logoMark.fillVerts[10]; y: logoMark.fillVerts[11] }
+                      }
+                  }
 
                   GlyphIcon {
                       anchors.fill: parent
@@ -521,21 +569,6 @@ RowLayout {
                       opticalScale: 0.94
                       glyph: "hexagon"
                       color: Theme.textPrimary
-                  }
-
-                  // Dot inside the hexagon, in love. Material Symbols has no
-                  // "hexagon with a dot" glyph -- hexagon and hexagon.fill are
-                  // the only two -- so the dot is a shape laid over the outline.
-                  // At 18px it has to be small and exactly centred, or it reads
-                  // as a smudge rather than as a mark.
-                  Rectangle {
-                      anchors.centerIn: parent
-                      // Was a fixed 5px, sized for the small hexagon. A fixed dot
-                      // disappears as the outline grows around it.
-                      width: 7
-                      height: 7
-                      radius: 3.5
-                      color: Theme.love
                   }
               }
 

@@ -140,6 +140,11 @@ Singleton {
     // file exists to keep.
     readonly property color workspaceActive: root.green
 
+    // The shell's mark. The palette's soft rose, distinct from love: love is the
+    // red role and is used where something has failed or is destructive, while
+    // this is purely the identity fill inside the notch's hexagon.
+    readonly property color markFill: root.palRose
+
     readonly property color accentRed: root.red
     readonly property color pastelBlue: root.palFoam
     readonly property color pastelOrange: root.palGold
