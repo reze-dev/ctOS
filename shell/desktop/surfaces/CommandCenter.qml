@@ -549,9 +549,13 @@ FocusScope {
                             // trailing term is the Column's own spacing between
                             // its children, which is not part of any child's
                             // height and was being left out -- the last row and
-                            // the overflow note were clipped by the card.
+                            // the overflow note were clipped by the card. It
+                            // counts visibleCount + 1 + overflow because the
+                            // prompt and the forget confirmation are mutually
+                            // exclusive, so exactly one of them supplies the
+                            // second "+1".
                             implicitHeight: NetworkService.wifiEnabled && NetworkService.available
-                                    ? 22 + Theme.spacingSmall * 2
+                                    ? 22
                                       + visibleCount * 34
                                       + (cardWifi.passwordPromptOpen ? pwPrompt.promptHeight : 0)
                                       + (cardWifi.confirmingForgetSsid !== "" ? 26 : 0)
