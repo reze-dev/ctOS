@@ -543,8 +543,13 @@ RowLayout {
                       preferredRendererType: Shape.GeometryRenderer
                       antialiasing: true
 
+                      // love, the palette's warm pink, is the identity fill.
+                      // It shares a value with destructive, deliberately and with
+                      // a separate name: destructive means something has failed,
+                      // and borrowing it for the shell's mark would say the mark
+                      // itself was an error.
                       ShapePath {
-                          fillColor: Theme.markFill
+                          fillColor: Theme.love
                           startX: logoMark.fillVerts[0]
                           startY: logoMark.fillVerts[1]
                           PathLine { x: logoMark.fillVerts[2];  y: logoMark.fillVerts[3] }
