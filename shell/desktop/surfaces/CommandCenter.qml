@@ -543,8 +543,8 @@ FocusScope {
                             readonly property bool hasOverflow:
                                 cardWifi.expanded && netCount > visibleCount
 
-                            // 22 for the scan row; 34 per network; 88 for an
-                            // open password prompt; 26 for a forget
+                            // 22 for the scan row; 34 per network; the password prompt's
+                            // own promptHeight; 26 for a forget
                             // confirmation; 18 for the overflow note. The
                             // trailing term is the Column's own spacing between
                             // its children, which is not part of any child's
@@ -553,7 +553,7 @@ FocusScope {
                             implicitHeight: NetworkService.wifiEnabled && NetworkService.available
                                     ? 22 + Theme.spacingSmall * 2
                                       + visibleCount * 34
-                                      + (cardWifi.passwordPromptOpen ? 88 : 0)
+                                      + (cardWifi.passwordPromptOpen ? pwPrompt.promptHeight : 0)
                                       + (cardWifi.confirmingForgetSsid !== "" ? 26 : 0)
                                       + (hasOverflow ? 18 : 0)
                                       + Theme.spacingSmall
@@ -720,16 +720,37 @@ FocusScope {
 
                                 // Password prompt, for a secured network with no
                                 // stored profile.
-                                Rectangle {
-                                    id: pwPanel
+Rectangle {
+                                        id: pwPrompt
                                     anchors.left: parent.left
                                     anchors.right: parent.right
-                                    height: visible ? 88 : 0
                                     visible: cardWifi.passwordPromptOpen
                                     radius: Theme.radiusMedium
                                     color: Theme.surfaceDeep
                                     border.width: Theme.borderWidth
                                     border.color: Theme.border
+
+                                    // Field and button heights are declared here
+                                    // and consumed below so the prompt can never be
+                                    // shorter than the stack it contains.
+                                    readonly property int fieldHeight: 28
+                                    readonly property int buttonHeight: 26
+
+                                    // Single source of truth for the prompt's
+                                    // height: the Column's implicitHeight far below
+                                    // adds this same value, and the two drifting
+                                    // apart is what clipped the overflow note
+                                    // before. Label height is measured rather than
+                                    // guessed so a font change cannot desync it.
+                                    readonly property int promptHeight:
+                                          Theme.spacingSmall * 2
+                                        + pwLabel.implicitHeight
+                                        + Theme.spacingSmall
+                                        + fieldHeight
+                                        + Theme.spacingSmall * 2
+                                        + buttonHeight * 2
+
+                                    height: visible ? promptHeight : 0
 
                                     Text {
                                         id: pwLabel
@@ -754,11 +775,11 @@ FocusScope {
                                         id: pwField
                                         anchors.left: parent.left
                                         anchors.leftMargin: Theme.spacingSmall
-                                        anchors.right: pwCancelBtn.left
+                                        anchors.right: parent.right
                                         anchors.rightMargin: Theme.spacingSmall
                                         anchors.top: pwLabel.bottom
                                         anchors.topMargin: Theme.spacingSmall
-                                        height: 28
+                                        height: pwPrompt.fieldHeight
 
                                         Rectangle {
                                             anchors.fill: parent
@@ -797,7 +818,7 @@ FocusScope {
                                         }
                                     }
 
-                                    // Cancel, left of Join. The prompt was
+                                    // Cancel, stacked under Join at the same size. The prompt was
                                     // dismissable only by clicking the selected
                                     // network row again, which toggles
                                     // selectedSsid -- true, but nothing on screen
@@ -805,11 +826,13 @@ FocusScope {
                                     // looked like it could not be closed.
                                     Rectangle {
                                         id: pwCancelBtn
-                                        anchors.right: pwSubmit.left
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: Theme.spacingSmall
+                                        anchors.right: parent.right
                                         anchors.rightMargin: Theme.spacingSmall
-                                        anchors.verticalCenter: pwInput.verticalCenter
-                                        width: pwCancelLabel.implicitWidth + Theme.spacingMedium * 2
-                                        height: 26
+                                        anchors.top: pwSubmit.bottom
+                                        anchors.topMargin: Theme.spacingSmall
+                                        height: pwPrompt.buttonHeight
                                         radius: Theme.radiusSmall
                                         color: pwCancelHover.containsMouse ? Theme.surfaceHover : "transparent"
                                         border.width: Theme.borderWidth
@@ -836,11 +859,13 @@ FocusScope {
 
                                     Row {
                                         id: pwSubmit
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: Theme.spacingSmall
                                         anchors.right: parent.right
                                         anchors.rightMargin: Theme.spacingSmall
-                                        anchors.verticalCenter: pwInput.verticalCenter
-                                        width: pwSubmitLabel.implicitWidth + Theme.spacingMedium * 2
-                                        height: 26
+                                        anchors.top: pwField.bottom
+                                        anchors.topMargin: Theme.spacingSmall
+                                        height: pwPrompt.buttonHeight
                                         property bool clicked: false
 
                                         Rectangle {
