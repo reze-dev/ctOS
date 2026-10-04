@@ -629,6 +629,35 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "ctos-overlay"
 
+        // Input region: the whole surface.
+        //
+        // A PanelWindow with no mask is given an empty pointer input region, so
+        // the compositor delivers it no pointer events at all. Everything
+        // mouse-driven in here was therefore unreachable: the radial's segments
+        // and preview subtrees could not be hovered, ContextPanel's toggle,
+        // slider, action and picker controls could not be clicked, and
+        // scrimBackdrop below never saw the click it exists to handle. Keyboard
+        // navigation worked the whole time, which is what made it read as "the
+        // radial is just awkward" rather than "the radial cannot be pointed at".
+        //
+        // Full screen because that is what the scrim is: modal, anchored on all
+        // four sides, with a dismiss MouseArea filling it. Content that should
+        // swallow a click instead of dismissing has its own MouseArea and is
+        // declared after scrimBackdrop, so it wins.
+        //
+        // AmbientBar sets a matching mask for the same reason; see the comment
+        // on its windowRegion.
+        Region {
+            id: overlayRegion
+
+            x: 0
+            y: 0
+            width: overlayHost.width
+            height: overlayHost.height
+        }
+
+        mask: overlayRegion
+
 
         Rectangle {
             id: scrimVisual
