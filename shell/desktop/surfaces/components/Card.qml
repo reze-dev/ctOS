@@ -49,25 +49,24 @@ Item {
     // Header height tracks the icon tile plus padding, so raising the tile size
     // raises the header rather than clipping it.
     readonly property int headerHeight: Theme.cardIconTile + Theme.spacingSmall * 2
-    // Bottom gap under the content, and the gap that was missing above it.
-    //
-    // These two are a redistribution, not an addition: 12 above and 4 below sums
-    // to the 16 the card already reserved, so every card keeps the height it had
-    // and the left column still clears the panel. That matters because the column
-    // had only ~3px of slack against the panel cap -- an earlier attempt that added
-    // 8 above while leaving 12 below pushed System Status past the cap and sliced
-    // its rings in half.
-    //
-    // Above the content is where the space belongs. The heading is a fixed 32px
-    // bar and the content below it was butting straight against that edge, which
-    // read as the content belonging to the header rather than to the card body.
-    // Twelve matches the card's left and right padding, so the content sits in a
-    // consistent inset on three sides.
-    //
-    // Below it, twelve was slack: the content ended and then the card kept going,
-    // which left the body looking bottom-heavy.
+// Vertical insets, inside the card.
+//
+// The card had none at all above the header and twelve below the content, so the
+// heading sat against the top border while the body ended in a pool of slack --
+// top-tight and bottom-heavy. topInset opens the top edge; contentPadding trims
+// the bottom.
+//
+// 12 + 4 is the sixteen the card already reserved, so every card keeps its exact
+// height. That is the whole reason for the split: the left column had ~3px of
+// slack against the panel cap, and an earlier attempt that added 8 above while
+// leaving 12 below pushed System Status past the cap and sliced its rings in
+// half.
+//
+// Collapsed cards have no content below the header, so they take the top inset
+// mirrored underneath instead of a 4px stub -- otherwise a collapsed card would
+// be the only one in the column sitting off-centre.
+readonly property int topInset: Theme.cardPadding
     readonly property int contentPadding: Theme.spacingSmall
-    readonly property int contentTopPadding: Theme.cardPadding
 
     readonly property real contentHeight: contentLoader.item
         ? (contentLoader.item.implicitHeight > 0
@@ -76,8 +75,8 @@ Item {
         : 0
 
     implicitWidth: parent ? parent.width : undefined
-    implicitHeight: headerHeight
-                     + (contentHeight > 0 ? contentTopPadding + contentHeight + contentPadding : 0)
+    implicitHeight: topInset + headerHeight
+                     + (contentHeight > 0 ? contentHeight + contentPadding : topInset)
     width: parent ? parent.width : undefined
     height: implicitHeight
 
@@ -106,6 +105,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
+        // The inset lives here: between the card's top edge and the heading.
+        anchors.topMargin: root.topInset
         height: root.headerHeight
 
         // Icon tile: a tinted rounded square, which is what gives the card its
@@ -256,7 +257,9 @@ onClicked: {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
-        anchors.topMargin: root.expanded ? root.contentTopPadding : 0
+        // Flush under the heading: the gap between the card's top edge and the
+        // heading is topInset's job, and doubling it up here is what left the
+        // content marooned in the middle of the card.
         anchors.leftMargin: Theme.cardPadding
         anchors.rightMargin: Theme.cardPadding
         // Collapsed cards keep their header height, so the content is hidden

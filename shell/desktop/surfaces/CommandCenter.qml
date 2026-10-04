@@ -1427,8 +1427,10 @@ FocusScope {
                     contentComponent: Component {
                         Item {
                             width: parent ? parent.width : undefined
-                            implicitHeight: 76
-                            height: 76
+                            // A StatRing with a caption is 78 tall, so 76 clipped
+                            // the bottom of the rings by 2px.
+                            implicitHeight: 78
+                            height: 78
 
                             Row {
                                 id: metrics
@@ -1597,8 +1599,11 @@ FocusScope {
                     contentComponent: Component {
                         Item {
                             width: parent ? parent.width : undefined
-                            implicitHeight: 76
-                            height: 76
+                            // The tiles are 64 tall, so reserving 76 left 12px of dead
+                            // space under them -- the other half of the bottom-heavy
+                            // gap the card's own padding was only part of.
+                            implicitHeight: 64
+                            height: 64
 
                             // Confirmation replaces the tiles rather than
                             // stacking below them, so asking to power off does not
