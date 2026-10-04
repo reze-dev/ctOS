@@ -509,10 +509,16 @@ RowLayout {
 
                   GlyphIcon {
                       anchors.fill: parent
-                      // The 18px slot stays -- it is also the hover target, which
-                      // should not shrink with the mark. 14 / (18 * 1.18) lands
-                      // the glyph on the same 14px font the clock sets.
-                      opticalScale: 0.71
+                      // Deliberately larger than the clock. Everything else on
+                      // the line is matched to the clock's ink height, but the
+                      // hexagon is the identity mark and reads as an afterthought
+                      // at that size -- it needs to hold its own against the bold
+                      // clock digits rather than match them. 0.94 puts it back
+                      // around its original presence.
+                      //
+                      // The 18px slot stays regardless: it is also the hover
+                      // target, which should not change with the mark's size.
+                      opticalScale: 0.94
                       glyph: "hexagon"
                       color: Theme.textPrimary
                   }
@@ -524,9 +530,11 @@ RowLayout {
                   // as a smudge rather than as a mark.
                   Rectangle {
                       anchors.centerIn: parent
-                      width: 5
-                      height: 5
-                      radius: 2.5
+                      // Was a fixed 5px, sized for the small hexagon. A fixed dot
+                      // disappears as the outline grows around it.
+                      width: 7
+                      height: 7
+                      radius: 3.5
                       color: Theme.love
                   }
               }
