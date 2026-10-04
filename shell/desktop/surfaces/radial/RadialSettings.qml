@@ -138,10 +138,11 @@ FocusScope {
 Rectangle {
           id: scrimBackdrop
           anchors.fill: parent
-          // Was a hardcoded rgb(13, 58, 143) navy. The radial settings panel is
-          // the one surface that was never routed through Theme, so it kept the
-          // previous palette through every theme change.
-          color: Theme.roseBase
+          // Was a hardcoded rgb(13, 58, 143) navy -- the one surface that was
+          // never routed through Theme, so it kept the previous palette through
+          // every theme change. palBase carries that same role as the backdrop
+          // tone; the grid canvas below is drawn on top of it.
+          color: Theme.palBase
           opacity: 0.95
       }
 
