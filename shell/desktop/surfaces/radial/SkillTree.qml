@@ -104,8 +104,6 @@ Item {
                     NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
                 }
                 readonly property real rad: previewSubtree.angleDeg * Math.PI / 180.0
-                readonly property real radMinus8: (previewSubtree.angleDeg - 8.0) * Math.PI / 180.0
-                readonly property real radPlus8: (previewSubtree.angleDeg + 8.0) * Math.PI / 180.0
                 readonly property real radMinus12: (previewSubtree.angleDeg - 12.0) * Math.PI / 180.0
 
                 readonly property bool isCatFocused: root.focusedCategoryIndex === previewSubtree.categoryIdx
@@ -114,9 +112,52 @@ Item {
                 // Subtree polar anchor points (reactive trigonometric properties)
                 readonly property var r0Point: ({ x: 150 * Math.cos(previewSubtree.rad), y: 150 * Math.sin(previewSubtree.rad) })
                 readonly property var r1Point: ({ x: 320 * Math.cos(previewSubtree.rad), y: 320 * Math.sin(previewSubtree.rad) })
-                readonly property var c1Point: ({ x: 380 * Math.cos(previewSubtree.radMinus8), y: 380 * Math.sin(previewSubtree.radMinus8) })
-                readonly property var c2Point: ({ x: 380 * Math.cos(previewSubtree.radPlus8), y: 380 * Math.sin(previewSubtree.radPlus8) })
-                readonly property var c3Point: ({ x: 440 * Math.cos(previewSubtree.radMinus8), y: 440 * Math.sin(previewSubtree.radMinus8) })
+
+                // Preview child slots, derived from the category's real node count.
+                //
+                // This was four hand-placed SkillNodes reading cat.nodes[0..3], which
+                // quietly assumed every category has exactly four nodes. All eight
+                // do today, so the assumption was invisible -- a category with three
+                // nodes rendered a phantom fourth, and one with five dropped the fifth
+                // with no diagnostic. Slots are generated instead, and the rule
+                // reproduces the hand-placed geometry exactly for a four-node category.
+                //
+                // The rule indexes child slots s = 0, 1, 2 ... (node index minus one),
+                // NOT node indices. That distinction is the whole thing: slot 2 is node
+                // index 3, and it must extend slot 0, not node index 2. Pairing on node
+                // index would parent it to the trunk and redraw the old "branch 3"
+                // edge as a second trunk spoke.
+                //
+                //   s = 0   side -8 deg   radius 380   parent = trunk
+                //   s = 1   side +8 deg   radius 380   parent = trunk
+                //   s = 2   side -8 deg   radius 440   parent = slot 0
+                //   s = 3   side +8 deg   radius 440   parent = slot 1
+                //
+                // generally: radius = 380 + floor(s/2) * 60, side alternates -8/+8 by
+                // parity of s, and the parent is slot s-2 (same side, one radius in).
+                readonly property var previewChildren: {
+                    var nodes = previewSubtree.cat && previewSubtree.cat.nodes ? previewSubtree.cat.nodes : [];
+                    var slots = [];
+                    for (var i = 1; i < nodes.length; ++i) {
+                        var s = i - 1;
+                        var radius = 380.0 + Math.floor(s / 2) * 60.0;
+                        var sideDeg = (s % 2 === 0) ? -8.0 : 8.0;
+                        var rad = (previewSubtree.angleDeg + sideDeg) * Math.PI / 180.0;
+
+                        var parentS = s - 2;
+                        var parentRadius = (parentS >= 0) ? (380.0 + Math.floor(parentS / 2) * 60.0) : 320.0;
+                        var parentSide = (parentS >= 0) ? ((parentS % 2 === 0) ? -8.0 : 8.0) : 0.0;
+                        var parentRad = (previewSubtree.angleDeg + parentSide) * Math.PI / 180.0;
+
+                        slots.push({
+                            nodeIndex: i,
+                            icon: nodes[i] ? nodes[i].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear"),
+                            point: { x: radius * Math.cos(rad), y: radius * Math.sin(rad) },
+                            parentPoint: { x: parentRadius * Math.cos(parentRad), y: parentRadius * Math.sin(parentRad) }
+                        });
+                    }
+                    return slots;
+                }
 
                 // Trunk edge
                 SkillEdge {
@@ -130,40 +171,21 @@ Item {
                     isPreview: true
                 }
 
-                // Branch edge 1
-                SkillEdge {
-                    x1: (root.wheelCenterX + previewSubtree.r1Point.x)
-                    y1: (root.wheelCenterY + previewSubtree.r1Point.y)
-                    x2: (root.wheelCenterX + previewSubtree.c1Point.x)
-                    y2: (root.wheelCenterY + previewSubtree.c1Point.y)
-                    node1Radius: 10
-                    node2Radius: 10
-                    isActive: previewSubtree.isCatFocused
-                    isPreview: true
-                }
+                // Branch edges, one per generated child slot
+                Repeater {
+                    model: previewSubtree.previewChildren
 
-                // Branch edge 2
-                SkillEdge {
-                    x1: (root.wheelCenterX + previewSubtree.r1Point.x)
-                    y1: (root.wheelCenterY + previewSubtree.r1Point.y)
-                    x2: (root.wheelCenterX + previewSubtree.c2Point.x)
-                    y2: (root.wheelCenterY + previewSubtree.c2Point.y)
-                    node1Radius: 10
-                    node2Radius: 10
-                    isActive: previewSubtree.isCatFocused
-                    isPreview: true
-                }
-
-                // Branch edge 3 (Leaf extension)
-                SkillEdge {
-                    x1: (root.wheelCenterX + previewSubtree.c1Point.x)
-                    y1: (root.wheelCenterY + previewSubtree.c1Point.y)
-                    x2: (root.wheelCenterX + previewSubtree.c3Point.x)
-                    y2: (root.wheelCenterY + previewSubtree.c3Point.y)
-                    node1Radius: 10
-                    node2Radius: 10
-                    isActive: previewSubtree.isCatFocused
-                    isPreview: true
+                    delegate: SkillEdge {
+                        required property var modelData
+                        x1: root.wheelCenterX + modelData.parentPoint.x
+                        y1: root.wheelCenterY + modelData.parentPoint.y
+                        x2: root.wheelCenterX + modelData.point.x
+                        y2: root.wheelCenterY + modelData.point.y
+                        node1Radius: 10
+                        node2Radius: 10
+                        isActive: previewSubtree.isCatFocused
+                        isPreview: true
+                    }
                 }
 
                 // Root Preview Node
@@ -175,31 +197,18 @@ Item {
                     iconName: previewSubtree.cat ? previewSubtree.cat.icon : "gear"
                 }
 
-                // Child Preview Node 1
-                SkillNode {
-                    x: (root.wheelCenterX + previewSubtree.c1Point.x) - width / 2
-                    y: (root.wheelCenterY + previewSubtree.c1Point.y) - height / 2
-                    isPreview: true
-                    isSelected: previewSubtree.isCatFocused
-                    iconName: (previewSubtree.cat && previewSubtree.cat.nodes && previewSubtree.cat.nodes[1]) ? previewSubtree.cat.nodes[1].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear")
-                }
+                // Child Preview Nodes
+                Repeater {
+                    model: previewSubtree.previewChildren
 
-                // Child Preview Node 2
-                SkillNode {
-                    x: (root.wheelCenterX + previewSubtree.c2Point.x) - width / 2
-                    y: (root.wheelCenterY + previewSubtree.c2Point.y) - height / 2
-                    isPreview: true
-                    isSelected: previewSubtree.isCatFocused
-                    iconName: (previewSubtree.cat && previewSubtree.cat.nodes && previewSubtree.cat.nodes[2]) ? previewSubtree.cat.nodes[2].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear")
-                }
-
-                // Child Preview Node 3
-                SkillNode {
-                    x: (root.wheelCenterX + previewSubtree.c3Point.x) - width / 2
-                    y: (root.wheelCenterY + previewSubtree.c3Point.y) - height / 2
-                    isPreview: true
-                    isSelected: previewSubtree.isCatFocused
-                    iconName: (previewSubtree.cat && previewSubtree.cat.nodes && previewSubtree.cat.nodes[3]) ? previewSubtree.cat.nodes[3].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear")
+                    delegate: SkillNode {
+                        required property var modelData
+                        x: (root.wheelCenterX + modelData.point.x) - width / 2
+                        y: (root.wheelCenterY + modelData.point.y) - height / 2
+                        isPreview: true
+                        isSelected: previewSubtree.isCatFocused
+                        iconName: modelData.icon
+                    }
                 }
             }
         }

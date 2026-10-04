@@ -497,7 +497,116 @@ Item {
                 }
             }
 
-            // 4. Readonly Value Readout
+            // 4. Picker Control
+            //
+            // A discrete choice among named options, where a slider would be a
+            // lie: theme and wallpaper are a small closed set, not a magnitude.
+            //
+            // Deliberately not arrow-driven. NavigationController.handleKeyPress
+            // already spends Left/Right on spatial traversal between nodes, so a
+            // picker that claimed them would either break node navigation or be
+            // unreachable by keyboard. Instead a chip selects directly on click,
+            // and the node's own execute() cycles when called with no argument,
+            // which is what ENTER reaches through executeCurrentNode().
+            Item {
+                anchors.fill: parent
+                visible: root.currentNode && root.currentNode.controlType === "picker" && !root.isLocked
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: Theme.spacingSmall
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        Text {
+                            text: "SELECT OPTION"
+                            font.family: Theme.fontFamilyMonospace
+                            font.pixelSize: Theme.fontSizeCaption
+                            color: Theme.textMuted
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: {
+                                if (!root.currentNode || !root.model) return "--";
+                                var _ = root.model.revision;
+                                return (typeof root.currentNode.valueText === "function") ? root.currentNode.valueText() : "--";
+                            }
+                            font.family: Theme.fontFamilyMonospace
+                            font.pixelSize: Theme.fontSizeBody
+                            font.weight: Theme.fontWeightBold
+                            color: Theme.acidGreen
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.spacingSmall
+
+                        Repeater {
+                            model: (root.currentNode && Array.isArray(root.currentNode.options)) ? root.currentNode.options : []
+
+                            delegate: Rectangle {
+                                id: optionChip
+                                required property var modelData
+
+                                // Options are either bare strings or objects with a
+                                // label and an optional distinct value, so a node can
+                                // display something readable while storing an
+                                // identifier the service understands.
+                                readonly property string label: {
+                                    if (typeof modelData === "string") return modelData;
+                                    if (modelData && modelData.label) return modelData.label;
+                                    return "";
+                                }
+                                readonly property string optionValue: {
+                                    if (typeof modelData === "string") return modelData;
+                                    if (modelData && modelData.value !== undefined) return modelData.value;
+                                    return optionChip.label;
+                                }
+                                readonly property bool isCurrent: {
+                                    if (!root.currentNode || !root.model) return false;
+                                    var _ = root.model.revision;
+                                    if (typeof root.currentNode.value !== "function") return false;
+                                    return root.currentNode.value() === optionChip.optionValue;
+                                }
+
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 32
+                                radius: Theme.radiusSmall
+                                color: isCurrent ? Theme.acidGreen : Theme.gray800
+                                border.color: isCurrent ? Theme.acidGreen : Theme.gray600
+                                border.width: 1
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    width: parent.width - Theme.spacingMedium
+                                    text: optionChip.label
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.weight: Theme.fontWeightBold
+                                    color: optionChip.isCurrent ? Theme.gray900 : Theme.textSecondary
+                                    horizontalAlignment: Text.AlignHCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (root.currentNode && typeof root.currentNode.execute === "function") {
+                                            root.currentNode.execute(optionChip.optionValue);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 5. Readonly Value Readout
             Item {
                 anchors.fill: parent
                 visible: root.currentNode && (root.currentNode.controlType === "readonly" || root.isLocked)
