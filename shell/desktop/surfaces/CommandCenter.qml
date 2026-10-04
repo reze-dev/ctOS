@@ -1370,6 +1370,97 @@ FocusScope {
                         }
                     }
                 }
+                Card {
+                    id: cardSystemStatus
+                    width: parent.width
+                    title: qsTr("System Status")
+                    icon: "sliders"
+                    accent: Theme.accentBlue
+                    // Fixed open: read-only telemetry has nothing to disclose.
+                    collapsible: false
+
+                    contentComponent: Component {
+                        Item {
+                            width: parent ? parent.width : undefined
+                            implicitHeight: 76
+                            height: 76
+
+                            Row {
+                                id: metrics
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                spacing: Theme.spacingLarge
+
+                                StatRing {
+                                    fraction: SystemMonitorService.cpuTotal
+                                    ringColor: Theme.statusGreen
+                                    valueText: Math.round(SystemMonitorService.cpuTotal * 100) + "%"
+                                    caption: "CPU"
+                                }
+
+                                StatRing {
+                                    fraction: SystemMonitorService.memTotalBytes > 0
+                                        ? SystemMonitorService.memUsedBytes / SystemMonitorService.memTotalBytes
+                                        : 0
+                                    ringColor: Theme.accentBlue
+                                    valueText: SystemMonitorService.memTotalBytes > 0
+                                        ? Math.round(SystemMonitorService.memUsedBytes / SystemMonitorService.memTotalBytes * 100) + "%"
+                                        : "--"
+                                    caption: "MEMORY"
+                                }
+
+                                StatRing {
+                                    fraction: SystemMonitorService.diskFraction
+                                    ringColor: Theme.accentMagenta
+                                    valueText: SystemMonitorService.diskTotalBytes > 0
+                                        ? Math.round(SystemMonitorService.diskFraction * 100) + "%"
+                                        : "--"
+                                    caption: "DISK"
+                                }
+                            }
+
+                            // Throughput, right-aligned so the arrows line up on
+                            // their trailing edge regardless of digit count.
+                            Column {
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                spacing: Theme.spacingSmall
+
+                                Repeater {
+                                    model: 2
+                                    delegate: Row {
+                                        required property int index
+                                        spacing: Theme.spacingSmall
+
+                                        Text {
+                                            text: index === 0 ? "↑" : "↓"
+                                            color: index === 0 ? Theme.accentBlue : Theme.accentMagenta
+                                            font.family: Theme.fontFamilyMonospace
+                                            font.pixelSize: Theme.fontSizeBody
+                                        }
+                                        Text {
+                                            text: SystemMonitorService.formatBytes(
+                                                      index === 0 ? SystemMonitorService.netRxBytesPerSec
+                                                                  : SystemMonitorService.netTxBytesPerSec) + "/s"
+                                            color: Theme.textPrimary
+                                            font.family: Theme.fontFamilyMonospace
+                                            font.pixelSize: Theme.fontSizeSmall
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    anchors.right: parent.right
+                                    text: "NETWORK"
+                                    color: Theme.textSecondary
+                                    font.family: Theme.fontFamilySans
+                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.weight: Theme.fontWeightDemiBold
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // ------------------------------------------------ right column
@@ -1639,98 +1730,6 @@ Card {
 
                       contentComponent: CalendarAgenda {}
                   }
-
-                Card {
-                    id: cardSystemStatus
-                    width: parent.width
-                    title: qsTr("System Status")
-                    icon: "sliders"
-                    accent: Theme.accentBlue
-                    // Fixed open: read-only telemetry has nothing to disclose.
-                    collapsible: false
-
-                    contentComponent: Component {
-                        Item {
-                            width: parent ? parent.width : undefined
-                            implicitHeight: 76
-                            height: 76
-
-                            Row {
-                                id: metrics
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                spacing: Theme.spacingLarge
-
-                                StatRing {
-                                    fraction: SystemMonitorService.cpuTotal
-                                    ringColor: Theme.statusGreen
-                                    valueText: Math.round(SystemMonitorService.cpuTotal * 100) + "%"
-                                    caption: "CPU"
-                                }
-
-                                StatRing {
-                                    fraction: SystemMonitorService.memTotalBytes > 0
-                                        ? SystemMonitorService.memUsedBytes / SystemMonitorService.memTotalBytes
-                                        : 0
-                                    ringColor: Theme.accentBlue
-                                    valueText: SystemMonitorService.memTotalBytes > 0
-                                        ? Math.round(SystemMonitorService.memUsedBytes / SystemMonitorService.memTotalBytes * 100) + "%"
-                                        : "--"
-                                    caption: "MEMORY"
-                                }
-
-                                StatRing {
-                                    fraction: SystemMonitorService.diskFraction
-                                    ringColor: Theme.accentMagenta
-                                    valueText: SystemMonitorService.diskTotalBytes > 0
-                                        ? Math.round(SystemMonitorService.diskFraction * 100) + "%"
-                                        : "--"
-                                    caption: "DISK"
-                                }
-                            }
-
-                            // Throughput, right-aligned so the arrows line up on
-                            // their trailing edge regardless of digit count.
-                            Column {
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                spacing: Theme.spacingSmall
-
-                                Repeater {
-                                    model: 2
-                                    delegate: Row {
-                                        required property int index
-                                        spacing: Theme.spacingSmall
-
-                                        Text {
-                                            text: index === 0 ? "↑" : "↓"
-                                            color: index === 0 ? Theme.accentBlue : Theme.accentMagenta
-                                            font.family: Theme.fontFamilyMonospace
-                                            font.pixelSize: Theme.fontSizeBody
-                                        }
-                                        Text {
-                                            text: SystemMonitorService.formatBytes(
-                                                      index === 0 ? SystemMonitorService.netRxBytesPerSec
-                                                                  : SystemMonitorService.netTxBytesPerSec) + "/s"
-                                            color: Theme.textPrimary
-                                            font.family: Theme.fontFamilyMonospace
-                                            font.pixelSize: Theme.fontSizeSmall
-                                        }
-                                    }
-                                }
-
-                                Text {
-                                    anchors.right: parent.right
-                                    text: "NETWORK"
-                                    color: Theme.textSecondary
-                                    font.family: Theme.fontFamilySans
-                                    font.pixelSize: Theme.fontSizeCaption
-                                    font.weight: Theme.fontWeightDemiBold
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
