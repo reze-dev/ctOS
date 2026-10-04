@@ -49,7 +49,19 @@ Item {
     // Header height tracks the icon tile plus padding, so raising the tile size
     // raises the header rather than clipping it.
     readonly property int headerHeight: Theme.cardIconTile + Theme.spacingSmall * 2
-    readonly property int contentPadding: Theme.cardPadding
+    // Bottom gap under the content. Matched to contentTopPadding so that moving
+    // space from below the content to above it leaves the card's total height
+    // exactly as it was: at 12px down here the reservation grew by 4px per card,
+    // and with five cards in the command centre's left column that was enough to
+    // push System Status past the panel and slice its rings in half.
+    readonly property int contentPadding: Theme.spacingMedium
+    // Gap between the header and the first line of content. Declared alongside
+    // contentPadding so the height reservation and the content's actual offset
+    // read from one place: the reservation was already counting a gap here, but
+    // the content area had no top margin to match it, so the space landed under
+    // the content instead of over it and the top edge sat flush against the
+    // header.
+    readonly property int contentTopPadding: Theme.spacingMedium
 
     readonly property real contentHeight: contentLoader.item
         ? (contentLoader.item.implicitHeight > 0
@@ -59,7 +71,7 @@ Item {
 
     implicitWidth: parent ? parent.width : undefined
     implicitHeight: headerHeight
-                     + (contentHeight > 0 ? Theme.spacingSmall + contentHeight + contentPadding : 0)
+                     + (contentHeight > 0 ? contentTopPadding + contentHeight + contentPadding : 0)
     width: parent ? parent.width : undefined
     height: implicitHeight
 
@@ -238,6 +250,7 @@ onClicked: {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
+        anchors.topMargin: root.expanded ? root.contentTopPadding : 0
         anchors.leftMargin: Theme.cardPadding
         anchors.rightMargin: Theme.cardPadding
         // Collapsed cards keep their header height, so the content is hidden

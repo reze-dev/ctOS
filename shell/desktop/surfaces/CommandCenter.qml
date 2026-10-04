@@ -471,6 +471,14 @@ FocusScope {
                         return false;
                     }
 
+                    // Closes the password prompt without attempting a join.
+                    // Clearing selectedSsid also clears the row's selected
+                    // highlight, which is what the prompt's visibility is keyed
+                    // off, so there is no second piece of state to reset.
+                    function dismissPasswordPrompt(): void {
+                        selectedSsid = "";
+                    }
+
                     function signalFor(ssid: string): real {
                         const list = NetworkService.availableNetworks || [];
                         for (let i = 0; i < list.length; i++) {
@@ -742,7 +750,7 @@ FocusScope {
                                         id: pwField
                                         anchors.left: parent.left
                                         anchors.leftMargin: Theme.spacingSmall
-                                        anchors.right: pwSubmit.left
+                                        anchors.right: pwCancelBtn.left
                                         anchors.rightMargin: Theme.spacingSmall
                                         anchors.top: pwLabel.bottom
                                         anchors.topMargin: Theme.spacingSmall
@@ -782,6 +790,43 @@ FocusScope {
                                                 font.family: Theme.fontFamilySans
                                                 font.pixelSize: Theme.fontSizeCaption
                                             }
+                                        }
+                                    }
+
+                                    // Cancel, left of Join. The prompt was
+                                    // dismissable only by clicking the selected
+                                    // network row again, which toggles
+                                    // selectedSsid -- true, but nothing on screen
+                                    // said so, so a prompt opened by mistake
+                                    // looked like it could not be closed.
+                                    Rectangle {
+                                        id: pwCancelBtn
+                                        anchors.right: pwSubmit.left
+                                        anchors.rightMargin: Theme.spacingSmall
+                                        anchors.verticalCenter: pwInput.verticalCenter
+                                        width: pwCancelLabel.implicitWidth + Theme.spacingMedium * 2
+                                        height: 26
+                                        radius: Theme.radiusSmall
+                                        color: pwCancelHover.containsMouse ? Theme.surfaceHover : "transparent"
+                                        border.width: Theme.borderWidth
+                                        border.color: Theme.border
+
+                                        Text {
+                                            id: pwCancelLabel
+                                            anchors.centerIn: parent
+                                            text: qsTr("Cancel")
+                                            color: Theme.textSecondary
+                                            font.family: Theme.fontFamilySans
+                                            font.pixelSize: Theme.fontSizeCaption
+                                            font.weight: Theme.fontWeightDemiBold
+                                        }
+
+                                        MouseArea {
+                                            id: pwCancelHover
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: cardWifi.dismissPasswordPrompt()
                                         }
                                     }
 

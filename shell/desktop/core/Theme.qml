@@ -358,7 +358,15 @@ Singleton {
 
     // The CCC is a dropdown off the notch, so it cannot run to the bottom of
     // the screen. Content past this scrolls instead.
-    readonly property int commandCenterMaxHeight: 620
+    //
+    // Raised from 620 to give the left column room to breathe. It had almost no
+    // slack left: adding a top gap to card content pushed the column past this
+    // cap and sliced System Status in half, and the only ways to avoid that were
+    // to give the space back or take it from somewhere else. At 700 the panel
+    // still clears the bottom of a 900px-tall screen by a wide margin, with the
+    // notch above it -- this is a fixed constant rather than a fraction of the
+    // screen, so a much shorter display would want it derived instead.
+    readonly property int commandCenterMaxHeight: 700
 
     readonly property int commandCenterColumnGutter: 12
 
