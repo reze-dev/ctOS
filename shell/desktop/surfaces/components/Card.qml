@@ -177,6 +177,26 @@ GlyphIcon {
                             easing.type: Easing.OutCubic
                         }
                     }
+
+                    // Lives inside the icon rather than in the header beside it.
+                    // Anchors only resolve against a parent or a sibling, and the
+                    // header MouseArea is a sibling of `trailing` -- the icon is
+                    // three levels below that, inside trailingContent. Anchoring
+                    // across that gap is silently discarded: the area kept its
+                    // size but fell back to the header's origin, so the top-left
+                    // corner of every card toggled it. Filling the parent needs
+                    // no anchor at all, so there is nothing to get wrong.
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        enabled: root.collapsible
+                        acceptedButtons: root.collapsible ? Qt.LeftButton : Qt.NoButton
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.expanded = !root.expanded;
+                            root.headerClicked();
+                        }
+                    }
                 }
 
                 Loader {
@@ -204,31 +224,12 @@ MouseArea {
               hoverEnabled: true
               enabled: root.collapsible
               acceptedButtons: root.collapsible ? Qt.LeftButton : Qt.NoButton
-              onClicked: {
+onClicked: {
                   root.expanded = !root.expanded;
                   root.headerClicked();
               }
           }
-
-          // The chevron keeps its own click target, since the header area above
-          // no longer reaches it. Anchored to the icon rather than to `trailing`,
-          // because trailing also contains the action slot.
-          MouseArea {
-              id: chevronArea
-              anchors.centerIn: chevronIcon
-              width: chevronIcon.width
-              height: chevronIcon.height
-              visible: root.collapsible
-              hoverEnabled: true
-              enabled: root.collapsible
-              acceptedButtons: root.collapsible ? Qt.LeftButton : Qt.NoButton
-              cursorShape: Qt.PointingHandCursor
-              onClicked: {
-                  root.expanded = !root.expanded;
-                  root.headerClicked();
-              }
-          }
-    }
+      }
 
     // -------------------------------------------------------------- content
 
