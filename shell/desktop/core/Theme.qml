@@ -5,7 +5,15 @@ import Quickshell
 
 // Design tokens for the Living Notch / command centre.
 //
-// Palette: Rosé Pine (main), from https://rosepinetheme.com/palette/.
+// Palette provenance: a Rosé Pine derivative taken from the nvchad/base46 theme
+// (M.base_30 and M.base_16), not the official Rosé Pine release. It reads deeper
+// and more muted than official Main -- its base is #13111e against Main's
+// #191724 -- which is the "darker" look this was after.
+//
+// Note the official variants, for reference: Main is the darkest of the three
+// (base relative luminance 0.0095, versus Moon's 0.0171). Moon is lighter, not
+// darker. So this palette is not "Rosé Pine Moon"; it is a third, darker thing,
+// and the values below come from base46.
 //
 // The rule this file exists to enforce: colour is referenced by role, never
 // inlined. Semantic aliases sit on top of a raw palette so a future theme swap is
@@ -17,8 +25,7 @@ import Quickshell
 //   its red, so spending it on the accent would leave destructive actions with
 //   nothing to distinguish them -- the Poweroff button and the focus ring would
 //   be the same colour.
-//   Love is health-failing: destructive, error, danger. In Rosé Pine this is the
-//   red role.
+//   Love is health-failing: destructive, error, danger.
 //   Pine is health: connected, charging, positive.
 //   Foam is the cool secondary: informational, hover borders.
 //   Gold is the warm notice: warnings and amber states.
@@ -28,47 +35,56 @@ Singleton {
     id: root
 
     // =========================================================================
-    // Palette — Rosé Pine, raw values
+    // Palette — raw values
     // =========================================================================
 
-    readonly property color roseBase: "#191724"         // rgb(25, 23, 36)
-    readonly property color roseSurface: "#1F1D2E"      // rgb(31, 29, 46)
-    readonly property color roseOverlay: "#26233A"      // rgb(38, 35, 58)
-    readonly property color roseMuted: "#6E6A86"        // rgb(110, 106, 134)
-    readonly property color roseSubtle: "#908CAA"       // rgb(144, 140, 170)
-    readonly property color roseText: "#E0DEF4"         // rgb(224, 222, 244)
-    readonly property color roseLove: "#EB6F92"         // rgb(235, 111, 146)
-    readonly property color roseGold: "#F6C177"         // rgb(246, 193, 119)
-    readonly property color roseBlush: "#EBC0BB"        // rgb(235, 188, 186)
-    readonly property color rosePine: "#31748F"         // rgb(49, 116, 143)
-    readonly property color roseFoam: "#9CCFD8"         // rgb(156, 207, 216)
-    readonly property color roseIris: "#C4A7E7"         // rgb(196, 167, 231)
-    readonly property color roseHighlightLow: "#21202E" // rgb(33, 32, 46)
-    readonly property color roseHighlightMed: "#403D52" // rgb(64, 61, 82)
-    readonly property color roseHighlightHigh: "#524F67"// rgb(82, 79, 103)
+    // Surfaces, deepest to lightest. base46 has a much tighter, darker ladder
+    // than Rosé Pine's: darker_black for the page, black for cards, one_bg for
+    // anything raised, line for hover, grey/light_grey for borders.
+    readonly property color palBase: "#13111e"           // base46 darker_black
+    readonly property color palSurface: "#191724"        // base46 black / base00
+    readonly property color palOverlay: "#262431"         // base46 one_bg
+    readonly property color palMuted: "#6E6A86"           // base03
+    readonly property color palSubtle: "#908CAA"          // base04
+    readonly property color palText: "#E0DEF4"            // base46 white / base05
+    readonly property color palLove: "#EB6F92"            // base46 red / base08
+    readonly property color palGold: "#F6C177"            // base46 yellow / base09
+    readonly property color palRose: "#EBBCBA"            // base0A
+    readonly property color palPine: "#31748F"            // base0B
+    readonly property color palFoam: "#8BBEC7"            // base46 blue
+    readonly property color palIris: "#C4A7E7"            // base46 purple / base0D
+    readonly property color palHighlightLow: "#2E2C39"    // base46 line
+    readonly property color palHighlightMed: "#3F3D4A"    // base46 grey
+    readonly property color palHighlightHigh: "#5D5B68"   // base46 light_grey
+
+    // Deliberately not used from base46's base_30: green (#ABE9B3) and
+    // vibrant_green (#b5f3bd). Those are nvim-tree highlight colours; at 95%-in-a-
+    // ring sizes they are far too bright for a status readout, so palPine stays
+    // on base0B. Also unused: baby_pink, pink, sun, teal, cyan, nord_blue,
+    // statusline_bg, one_bg2, one_bg3, grey_fg, grey_fg2, pmenu_bg, folder_bg.
+    // Several exist only to serve neovim's own UI.
 
     // Legacy raw names, kept because the role tokens below are defined in terms
     // of them and because a handful of call sites outside this file still reach
     // for navyDeep, navyBorder and textDim directly. New code should use a
     // semantic token.
-    readonly property color blue: root.roseFoam
-    readonly property color violet: root.roseIris
-    readonly property color magenta: root.roseIris
-    readonly property color green: root.rosePine
-    readonly property color red: root.roseLove
+    readonly property color blue: root.palFoam
+    readonly property color violet: root.palIris
+    readonly property color magenta: root.palIris
+    readonly property color green: root.palPine
+    readonly property color red: root.palLove
 
-    // Surface ramp, darkest to lightest. Rosé Pine's base/surface/highlight
-    // ladder rather than the old navy blues.
-    readonly property color navyDeep: root.roseBase
-    readonly property color navySurface: root.roseSurface
-    readonly property color navyCard: root.roseSurface
-    readonly property color navyBorder: root.roseHighlightMed
-    readonly property color navyElevated: root.roseOverlay
-    readonly property color navyHover: root.roseHighlightLow
-    readonly property color navyActive: root.roseHighlightMed
-    readonly property color navySelected: root.roseOverlay
-    readonly property color textCool: root.roseText
-    readonly property color textDim: root.roseMuted
+    // Surface ramp, darkest to lightest.
+    readonly property color navyDeep: root.palBase
+    readonly property color navySurface: root.palSurface
+    readonly property color navyCard: root.palSurface
+    readonly property color navyBorder: root.palHighlightMed
+    readonly property color navyElevated: root.palOverlay
+    readonly property color navyHover: root.palHighlightLow
+    readonly property color navyActive: root.palHighlightMed
+    readonly property color navySelected: root.palOverlay
+    readonly property color textCool: root.palText
+    readonly property color textDim: root.palMuted
 
     // =========================================================================
     // Accent and status roles
@@ -108,11 +124,11 @@ Singleton {
     // Warm notice, distinct from the red above. Rosé Pine has both, and using
     // love for warnings as well would collapse caution and failure into one
     // signal.
-    readonly property color warning: root.roseGold
+    readonly property color warning: root.palGold
 
     readonly property color accentRed: root.red
-    readonly property color pastelBlue: root.roseFoam
-    readonly property color pastelOrange: root.roseGold
+    readonly property color pastelBlue: root.palFoam
+    readonly property color pastelOrange: root.palGold
 
     // =========================================================================
     // Surfaces
@@ -135,10 +151,10 @@ Singleton {
     readonly property string statusGreenHex: "#31748F"
     readonly property string dangerHex: "#EB6F92"
     // Love dimmed toward base, for the muted half of a destructive pair.
-    readonly property string dangerDimHex: "#4B2130"
+    readonly property string dangerDimHex: "#5E3246"
     readonly property string textDimHex: "#6E6A86"
     readonly property string gray300Hex: "#908CAA"
-    readonly property string gray700Hex: "#21202E"
+    readonly property string gray700Hex: "#2E2C39"
 
     readonly property color surfaceScrim: Qt.rgba(root.navySurface.r, root.navySurface.g, root.navySurface.b, 0.85)
 
@@ -173,10 +189,10 @@ Singleton {
     // Rosé Pine has no second and third text steps, so these are text stepped
     // toward muted rather than invented hues.
     readonly property color textPrimaryDim: "#C8C5DC"
-    readonly property color textPrimaryDimmer: root.roseSubtle
+    readonly property color textPrimaryDimmer: root.palSubtle
     readonly property color textSecondary: root.textDim
     readonly property color textMuted: root.textDim
-    readonly property color textDisabled: root.roseHighlightMed
+    readonly property color textDisabled: root.palHighlightMed
     readonly property color textInverse: root.navyDeep
     readonly property color unavailable: root.textDim
 
@@ -227,14 +243,14 @@ Singleton {
     // Neutral ramp — Rosé Pine's neutral ladder, not grey
     // =========================================================================
 
-    readonly property color gray50: root.roseText
+    readonly property color gray50: root.palText
     readonly property color gray100: "#C8C5DC"
     readonly property color gray200: root.textCool
-    readonly property color gray300: root.roseSubtle
-    readonly property color gray400: root.roseMuted
+    readonly property color gray300: root.palSubtle
+    readonly property color gray400: root.palMuted
     readonly property color gray500: root.textDim
-    readonly property color gray600: root.roseHighlightMed
-    readonly property color gray700: root.roseHighlightLow
+    readonly property color gray600: root.palHighlightMed
+    readonly property color gray700: root.palHighlightLow
     readonly property color gray800: root.navySurface
     readonly property color gray900: root.navyDeep
 
