@@ -512,7 +512,7 @@ RowLayout {
                       // The 18px slot stays -- it is also the hover target, which
                       // should not shrink with the mark. 14 / (18 * 1.18) lands
                       // the glyph on the same 14px font the clock sets.
-                      opticalScale: 0.66
+                      opticalScale: 0.71
                       glyph: "hexagon"
                       color: Theme.textPrimary
                   }
@@ -622,7 +622,7 @@ RowLayout {
                 Layout.preferredWidth: 18
                 Layout.preferredHeight: 18
                 visible: root.isCommandCenterOpen
-                opticalScale: 0.66
+                opticalScale: 0.71
                 glyph: "chevron"
                 // Glyph points down; collapsing means going back up.
                 rotation: 180
@@ -644,7 +644,7 @@ RowLayout {
                     Layout.preferredHeight: 15
                     // 0.78 brings the wifi's ink to the volume's, measured at
                     // 1.27x, and stops it overrunning the slot.
-                    opticalScale: 0.79
+                    opticalScale: 0.90
                     glyph: "wifi"
                     color: Theme.textSecondary
                 }
@@ -675,7 +675,7 @@ RowLayout {
                     // effect at all, and GlyphIcon sizes its font from height.
                     Layout.preferredWidth: 15
                     Layout.preferredHeight: 15
-                    opticalScale: 0.79
+                    opticalScale: 0.85
                     glyph: "speaker"
                     color: Theme.textSecondary
                 }
@@ -704,7 +704,7 @@ RowLayout {
                     // effect at all, and GlyphIcon sizes its font from height.
                     Layout.preferredWidth: 15
                     Layout.preferredHeight: 15
-                    opticalScale: 0.79
+                    opticalScale: 0.73
                     glyph: "battery"
                     color: PowerService.isCharging ? Theme.statusGreen : Theme.textSecondary
                 }
@@ -731,7 +731,10 @@ RowLayout {
                     : (root.hasMedia ? (root.isPlaying ? "PLAYING" : "PAUSED") : "IDLE")
                 color: Theme.textSecondary
                 font.family: Theme.fontFamilySans
-                font.pixelSize: Theme.fontSizeMicro
+                // Was fontSizeMicro, whose 9px face draws about 8px of ink --
+                // half the clock's height beside it. The status word is the same
+                // tier as the glyphs next to it, so it takes the body size.
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Theme.fontWeightDemiBold
             }
 
