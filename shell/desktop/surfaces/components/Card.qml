@@ -50,20 +50,22 @@ Item {
     // raises the header rather than clipping it.
     readonly property int headerHeight: Theme.cardIconTile + Theme.spacingSmall * 2
 // Vertical insets, inside the card. Every card uses these two values and no
-    // others, so a collapsed card and an expanded one are padded identically.
+    // others, so a collapsed card and an expanded one are padded identically,
+    // and the card is symmetric top to bottom.
     //
     // The card had none at all above the header and twelve below the content, so
     // the heading sat against the top border while the body ended in a pool of
-    // slack -- top-tight and bottom-heavy. topInset opens the top edge;
-    // contentPadding trims the bottom.
+    // slack -- top-tight and bottom-heavy. The top edge is now open and the
+    // bottom trimmed back to match it.
     //
-    // 12 + 4 is the sixteen the card already reserved, so every card keeps its
-    // exact height. That is the whole reason for the split: the left column had
+    // Eight and eight is also the sixteen the card already reserved, so this is
+    // a redistribution rather than a resize: every card keeps its exact height
+    // and the panel does not move. That mattered because the left column had only
     // ~3px of slack against the panel cap, and an earlier attempt that added 8
     // above while leaving 12 below pushed System Status past the cap and sliced
     // its rings in half.
-    readonly property int topInset: Theme.cardPadding
-    readonly property int contentPadding: Theme.spacingSmall
+    readonly property int topInset: Theme.spacingMedium
+    readonly property int contentPadding: Theme.spacingMedium
 
     readonly property real contentHeight: contentLoader.item
         ? (contentLoader.item.implicitHeight > 0
