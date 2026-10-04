@@ -126,6 +126,20 @@ Singleton {
     // signal.
     readonly property color warning: root.palGold
 
+    // The identity dot inside the notch's hexagon. Same colour as destructive,
+    // deliberately: the palette's love is its warm pink, and spending it on the
+    // shell's mark rather than reusing a token whose meaning is "this failed"
+    // keeps the file's role vocabulary honest.
+    readonly property color love: root.red
+
+    // Workspace selection, in pine.
+    //
+    // Deliberately not statusGreen even though both resolve to the same value.
+    // statusGreen means connected/charging/positive, and a selected workspace
+    // means none of those; reusing it would blur exactly the distinction this
+    // file exists to keep.
+    readonly property color workspaceActive: root.green
+
     readonly property color accentRed: root.red
     readonly property color pastelBlue: root.palFoam
     readonly property color pastelOrange: root.palGold

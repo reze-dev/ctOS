@@ -233,7 +233,18 @@ Item {
     // up under the header by the same amount and hide those corners, which is
     // what makes the two read as one surface. A radius that large would instead
     // cover the bottom half of the header's own content.
-    readonly property real targetRadius: root.isCommandCenterOpen ? 18 : root.height / 2
+    // Rounded rectangle rather than a stadium.
+    //
+    // radius: height / 2 gives fully rounded ends, which read as a pill. The
+    // design calls for a square with rounded corners, so the resting radius is a
+    // fixed value instead of tracking the height -- at 42px tall a 21px radius is
+    // half the height, which is the pill shape, not this one.
+    //
+    // The command centre's 18 is kept: that is the join radius, where the panel
+    // tucks under the notch and the two rounded corners have to meet.
+    readonly property real targetRadius: root.isCommandCenterOpen
+        ? 18
+        : Theme.radiusLarge
 
     // =========================================================================
     // Geometry & Spring Physics Animation Declarations
@@ -491,12 +502,29 @@ RowLayout {
               color: compactLogoMouse.containsMouse ? Theme.surfaceHover : "transparent"
               Layout.alignment: Qt.AlignVCenter
 
-              GlyphIcon {
+              Item {
                   anchors.centerIn: parent
                   width: 18
                   height: 18
-                  glyph: "hexagon"
-                  color: Theme.textPrimary
+
+                  GlyphIcon {
+                      anchors.fill: parent
+                      glyph: "hexagon"
+                      color: Theme.textPrimary
+                  }
+
+                  // Dot inside the hexagon, in love. Material Symbols has no
+                  // "hexagon with a dot" glyph -- hexagon and hexagon.fill are
+                  // the only two -- so the dot is a shape laid over the outline.
+                  // At 18px it has to be small and exactly centred, or it reads
+                  // as a smudge rather than as a mark.
+                  Rectangle {
+                      anchors.centerIn: parent
+                      width: 5
+                      height: 5
+                      radius: 2.5
+                      color: Theme.love
+                  }
               }
 
               MouseArea {
@@ -535,7 +563,7 @@ RowLayout {
                   Rectangle {
                       anchors.fill: parent
                       radius: height / 2
-                      color: wsCell.isFocused ? Theme.accent
+                      color: wsCell.isFocused ? Theme.workspaceActive
                           : (wsCell.isUrgent ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
                       border.width: Theme.borderWidth
                       border.color: wsCell.isUrgent ? Theme.destructive : "transparent"
@@ -603,8 +631,8 @@ RowLayout {
 
                 GlyphIcon {
                     Layout.alignment: Qt.AlignHCenter
-                    width: 16
-                    height: 16
+                    width: 14
+                    height: 14
                     glyph: "wifi"
                     color: Theme.textSecondary
                 }
@@ -629,8 +657,8 @@ RowLayout {
 
                 GlyphIcon {
                     Layout.alignment: Qt.AlignHCenter
-                    width: 16
-                    height: 16
+                    width: 14
+                    height: 14
                     glyph: "speaker"
                     color: Theme.textSecondary
                 }
@@ -653,8 +681,8 @@ RowLayout {
 
                 GlyphIcon {
                     Layout.alignment: Qt.AlignHCenter
-                    width: 16
-                    height: 16
+                    width: 14
+                    height: 14
                     glyph: "battery"
                     color: PowerService.isCharging ? Theme.statusGreen : Theme.textSecondary
                 }
