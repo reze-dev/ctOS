@@ -617,7 +617,13 @@ Scope {
         }
 
         color: "transparent"
-        visible: root.scrimHostedSurfaces && overlayHost.screen !== null
+        // Only the intent, deliberately. The `&& screen !== null` this replaced
+        // closed a loop: `screen` is resolved when the window is placed, and
+        // placement waits on `visible`, so each re-evaluation invalidated the
+        // other. Qt reported it as "Binding loop detected for property visible".
+        // The guard was redundant anyway -- an anchored panel is sized by the
+        // screen it is shown on, so there is nothing to draw until then.
+        visible: root.scrimHostedSurfaces
 
         WlrLayershell.keyboardFocus: root.scrimHostedSurfaces ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.layer: WlrLayer.Overlay
