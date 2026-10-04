@@ -747,8 +747,8 @@ Rectangle {
                                         + pwLabel.implicitHeight
                                         + Theme.spacingSmall
                                         + fieldHeight
-                                        + Theme.spacingSmall * 2
-                                        + buttonHeight * 2
+                                        + Theme.spacingSmall
+                                        + buttonHeight
 
                                     height: visible ? promptHeight : 0
 
@@ -818,9 +818,9 @@ Rectangle {
                                         }
                                     }
 
-                                    // Cancel, stacked under Join at the same size. The prompt was
-                                    // dismissable only by clicking the selected
-                                    // network row again, which toggles
+                                    // Cancel, left of Join and the same size. The prompt was
+                                    // dismissable only by clicking the
+                                    // selected network row again, which toggles
                                     // selectedSsid -- true, but nothing on screen
                                     // said so, so a prompt opened by mistake
                                     // looked like it could not be closed.
@@ -828,10 +828,15 @@ Rectangle {
                                         id: pwCancelBtn
                                         anchors.left: parent.left
                                         anchors.leftMargin: Theme.spacingSmall
-                                        anchors.right: parent.right
-                                        anchors.rightMargin: Theme.spacingSmall
-                                        anchors.top: pwSubmit.bottom
+                                        anchors.top: pwField.bottom
                                         anchors.topMargin: Theme.spacingSmall
+                                        // Half the panel's inner width: two margins,
+                                        // the field's, plus the gap between them.
+                                        // Join copies this value, so the two are
+                                        // equal by construction rather than by two
+                                        // independent calculations agreeing.
+                                        width: Math.floor((pwPrompt.width
+                                                            - Theme.spacingSmall * 3) / 2)
                                         height: pwPrompt.buttonHeight
                                         radius: Theme.radiusSmall
                                         color: pwCancelHover.containsMouse ? Theme.surfaceHover : "transparent"
@@ -859,12 +864,10 @@ Rectangle {
 
                                     Row {
                                         id: pwSubmit
-                                        anchors.left: parent.left
+                                        anchors.left: pwCancelBtn.right
                                         anchors.leftMargin: Theme.spacingSmall
-                                        anchors.right: parent.right
-                                        anchors.rightMargin: Theme.spacingSmall
-                                        anchors.top: pwField.bottom
-                                        anchors.topMargin: Theme.spacingSmall
+                                        anchors.top: pwCancelBtn.top
+                                        width: pwCancelBtn.width
                                         height: pwPrompt.buttonHeight
                                         property bool clicked: false
 
