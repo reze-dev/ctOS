@@ -445,38 +445,29 @@ function projectPoint(p, angleDeg, scale, origin) {
 // ---------------------------------------------------------------------------
 // Wheel preview tree layout
 //
-// Deliberately not layoutTree() above. These are two different drawings of the
-// same topology and they do not want the same shape.
+// Deliberately not layoutTree() above. The wheel packs eight of these into a
+// ring, so a tree here is compact and symmetric about its own segment axis,
+// where the expanded branch is read one node at a time and fans to fill space.
 //
-// The expanded branch has the canvas to itself and is read one node at a time,
-// so it fans wide and lets its chains arc outward. The wheel packs eight of
-// these trees into a ring, so the base tree is compact and mostly straight:
+// The rule, in the tree's own space where +x is "outward along the segment":
 //
-//   arc -> first node -> two children at 45 degrees -> each child's children
-//   continue in a straight line radially outward
+//              |
+//              o
+//             / \
+//            o   o
+//            |   |
+//            o   o
 //
-// One fork, at the first node, and then straight rays. No arcing, and the fan is
-// 45 degrees rather than the expanded view's 74-85.
+// A fork straddles the parent's own direction by +/- forkDeg, and everything
+// below a fork carries on straight along the ray that node already left on. It
+// does NOT come back to the segment axis: two siblings that forked apart stay
+// apart, so a tree reads as a fork with two arms rather than as a row of nodes
+// stacked back up the middle.
 //
-// Sharing layoutTree() here is what made the base look wrong: it inherited the
-// expanded view's wide fan and its per-level flattening, so a fork of two at 74
-// degrees that curved as it went read as a sprawl rather than a pair of branches.
-// ---------------------------------------------------------------------------
-
-function previewForkAngles(childCount, forkDeg) {
-    if (childCount <= 1) return [0.0];
-    if (childCount === 2) return [-forkDeg, forkDeg];
-
-    // Past two there is nothing to copy, so spread evenly across the same 90
-    // degrees rather than inventing a wider fan for a shape nobody has drawn.
-    var out = [];
-    for (var i = 0; i < childCount; ++i)
-        out.push(-forkDeg + (2.0 * forkDeg * i) / (childCount - 1));
-    return out;
-}
-
-// Lay out a nested tree literal for the wheel's preview.
-// Returns { <id>: { x, y, depth, spoke, parent } }, root at (0, 0).
+// That "stay diverged" is the whole rule, and getting it wrong in either
+// direction is visible. Snapping every node back to the axis collapses the arms
+// onto each other; inheriting the fork only at the root, as an earlier version
+// did, leaves a second fork in the middle of a chain drawn as a straight line.
 function layoutPreviewTree(nodes, opts) {
     opts = opts || {};
     var step = (typeof opts.step === "number") ? opts.step : 56.0;
@@ -484,74 +475,58 @@ function layoutPreviewTree(nodes, opts) {
 
     var out = {};
     if (!nodes || nodes.length === 0) return out;
-    out[nodes[0].id] = { x: 0.0, y: 0.0, depth: 0, spoke: -1, parent: null };
+    out[nodes[0].id] = {
+        x: 0.0, y: 0.0, depth: 0, dir: 0.0, spoke: -1, parent: null
+    };
 
-    function place(node, depth, dirDeg, spoke) {
-        if (!node || out[node.id]) return null;
-        var rad = dirDeg * Math.PI / 180.0;
-        var radius = step * depth;
-        out[node.id] = {
-            x: radius * Math.cos(rad),
-            y: radius * Math.sin(rad),
-            depth: depth,
-            spoke: spoke,
-            parent: null
-        };
-        return out[node.id];
-    }
+    var queue = [{ node: nodes[0], depth: 0, dir: 0.0 }];
 
-    // Siblings on a straight ray are told who their parent is by the caller,
-    // because below the fork the parent is the node being walked, not the node
-    // one level up.
-    var queue = [{ node: nodes[0], depth: 0, dir: 0.0, spoke: -1 }];
     while (queue.length > 0) {
         var cur = queue.shift();
         var kids = cur.node.children || [];
         if (kids.length === 0) continue;
 
-        // Fork at EVERY branching node, not just the root.
-        //
-        // This only forked when cur.depth === 0, which quietly assumed a tree
-        // branches once. security does not: sec-toolkit has three children, and
-        // with the fork reserved for the root they were placed as a straight line
-        // of three dots along one ray -- six dots in a row in the wheel, which
-        // read as a bar rather than a branch.
-        //
-        // The rule is per node, not per level: a node with two or more children
-        // is a branch point and its children fan at forkDeg; a node with exactly
-        // one child is a link in a chain and that child continues straight out.
-        if (kids.length >= 2) {
-            var fan = previewForkAngles(kids.length, forkDeg);
-            for (var k = 0; k < kids.length; ++k) {
-                var rec = place(kids[k], cur.depth + 1, cur.dir + fan[k], k);
-                if (!rec) continue;
-                rec.parent = cur.node.id;
-                queue.push({ node: kids[k], depth: cur.depth + 1, dir: cur.dir + fan[k], spoke: k });
-            }
-        } else {
-            // Straight out from here. Siblings share the ray and step outward in
-            // order, so a node with two children draws as two dots in a line
-            // rather than as a second fork.
-            for (var m = 0; m < kids.length; ++m) {
-                var rec2 = place(kids[m], cur.depth + 1 + m, cur.dir, cur.spoke);
-                if (!rec2) continue;
-                rec2.parent = cur.node.id;
-                queue.push({ node: kids[m], depth: cur.depth + 1 + m, dir: cur.dir, spoke: cur.spoke });
-            }
+        var depth = cur.depth + 1;
+        var distance = step;
+
+        // One child gets no offset at all: it is a link in an arm, and it
+        // continues along the ray its parent is already on.
+        var offsets = fanOffsets(kids.length, forkDeg * 2.0);
+
+        for (var i = 0; i < kids.length; ++i) {
+            var kid = kids[i];
+            if (!kid || out[kid.id]) continue;
+
+            var dir = cur.dir + offsets[i];
+            var rad = dir * Math.PI / 180.0;
+            out[kid.id] = {
+                x: out[cur.node.id].x + Math.sin(rad) * distance,
+                y: out[cur.node.id].y - Math.cos(rad) * distance,
+                depth: depth,
+                dir: dir,
+                spoke: offsets[i] === 0.0 ? -1 : i,
+                parent: cur.node.id
+            };
+            queue.push({ node: kid, depth: depth, dir: dir });
         }
     }
 
-    // Same orphan handling as layoutTree(): a node the topology never reaches is
-    // parked rather than dropped, so a mistake shows up instead of vanishing.
+    // Nodes the relationships never reach cannot be placed against a parent that
+    // does not exist, but dropping them would make them vanish instead of failing
+    // visibly. Park them on the parent's ray.
     var orphans = [];
-    for (var i = 0; i < nodes.length; ++i)
-        if (nodes[i] && !out[nodes[i].id]) orphans.push(nodes[i]);
+    for (var n = 0; n < nodes.length; ++n)
+        if (nodes[n] && !out[nodes[n].id]) orphans.push(nodes[n]);
 
     for (var o = 0; o < orphans.length; ++o) {
-        var od = orphans.length === 1 ? 0.0 : -forkDeg + (2.0 * forkDeg * o) / (orphans.length - 1);
-        var rec3 = place(orphans[o], 1, od, 90 + o);
-        if (rec3) rec3.parent = nodes[0].id;
+        var orad = (out[nodes[0].id].dir) * Math.PI / 180.0;
+        out[orphans[o].id] = {
+            x: out[nodes[0].id].x + Math.sin(orad) * step,
+            y: out[nodes[0].id].y - Math.cos(orad) * step,
+            depth: 1, dir: out[nodes[0].id].dir, spoke: 90 + o, parent: nodes[0].id
+        };
     }
 
     return out;
 }
+

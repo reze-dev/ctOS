@@ -17,7 +17,7 @@ Item {
 
     property real wheelCenterX: width / 2
     property real wheelCenterY: height / 2
-    property real outerRadius: 210
+    property real outerRadius: 180
     property real branchOriginX: 300
     property real branchOriginY: height / 2
 
@@ -181,7 +181,7 @@ Item {
                 // These were 320 and 48 before, and 320 in particular left a trunk
                 // longer than the tree it introduced, so the branches read as
                 // floating clear of the wheel.
-                readonly property var r1Point: ({ x: 241 * Math.cos(previewSubtree.rad), y: 241 * Math.sin(previewSubtree.rad) })
+                readonly property var r1Point: ({ x: 300 * Math.cos(previewSubtree.rad), y: 300 * Math.sin(previewSubtree.rad) })
 
                 // The wheel's preview trees, laid out by their own algorithm
                 // rather than the expanded branch's.
@@ -238,7 +238,17 @@ Item {
                     y1: root.wheelCenterY
                     x2: (root.wheelCenterX + previewSubtree.r1Point.x)
                     y2: (root.wheelCenterY + previewSubtree.r1Point.y)
-                    node1Radius: root.outerRadius + 10
+                    // The gap and the visible run are the same edge. SkillEdge
+                    // starts its path one node radius in from each end, so what
+                    // gets drawn is the run between outerRadius+6 and r1Point-15,
+                    // and an opaque hub disc covers the inner half of it.
+                    //
+                    // That run was 6px. The path began at a hardcoded
+                    // outerRadius+10 -- 220 against a 210 ring radius -- while the
+                    // tree root sat at 241, so the connector from ring to tree was
+                    // effectively invisible and the trees looked unattached. 40px
+                    // of dead gap, then 6px of line.
+                    node1Radius: root.outerRadius + 6
                     node2Radius: 15
                     isActive: previewSubtree.isCatFocused
                     isPreview: true

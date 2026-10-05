@@ -295,6 +295,9 @@ Rectangle {
         isExpanded: root.branchExpanded
         wheelCenterX: wheelMenu.wheelCenterX
         wheelCenterY: wheelMenu.wheelCenterY
+        // SkillTree kept its own outerRadius of 210 while the wheel's ring is
+        // 180, so everything anchored to the rim started 30px outside it.
+        outerRadius: wheelMenu.outerRadius
         // Where the expanded branch's base node sits: 350px right of the wheel's
         // left anchor, which is where it was before the geometry work.
         //
