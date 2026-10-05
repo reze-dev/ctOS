@@ -18,9 +18,22 @@ let
   # here but absent there can never be selected, and a file shipped here but
   # named differently there selects a path that does not exist.
   #
-  # Only wallpapers that belong in the repository are listed. Two further images
-  # are present in the working tree and are deliberately not referenced here or
-  # in the shell -- see .gitignore. Adding one is two entries, one per side.
+  # Only wallpapers that belong in the repository are listed. Adding one is an
+  # entry here and one there.
+  #
+  # The install below is written out longhand rather than folded over this list,
+  # and that is deliberate. Generating `home.file` entries from interpolated path
+  # expressions -- `../../../shell/extras/wallpapers/${w.file}` -- produces a
+  # value that reports itself as a path and resolves to the right file in
+  # isolation, but makes `system.build.toplevel` fail to evaluate with
+  #
+  #   syntax error, unexpected invalid token
+  #   at shell/extras/wallpapers/wallpaper-v1.png:1:1
+  #
+  # i.e. Nix parses the PNG as an expression. So the set is still data, but the
+  # one place a path is built for home-manager spells it as a literal. Two
+  # entries is a small enough list that being explicit costs nothing, and being
+  # explicit is what the previous working version of this module did.
   wallpaperFiles = [
     {
       id = "v1";
@@ -32,20 +45,12 @@ let
     }
   ];
 
-  wallpapers = lib.listToAttrs (
-    map (w: {
-      name = ".local/share/ctos/wallpapers/${w.file}";
-      value = ../../../shell/extras/wallpapers/${w.file};
-    }) wallpaperFiles
-  );
-
   defaultWallpaper = "v1";
-  defaultWallpaperFile =
-    lib.head (
-      builtins.filter (w: w.id == defaultWallpaper) wallpaperFiles
-    )
-      .file;
-  wallpaperPath = ".local/share/ctos/wallpapers/${defaultWallpaperFile}";
+  wallpaperPath = ".local/share/ctos/wallpapers/wallpaper-v1.png";
+
+  wallpaperV1 = ../../../shell/extras/wallpapers/wallpaper-v1.png;
+  wallpaperV2 = ../../../shell/extras/wallpapers/wallpaper-v2.png;
+
   applyWallpaper = pkgs.writeShellScript "ctos-apply-wallpaper" ''
     set -eu
 
@@ -75,10 +80,12 @@ in
         {
           home.packages = [ pkgs.awww ];
 
-          # Every authored wallpaper, not just the default. home.file merges
-          # attribute names rather than replacing, so this composes with any
-          # other module that wants to drop something else in that directory.
-          home.file = wallpapers;
+          # Every authored wallpaper, not just the default -- so there is
+          # something to switch between. home.file merges attribute names rather
+          # than replacing, so this composes with any other module that wants to
+          # drop something else in that directory.
+          home.file.".local/share/ctos/wallpapers/wallpaper-v1.png".source = wallpaperV1;
+          home.file.".local/share/ctos/wallpapers/wallpaper-v2.png".source = wallpaperV2;
 
           systemd.user.services.ctos-awww-daemon = {
             Unit = {
