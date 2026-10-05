@@ -21,9 +21,23 @@ Singleton {
     // merely asserted the tool was present would be exactly the kind of
     // confident fiction Phase 3 removed from this tree.
     //
-    // The groups are deliberately coarse. Twenty-odd nodes in one category
-    // would make the ring unreadable, so the radial shows one node per group and
-    // this service holds the detail.
+    // Three groups, not seven.
+    //
+    // These used to be seven (recon, capture, wireless, credentials, web,
+    // forensics, diagnostics) and sec-toolkit fanned all seven off one node.
+    // That breaks the tree layout: a node's children are spread by how many
+    // there are, and past three there is no reference to copy the angles from,
+    // so seven branches is where "tree" stops being the right word.
+    //
+    // So they are bucketed by what you would be *doing*, which is also what
+    // makes the split defensible rather than arbitrary:
+    //
+    //   RECON    find what is there          discovery, before touching anything
+    //   CAPTURE  watch what is happening     network observation
+    //   ANALYSIS what did this thing leave   offline inspection of artifacts
+    //
+    // The bucket names are mine; the previous seven are recoverable from each
+    // tool's origin below, so re-bucketing is a data edit and not a rewrite.
     readonly property var groups: [
         {
             id: "recon",
@@ -35,42 +49,26 @@ Singleton {
             id: "capture",
             label: "CAPTURE",
             icon: "storage",
-            tools: ["tshark", "tcpdump", "socat"]
+            // capture + wireless + diagnostics: all three observe a live
+            // network rather than a file on disk.
+            tools: ["tshark", "tcpdump", "socat", "aircrack-ng",
+                    "iperf3", "mtr", "traceroute"]
         },
         {
-            id: "wireless",
-            label: "WIRELESS",
-            icon: "wifi",
-            tools: ["aircrack-ng"]
-        },
-        {
-            id: "credentials",
-            label: "CREDENTIALS",
-            icon: "vpn-key",
+            id: "analysis",
+            label: "ANALYSIS",
+            icon: "layers",
+            // credentials + web + forensics: everything here reads an artifact
+            // rather than a socket. Called ANALYSIS rather than VULNERABILITY
+            // because binwalk, exiftool and file are not attacks.
+            //
             // hydra-server, not hydra: the package installs no binary called
             // `hydra` and leaves meta.mainProgram unset, so probing "hydra"
             // reported this group as 2/3 while all three were installed. Probing
             // a name that cannot exist is how a readout ends up lying about the
             // thing it is measuring.
-            tools: ["john", "hashcat", "hydra-server"]
-        },
-        {
-            id: "web",
-            label: "WEB",
-            icon: "globe",
-            tools: ["sqlmap"]
-        },
-        {
-            id: "forensics",
-            label: "FORENSICS",
-            icon: "layers",
-            tools: ["binwalk", "exiftool", "file"]
-        },
-        {
-            id: "diagnostics",
-            label: "DIAGNOSTICS",
-            icon: "bolt",
-            tools: ["iperf3", "mtr", "traceroute"]
+            tools: ["john", "hashcat", "hydra-server", "sqlmap",
+                    "binwalk", "exiftool", "file"]
         }
     ]
 
