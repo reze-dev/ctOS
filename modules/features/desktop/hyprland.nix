@@ -35,7 +35,7 @@ let
 
           local terminal = "kitty"
           local fileManager = "kitty -e yazi"
-          local menu = "ctos-shell-msg toggleCommandDeck"
+          local menu = "fuzzel"
           local mainMod = "SUPER"
 
           hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
@@ -71,41 +71,41 @@ let
           hl.env("AQ_DRM_DEVICES", "/dev/dri/card1")
 
           ${lib.optionalString debugEnabled ''
-          -- 0.56 defaults debug.disable_logs to true, so Hyprland prints
-          -- nothing at all unless logs are explicitly re-enabled. Combined
-          -- with the launcher redirecting stderr, a failing start-up used to
-          -- produce a completely empty log.
-          hl.env("HYPRLAND_TRACE", "1")
-          hl.env("AQ_TRACE", "1")
+            -- 0.56 defaults debug.disable_logs to true, so Hyprland prints
+            -- nothing at all unless logs are explicitly re-enabled. Combined
+            -- with the launcher redirecting stderr, a failing start-up used to
+            -- produce a completely empty log.
+            hl.env("HYPRLAND_TRACE", "1")
+            hl.env("AQ_TRACE", "1")
           ''}
 
-hl.on("hyprland.start", function()
-                -- nixos-fake-graphical-session.target, the same target niri
-                -- starts.
-                --
-                -- This used to start and stop hyprland-session.target, but the
-                -- nixpkgs Hyprland package installs no systemd user units, so
-                -- that target does not exist and systemctl fails with "Unit
-                -- hyprland-session.target not found". Nothing then pulled in
-                -- graphical-session.target, which is where ctos.service,
-                -- ctos-awww-daemon.service and ctos-wallpaper.service live --
-                -- hence a Hyprland session with no shell, no awww and no
-                -- wallpaper.
-                hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start nixos-fake-graphical-session.target")
-                hl.exec_cmd("systemctl --user start hyprpolkitagent")
-            end)
+          hl.on("hyprland.start", function()
+            -- nixos-fake-graphical-session.target, the same target niri
+            -- starts.
+            --
+            -- This used to start and stop hyprland-session.target, but the
+            -- nixpkgs Hyprland package installs no systemd user units, so
+            -- that target does not exist and systemctl fails with "Unit
+            -- hyprland-session.target not found". Nothing then pulled in
+            -- graphical-session.target, which is where ctos.service,
+            -- ctos-awww-daemon.service and ctos-wallpaper.service live --
+            -- hence a Hyprland session with no shell, no awww and no
+            -- wallpaper.
+            hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start nixos-fake-graphical-session.target")
+            hl.exec_cmd("systemctl --user start hyprpolkitagent")
+          end)
 
           hl.config({
               ${lib.optionalString debugEnabled ''
-              -- enable_stdout_logs is only honoured when disable_logs is false,
-              -- so both are needed to get anything on stdout.
-              debug = {
-                  disable_logs = false,
-                  enable_stdout_logs = true,
-                  disable_time = false,
-                  suppress_errors = false,
-                  error_limit = 20,
-              },
+                -- enable_stdout_logs is only honoured when disable_logs is false,
+                -- so both are needed to get anything on stdout.
+                debug = {
+                    disable_logs = false,
+                    enable_stdout_logs = true,
+                    disable_time = false,
+                    suppress_errors = false,
+                    error_limit = 20,
+                },
               ''}
               general = {
                   gaps_in = 3,
@@ -267,30 +267,30 @@ in
   config = lib.mkIf cfg.enable {
     home-manager.sharedModules = [ hmHyprlandModule ];
 
-programs.hyprland = {
-        enable = true;
+    programs.hyprland = {
+      enable = true;
 
-        # From the system nixpkgs rather than the Hyprland git flake input.
-        #
-        # The flake input carries its own nixpkgs, so Hyprland and aquamarine
-        # were linked against glibc-2.42 while the system's Mesa is built
-        # against glibc-2.44. Hyprland therefore starts with glibc 2.42 mapped,
-        # and when GBM tries to dlopen the driver's dri_gbm.so it pulls in
-        # mesa's libgallium, which requires GLIBC_2.43:
-        #
-        #   MESA-LOADER: failed to open dri:
-        #     .../glibc-2.42-84/lib/libm.so.6: version `GLIBC_2.43' not found
-        #     (required by .../mesa-26.2.3/lib/libgallium-26.2.3.so)
-        #
-        # gbm_create_device() then returns NULL and start-up dies with
-        # "Cannot create a GBM Allocator" / "no allocator available". Niri is
-        # unaffected because it comes from the system nixpkgs and so runs
-        # against glibc 2.44.
-        #
-        # No environment variable can paper over this: glibc resolves its
-        # dlopen search path once at startup, and the GLIBC_2.43 requirement is
-        # absolute. The two closures have to be built against the same glibc.
-        package = pkgs.hyprland;
+      # From the system nixpkgs rather than the Hyprland git flake input.
+      #
+      # The flake input carries its own nixpkgs, so Hyprland and aquamarine
+      # were linked against glibc-2.42 while the system's Mesa is built
+      # against glibc-2.44. Hyprland therefore starts with glibc 2.42 mapped,
+      # and when GBM tries to dlopen the driver's dri_gbm.so it pulls in
+      # mesa's libgallium, which requires GLIBC_2.43:
+      #
+      #   MESA-LOADER: failed to open dri:
+      #     .../glibc-2.42-84/lib/libm.so.6: version `GLIBC_2.43' not found
+      #     (required by .../mesa-26.2.3/lib/libgallium-26.2.3.so)
+      #
+      # gbm_create_device() then returns NULL and start-up dies with
+      # "Cannot create a GBM Allocator" / "no allocator available". Niri is
+      # unaffected because it comes from the system nixpkgs and so runs
+      # against glibc 2.44.
+      #
+      # No environment variable can paper over this: glibc resolves its
+      # dlopen search path once at startup, and the GLIBC_2.43 requirement is
+      # absolute. The two closures have to be built against the same glibc.
+      package = pkgs.hyprland;
       xwayland.enable = true;
     };
 

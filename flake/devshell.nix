@@ -37,14 +37,13 @@
       headlessEnv = ''
         export WLR_BACKENDS=headless
         export WLR_RENDERER=pixman
-        # Input devices off by default. CTOS_INPUT=1 re-enables them so an
-        # injected uinput pointer can be delivered as a real event; see
-        # ctos-shot.sh, which honours the same variable.
-        if [ "${CTOS_INPUT: -0}" = "1" ]; then
+
+        if [ "''${CTOS_INPUT:-0}" = "1" ]; then
           unset WLR_LIBINPUT_NO_DEVICES
         else
           export WLR_LIBINPUT_NO_DEVICES=1
         fi
+
         export LIBGL_ALWAYS_SOFTWARE=1
       '';
     in
