@@ -311,6 +311,17 @@ Rectangle {
         model: settingsModel
         focusedIndex: root.focusedCategoryIndex
         isExpanded: root.wheelExpanded
+
+        // Negative on purpose. outerRadius is 180, so a centre at -70 leaves
+        // 110px of a 360px diameter on screen -- about a third of the circle,
+        // showing only the arc the branch grows out of.
+        //
+        // This was previously "fixed" to Math.max(220, width * 0.12) on the
+        // theory that the wheel hanging off the left edge was a bug. It is not:
+        // the expanded reference shows exactly that, one third of the arc, with
+        // the branch tree reading as if it grew out of the hub. Centring the
+        // whole wheel instead puts a large empty circle between the arc and the
+        // base node, so the tree stops looking attached to anything.
         leftAnchorX: -70
         z: 10
 
@@ -421,9 +432,22 @@ Rectangle {
                 if (distFromCenter < wheelMenu.innerRadius) {
                     // Clicked center hub -> expand
                     root.isExpanded = true;
-                } else if (distFromCenter > 280) {
-                    // Clicked far background -> dismiss
-                    OverlayController.close();
+                } else if (distFromCenter > wheelMenu.outerRadius + 100) {
+                    // Outside the wheel entirely: ignore the click.
+                    //
+                    // This used to be `> 280` -> OverlayController.close(), so any
+                    // click more than 280px from the wheel centre dismissed the
+                    // whole surface. The wheel's outerRadius is only 180, which
+                    // meant the dead zone swallowed most of a 1920px screen: a
+                    // stray click on the wallpaper, the notch, or empty space
+                    // tore down a menu the user had just opened. Nothing inside
+                    // the wheel needs the dismiss -- the hub collapses, segments
+                    // select, and Esc closes -- so the wide zone was pure loss.
+                    //
+                    // Distances past the rim are ignored rather than snapped to
+                    // the nearest segment, because angle-only selection would
+                    // make a click at the far corner of the screen jump the
+                    // selection to whatever happened to be nearest.
                 } else {
                     // Clicked on a segment
                     var angle = RadialGeometry.angleFromCenter(wheelMenu.wheelCenterX, wheelMenu.wheelCenterY, mouse.x, mouse.y);
