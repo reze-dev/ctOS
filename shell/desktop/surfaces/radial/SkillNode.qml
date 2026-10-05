@@ -21,12 +21,10 @@ Item {
     property bool isHovered: false
     property bool isActive: false
 
-    // Preview nodes sit at 20 against 42 interactive. The reference wheel draws
-    // its preview trees as 11px dots on a ~195px ring -- about 5.6% of the
-    // diameter -- and 30 was more than twice that, so the trees read as scattered
-    // clusters of icons rather than as a dense wheel of small trees. 20 keeps the
-    // glyph legible and lands near the reference proportion.
-    property real nodeSize: (!isPreview && (isSelected || isHovered)) ? 60 : (isPreview ? 20 : 42)
+    // Preview nodes sit at 30 against 42 interactive. The reference wheel draws
+    // proportionally smaller dots, but matching that ratio cost legibility on
+    // every icon in the tree, so the shipped size stayed.
+    property real nodeSize: (!isPreview && (isSelected || isHovered)) ? 60 : (isPreview ? 30 : 42)
     property real screenX: x + width / 2
     property real screenY: y + height / 2
 
@@ -114,9 +112,29 @@ Item {
         //
         // The preview branch keeps gray900, which is intentional: an unselected
         // preview node is meant to recede into the grid.
-        color: (!root.isPreview || root.isSelected || root.isHovered) ? Theme.surface : Theme.gray900
-        border.width: (!root.isPreview) ? 0 : ((root.isSelected || root.isHovered) ? 2 : 1)
-        border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? Theme.textPrimary : (root.isPreview ? Theme.gray800 : Theme.gray700))
+        // Base-tree discs are Theme.palBase -- the palette's darkest slot -- so the whole
+        // wheel reads as flat near-black dots and a section's glyphs are the only
+        // thing that lights up when it is focused. That is what the reference
+        // draws, and it is why its preview nodes look like featureless dots: the
+        // glyph is present, painted the same colour as the disc, and invisible
+        // until that section is highlighted.
+        //
+        // Theme.palBase rather than a literal black: Phase 1 removed the hardcoded
+        // "black" from this file, and neither palette has a #000 slot. bg is the
+        // darkest each one gets (#13111E pine, #0E0E0E acid) and sits below
+        // radialBackdrop in both, so the discs still read against the backdrop.
+        //
+        // Preview discs deliberately keep a constant 1px border. Highlighting one
+        // used to take the border to 2px in text colour, which put a lit ring
+        // around every node of the focused section -- the reference highlights
+        // the glyphs only, and leaves the rings alone.
+        color: root.isPreview
+            ? (root.locked ? Theme.destructive : Theme.palBase)
+            : Theme.surface
+        border.width: root.isPreview ? 1 : 0
+        border.color: root.isPreview
+            ? (root.locked ? Theme.destructive : Theme.gray800)
+            : (root.locked ? Theme.warningRed : Theme.gray700)
 
         Behavior on border.color {
             ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
@@ -130,26 +148,31 @@ Item {
             id: nodeIcon
             anchors.centerIn: parent
 
-            // Preview glyphs were hidden outright (`visible: !isPreview ||
-            // isSelected`), which left every node in the base-state trees a blank
-            // dot. The Watch Dogs reference draws an icon in all of them.
+// Base-tree glyphs sit at 24 inside a 30px disc, which is the size this
+            // repo shipped and the smallest that keeps every icon legible at a
+            // glance. They were briefly dropped to 13 to chase the reference
+            // wheel's dot-to-ring ratio, and the icons became unreadable --
+            // matching a proportion is not worth that.
             //
-            // They also grow: 24px in the preview trees, and nodeSize-relative once
-            // the branch is expanded, so selecting a branch enlarges its glyphs
-            // without a second set of art.
+            // Once expanded, glyphs grow with the node so selecting a branch
+            // enlarges its art without a second set.
             size: root.isPreview ? 24 : Math.max(20, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
 
-            // Preview discs are Theme.surface on the radial backdrop, so a preview
-            // glyph needs to be lighter than gray800 to read on them -- gray800 was
-            // the old value and was effectively invisible. Selected and hovered
-            // nodes go to full text, which is the reference's "highlighted turns
-            // white" behaviour.
-            color: root.locked
-                ? Theme.destructive
-                : (root.isSelected || root.isHovered
-                    ? Theme.textPrimary
-                    : (root.isPreview ? Theme.textMuted : Theme.gray500))
+            // In the base tree the glyph is its own disc's colour, so it is
+            // invisible until that section is highlighted -- and then it goes to
+            // full text, which is the reference's "highlighted turns white"
+            // behaviour. Locked nodes keep the destructive colour in both states,
+            // because a lock you cannot see is not information.
+            color: root.isPreview
+                ? (root.locked
+                    ? Theme.destructive
+                    : ((root.isSelected || root.isHovered) ? Theme.textPrimary : Theme.palBase))
+                : (root.locked
+                    ? Theme.destructive
+                    : ((root.isSelected || root.isHovered)
+                        ? Theme.textPrimary
+                        : Theme.gray500))
 
             Behavior on color {
                 ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
