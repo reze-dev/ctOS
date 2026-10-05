@@ -409,6 +409,11 @@ Item {
                     title: "LINK ADAPTER",
                     subtitle: "NET.01 // INTERFACE",
                     icon: "wifi",
+                    // A transport state, not the network's name. It used to return
+                    // NetworkService.networkName outright, which on wifi is the SSID
+                    // and on a wired link is the NetworkManager profile name -- so one
+                    // field meant "which network" on one transport and "which profile"
+                    // on the other, under a node titled LINK ADAPTER.
                     description: "Primary network interface connection and transport controller.",
                     locked: false,
                     lockReason: "",
@@ -417,7 +422,10 @@ Item {
                     edges: ["net-flow", "net-tracer"],
                     controlType: "readonly",
                     value: function() { return NetworkService.isConnected ? 1 : 0; },
-                    valueText: function() { return NetworkService.isConnected ? NetworkService.networkName : "OFFLINE"; },
+                    valueText: function() {
+                        if (!NetworkService.isConnected) return "OFFLINE";
+                        return NetworkService.connectionType === "ethernet" ? "WIRED" : NetworkService.networkName;
+                    },
                     execute: function() {}
                 },
                 {
@@ -430,7 +438,7 @@ Item {
                     lockReason: "",
                     requires: ["net-core"],
                     pos: { x: 224, y: -131 },
-                    edges: ["net-sniffer"],
+                    edges: ["net-wifi-radio"],
                     controlType: "toggle",
                     value: function() { return Settings.widgetNetworkFlowVisible; },
                     valueText: function() { return Settings.widgetNetworkFlowVisible ? "ENABLED" : "DISABLED"; },
@@ -461,20 +469,27 @@ Item {
                     }
                 },
                 {
-                    id: "net-sniffer",
-                    title: "PACKET SNIFFER",
-                    subtitle: "NET.04 // SURVEILLANCE",
-                    icon: "policy",
-                    description: "Deep packet inspection and socket surveillance matrix.",
-                    locked: true,
-                    lockReason: "Requires raw CAP_NET_RAW / promiscuous socket privileges.",
-                    requires: ["net-flow"],
+                    // Was "PACKET SNIFFER": locked behind an invented CAP_NET_RAW
+                    // privilege reason with a RESTRICTED readout, promising a packet
+                    // inspector that does not exist. Replaced with the one network
+                    // capability the shell can actually drive.
+                    id: "net-wifi-radio",
+                    title: "WI-FI RADIO",
+                    subtitle: "NET.04 // RADIO",
+                    icon: "wifi",
+                    description: "Wi-Fi subsystem radio. Turning it off drops the current association.",
+                    locked: !NetworkService.available,
+                    lockReason: "NetworkManager is not available.",
+                    requires: ["net-core"],
                     pos: { x: 418, y: -109 },
                     edges: [],
-                    controlType: "readonly",
-                    value: function() { return 0; },
-                    valueText: function() { return "RESTRICTED"; },
-                    execute: function() {}
+                    controlType: "toggle",
+                    value: function() { return NetworkService.wifiEnabled; },
+                    valueText: function() { return NetworkService.wifiEnabled ? "ENABLED" : "DISABLED"; },
+                    execute: function() {
+                        NetworkService.setWifiEnabled(!NetworkService.wifiEnabled);
+                        root.revision++;
+                    }
                 }
             ]
         },
@@ -555,20 +570,50 @@ Item {
                     }
                 },
                 {
-                    id: "audio-dsp",
-                    title: "DSP SPATIALIZER",
-                    subtitle: "AUD.04 // FILTER",
-                    icon: "memory",
-                    description: "Hardware acoustic spatializer and real-time noise cancellation matrix.",
-                    locked: true,
-                    lockReason: "DSP kernel pipeline locked by audio server driver.",
+                    // Was "DSP SPATIALIZER": locked behind an invented kernel-driver
+                    // reason with a RESTRICTED readout, for a filter that does not
+                    // exist. Replaced with capture control, which the shell can drive
+                    // and which the CCC is being stripped of.
+                    id: "audio-mic",
+                    title: "MIC VOLUME",
+                    subtitle: "AUD.04 // CAPTURE",
+                    icon: "microphone",
+                    description: AudioService.micAvailable
+                        ? "Capture gain for the default input device."
+                        : "No input device is available.",
+                    locked: !AudioService.micAvailable,
+                    lockReason: "No input device is available.",
                     requires: ["audio-mute"],
                     pos: { x: 391, y: -133 },
+                    edges: ["audio-mic-mute"],
+                    controlType: "slider",
+                    value: function() { return AudioService.micVolume; },
+                    minValue: 0.0,
+                    maxValue: 1.0,
+                    stepSize: 0.02,
+                    valueText: function() { return Math.round(AudioService.micVolume * 100) + "%"; },
+                    execute: function(value) {
+                        if (typeof value === "number") AudioService.setMicVolume(value);
+                    }
+                },
+                {
+                    id: "audio-mic-mute",
+                    title: "MIC MUTE",
+                    subtitle: "AUD.05 // CAPTURE",
+                    icon: "microphone-slash",
+                    description: "Mute the default input device without changing its level.",
+                    locked: !AudioService.micAvailable,
+                    lockReason: "No input device is available.",
+                    requires: ["audio-mic"],
+                    pos: { x: 545, y: -60 },
                     edges: [],
-                    controlType: "readonly",
-                    value: function() { return 0; },
-                    valueText: function() { return "RESTRICTED"; },
-                    execute: function() {}
+                    controlType: "toggle",
+                    value: function() { return !AudioService.micMuted; },
+                    valueText: function() { return AudioService.micMuted ? "MUTED" : "LIVE"; },
+                    execute: function() {
+                        AudioService.toggleMicMute();
+                        root.revision++;
+                    }
                 }
             ]
         },
@@ -618,38 +663,7 @@ Item {
                         root.revision++;
                     }
                 },
-                {
-                    id: "in-repeat",
-                    title: "KEY REPEAT",
-                    subtitle: "INP.03 // TYPEMATIC",
-                    icon: "timer",
-                    description: "Keyboard repeat delay and typematic strike frequency.",
-                    locked: false,
-                    lockReason: "",
-                    requires: ["in-engine"],
-                    pos: { x: 224, y: 68 },
-                    edges: [],
-                    controlType: "readonly",
-                    value: function() { return 1; },
-                    valueText: function() { return "25ms / 600ms"; },
-                    execute: function() {}
-                },
-                {
-                    id: "in-gestures",
-                    title: "TOUCH GESTURES",
-                    subtitle: "INP.04 // PRECISION",
-                    icon: "layers",
-                    description: "Multi-touch workspace navigation and boundary swipe recognition.",
-                    locked: true,
-                    lockReason: "No supported precision touchpad hardware detected.",
-                    requires: ["in-pointer"],
-                    pos: { x: 377, y: -68 },
-                    edges: [],
-                    controlType: "readonly",
-                    value: function() { return 0; },
-                    valueText: function() { return "RESTRICTED"; },
-                    execute: function() {}
-                }
+
             ]
         },
 
@@ -695,38 +709,7 @@ Item {
                     valueText: function() { return PowerService.isBatteryPresent ? Math.round(PowerService.percentage) + "%" : "AC MAINS"; },
                     execute: function() {}
                 },
-                {
-                    id: "pwr-sleep",
-                    title: "IDLE BLANKING",
-                    subtitle: "PWR.03 // DPMS",
-                    icon: "timer",
-                    description: "Display DPMS timeout and screen power conservation.",
-                    locked: false,
-                    lockReason: "",
-                    requires: ["pwr-governor"],
-                    pos: { x: 248, y: 78 },
-                    edges: [],
-                    controlType: "readonly",
-                    value: function() { return 1; },
-                    valueText: function() { return "300 SEC"; },
-                    execute: function() {}
-                },
-                {
-                    id: "pwr-threshold",
-                    title: "CHARGE THRESHOLD",
-                    subtitle: "PWR.04 // CONSERVATION",
-                    icon: "battery-charging",
-                    description: "Firmware-level 80% battery longevity threshold limit.",
-                    locked: true,
-                    lockReason: "Requires ACPI battery charge threshold driver support.",
-                    requires: ["pwr-supply"],
-                    pos: { x: 383, y: -123 },
-                    edges: [],
-                    controlType: "readonly",
-                    value: function() { return 0; },
-                    valueText: function() { return "RESTRICTED"; },
-                    execute: function() {}
-                }
+
             ]
         },
 
@@ -796,21 +779,7 @@ Item {
                         root.revision++;
                     }
                 },
-                {
-                    id: "sec-vault",
-                    title: "ENCRYPTED VAULT",
-                    subtitle: "SEC.04 // LUKS-HSM",
-                    icon: "vpn-key",
-                    description: "Hardware security module and encrypted credentials vault.",
-                    locked: true,
-                    lockReason: "Requires LUKS hardware token or biometric key-ring authorization.",
-                    requires: ["sec-lock"],
-                    pos: { x: 424, y: -89 },
-                    edges: [],
-                    controlType: "readonly",
-                    value: function() { return 0; },
-                    valueText: function() { return "RESTRICTED"; },
-                }
+
             ]
 
         } // END OF CATEGORIES

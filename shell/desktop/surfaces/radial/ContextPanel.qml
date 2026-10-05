@@ -59,14 +59,14 @@ Item {
     visible: opacity > 0.01
 
     Behavior on opacity {
-        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
     }
 
     // Slide transition
     transform: Translate {
         x: root.isExpanded ? 0 : 60
         Behavior on x {
-            NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
         }
     }
 
@@ -110,7 +110,7 @@ Item {
             target: layout
             property: "opacity"
             to: 1.0
-            duration: Theme.durationNormal
+            duration: Settings.reducedMotion ? 0 : Theme.durationNormal
             easing.type: Easing.OutCubic
         }
     }
@@ -224,15 +224,23 @@ Item {
                     spacing: 2
 
                     Text {
-                        text: "PREREQUISITE LOCKED"
+                        // Was an unconditional "PREREQUISITE LOCKED". No node is
+                        // gated on another node's state: `requires` records what a
+                        // branch hangs off, which `edges` already expresses, and
+                        // every setting in the tree is independently reachable. The
+                        // locks that remain are real conditions -- an absent
+                        // NetworkManager, an absent input device, a dead awww
+                        // daemon -- so the banner names the condition rather than
+                        // inventing a prerequisite graph that does not exist.
+                        text: "UNAVAILABLE"
                         font.family: Theme.fontFamilyMonospace
                         font.pixelSize: Theme.fontSizeCaption
                         font.weight: Theme.fontWeightBold
-                        color: Theme.warningRed
+                        color: Theme.destructive
                     }
 
                     Text {
-                        text: root.currentNode ? (root.currentNode.lockReason || "Prerequisites not fulfilled.") : ""
+                        text: root.currentNode ? (root.currentNode.lockReason || "This control is unavailable right now.") : ""
                         font.family: Theme.fontFamilyMonospace
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.textPrimaryDim

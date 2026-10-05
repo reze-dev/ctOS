@@ -93,16 +93,16 @@ Reference images are in the repository root: `base-settings-tree.png`,
 
 | # | Item | Status |
 | --- | --- | --- |
-| R1 | Derive lock state from `requires`; stop printing "PREREQUISITE LOCKED" while enforcing nothing | todo |
-| R2 | Resolve the 4 stub nodes and the 5 invented lock reasons | todo |
-| R3 | Honour `Settings.reducedMotion` in every animating surface (live violation, `interaction-spec.md`) | todo |
-| R4 | Fix `RadialSettings.qml` `leftAnchorX: -70` — the wheel hangs off the left edge when expanded | todo |
-| R5 | Delete the never-emitted `RadialSegment.clicked()` / `hovered()` signals | todo |
-| R6 | `net-core` reports a raw interface name instead of a connection state | todo |
-| R7 | Glyphs on preview nodes — currently hidden, so the base-state trees are blank dots. Black unless highlighted; larger when the tree is expanded | todo |
-| R8 | Blip in both states: red when the setting is off, green when on. Needs a per-node on/off notion first | todo |
-| R9 | Resolve the `readonly` nodes — either make them functional or delete them. They have no on/off state, which R8 depends on | todo |
-| R10 | More nodes and branches per section, so the trees match the reference density | todo |
+| R1 | Stop printing "PREREQUISITE LOCKED" while enforcing nothing | done — see below |
+| R2 | Resolve the stub nodes and the invented lock reasons | done — 5 removed, 3 replaced |
+| R3 | Honour `Settings.reducedMotion` in every animating surface | done — 35 durations, 3 timers, 1 infinite loop |
+| R4 | `leftAnchorX: -70` | **no change** — reviewed against the references and it is deliberate |
+| R5 | Delete the never-emitted `RadialSegment.clicked()` / `hovered()` signals | done |
+| R6 | `net-core` reports a raw interface name instead of a connection state | done |
+| R7 | Glyphs on preview nodes | done — were hidden outright, so the base-state trees were blank |
+| R8 | Blip in both states: red when off, green when on | done |
+| R9 | Resolve the `readonly` nodes | done — 5 deleted, 3 made functional |
+| R10 | More nodes and branches per section | todo — plus the security tooling branches |
 | R11 | Animated 3D-city skill-tree background (`WatchDogs1` reference). Not implemented | todo |
 
 R7–R10 came from reading the reference images against the running shell. The arc

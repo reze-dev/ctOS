@@ -64,7 +64,7 @@ Item {
         visible: opacity > 0.01
 
         Behavior on opacity {
-            NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
         }
 
         Repeater {
@@ -101,7 +101,7 @@ Item {
                 property real angleDeg: layoutInfo.centerAngle
                 
                 Behavior on angleDeg {
-                    NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
                 }
                 readonly property real rad: previewSubtree.angleDeg * Math.PI / 180.0
                 readonly property real radMinus12: (previewSubtree.angleDeg - 12.0) * Math.PI / 180.0
@@ -235,7 +235,7 @@ Item {
         }
 
         Behavior on opacity {
-            NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
         }
 
         // Staggered cascade controller for nodes and connecting edges
@@ -274,14 +274,14 @@ Item {
                 cascadeAnim7.restart();
             }
 
-            NumberAnimation { id: cascadeAnim0; target: cascadeController; property: "offset0"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 0; running: root.isExpanded; easing.type: Easing.OutBack }
-            NumberAnimation { id: cascadeAnim1; target: cascadeController; property: "offset1"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 60; running: root.isExpanded; easing.type: Easing.OutBack }
-            NumberAnimation { id: cascadeAnim2; target: cascadeController; property: "offset2"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 120; running: root.isExpanded; easing.type: Easing.OutBack }
-            NumberAnimation { id: cascadeAnim3; target: cascadeController; property: "offset3"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 180; running: root.isExpanded; easing.type: Easing.OutBack }
-            NumberAnimation { id: cascadeAnim4; target: cascadeController; property: "offset4"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 240; running: root.isExpanded; easing.type: Easing.OutBack }
-            NumberAnimation { id: cascadeAnim5; target: cascadeController; property: "offset5"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 300; running: root.isExpanded; easing.type: Easing.OutBack }
-            NumberAnimation { id: cascadeAnim6; target: cascadeController; property: "offset6"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 360; running: root.isExpanded; easing.type: Easing.OutBack }
-            NumberAnimation { id: cascadeAnim7; target: cascadeController; property: "offset7"; from: -30.0; to: 0.0; duration: Theme.durationSlow + 420; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim0; target: cascadeController; property: "offset0"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 0; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim1; target: cascadeController; property: "offset1"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 60; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim2; target: cascadeController; property: "offset2"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 120; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim3; target: cascadeController; property: "offset3"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 180; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim4; target: cascadeController; property: "offset4"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 240; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim5; target: cascadeController; property: "offset5"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 300; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim6; target: cascadeController; property: "offset6"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 360; running: root.isExpanded; easing.type: Easing.OutBack }
+            NumberAnimation { id: cascadeAnim7; target: cascadeController; property: "offset7"; from: -30.0; to: 0.0; duration: Settings.reducedMotion ? 0 : Theme.durationSlow + 420; running: root.isExpanded; easing.type: Easing.OutBack }
         }
 
         // Horizontal Anchor Ray from Wheel to Root Node

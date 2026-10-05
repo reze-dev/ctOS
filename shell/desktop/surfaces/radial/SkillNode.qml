@@ -26,7 +26,7 @@ Item {
     property real screenY: y + height / 2
 
     Behavior on nodeSize {
-        NumberAnimation { duration: Theme.durationFast }
+        NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
     }
 
     width: nodeSize
@@ -67,14 +67,18 @@ Item {
 
         ParallelAnimation {
             id: pulseAnim
-            running: root.shouldPulse
+            // Gated on running, not just on duration. This loop is infinite, so a
+            // zero duration would not make it still -- it would make it spin as
+            // fast as the frame clock, which is the opposite of reduced motion and
+            // costs a wakeup per frame. It has to not run at all.
+            running: root.shouldPulse && !Settings.reducedMotion
             loops: Animation.Infinite
             NumberAnimation {
                 target: outerRing
                 property: "scale"
                 from: 1.0
                 to: 1.8
-                duration: 1000
+                duration: Settings.reducedMotion ? 0 : 1000
                 easing.type: Easing.OutCubic
             }
             NumberAnimation {
@@ -82,7 +86,7 @@ Item {
                 property: "opacity"
                 from: 0.8
                 to: 0.0
-                duration: 1000
+                duration: Settings.reducedMotion ? 0 : 1000
                 easing.type: Easing.OutCubic
             }
         }
@@ -110,37 +114,60 @@ Item {
         border.color: root.locked ? Theme.warningRed : ((root.isSelected || root.isHovered) ? Theme.textPrimary : (root.isPreview ? Theme.gray800 : Theme.gray700))
 
         Behavior on border.color {
-            ColorAnimation { duration: Theme.durationFast }
+            ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
         }
         Behavior on color {
-            ColorAnimation { duration: Theme.durationFast }
+            ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
         }
 
         // Center Node Icon
         CtosIcon {
             id: nodeIcon
             anchors.centerIn: parent
+
+            // Preview glyphs were hidden outright (`visible: !isPreview ||
+            // isSelected`), which left every node in the base-state trees a blank
+            // dot. The Watch Dogs reference draws an icon in all of them.
+            //
+            // They also grow: 24px in the preview trees, and nodeSize-relative once
+            // the branch is expanded, so selecting a branch enlarges its glyphs
+            // without a second set of art.
             size: root.isPreview ? 24 : Math.max(20, root.nodeSize * 0.44)
             name: root.locked ? "lock" : root.iconName
-            color: root.locked ? Theme.warningRed : ((!root.isPreview || root.isSelected || root.isHovered) ? Theme.textPrimary : (root.isPreview ? Theme.gray800 : Theme.gray500))
-            visible: !root.isPreview || root.isSelected
+
+            // Preview discs are Theme.surface on the radial backdrop, so a preview
+            // glyph needs to be lighter than gray800 to read on them -- gray800 was
+            // the old value and was effectively invisible. Selected and hovered
+            // nodes go to full text, which is the reference's "highlighted turns
+            // white" behaviour.
+            color: root.locked
+                ? Theme.destructive
+                : (root.isSelected || root.isHovered
+                    ? Theme.textPrimary
+                    : (root.isPreview ? Theme.textMuted : Theme.gray500))
 
             Behavior on color {
-                ColorAnimation { duration: Theme.durationFast }
+                ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
             }
         }
 
-        // Active State Indicator Dot
+        // State blip: green when the setting is doing its thing, red when it is
+        // not. It used to be accent-coloured and visible only while active, so
+        // "off" had no marker at all -- the reference shows both states.
         Rectangle {
             id: activeDot
             width: 6
             height: 6
             radius: Theme.radiusPill
-            color: Theme.acidGreen
+            color: root.isActive ? Theme.status : Theme.destructive
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             anchors.margins: 3
-            visible: root.isActive && !root.locked
+            visible: !root.isPreview && !root.locked
+
+            Behavior on color {
+                ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
+            }
         }
 
         // Lock Badge Mini Indicator

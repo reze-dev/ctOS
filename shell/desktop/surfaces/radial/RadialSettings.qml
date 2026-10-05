@@ -57,14 +57,17 @@ FocusScope {
         property: "opacity"
         from: 1.0
         to: 0.0
-        duration: 130
+        duration: Settings.reducedMotion ? 0 : 130
         easing.type: Easing.OutCubic
     }
 
     // Expand Choreography: Wheel translates left first, branch deploys once wheel nears left edge
     Timer {
         id: expandTimer
-        interval: 180
+        // Zero under reducedMotion: these three stagger the wheel
+        // rotation and the branch origin, so snapping them is what makes the
+        // expansion instant rather than merely fast.
+        interval: Settings.reducedMotion ? 0 : 180
         repeat: false
         onTriggered: {
             if (root.isExpanded) {
@@ -76,7 +79,7 @@ FocusScope {
     // Collapse Choreography: Branch retracts first (140ms), then wheel returns to center
     Timer {
         id: collapseTimerWheelReturn
-        interval: 140
+        interval: Settings.reducedMotion ? 0 : 140
         repeat: false
         onTriggered: {
             if (!root.isExpanded) {
@@ -89,7 +92,7 @@ FocusScope {
     // Preview trees blossom back in as the wheel approaches screen center
     Timer {
         id: collapseTimerPreviewRestore
-        interval: 320
+        interval: Settings.reducedMotion ? 0 : 320
         repeat: false
         onTriggered: {
             if (!root.isExpanded) {
@@ -319,11 +322,12 @@ Rectangle {
             }
         }
 
-        onCategoryHovered: function(idx) {
-            if (!root.isExpanded) {
-                root.focusedCategoryIndex = idx;
-            }
-        }
+        // onCategoryHovered is gone with the signal. It was connected here but
+        // never raised: RadialSegment declared hovered() and had no MouseArea to
+        // emit it from, so hovering a segment did nothing through this path.
+        // Hovering the wheel to change category is surfaceMouseArea's
+        // onPositionChanged -> handleMouseMove, which is what has always actually
+        // driven it.
 
         onCollapseRequested: {
             root.isExpanded = false;

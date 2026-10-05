@@ -71,7 +71,7 @@ Item {
         property: "progress"
         from: 0.0
         to: 1.0
-        duration: root.pulseDuration
+        duration: Settings.reducedMotion ? 0 : root.pulseDuration
         easing.type: Easing.InOutQuad
     }
 
