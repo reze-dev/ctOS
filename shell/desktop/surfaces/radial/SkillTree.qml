@@ -184,16 +184,25 @@ Item {
                 // is how the audio and security trees came to look different
                 // depending on which view you were in.
                 //
-                // Step 42 against a 30px node is the reference's own ratio: its depth step is
-                // 28px on a 119px ring, which scales to 42 here. The previous 48
-                // was close but loose enough that the edges read as long lines
-                // with a gap at each end rather than as a tree.
                 //
                 // The fan angles are deliberately the same as the expanded view's.
                 // The reference's base trees are not a different *shape* -- their
                 // forks are short perpendicular pairs because everything is small,
                 // not because the geometry differs. Compressing it is a smaller
                 // step, not a second set of angles.
+                // Step against a 30px node.
+                //
+                // At 42 the gap between one node's edge and the next was 12px,
+                // which made the connectors read as stubs rather than branches:
+                // the discs nearly touched and the eye saw a row of dots instead
+                // of a tree. 56 leaves 26px, so each edge reads as a branch.
+                //
+                // This is a legibility number, not a proportion to copy. The
+                // reference wheel steps 28 against a 119px ring, which would put
+                // it at 42 here -- matching that exactly is what produced the
+                // stubs, because its nodes are 20px and ours are 30. A real
+                // settings tree with bigger nodes needs longer branches to read
+                // the same way; only the character has to match, not the scale.
                 readonly property var previewChildren: {
                     var nodes = previewSubtree.cat && previewSubtree.cat.nodes ? previewSubtree.cat.nodes : [];
                     if (nodes.length === 0) return [];
@@ -205,7 +214,7 @@ Item {
                         if (known.indexOf(nodes[w].id) < 0)
                             roots.push({ id: nodes[w].id });
 
-                    var small = RadialGeometry.layoutTree(roots, { step: 42.0, flatten: 0.15 });
+                    var small = RadialGeometry.layoutTree(roots, { step: 56.0, flatten: 0.15 });
                     var origin = previewSubtree.r1Point;
                     var slots = [];
 
