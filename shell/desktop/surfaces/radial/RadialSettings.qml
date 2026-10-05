@@ -295,6 +295,13 @@ Rectangle {
         isExpanded: root.branchExpanded
         wheelCenterX: wheelMenu.wheelCenterX
         wheelCenterY: wheelMenu.wheelCenterY
+        // Where the expanded branch's base node sits: 350px right of the wheel's
+        // left anchor, which is where it was before the geometry work.
+        //
+        // I moved this to leftAnchorX + outerRadius + 11 while chasing the base
+        // wheel's short trunks, on the theory that the expanded tree should hug
+        // the ring too. It should not -- the expanded view has the whole canvas
+        // to itself, so its branch starts further out and runs longer.
         branchOriginX: wheelMenu.leftAnchorX + 350
         branchOriginY: root.height / 2
         z: 5
