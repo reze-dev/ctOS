@@ -126,10 +126,23 @@ FocusScope {
                 return;
 
             root.forceActiveFocus();
-            root.applyRequestedCard();
 
             // A sub-surface request (power menu, wifi rail) opens the panel with
             // the matching card already expanded.
+            //
+            // Assignment comes before applyRequestedCard(), not after. The call
+            // used to sit above this block, so it read requestedCard while that
+            // was still "" -- the only two writers are the two lines below --
+            // and returned on the `requestedCard === ""` guard every time.
+            //
+            // That reads like a harmless no-op, because Card.qml:45 defaults
+            // every card to expanded and nothing here ever collapses one. It is
+            // not: the only writer of expanded=false is the chevron at
+            // Card.qml:219, so this function is the *re*-expand path for a card
+            // the user had collapsed. With the call above the assignment, the
+            // deck's Logout/Reboot/Poweroff routing opened the CCC onto a power
+            // card the user had collapsed -- the confirmation it routed to,
+            // hidden behind the very chevron that collapsed it.
             if (OverlayController.pendingSessionAction !== "") {
                 root.requestedCard = "power";
                 OverlayController.pendingSessionAction = "";
@@ -137,6 +150,7 @@ FocusScope {
                 root.requestedCard = OverlayController.pendingRailView;
                 OverlayController.pendingRailView = "";
             }
+            root.applyRequestedCard();
         }
     }
 
