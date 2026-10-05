@@ -675,6 +675,18 @@ Item {
                 onVisibleChanged: {
                     if (visible) {
                         browserControl.dirDraft = WallpaperService.directory;
+                        // Re-list on open. The service scans once at startup and
+                        // again only when the directory changes -- deliberately,
+                        // since a watch would mean holding a descriptor open on a
+                        // path the user can point anywhere -- so files added or
+                        // deleted while the shell was running never appeared or
+                        // disappeared here. The grid showed whatever the directory
+                        // held at boot, indefinitely.
+                        //
+                        // Opening the browser is a deliberate act and costs one
+                        // `sh`, so that is the moment worth paying for a fresh
+                        // listing.
+                        WallpaperService.rescan();
                     }
                 }
                 Component.onCompleted: {
@@ -956,8 +968,16 @@ Item {
             }
         }
 
+        // Filler that pins the key hint to the bottom.
+        //
+        // It yields when the browser is active, because the control box above is
+        // also fillHeight and QtQuick.Layouts splits leftover space equally among
+        // every fillHeight item. With both filling, the browser's control box
+        // received roughly half the leftover and the wallpaper grid was left at
+        // 328px regardless of a 972px panel -- two rows on a screen with room for
+        // six. Only one of the two needs the space, and it is the browser.
         Item {
-            Layout.fillHeight: true
+            Layout.fillHeight: !root.currentIsBrowser
         }
 
         // Bottom Tactical Key Navigation Hint
