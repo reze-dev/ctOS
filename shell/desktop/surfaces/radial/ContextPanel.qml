@@ -923,6 +923,49 @@ Item {
                             font.pixelSize: Theme.fontSizeSmall
                             color: Theme.textDisabled
                         }
+
+                        // Scroll indicator, hand-rolled.
+                        //
+                        // QtQuick.Controls' ScrollBar is not available here -- this
+                        // panel deliberately has no Controls dependency, the same
+                        // constraint that forced the directory field above to be a
+                        // core TextInput with a sibling background -- so the track
+                        // and thumb are built by hand. The grid already flicks on
+                        // wheel and drag; what it had was no indication that it
+                        // could, which matters more now that it holds five rows.
+                        Rectangle {
+                            id: scrollTrack
+                            anchors.right: parent.right
+                            anchors.rightMargin: 2
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            width: 4
+                            radius: 2
+                            visible: wallpaperGrid.contentHeight > wallpaperGrid.height
+                            color: Theme.gray700
+
+                            readonly property real usable:
+                                height - thumb.height
+
+                            Rectangle {
+                                id: thumb
+                                width: parent.width
+                                radius: 2
+                                color: Theme.acidGreen
+                                opacity: 0.8
+
+                                // Proportional to the visible fraction, with a
+                                // floor so a long list still leaves a thumb you
+                                // can see and aim at.
+                                height: Math.max(
+                                    24,
+                                    scrollTrack.height
+                                        * (wallpaperGrid.height / Math.max(1, wallpaperGrid.contentHeight)))
+
+                                y: wallpaperGrid.contentY
+                                    * (scrollTrack.usable / Math.max(1, wallpaperGrid.contentHeight - wallpaperGrid.height))
+                            }
+                        }
                     }
                 }
             }
