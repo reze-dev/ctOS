@@ -263,133 +263,152 @@ function getSegmentTargetLayout(index, focusedIndex, categoryCount, gapAngle, fo
 // ---------------------------------------------------------------------------
 // Tree layout
 //
-// The one place a settings tree gets geometry. Both renderings call this: the
-// expanded branch at one scale, the wheel's preview at another. They used to
-// have separate geometry -- hand-placed `pos` in the model for the first, a
-// synthetic +/-8 degree fan for the second -- so the two views disagreed about
-// how many branches a category had, and nothing in the code could catch it.
+// Takes declared relationships and parameters, and produces coordinates. It
+// never sees a tree that has positions baked in: RadialTopology.qml holds only
+// who is connected to whom, and this decides where they land in one view while
+// layoutPreviewTree below decides where they land in the other. Same
+// relationships, two projections, so the views cannot disagree about a
+// category's shape -- only about how it is drawn.
 //
-// Same algorithm for both views is deliberate. Letting each pick its own angles
-// would fix today's mismatch and reintroduce it the next time one is tuned, so
-// difference between the views lives in `params` instead.
+// Polar convention, and it is worth stating because it is easy to get backwards:
+//   x = parentX + sin(angle) * distance
+//   y = parentY - cos(angle) * distance
+// Angle 0 points UP, +90 points right. The expanded branch grows rightward from
+// a wheel anchored off the left edge, so rootAngle defaults to 90 -- at 0 the
+// tree grows up out of the ring.
+//
+// Angles accumulate down a branch rather than being measured from the root, so
+// a child placed at -85 puts its own children around -85. Without that, every
+// generation tries to orbit the original root and the tree becomes a disc of
+// unrelated spokes instead of branches.
 // ---------------------------------------------------------------------------
 
-// How a node's children fan out, as offsets in degrees from the direction that
-// led to their parent.
+// Offsets for childCount children spread evenly across a total fan of `total`
+// degrees, centred on zero.
 //
-// The numbers come from the two reference layouts rather than from taste: three
-// branches off one base sit at about -85/0/+85, and two at about -74/+74. A
-// single child returns [0], so it continues along its parent's direction -- that
-// is what makes a three-deep chain read as one spoke leaving the base instead of
-// three unrelated nodes.
-function childFanAngles(childCount) {
+// One child gets no spread at all: a single child is a link in a chain, and
+// giving it an offset is what turns a three-deep chain into three stray nodes.
+function fanOffsets(childCount, total) {
     if (childCount <= 1) return [0.0];
-    if (childCount === 2) return [-74.0, 74.0];
-    if (childCount === 3) return [-85.0, 0.0, 85.0];
-
-    // No reference for this case, and nothing in the tree currently reaches it
-    // (the widest node has three children). Spread evenly rather than guess
-    // unevenly: if a category ever does fan four ways, this is the shape to
-    // argue about, and it should start from "evenly spaced", not from a number
-    // someone picked.
+    var half = total / 2.0;
     var out = [];
     for (var i = 0; i < childCount; ++i)
-        out.push(-90.0 + (180.0 * i) / (childCount - 1));
+        out.push(-half + (total * i) / (childCount - 1));
     return out;
 }
 
-// Lay out a nested tree literal ({ id, children }) into coordinates.
+// The narrowest total fan that still leaves `minSeparation` between siblings.
 //
-// opts.step      distance between depth levels, in the view's own units
-// opts.flatten   per-level pull of each spoke toward its parent's axis, so a
-//                chain arcs outward instead of running along one ray
-//
-// Returns { <id>: { x, y, depth, spoke } } with the root at (0, 0).
-//
-// Breadth-first from the root, and each node carries the axis it was placed on
-// so its own children continue outward from there rather than re-fanning around
-// a fixed global axis. That is the whole difference between a tree that reads as
-// a tree and one that reads as nodes scattered near each other.
+// A fixed fan collapses as children are added: at 120 degrees, six children sit
+// 30 degrees apart, which is 72px apart at a 140px distance -- closer than the
+// nodes are wide. So the fan has to grow with the child count, which is what
+// this returns, and it is the reason nodeRadius is worth passing in at all.
+function minimumFan(childCount, distance, minSeparation) {
+    if (childCount <= 1 || distance <= 0.0) return 0.0;
+    var ratio = Math.min(1.0, minSeparation / (2.0 * distance));
+    var step = 2.0 * Math.asin(ratio) * 180.0 / Math.PI;
+    return step * (childCount - 1);
+}
+
 function layoutTree(nodes, opts) {
     opts = opts || {};
-    var step = (typeof opts.step === "number") ? opts.step : 140.0;
-    var flatten = (typeof opts.flatten === "number") ? opts.flatten : 0.15;
+
+    var rootAngle = (typeof opts.rootAngle === "number") ? opts.rootAngle : 90.0;
+
+    // Total fan per depth, index = depth - 1, clamped at the last entry. 170 at
+    // the root reproduces the reference's up/right/down first level; every level
+    // below is narrower so a deep fork cannot swing round behind its parent.
+    var fans = (opts.fans && opts.fans.length > 0) ? opts.fans : [170.0, 120.0];
+
+    var baseDistance = (typeof opts.distance === "number") ? opts.distance : 140.0;
+    var nodeRadius = (typeof opts.nodeRadius === "number") ? opts.nodeRadius : 24.0;
+    var gap = (typeof opts.gap === "number") ? opts.gap : 10.0;
+
+    // Distance holds for the first two levels, then shortens. A tree that keeps
+    // marching at full stride spreads very wide by depth 4; security already
+    // reaches x = -344 at depth 3.
+    var shrinkFromDepth = (typeof opts.shrinkFromDepth === "number") ? opts.shrinkFromDepth : 2;
+    var shrinkPerLevel = (typeof opts.shrinkPerLevel === "number") ? opts.shrinkPerLevel : 0.8;
+
+    // Measure a fork from the direction its own branch arrived on (the default),
+    // or from rootAngle. The second reads as a fork hanging off the side of a
+    // chain, which shoots back across the tree; the first reads as a tree.
+    var recentreDeepForks = opts.recentreDeepForks === true;
+
+    function fanAt(depth) {
+        return fans[Math.min(depth - 1, fans.length - 1)];
+    }
+
+    function distanceAt(depth) {
+        if (depth <= shrinkFromDepth) return baseDistance;
+        return baseDistance * Math.pow(shrinkPerLevel, depth - shrinkFromDepth);
+    }
 
     var out = {};
     if (!nodes || nodes.length === 0) return out;
 
-    // A node already placed is left alone, so a second parent cannot drag it to a
-    // new position. The topology is authored as a tree, but this keeps a
-    // mistake in the file from silently relocating a subtree.
-    var queue = [{ node: nodes[0], depth: 0, axis: 0.0, spoke: -1 }];
-    out[nodes[0].id] = { x: 0.0, y: 0.0, depth: 0, spoke: -1, parent: null };
+    out[nodes[0].id] = {
+        x: 0.0, y: 0.0, depth: 0, angle: rootAngle, parent: null, spoke: -1
+    };
+
+    var queue = [{ node: nodes[0], angle: rootAngle, depth: 0 }];
 
     while (queue.length > 0) {
         var cur = queue.shift();
         var kids = cur.node.children || [];
         if (kids.length === 0) continue;
 
-        var fan = childFanAngles(kids.length);
+        var depth = cur.depth + 1;
+        var distance = distanceAt(depth);
 
-        // A fork inherits its parent's axis, so a deep fork can be aimed backwards.
-        //
-        // security is the case that matters: root -> sec-lock (-74) -> sec-toolkit
-        // (-63), and sec-toolkit has three children. Fanning those around its own
-        // axis gave -148, -63 and +22, so the recon node was thrown up and to the
-        // LEFT, back over the hub it belongs to. The subtree stopped reading as
-        // growing outward from the wheel.
-        //
-        // When the inherited fan would leave the forward half-plane, drop the
-        // parent's axis for this fork and open it symmetrically instead. It is the
-        // same shape the reference uses for a three-way fork, just aimed outward
-        // rather than continuing to rotate.
-        var raw = [];
-        for (var q = 0; q < kids.length; ++q) raw.push(cur.axis + fan[q]);
-        var backwards = false;
-        for (var q2 = 0; q2 < raw.length; ++q2)
-            if (raw[q2] < -90.0 || raw[q2] > 90.0) backwards = true;
-        if (backwards) {
-            var centred = childFanAngles(kids.length);
-            for (var q3 = 0; q3 < centred.length; ++q3) raw[q3] = centred[q3];
-        }
+        // Widen the fan if this many children would otherwise sit inside each
+        // other at this distance.
+        var total = Math.max(
+            fanAt(depth),
+            minimumFan(kids.length, distance, 2.0 * nodeRadius + gap)
+        );
+        var offsets = fanOffsets(kids.length, total);
 
-        for (var k = 0; k < kids.length; ++k) {
-            var child = kids[k];
-            if (!child || out[child.id]) continue;
+        var origin = out[cur.node.id];
+        var from = (recentreDeepForks && cur.depth > 0) ? rootAngle : cur.angle;
 
-            var depth = cur.depth + 1;
-            var axis = raw[k];
-            var dir = axis * Math.pow(1.0 - flatten, depth - 1);
-            var rad = dir * Math.PI / 180.0;
-            var radius = step * depth;
+        for (var i = 0; i < kids.length; ++i) {
+            var kid = kids[i];
+            // Already placed means it was reached by another branch; leave it
+            // where it is rather than letting a second parent drag it.
+            if (!kid || out[kid.id]) continue;
 
-            out[child.id] = {
-                x: radius * Math.cos(rad),
-                y: radius * Math.sin(rad),
+            var angle = from + offsets[i];
+            var rad = angle * Math.PI / 180.0;
+            out[kid.id] = {
+                x: origin.x + Math.sin(rad) * distance,
+                y: origin.y - Math.cos(rad) * distance,
                 depth: depth,
-                spoke: (depth === 1) ? k : cur.spoke,
-                // Recorded rather than re-derived by the renderer. Both views
-                // need a parent-to-child pair to draw one edge, and re-walking
-                // the tree in each of them is how they came to disagree.
-                parent: cur.node.id
+                angle: angle,
+                parent: cur.node.id,
+                spoke: i
             };
-            queue.push({ node: child, depth: depth, axis: axis, spoke: (depth === 1) ? k : cur.spoke });
+            queue.push({ node: kid, angle: angle, depth: depth });
         }
     }
 
-    // Nodes the children lists never reached. They cannot be laid out from a
+    // Nodes the relationships never reach. They cannot be placed relative to a
     // parent that does not exist, but leaving them out would make them vanish
     // instead of failing visibly, so park them on a shallow arc off the root.
     var orphans = [];
-    for (var i = 0; i < nodes.length; ++i)
-        if (nodes[i] && !out[nodes[i].id]) orphans.push(nodes[i]);
+    for (var n = 0; n < nodes.length; ++n)
+        if (nodes[n] && !out[nodes[n].id]) orphans.push(nodes[n]);
 
-    for (var m = 0; m < orphans.length; ++m) {
-        var od = orphans.length === 1 ? 0.0 : -90.0 + (180.0 * m) / (orphans.length - 1);
-        var orad = od * Math.PI / 180.0;
-        out[orphans[m].id] = {
-            x: step * Math.cos(orad), y: step * Math.sin(orad), depth: 1, spoke: 100 + m,
-            parent: null
+    for (var o = 0; o < orphans.length; ++o) {
+        var spread = orphans.length === 1 ? 0.0 : -45.0 + (90.0 * o) / (orphans.length - 1);
+        var orad = (rootAngle + spread) * Math.PI / 180.0;
+        out[orphans[o].id] = {
+            x: Math.sin(orad) * baseDistance,
+            y: -Math.cos(orad) * baseDistance,
+            depth: 1,
+            angle: rootAngle + spread,
+            parent: nodes[0].id,
+            spoke: 90 + o
         };
     }
 

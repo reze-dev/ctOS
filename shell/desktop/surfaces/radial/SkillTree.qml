@@ -65,8 +65,13 @@ Item {
     // has room to breathe.
     readonly property real expandedStep: 140.0
 
-    readonly property var expandedLayout: RadialGeometry.layoutTree(
-        root.categoryTree, { step: root.expandedStep, flatten: 0.15 })
+    readonly property var expandedLayout: RadialGeometry.layoutTree(root.categoryTree, {
+        // 90, not 0: the polar convention puts 0 pointing up, and this tree grows
+        // rightward from a wheel anchored off the left edge.
+        rootAngle: 90.0,
+        distance: root.expandedStep,
+        nodeRadius: 24.0
+    })
 
     function posOf(nodeId: string): var {
         var p = root.expandedLayout[nodeId];
