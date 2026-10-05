@@ -72,7 +72,7 @@ function slots() {
         // already near-black (#0E0E0E) and a tint that reads as bronze against
         // pine's blue-black would disappear here. Same job as the slot above:
         // dark enough for light text and for the grid to sit over.
-        "radialBackdrop": "#0C2126"
+        "radialBackdrop": "#EAF6F2"
     };
 }
 

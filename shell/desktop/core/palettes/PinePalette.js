@@ -77,7 +77,7 @@ function slots() {
         // A deep bronze, not literal #F6C177. The panel and all its text sit on
         // this, and the grid is drawn over it, so the value has to stay dark
         // enough for light text -- roughly 12:1 against `text`.
-        "radialBackdrop": "#2A2313"
+        "radialBackdrop": "#EFF1F5"
     };
 }
 
