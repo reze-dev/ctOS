@@ -77,6 +77,31 @@ Singleton {
     property string _scannedDir: ""
     property int _consecutiveFailures: 0
     property string _lastError: ""
+    property string _lastApplied: ""
+
+    // Whether the recorded selection can be trusted as the user's actual choice.
+    // True once Settings has either parsed the file or reported that it could
+    // not; see the deferred fallback in the scan handler for why isLoaded alone
+    // is not enough.
+    property bool _settleSeen: false
+    readonly property bool _settingsSettled: Settings.isLoaded || root._settleSeen
+
+    // Hand a wallpaper to awww at most once per distinct name.
+    //
+    // This is what makes the shell the authority on the desktop backdrop.
+    // ctos-wallpaper.service applies wallpaper-v1.png unconditionally at
+    // graphical-session.target -- it does not read settings.json -- so without
+    // this the unit won every boot: the desktop came up on v1 while the setting
+    // and the browser showed whatever was chosen. The comment on the session
+    // start block below already claimed the shell re-applies the recorded choice
+    // and made itself authoritative; it did not, because apply() was only reached
+    // from the fallback branch below, which runs precisely when the recorded name
+    // is *missing*.
+    function _applyTarget(name) {
+        if (name === "" || name === root._lastApplied) return;
+        root._lastApplied = name;
+        root.apply(name);
+    }
 
     function entryFor(name) {
         for (var i = 0; i < root._entries.length; ++i) {
@@ -114,7 +139,7 @@ Singleton {
         _scannedDir = root.directory;
         _scanProc.command = [
             "sh", "-c",
-            'if [ ! -d "$1" ]; then printf "%s\\n" "###CTOSWPERR"; exit 0; fi; for f in "$1"/*; do [ -f "$f" ] || continue; printf "%s\\n" "$f"; done',
+            'printf "%s\\n" "###CTOSWP:$1"; if [ ! -d "$1" ]; then printf "%s\\n" "###CTOSWPERR"; exit 0; fi; for f in "$1"/*; do [ -f "$f" ] || continue; printf "%s\\n" "$f"; done',
             "ctos-wallpaper-scan", root.directory
         ];
         _scanProc.running = true;
@@ -128,17 +153,33 @@ Singleton {
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
-                // Guard against a scan whose result arrives after the user has
-                // already pointed somewhere else.
-                if (root._scannedDir !== root.directory) return;
-
+                // The first line names the directory this output describes, and
+                // the guard compares against that rather than against _scannedDir.
+                //
+                // _scannedDir records where a scan was *aimed*, and it is
+                // overwritten by the next rescan() while earlier scans are still in
+                // flight. StdioCollector does not say which process a given
+                // onStreamFinished belongs to, so an older scan's output would
+                // pass a _scannedDir check that a newer rescan had already
+                // satisfied, and its files would be adopted as if they described
+                // the current directory. That is how a scan of one directory
+                // produced a fallback to an image from another one.
+                //
+                // Letting the output declare its own directory makes the check
+                // independent of arrival order.
                 const raw = text || "";
+                const lines = raw.split("\n");
+
+                if (lines.length === 0 || lines[0].indexOf("###CTOSWP:") !== 0) return;
+                const scanDir = lines[0].slice(10);
+                if (scanDir !== root.directory) return;
+                lines.shift();
 
                 // A sentinel line rather than an exit code: StdioCollector
                 // exposes only `text`, so there is no exitCode to read here, and
                 // this is the same marker technique CalendarService uses to split
                 // its combined output.
-                if (raw.indexOf("###CTOSWPERR") >= 0) {
+                if (lines.indexOf("###CTOSWPERR") >= 0) {
                     root._entries = [];
                     root._scanned = true;
                     root._lastError = "not a directory: " + root.directory;
@@ -147,7 +188,6 @@ Singleton {
                 }
 
                 const found = [];
-                const lines = raw.split("\n");
                 for (let i = 0; i < lines.length; ++i) {
                     const path = lines[i].trim();
                     if (path.length === 0) continue;
@@ -166,14 +206,37 @@ Singleton {
                 root._scanned = true;
                 root._lastError = "";
 
-                if (root.entryFor(root.currentName) === null && found.length > 0) {
-                    console.warn("[WallpaperService] selection '" + root.currentName
-                        + "' is not in " + root.directory + "; falling back to '"
-                        + found[0].name + "'");
-                    Settings.wallpaper = found[0].name;
-                    Settings.save();
-                    root.apply(found[0].name);
+                if (found.length === 0) return;
+
+                if (root.entryFor(root.currentName) !== null) {
+                    root._applyTarget(root.currentName);
+                    return;
                 }
+
+                // Falling back overwrites the recorded choice, so it must not run
+                // on a scan that finished before the settings were read. On such a
+                // scan the "missing" selection is Settings' built-in default rather
+                // than the user's choice, and writing the first image over it
+                // destroys the record permanently -- the user came back after a
+                // reboot to a wallpaper they had never chosen.
+                //
+                // Settings.isLoaded cannot be the only test: resetToDefaults sets it
+                // back to false, so it is also false after a failed parse, and
+                // neither of the two signals fires in that case either. That is
+                // harmless here, because a failed parse leaves the default in place
+                // and the default is what the session unit already applied.
+                if (!root._settingsSettled) {
+                    console.warn("[WallpaperService] scan finished before settings"
+                        + " settled; deferring the fallback decision");
+                    return;
+                }
+
+                console.warn("[WallpaperService] selection '" + root.currentName
+                    + "' is not in " + root.directory + "; falling back to '"
+                    + found[0].name + "'");
+                Settings.wallpaper = found[0].name;
+                Settings.save();
+                root._applyTarget(found[0].name);
             }
         }
     }
@@ -277,6 +340,24 @@ Singleton {
     Connections {
         target: Settings
         function onWallpaperDirChanged() {
+            root.rescan();
+        }
+
+        // The scan started in Component.onCompleted above races the settings file
+        // being read off disk. Whichever lands first, on a machine that is not
+        // already correct the first scan would settle on Settings' built-in
+        // default rather than the recorded choice -- and then nothing would look
+        // again. Look again once the settings have settled.
+        //
+        // Both outcomes are hooked rather than Settings.isLoaded: resetToDefaults
+        // sets isLoaded back to false, so that flag is also false after a failed
+        // parse and gating on it would never settle at all.
+        function onSettingsLoaded() {
+            root._settleSeen = true;
+            root.rescan();
+        }
+        function onSettingsLoadFailed() {
+            root._settleSeen = true;
             root.rescan();
         }
     }
