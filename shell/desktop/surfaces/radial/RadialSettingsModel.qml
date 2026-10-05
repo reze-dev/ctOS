@@ -572,13 +572,29 @@ Item {
                         return AudioService.micAvailable ? "" : "No input device is available.";
                     },
                     controlType: "slider",
+                    // The slider contract is minVal/maxVal/step -- those are the
+                    // names ContextPanel reads (and the only ones it reads). This
+                    // node used minValue/maxValue/stepSize, which nothing reads,
+                    // so it silently inherited the defaults minVal 0 / maxVal 100
+                    // / step 1. Against a 0..1 gain that made the track render at
+                    // micVolume/100 -- empty even at full gain -- and turned a
+                    // click anywhere past 1% of the track into setMicVolume(100),
+                    // which clamps to 1.0. Off or full, nothing between, and the
+                    // step buttons had the same two outcomes.
                     value: function() { return AudioService.micVolume; },
-                    minValue: 0.0,
-                    maxValue: 1.0,
-                    stepSize: 0.02,
+                    minVal: 0.0,
+                    maxVal: 1.0,
+                    step: 0.02,
                     valueText: function() { return Math.round(AudioService.micVolume * 100) + "%"; },
                     execute: function(value) {
-                        if (typeof value === "number") AudioService.setMicVolume(value);
+                        if (typeof value === "number") {
+                            AudioService.setMicVolume(value);
+                            // The track width reads model.revision to establish its
+                            // dependency, because value() is called imperatively
+                            // inside that binding and QML cannot track through a
+                            // function call. Without this the bar does not move.
+                            root.revision++;
+                        }
                     }
                 },
                 {
