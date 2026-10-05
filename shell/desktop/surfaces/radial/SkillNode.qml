@@ -21,7 +21,12 @@ Item {
     property bool isHovered: false
     property bool isActive: false
 
-    property real nodeSize: (!isPreview && (isSelected || isHovered)) ? 60 : (isPreview ? 30 : 42)
+    // Preview nodes sit at 20 against 42 interactive. The reference wheel draws
+    // its preview trees as 11px dots on a ~195px ring -- about 5.6% of the
+    // diameter -- and 30 was more than twice that, so the trees read as scattered
+    // clusters of icons rather than as a dense wheel of small trees. 20 keeps the
+    // glyph legible and lands near the reference proportion.
+    property real nodeSize: (!isPreview && (isSelected || isHovered)) ? 60 : (isPreview ? 20 : 42)
     property real screenX: x + width / 2
     property real screenY: y + height / 2
 
