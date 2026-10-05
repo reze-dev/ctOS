@@ -468,6 +468,15 @@ function projectPoint(p, angleDeg, scale, origin) {
 // direction is visible. Snapping every node back to the axis collapses the arms
 // onto each other; inheriting the fork only at the root, as an earlier version
 // did, leaves a second fork in the middle of a chain drawn as a straight line.
+//
+// Direction convention: dir 0 is +x, so the step is (cos, sin) and a tree grows
+// rightward in its own space. That is a 90 degree clockwise turn from the (sin,
+// -cos) frame, where 0 would mean up, and it has to be +x because
+// projectPoint() rotates by the segment angle and so maps local +x onto the
+// outward radial direction (cos a, sin a). Under the old (sin, -cos) frame a
+// segment's own axis mapped to (sin a, -cos a), which coincides with the
+// outward ray only at a = 180 -- so every tree grew sideways across its
+// segment instead of away from the wheel.
 function layoutPreviewTree(nodes, opts) {
     opts = opts || {};
     var step = (typeof opts.step === "number") ? opts.step : 56.0;
@@ -500,8 +509,8 @@ function layoutPreviewTree(nodes, opts) {
             var dir = cur.dir + offsets[i];
             var rad = dir * Math.PI / 180.0;
             out[kid.id] = {
-                x: out[cur.node.id].x + Math.sin(rad) * distance,
-                y: out[cur.node.id].y - Math.cos(rad) * distance,
+                x: out[cur.node.id].x + Math.cos(rad) * distance,
+                y: out[cur.node.id].y + Math.sin(rad) * distance,
                 depth: depth,
                 dir: dir,
                 spoke: offsets[i] === 0.0 ? -1 : i,
@@ -521,8 +530,8 @@ function layoutPreviewTree(nodes, opts) {
     for (var o = 0; o < orphans.length; ++o) {
         var orad = (out[nodes[0].id].dir) * Math.PI / 180.0;
         out[orphans[o].id] = {
-            x: out[nodes[0].id].x + Math.sin(orad) * step,
-            y: out[nodes[0].id].y - Math.cos(orad) * step,
+            x: out[nodes[0].id].x + Math.cos(orad) * step,
+            y: out[nodes[0].id].y + Math.sin(orad) * step,
             depth: 1, dir: out[nodes[0].id].dir, spoke: 90 + o, parent: nodes[0].id
         };
     }
