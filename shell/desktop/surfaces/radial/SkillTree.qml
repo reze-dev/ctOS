@@ -162,12 +162,15 @@ Item {
                 // outerRadius is 180, so this is how much trunk shows before the
                 // tree starts.
                 //
-                // At 320 the trunk (140px) was as long as the tree it introduced,
-                // which left a long bare line between the ring and the first
-                // branch. The reference puts the base node about 0.7x the wheel
-                // radius past the rim, so the tree visibly grows out of the hub
-                // instead of floating away from it.
-                readonly property var r1Point: ({ x: 265 * Math.cos(previewSubtree.rad), y: 265 * Math.sin(previewSubtree.rad) })
+                // Measured off the reference rather than guessed: its ring has an
+                // outer radius of 119px, its tree roots sit at ~160, and its depth
+                // step is 28. Scaled to our 180px ring that is 241 and 42, which
+                // are the two numbers below.
+                //
+                // These were 320 and 48 before, and 320 in particular left a trunk
+                // longer than the tree it introduced, so the branches read as
+                // floating clear of the wheel.
+                readonly property var r1Point: ({ x: 241 * Math.cos(previewSubtree.rad), y: 241 * Math.sin(previewSubtree.rad) })
 
                 // Preview tree: the same layout the expanded branch draws,
                 // projected small and rotated so it points outward from its own
@@ -181,11 +184,10 @@ Item {
                 // is how the audio and security trees came to look different
                 // depending on which view you were in.
                 //
-                // Step 48 against a 30px preview node puts the gap between nodes at
-                // about the same proportion as the reference base wheel (11px dots
-                // on 18px centres). At 62 the edges read as long lines with a gap
-                // at each end rather than as a tree, which is what made the wheel
-                // look scattered instead of dense.
+                // Step 42 against a 30px node is the reference's own ratio: its depth step is
+                // 28px on a 119px ring, which scales to 42 here. The previous 48
+                // was close but loose enough that the edges read as long lines
+                // with a gap at each end rather than as a tree.
                 //
                 // The fan angles are deliberately the same as the expanded view's.
                 // The reference's base trees are not a different *shape* -- their
@@ -203,7 +205,7 @@ Item {
                         if (known.indexOf(nodes[w].id) < 0)
                             roots.push({ id: nodes[w].id });
 
-                    var small = RadialGeometry.layoutTree(roots, { step: 48.0, flatten: 0.15 });
+                    var small = RadialGeometry.layoutTree(roots, { step: 42.0, flatten: 0.15 });
                     var origin = previewSubtree.r1Point;
                     var slots = [];
 
