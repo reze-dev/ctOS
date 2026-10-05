@@ -540,7 +540,7 @@ Item {
                     lockReason: "",
                     requires: ["audio-master"],
                     pos: { x: 238, y: -106 },
-                    edges: ["audio-dsp"],
+                    edges: ["audio-mic"],
                     controlType: "toggle",
                     value: function() { return !AudioService.muted; },
                     valueText: function() { return AudioService.muted ? "MUTED" : "ACTIVE"; },
@@ -626,7 +626,7 @@ Item {
             name: "INPUT",
             subtitle: "LIBINPUT // HID DEVICES",
             icon: "keyboard",
-            description: "Pointer acceleration, keyboard repeat rate, and multi-finger gestures.",
+            description: "Pointer acceleration profile and input device sensing.",
             nodes: [
                 {
                     id: "in-engine",
@@ -638,7 +638,7 @@ Item {
                     lockReason: "",
                     requires: [],
                     pos: { x: 59, y: -36 },
-                    edges: ["in-pointer", "in-repeat"],
+                    edges: ["in-pointer"],
                     controlType: "readonly",
                     value: function() { return 1; },
                     valueText: function() { return "ACTIVE"; },
@@ -654,7 +654,7 @@ Item {
                     lockReason: "",
                     requires: ["in-engine"],
                     pos: { x: 230, y: -89 },
-                    edges: ["in-gestures"],
+                    edges: [],
                     controlType: "action",
                     actionLabel: "CYCLE PROFILE",
                     value: function() { return 1; },
@@ -687,7 +687,7 @@ Item {
                     lockReason: "",
                     requires: [],
                     pos: { x: 70, y: -13 },
-                    edges: ["pwr-supply", "pwr-sleep"],
+                    edges: ["pwr-supply"],
                     controlType: "readonly",
                     value: function() { return PowerService.available ? 1 : 0; },
                     valueText: function() { return PowerService.stateText; },
@@ -703,7 +703,7 @@ Item {
                     lockReason: "",
                     requires: ["pwr-governor"],
                     pos: { x: 253, y: -90 },
-                    edges: ["pwr-threshold"],
+                    edges: [],
                     controlType: "readonly",
                     value: function() { return PowerService.isBatteryPresent ? PowerService.percentage : 100; },
                     valueText: function() { return PowerService.isBatteryPresent ? Math.round(PowerService.percentage) + "%" : "AC MAINS"; },
@@ -749,7 +749,7 @@ Item {
                     lockReason: "",
                     requires: ["sec-subsystem"],
                     pos: { x: 258, y: -107 },
-                    edges: ["sec-vault"],
+                    edges: ["sec-toolkit"],
                     controlType: "action",
                     actionLabel: "LOCK SESSION",
                     value: function() { return 1; },
@@ -759,6 +759,59 @@ Item {
                         root.revision++;
                     }
                 },
+{
+                    id: "sec-toolkit",
+                    title: "TOOLKIT",
+                    subtitle: "SEC.04 // TOOLKIT",
+                    icon: "terminal",
+                    description: ToolkitService.scanned
+                        ? "Security and diagnostic tooling present in the Nix profile."
+                        : "Scanning the Nix profile for installed tooling.",
+                    locked: false,
+                    lockReason: "",
+                    requires: ["sec-subsystem"],
+                    pos: { x: 61, y: 143 },
+                    edges: ToolkitService.groups.map(function (g) { return "sec-tk-" + g.id; }),
+                    controlType: "readonly",
+                    value: function() { return ToolkitService.installedCount; },
+                    valueText: function() {
+                        if (!ToolkitService.scanned) return "SCANNING";
+                        if (ToolkitService.installedCount === 0) return "NOT INSTALLED";
+                        return ToolkitService.installedCount + " / " + ToolkitService.totalCount + " TOOLS";
+                    },
+                    execute: function() {
+                        ToolkitService.rescan();
+                        root.revision++;
+                    }
+                },
+
+                // One node per tool group, generated rather than hand-written so
+                // the group list lives in exactly one place. These are readouts,
+                // not switches: Nix decides what is installed, so a toggle here
+                // would be a control that cannot do what it says.
+                ...ToolkitService.groups.map(function (g) {
+                    return {
+                        id: "sec-tk-" + g.id,
+                        title: g.label,
+                        subtitle: "TK // " + g.id.toUpperCase(),
+                        icon: g.icon,
+                        description: g.tools.join(", "),
+                        locked: false,
+                        lockReason: "",
+                        requires: ["sec-toolkit"],
+                        pos: { x: 40 + ToolkitService.groups.indexOf(g) * 122, y: 272 },
+                        edges: [],
+                        controlType: "readonly",
+                        value: function() { return ToolkitService.groupInstalled(g.id); },
+                        valueText: function() {
+                            if (!ToolkitService.scanned) return "SCANNING";
+                            const n = ToolkitService.groupInstalled(g.id);
+                            return n + " / " + g.tools.length;
+                        },
+                        execute: function() {}
+                    };
+                }),
+
                 {
                     id: "sec-privacy",
                     title: "ALERT PRIVACY",

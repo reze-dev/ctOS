@@ -10,3 +10,4 @@ singleton SessionService 1.0 SessionService.qml
 singleton PacketAnalyzerService 1.0 PacketAnalyzerService.qml
 singleton CalendarService 1.0 CalendarService.qml
 singleton WallpaperService 1.0 WallpaperService.qml
+singleton ToolkitService 1.0 ToolkitService.qml

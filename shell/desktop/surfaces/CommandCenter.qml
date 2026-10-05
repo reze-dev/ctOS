@@ -1216,97 +1216,31 @@ Rectangle {
                         Item {
                             id: audioBody
                             width: parent ? parent.width : undefined
-                            // Stated rather than derived from the transport's
-                            // position: 16 for the volume row, 52 for the
-                            // transport, 12 of gap, plus 24 more when the
-                            // microphone row is present.
-                            implicitHeight: AudioService.micAvailable ? 104 : 80
+                            // The transport is the only thing left in this card, so
+                            // the height no longer varies with whether a microphone
+                            // exists. That conditional was the 24px of slack for the
+                            // capture row; with both level rows gone it is dead, and
+                            // the audio card is the same height whether or not the
+                            // machine has an input device.
+                            implicitHeight: 52
                             height: implicitHeight
 
-                            // Output level.
-                            Row {
-                                id: outputRow
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                spacing: Theme.spacingSmall
-
-                                GlyphIcon {
-                                    width: 16
-                                    height: 16
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    glyph: "speaker"
-                                    color: AudioService.muted ? Theme.destructive : Theme.textSecondary
-                                }
-
-                                LevelSlider {
-                                    id: outputSlider
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width - 16 - 40 - Theme.spacingSmall * 2
-                                    value: AudioService.volume
-                                    fillColor: AudioService.muted ? Theme.textDisabled : Theme.accentViolet
-                                    onMoved: function (level) { AudioService.setVolume(level); }
-                                }
-
-                                Text {
-                                    width: 40
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    horizontalAlignment: Text.AlignRight
-                                    text: Math.round(AudioService.volume * 100) + "%"
-                                    color: Theme.textSecondary
-                                    font.family: Theme.fontFamilyMonospace
-                                    font.pixelSize: Theme.fontSizeCaption
-                                }
-                            }
-
-                            // Microphone, only where there is one. A permanently
-                            // visible dead control is worse than no control.
-                            Row {
-                                id: micRow
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.top: outputRow.bottom
-                                anchors.topMargin: Theme.spacingMedium
-                                spacing: Theme.spacingSmall
-                                visible: AudioService.micAvailable
-
-                                GlyphIcon {
-                                    width: 16
-                                    height: 16
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    // mic, not speaker: both rows were labelled
-                                    // with the same glyph, so the capture level
-                                    // and the output level were indistinguishable.
-                                    glyph: "mic"
-                                    color: AudioService.micMuted ? Theme.destructive : Theme.textSecondary
-                                }
-
-                                LevelSlider {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width - 16 - 40 - Theme.spacingSmall * 2
-                                    value: AudioService.micVolume
-                                    fillColor: AudioService.micMuted ? Theme.textDisabled : Theme.accentBlue
-                                    onMoved: function (level) { AudioService.setMicVolume(level); }
-                                }
-
-                                Text {
-                                    width: 40
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    horizontalAlignment: Text.AlignRight
-                                    text: Math.round(AudioService.micVolume * 100) + "%"
-                                    color: Theme.textSecondary
-                                    font.family: Theme.fontFamilyMonospace
-                                    font.pixelSize: Theme.fontSizeCaption
-                                }
-                            }
+                            // Output and capture levels are not here. Both moved to
+                            // the radial (AUD.03 output, AUD.04 mic volume, AUD.05 mic
+                            // mute) because a slider in a card that also has transport
+                            // controls is a second place to look for the same setting,
+                            // and the two could disagree. Nothing is lost: the radial
+                            // drives the same AudioService calls.
+                            //
+                            // The transport block below used to be positioned against
+                            // outputRow.bottom; it is anchored to the top instead.
 
                             // Transport.
                             Rectangle {
                                 id: transport
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                anchors.top: AudioService.micAvailable ? micRow.bottom : outputRow.bottom
-                                anchors.topMargin: Theme.spacingMedium
+                                anchors.top: parent.top
                                 height: 52
                                 radius: Theme.radiusMedium
                                 color: Theme.surfaceElevated
