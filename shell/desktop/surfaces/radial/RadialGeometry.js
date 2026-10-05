@@ -451,23 +451,33 @@ function projectPoint(p, angleDeg, scale, origin) {
 //
 // The rule, in the tree's own space where +x is "outward along the segment":
 //
-//              |
-//              o
-//             / \
-//            o   o
-//            |   |
-//            o   o
+//           o
+//          / \
+//         o   o
+//         |   |
+//         o   o
+//         |   |
+//         o   o
 //
-// A fork straddles the parent's own direction by +/- forkDeg, and everything
-// below a fork carries on straight along the ray that node already left on. It
-// does NOT come back to the segment axis: two siblings that forked apart stay
-// apart, so a tree reads as a fork with two arms rather than as a row of nodes
-// stacked back up the middle.
+// A fork straddles the axis by +/- forkDeg, and then a node's descendants carry
+// on straight down that same axis. The fork angle is local to the generation
+// that forked: it decides where a node is placed and nothing else. A child's own
+// children are placed from the axis again, so the two arms below the first fork
+// stay parallel columns rather than curving away from each other.
 //
-// That "stay diverged" is the whole rule, and getting it wrong in either
-// direction is visible. Snapping every node back to the axis collapses the arms
-// onto each other; inheriting the fork only at the root, as an earlier version
-// did, leaves a second fork in the middle of a chain drawn as a straight line.
+// Inheriting the fork instead -- each node's children measuring from the angle
+// that node itself left on -- produces
+//
+//           o
+//          / \
+//         o   o
+//        / \ / \
+//       o   o o   o
+//
+// which is a dendrite that spreads ever wider. It is the more obvious reading
+// of "branch", and it is wrong here: the wheel packs eight of these into a
+// ring, and a spreading tree at depth 3 reaches past its neighbours' segments.
+// The wheel wants columns, not a fan.
 //
 // Direction convention: dir 0 is +x, so the step is (cos, sin) and a tree grows
 // rightward in its own space. That is a 90 degree clockwise turn from the (sin,
@@ -482,13 +492,18 @@ function layoutPreviewTree(nodes, opts) {
     var step = (typeof opts.step === "number") ? opts.step : 56.0;
     var forkDeg = (typeof opts.forkDeg === "number") ? opts.forkDeg : 45.0;
 
+    // The direction a single child follows, i.e. the tree's own outward axis.
+    // Every fork is centred on it, and every node's children are placed from it,
+    // so it is the one angle that survives a fork.
+    var axisDir = (typeof opts.axisDir === "number") ? opts.axisDir : 0.0;
+
     var out = {};
     if (!nodes || nodes.length === 0) return out;
     out[nodes[0].id] = {
-        x: 0.0, y: 0.0, depth: 0, dir: 0.0, spoke: -1, parent: null
+        x: 0.0, y: 0.0, depth: 0, dir: axisDir, spoke: -1, parent: null
     };
 
-    var queue = [{ node: nodes[0], depth: 0, dir: 0.0 }];
+    var queue = [{ node: nodes[0], depth: 0, dir: axisDir }];
 
     while (queue.length > 0) {
         var cur = queue.shift();
@@ -498,25 +513,28 @@ function layoutPreviewTree(nodes, opts) {
         var depth = cur.depth + 1;
         var distance = step;
 
-        // One child gets no offset at all: it is a link in an arm, and it
-        // continues along the ray its parent is already on.
+        // One child gets no offset at all: it is a link in a column, and it
+        // continues along the axis.
         var offsets = fanOffsets(kids.length, forkDeg * 2.0);
 
         for (var i = 0; i < kids.length; ++i) {
             var kid = kids[i];
             if (!kid || out[kid.id]) continue;
 
+            // Placement uses the forked angle, but the direction handed to this
+            // node's own children is the axis. That is the whole of the rule:
+            // the fork offsets where a node sits, not where its subtree grows.
             var dir = cur.dir + offsets[i];
             var rad = dir * Math.PI / 180.0;
             out[kid.id] = {
                 x: out[cur.node.id].x + Math.cos(rad) * distance,
                 y: out[cur.node.id].y + Math.sin(rad) * distance,
                 depth: depth,
-                dir: dir,
+                dir: axisDir,
                 spoke: offsets[i] === 0.0 ? -1 : i,
                 parent: cur.node.id
             };
-            queue.push({ node: kid, depth: depth, dir: dir });
+            queue.push({ node: kid, depth: depth, dir: axisDir });
         }
     }
 
