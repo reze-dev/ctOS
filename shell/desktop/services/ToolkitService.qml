@@ -47,7 +47,12 @@ Singleton {
             id: "credentials",
             label: "CREDENTIALS",
             icon: "vpn-key",
-            tools: ["john", "hashcat", "hydra"]
+            // hydra-server, not hydra: the package installs no binary called
+            // `hydra` and leaves meta.mainProgram unset, so probing "hydra"
+            // reported this group as 2/3 while all three were installed. Probing
+            // a name that cannot exist is how a readout ends up lying about the
+            // thing it is measuring.
+            tools: ["john", "hashcat", "hydra-server"]
         },
         {
             id: "web",
