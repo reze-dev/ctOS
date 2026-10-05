@@ -19,12 +19,6 @@ Scope {
     property bool calendarVisible: false
     property var calendarScreen: null
 
-    property bool bluetoothVisible: false
-    property var bluetoothScreen: null
-
-    property bool networkVisible: false
-    property var networkScreen: null
-
     signal calendarDismissRequested
 
     property bool _calendarDismissing: false
@@ -43,8 +37,6 @@ Scope {
                 root.calendarScreen = resolved;
             }
         } else {
-            root.closeBluetooth();
-            root.closeNetwork();
             root.calendarScreen = resolved;
             root.calendarVisible = true;
         }
@@ -58,56 +50,8 @@ Scope {
         root._calendarDismissing = false;
     }
 
-    function toggleBluetooth(targetScreen): void {
-        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
-
-        if (root.bluetoothVisible) {
-            if (targetScreen === null || targetScreen === undefined || root.bluetoothScreen === resolved) {
-                root.bluetoothVisible = false;
-                root.bluetoothScreen = null;
-            } else {
-                root.bluetoothScreen = resolved;
-            }
-        } else {
-            root.closeCalendar();
-            root.closeNetwork();
-            root.bluetoothScreen = resolved;
-            root.bluetoothVisible = true;
-        }
-    }
-
-    function closeBluetooth(): void {
-        root.bluetoothVisible = false;
-        root.bluetoothScreen = null;
-    }
-
-    function toggleNetwork(targetScreen): void {
-        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
-
-        if (root.networkVisible) {
-            if (targetScreen === null || targetScreen === undefined || root.networkScreen === resolved) {
-                root.networkVisible = false;
-                root.networkScreen = null;
-            } else {
-                root.networkScreen = resolved;
-            }
-        } else {
-            root.closeCalendar();
-            root.closeBluetooth();
-            root.networkScreen = resolved;
-            root.networkVisible = true;
-        }
-    }
-
-    function closeNetwork(): void {
-        root.networkVisible = false;
-        root.networkScreen = null;
-    }
-
     function closeAllPopups(): void {
         root.closeCalendar();
-        root.closeBluetooth();
-        root.closeNetwork();
     }
 
     IpcHandler {
@@ -132,11 +76,11 @@ Scope {
         }
 
         function toggleBluetooth(): void {
-            root.toggleBluetooth(null);
+            OverlayController.openSystemRailWithSubmenu("bluetooth");
         }
 
         function toggleNetwork(): void {
-            root.toggleNetwork(null);
+            OverlayController.openWifiSubmenu();
         }
 
         function toggleRadialSettings(): void {
@@ -454,8 +398,11 @@ Scope {
                 screen: modelData
 
                 onToggleCalendar: root.toggleCalendar(modelData)
-                onToggleBluetooth: root.toggleBluetooth(modelData)
-                onToggleNetwork: root.toggleNetwork(modelData)
+                // The network and Bluetooth popups are gone. These open the
+                // Command Center on the matching card instead, which is where
+                // those controls live now.
+                onToggleBluetooth: OverlayController.openSystemRailWithSubmenu("bluetooth")
+                onToggleNetwork: OverlayController.openWifiSubmenu()
 
                 Connections {
                     target: root
@@ -520,47 +467,6 @@ Scope {
                 }
             }
 
-            if (root.bluetoothVisible) {
-                const currentBtScreen = root.bluetoothScreen;
-                if (!currentBtScreen) {
-                    root.closeBluetooth();
-                    return;
-                }
-
-                const screenList = Quickshell.screens;
-                let isBtAlive = false;
-                for (let i = 0; i < screenList.length; ++i) {
-                    if (screenList[i] && screenList[i].name === currentBtScreen.name) {
-                        isBtAlive = true;
-                        break;
-                    }
-                }
-
-                if (!isBtAlive) {
-                    root.closeBluetooth();
-                }
-            }
-
-            if (root.networkVisible) {
-                const currentNetScreen = root.networkScreen;
-                if (!currentNetScreen) {
-                    root.closeNetwork();
-                    return;
-                }
-
-                const screenList = Quickshell.screens;
-                let isNetAlive = false;
-                for (let i = 0; i < screenList.length; ++i) {
-                    if (screenList[i] && screenList[i].name === currentNetScreen.name) {
-                        isNetAlive = true;
-                        break;
-                    }
-                }
-
-                if (!isNetAlive) {
-                    root.closeNetwork();
-                }
-            }
         }
     }
 
@@ -569,8 +475,6 @@ Scope {
 
         function onOverlayOpened(activeSurface: int): void {
             root.closeCalendar();
-            root.closeBluetooth();
-            root.closeNetwork();
             // Anything already toasting would sit on top of the opening overlay.
             NotificationService.dismissToasts();
             overlayHost.screen = root.resolveTargetScreen();
@@ -789,124 +693,6 @@ Scope {
             id: calendarPopup
 
             onCloseRequested: root.closeCalendar()
-        }
-    }
-
-    PanelWindow {
-        id: bluetoothBackdropHost
-
-        screen: root.bluetoothScreen
-        color: "transparent"
-        visible: root.bluetoothVisible && root.bluetoothScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        WlrLayershell.namespace: "ctos-bluetooth-backdrop"
-
-        anchors {
-            bottom: true
-            left: true
-            right: true
-            top: true
-        }
-
-        MouseArea {
-            id: bluetoothBackdropMouseArea
-
-            anchors.fill: parent
-
-            onClicked: root.closeBluetooth()
-        }
-    }
-
-    PanelWindow {
-        id: bluetoothPopupHost
-
-        screen: root.bluetoothScreen
-        color: "transparent"
-        visible: root.bluetoothVisible && root.bluetoothScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        WlrLayershell.namespace: "ctos-bluetooth-popup"
-
-        anchors {
-            top: true
-            right: true
-        }
-        margins {
-            top: root.barContentTop
-            right: Theme.barPaddingHorizontal + 60
-        }
-
-        implicitWidth: bluetoothPopup.implicitWidth
-        implicitHeight: bluetoothPopup.implicitHeight
-
-        BluetoothPopup {
-            id: bluetoothPopup
-
-            onCloseRequested: root.closeBluetooth()
-        }
-    }
-
-    PanelWindow {
-        id: networkBackdropHost
-
-        screen: root.networkScreen
-        color: "transparent"
-        visible: root.networkVisible && root.networkScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        WlrLayershell.namespace: "ctos-network-backdrop"
-
-        anchors {
-            bottom: true
-            left: true
-            right: true
-            top: true
-        }
-
-        MouseArea {
-            id: networkBackdropMouseArea
-
-            anchors.fill: parent
-
-            onClicked: root.closeNetwork()
-        }
-    }
-
-    PanelWindow {
-        id: networkPopupHost
-
-        screen: root.networkScreen
-        color: "transparent"
-        visible: root.networkVisible && root.networkScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        WlrLayershell.namespace: "ctos-network-popup"
-
-        anchors {
-            top: true
-            right: true
-        }
-        margins {
-            top: root.barContentTop
-            right: Theme.barPaddingHorizontal + 160
-        }
-
-        implicitWidth: networkPopup.implicitWidth
-        implicitHeight: networkPopup.implicitHeight
-
-        NetworkPopup {
-            id: networkPopup
-
-            onCloseRequested: root.closeNetwork()
         }
     }
 
