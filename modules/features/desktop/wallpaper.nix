@@ -45,7 +45,6 @@ let
     }
   ];
 
-  defaultWallpaper = "v1";
   wallpaperPath = ".local/share/ctos/wallpapers/wallpaper-v1.png";
 
   wallpaperV1 = ../../../shell/extras/wallpapers/wallpaper-v1.png;
@@ -54,11 +53,34 @@ let
   applyWallpaper = pkgs.writeShellScript "ctos-apply-wallpaper" ''
     set -eu
 
+    # Apply the recorded choice, not a hardcoded one.
+    #
+    # This unit runs at graphical-session.target and WallpaperService applies the
+    # same value a moment later. While the unit applied v1 outright, every boot
+    # showed v1 fading out and the real wallpaper fading in. The shell being the
+    # authority fixed what ended up on screen; this stops the wrong image being
+    # painted first.
+    #
+    # Any of settings.json being unreadable, absent, lacking the key, or naming a
+    # file that is not there is an ordinary condition on a first boot or after a
+    # wallpaper has been deleted, and all of them fall back to v1.
+    settings="''${XDG_CONFIG_HOME:-$HOME/.config}/ctos/settings.json"
+    target="$HOME/${wallpaperPath}"
+
+    if [ -r "$settings" ]; then
+      name=$(${pkgs.jq}/bin/jq -r '.wallpaper // empty' "$settings" 2>/dev/null) || name=""
+      dir=$(${pkgs.jq}/bin/jq -r '.wallpaperDir // empty' "$settings" 2>/dev/null) || dir=""
+      [ -n "$dir" ] || dir="$HOME/.local/share/ctos/wallpapers"
+      if [ -n "$name" ] && [ -f "$dir/$name" ]; then
+        target="$dir/$name"
+      fi
+    fi
+
     # The daemon socket can appear shortly after the graphical session target.
     # Retry briefly so startup ordering does not make the wallpaper disappear.
     for attempt in $(seq 1 20); do
       if ${pkgs.awww}/bin/awww img \
-        "$HOME/${wallpaperPath}" \
+        "$target" \
         --transition-type fade \
         --transition-duration 1; then
         exit 0
