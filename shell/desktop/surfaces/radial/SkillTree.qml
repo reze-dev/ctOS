@@ -54,9 +54,15 @@ Item {
         return roots;
     }
 
-    // Step size for the expanded branch. 140 puts a four-deep tree (audio) inside
-    // ~670px, which clears both the 1080px height and the ContextPanel edge; a
-    // deeper category would want this smaller, not the algorithm changed.
+    // Step size for the expanded branch. Left at the value the tree had before
+    // the geometry work; do not shrink this to make an expanded tree fit.
+    //
+    // I reduced it from 140 to 60 while chasing the base wheel's proportions,
+    // and the expanded branches went with it -- the trees came out with edges so
+    // short the nodes read as a cluster rather than a branch. The two views were
+    // given different numbers for one reason: they are different views. The base
+    // wheel is dense and compact; the expanded branch is one node at a time and
+    // has room to breathe.
     readonly property real expandedStep: 140.0
 
     readonly property var expandedLayout: RadialGeometry.layoutTree(
@@ -172,37 +178,26 @@ Item {
                 // floating clear of the wheel.
                 readonly property var r1Point: ({ x: 241 * Math.cos(previewSubtree.rad), y: 241 * Math.sin(previewSubtree.rad) })
 
-                // Preview tree: the same layout the expanded branch draws,
-                // projected small and rotated so it points outward from its own
-                // segment.
+                // The wheel's preview trees, laid out by their own algorithm
+                // rather than the expanded branch's.
                 //
-                // This replaces a rule that was entirely its own -- each child
-                // offset by +/-8 degrees at a fixed radius, parented two slots
-                // back. That packed a whole subtree into a 16-degree wedge, and
-                // worse, it was free to disagree with the expanded view about how
-                // many branches a category had. Nothing connected the two, which
-                // is how the audio and security trees came to look different
-                // depending on which view you were in.
+                // RadialGeometry.layoutPreviewTree draws one fork at 45 degrees at
+                // the first node and then straight radial rays; layoutTree, which
+                // the expanded branch uses, fans 74-85 degrees wide and curves
+                // each chain as it goes. Those are different shapes and the base
+                // wants the compact one -- it packs eight trees into a ring.
                 //
+                // It used to call layoutTree with a smaller step, which meant the
+                // base inherited that wide fan and that flattening. At 74 degrees
+                // and curving, a fork of two reads as a sprawl rather than as the
+                // pair of branches it is.
                 //
-                // The fan angles are deliberately the same as the expanded view's.
-                // The reference's base trees are not a different *shape* -- their
-                // forks are short perpendicular pairs because everything is small,
-                // not because the geometry differs. Compressing it is a smaller
-                // step, not a second set of angles.
-                // Step against a 30px node.
+                // Topology is still shared: both layouts walk the same
+                // RadialTopology tree, so the two views cannot disagree about a
+                // category's shape, only about how it is drawn.
                 //
-                // At 42 the gap between one node's edge and the next was 12px,
-                // which made the connectors read as stubs rather than branches:
-                // the discs nearly touched and the eye saw a row of dots instead
-                // of a tree. 56 leaves 26px, so each edge reads as a branch.
-                //
-                // This is a legibility number, not a proportion to copy. The
-                // reference wheel steps 28 against a 119px ring, which would put
-                // it at 42 here -- matching that exactly is what produced the
-                // stubs, because its nodes are 20px and ours are 30. A real
-                // settings tree with bigger nodes needs longer branches to read
-                // the same way; only the character has to match, not the scale.
+                // Step 56 against a 30px node leaves a 26px gap, so each edge
+                // reads as a branch rather than the two discs nearly touching.
                 readonly property var previewChildren: {
                     var nodes = previewSubtree.cat && previewSubtree.cat.nodes ? previewSubtree.cat.nodes : [];
                     if (nodes.length === 0) return [];
@@ -214,7 +209,7 @@ Item {
                         if (known.indexOf(nodes[w].id) < 0)
                             roots.push({ id: nodes[w].id });
 
-                    var small = RadialGeometry.layoutTree(roots, { step: 56.0, flatten: 0.15 });
+                    var small = RadialGeometry.layoutPreviewTree(roots, { step: 56.0, forkDeg: 45.0 });
                     var origin = previewSubtree.r1Point;
                     var slots = [];
 
