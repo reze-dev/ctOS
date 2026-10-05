@@ -169,19 +169,19 @@ Item {
                 // Subtree polar anchor points (reactive trigonometric properties)
                 readonly property var r0Point: ({ x: 150 * Math.cos(previewSubtree.rad), y: 150 * Math.sin(previewSubtree.rad) })
 
-                // How far out the preview tree's base node sits. The wheel's
-                // outerRadius is 180, so this is how much trunk shows before the
-                // tree starts.
+                // How far out the preview tree's base node sits, and so how long
+                // the trunk runs before the tree starts.
                 //
                 // Measured off the reference rather than guessed: its ring has an
-                // outer radius of 119px, its tree roots sit at ~160, and its depth
-                // step is 28. Scaled to our 180px ring that is 241 and 42, which
-                // are the two numbers below.
+                // outer radius of 119px and its tree roots sit at ~160, so its trunk
+                // is 0.35 x the ring radius. Scaled to our 180px ring that is 243.
                 //
-                // These were 320 and 48 before, and 320 in particular left a trunk
-                // longer than the tree it introduced, so the branches read as
-                // floating clear of the wheel.
-                readonly property var r1Point: ({ x: 300 * Math.cos(previewSubtree.rad), y: 300 * Math.sin(previewSubtree.rad) })
+                // This was 320, then 300, and both left a trunk longer than the tree
+                // it introduced -- the branches read as floating clear of the wheel.
+                // What is actually drawn runs from outerRadius+6 to this minus
+                // node2Radius, because SkillEdge starts one node radius in from each
+                // end: 99px of line at 300, 41px at 242.
+                readonly property var r1Point: ({ x: 242 * Math.cos(previewSubtree.rad), y: 242 * Math.sin(previewSubtree.rad) })
 
                 // The wheel's preview trees, laid out by their own algorithm
                 // rather than the expanded branch's.
