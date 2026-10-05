@@ -23,6 +23,50 @@ Item {
 
     readonly property var rootNode: (root.model && root.model.categories[root.focusedCategoryIndex]?.nodes?.length > 0) ? root.model.categories[root.focusedCategoryIndex].nodes[0] : null
 
+    // -------------------------------------------------------------------------
+    // One topology, one layout, two renderings.
+    // -------------------------------------------------------------------------
+
+    readonly property string focusedCategoryId: (root.model && root.model.categories[root.focusedCategoryIndex]) ? root.model.categories[root.focusedCategoryIndex].id : ""
+
+    // Roots to lay out: the category's declared tree, plus any model node the
+    // topology does not declare.
+    //
+    // Those extras are the reason this is not just RadialTopology.treeFor(). A
+    // node added to the model without a matching entry in the topology would
+    // otherwise have no coordinates and silently disappear -- and the whole
+    // promise of this file is that adding a node anywhere shows up. Parked as
+    // extra roots, they land on the layout's orphan arc and stay visible.
+    readonly property var categoryTree: {
+        var declared = RadialTopology.treeFor(root.focusedCategoryId);
+        var roots = (declared && declared.length > 0) ? declared.slice() : [];
+        var known = RadialTopology.idsFor(root.focusedCategoryId);
+
+        if (root.model) {
+            var cat = root.model.getCategory(root.focusedCategoryIndex);
+            if (cat && cat.nodes) {
+                for (var i = 0; i < cat.nodes.length; ++i) {
+                    if (known.indexOf(cat.nodes[i].id) < 0)
+                        roots.push({ id: cat.nodes[i].id });
+                }
+            }
+        }
+        return roots;
+    }
+
+    // Step size for the expanded branch. 140 puts a four-deep tree (audio) inside
+    // ~670px, which clears both the 1080px height and the ContextPanel edge; a
+    // deeper category would want this smaller, not the algorithm changed.
+    readonly property real expandedStep: 140.0
+
+    readonly property var expandedLayout: RadialGeometry.layoutTree(
+        root.categoryTree, { step: root.expandedStep, flatten: 0.15 })
+
+    function posOf(nodeId: string): var {
+        var p = root.expandedLayout[nodeId];
+        return p ? p : { x: 0.0, y: 0.0, depth: 0, spoke: -1, parent: "" };
+    }
+
     signal nodeSelected(string nodeId)
     signal nodeHovered(string nodeId)
     signal nodeActivated(string nodeId)
@@ -33,9 +77,9 @@ Item {
         var cat = model.getCategory(focusedCategoryIndex);
         if (!cat || !cat.nodes) return [];
         var list = [];
-        var rootPosY = cat.nodes.length > 0 ? cat.nodes[0].pos.y : 0;
         for (var i = 0; i < cat.nodes.length; ++i) {
             var n = cat.nodes[i];
+            var p = root.posOf(n.id);
             list.push({
                 id: n.id,
                 title: n.title,
@@ -44,9 +88,11 @@ Item {
                 locked: n.locked,
                 lockReason: n.lockReason,
                 controlType: n.controlType,
-                pos: n.pos,
-                screenX: root.branchOriginX + n.pos.x,
-                screenY: root.branchOriginY + n.pos.y - rootPosY
+                pos: p,
+                // The layout puts the root at (0,0), so there is no rootY to
+                // subtract the way there was with hand-placed `pos` values.
+                screenX: root.branchOriginX + p.x,
+                screenY: root.branchOriginY + p.y
             });
         }
         return list;
@@ -111,49 +157,65 @@ Item {
 
                 // Subtree polar anchor points (reactive trigonometric properties)
                 readonly property var r0Point: ({ x: 150 * Math.cos(previewSubtree.rad), y: 150 * Math.sin(previewSubtree.rad) })
-                readonly property var r1Point: ({ x: 320 * Math.cos(previewSubtree.rad), y: 320 * Math.sin(previewSubtree.rad) })
 
-                // Preview child slots, derived from the category's real node count.
+                // How far out the preview tree's base node sits. The wheel's
+                // outerRadius is 180, so this is how much trunk shows before the
+                // tree starts.
                 //
-                // This was four hand-placed SkillNodes reading cat.nodes[0..3], which
-                // quietly assumed every category has exactly four nodes. All eight
-                // do today, so the assumption was invisible -- a category with three
-                // nodes rendered a phantom fourth, and one with five dropped the fifth
-                // with no diagnostic. Slots are generated instead, and the rule
-                // reproduces the hand-placed geometry exactly for a four-node category.
+                // At 320 the trunk (140px) was as long as the tree it introduced,
+                // which left a long bare line between the ring and the first
+                // branch. The reference puts the base node about 0.7x the wheel
+                // radius past the rim, so the tree visibly grows out of the hub
+                // instead of floating away from it.
+                readonly property var r1Point: ({ x: 265 * Math.cos(previewSubtree.rad), y: 265 * Math.sin(previewSubtree.rad) })
+
+                // Preview tree: the same layout the expanded branch draws,
+                // projected small and rotated so it points outward from its own
+                // segment.
                 //
-                // The rule indexes child slots s = 0, 1, 2 ... (node index minus one),
-                // NOT node indices. That distinction is the whole thing: slot 2 is node
-                // index 3, and it must extend slot 0, not node index 2. Pairing on node
-                // index would parent it to the trunk and redraw the old "branch 3"
-                // edge as a second trunk spoke.
+                // This replaces a rule that was entirely its own -- each child
+                // offset by +/-8 degrees at a fixed radius, parented two slots
+                // back. That packed a whole subtree into a 16-degree wedge, and
+                // worse, it was free to disagree with the expanded view about how
+                // many branches a category had. Nothing connected the two, which
+                // is how the audio and security trees came to look different
+                // depending on which view you were in.
                 //
-                //   s = 0   side -8 deg   radius 380   parent = trunk
-                //   s = 1   side +8 deg   radius 380   parent = trunk
-                //   s = 2   side -8 deg   radius 440   parent = slot 0
-                //   s = 3   side +8 deg   radius 440   parent = slot 1
+                // Step 48 against a 30px preview node puts the gap between nodes at
+                // about the same proportion as the reference base wheel (11px dots
+                // on 18px centres). At 62 the edges read as long lines with a gap
+                // at each end rather than as a tree, which is what made the wheel
+                // look scattered instead of dense.
                 //
-                // generally: radius = 380 + floor(s/2) * 60, side alternates -8/+8 by
-                // parity of s, and the parent is slot s-2 (same side, one radius in).
+                // The fan angles are deliberately the same as the expanded view's.
+                // The reference's base trees are not a different *shape* -- their
+                // forks are short perpendicular pairs because everything is small,
+                // not because the geometry differs. Compressing it is a smaller
+                // step, not a second set of angles.
                 readonly property var previewChildren: {
                     var nodes = previewSubtree.cat && previewSubtree.cat.nodes ? previewSubtree.cat.nodes : [];
+                    if (nodes.length === 0) return [];
+
+                    var tree = RadialTopology.treeFor(previewSubtree.cat.id);
+                    var known = RadialTopology.idsFor(previewSubtree.cat.id);
+                    var roots = (tree && tree.length > 0) ? tree.slice() : [];
+                    for (var w = 0; w < nodes.length; ++w)
+                        if (known.indexOf(nodes[w].id) < 0)
+                            roots.push({ id: nodes[w].id });
+
+                    var small = RadialGeometry.layoutTree(roots, { step: 48.0, flatten: 0.15 });
+                    var origin = previewSubtree.r1Point;
                     var slots = [];
+
                     for (var i = 1; i < nodes.length; ++i) {
-                        var s = i - 1;
-                        var radius = 380.0 + Math.floor(s / 2) * 60.0;
-                        var sideDeg = (s % 2 === 0) ? -8.0 : 8.0;
-                        var rad = (previewSubtree.angleDeg + sideDeg) * Math.PI / 180.0;
-
-                        var parentS = s - 2;
-                        var parentRadius = (parentS >= 0) ? (380.0 + Math.floor(parentS / 2) * 60.0) : 320.0;
-                        var parentSide = (parentS >= 0) ? ((parentS % 2 === 0) ? -8.0 : 8.0) : 0.0;
-                        var parentRad = (previewSubtree.angleDeg + parentSide) * Math.PI / 180.0;
-
+                        var p = small[nodes[i].id];
+                        if (!p || p.depth < 1) continue;
+                        var parent = small[p.parent] ? small[p.parent] : { x: 0.0, y: 0.0 };
                         slots.push({
                             nodeIndex: i,
-                            icon: nodes[i] ? nodes[i].icon : (previewSubtree.cat ? previewSubtree.cat.icon : "gear"),
-                            point: { x: radius * Math.cos(rad), y: radius * Math.sin(rad) },
-                            parentPoint: { x: parentRadius * Math.cos(parentRad), y: parentRadius * Math.sin(parentRad) }
+                            icon: nodes[i] ? nodes[i].icon : previewSubtree.cat.icon,
+                            point: RadialGeometry.projectPoint(p, previewSubtree.angleDeg, 1.0, origin),
+                            parentPoint: RadialGeometry.projectPoint(parent, previewSubtree.angleDeg, 1.0, origin)
                         });
                     }
                     return slots;
@@ -225,14 +287,11 @@ Item {
         opacity: root.isExpanded ? 1.0 : 0.0
         visible: opacity > 0.01
 
-        property real currentRootPosY: {
-            if (!root.model || !root.isExpanded) return 0.0;
-            var cat = root.model.getCategory(root.focusedCategoryIndex);
-            if (cat && cat.nodes && cat.nodes.length > 0) {
-                return cat.nodes[0].pos.y;
-            }
-            return 0.0;
-        }
+        // The layout puts the root at (0, 0), so there is no rootY offset to
+        // apply. This used to read cat.nodes[0].pos.y and subtract it from every
+        // node, which existed only because the old `pos` values were hand-placed
+        // rather than computed from a known origin.
+        readonly property real currentRootPosY: 0.0
 
         Behavior on opacity {
             NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
@@ -289,7 +348,7 @@ Item {
             id: anchorRay
             x1: root.wheelCenterX
             y1: root.wheelCenterY
-            x2: root.branchOriginX + (root.rootNode ? root.rootNode.pos.x : 70) + cascadeController.offset0
+            x2: root.branchOriginX + (root.rootNode ? root.posOf(root.rootNode.id).x : 0) + cascadeController.offset0
             y2: root.wheelCenterY
             node1Radius: root.outerRadius + 10
             node2Radius: 16
@@ -319,44 +378,43 @@ Item {
         }
 
         // Inter-Node Edges
+        //
+        // Built by walking the layout rather than each node's `edges` list, so
+        // the parent-child pairs here and the ones the preview draws are the same
+        // pairs. Two lists that both claimed to describe the tree is how they came
+        // to describe different ones.
         Repeater {
             id: edgesRepeater
             model: {
                 if (!root.model || !root.isExpanded) return [];
                 var cat = root.model.getCategory(root.focusedCategoryIndex);
                 if (!cat || !cat.nodes) return [];
+
+                var layout = root.expandedLayout;
                 var edgesList = [];
-                var rootPosY = expandedBranchContainer.currentRootPosY;
                 for (var i = 0; i < cat.nodes.length; ++i) {
-                    var parentNode = cat.nodes[i];
-                    if (!parentNode.edges) continue;
-                    for (var j = 0; j < parentNode.edges.length; ++j) {
-                        var childId = parentNode.edges[j];
-                        var childNode = root.model.getNode(root.focusedCategoryIndex, childId);
-                        if (childNode) {
-                            var childIdx = -1;
-                            for (var k = 0; k < cat.nodes.length; ++k) {
-                                if (cat.nodes[k].id === childId) {
-                                    childIdx = k;
-                                    break;
-                                }
-                            }
-                            edgesList.push({
-                                parentId: parentNode.id,
-                                childId: childId,
-                                parentIndex: i,
-                                childIndex: childIdx,
-                                parentPosX: parentNode.pos.x,
-                                parentPosY: parentNode.pos.y,
-                                childPosX: childNode.pos.x,
-                                childPosY: childNode.pos.y,
-                                x1: root.branchOriginX + parentNode.pos.x,
-                                y1: root.branchOriginY + parentNode.pos.y - rootPosY,
-                                x2: root.branchOriginX + childNode.pos.x,
-                                y2: root.branchOriginY + childNode.pos.y - rootPosY
-                            });
-                        }
+                    var id = cat.nodes[i].id;
+                    var p = layout[id];
+                    if (!p || !p.parent) continue;
+
+                    var parentPos = layout[p.parent];
+                    if (!parentPos) continue;
+
+                    var childIdx = -1;
+                    for (var k = 0; k < cat.nodes.length; ++k) {
+                        if (cat.nodes[k].id === id) { childIdx = k; break; }
                     }
+
+                    edgesList.push({
+                        parentId: p.parent,
+                        childId: id,
+                        parentIndex: -1,
+                        childIndex: childIdx,
+                        parentPosX: parentPos.x,
+                        parentPosY: parentPos.y,
+                        childPosX: p.x,
+                        childPosY: p.y
+                    });
                 }
                 return edgesList;
             }
@@ -364,7 +422,14 @@ Item {
             delegate: SkillEdge {
                 id: edgeItem
                 required property var modelData
-                x1: root.branchOriginX + edgeItem.modelData.parentPosX + cascadeController.getOffset(edgeItem.modelData.parentIndex)
+                // The parent's stagger is keyed off the layout's depth rather
+                // than the model's array index: the two orders differ (the
+                // topology nests, the model lists flat), and keying off array
+                // position made the cascade run in an order that had nothing to
+                // do with how the tree reads.
+                readonly property int parentIndex: root.expandedLayout[edgeItem.modelData.parentId]
+                    ? root.expandedLayout[edgeItem.modelData.parentId].depth : 0
+                x1: root.branchOriginX + edgeItem.modelData.parentPosX + cascadeController.getOffset(edgeItem.parentIndex)
                 y1: root.branchOriginY + edgeItem.modelData.parentPosY - expandedBranchContainer.currentRootPosY
                 x2: root.branchOriginX + edgeItem.modelData.childPosX + cascadeController.getOffset(edgeItem.modelData.childIndex)
                 y2: root.branchOriginY + edgeItem.modelData.childPosY - expandedBranchContainer.currentRootPosY
@@ -398,8 +463,9 @@ Item {
                 required property var modelData
                 required property int index
                 readonly property real cascadeOffset: cascadeController.getOffset(nodeWrapper.index)
-                x: root.branchOriginX + nodeWrapper.modelData.pos.x - 24 + nodeWrapper.cascadeOffset
-                y: root.branchOriginY + nodeWrapper.modelData.pos.y - expandedBranchContainer.currentRootPosY - 24
+                readonly property var pos: root.posOf(nodeWrapper.modelData.id)
+                x: root.branchOriginX + nodeWrapper.pos.x - 24 + nodeWrapper.cascadeOffset
+                y: root.branchOriginY + nodeWrapper.pos.y - expandedBranchContainer.currentRootPosY - 24
                 width: 48
                 height: 48
 

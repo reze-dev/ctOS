@@ -259,3 +259,133 @@ function getSegmentTargetLayout(index, focusedIndex, categoryCount, gapAngle, fo
     };
 }
 
+
+// ---------------------------------------------------------------------------
+// Tree layout
+//
+// The one place a settings tree gets geometry. Both renderings call this: the
+// expanded branch at one scale, the wheel's preview at another. They used to
+// have separate geometry -- hand-placed `pos` in the model for the first, a
+// synthetic +/-8 degree fan for the second -- so the two views disagreed about
+// how many branches a category had, and nothing in the code could catch it.
+//
+// Same algorithm for both views is deliberate. Letting each pick its own angles
+// would fix today's mismatch and reintroduce it the next time one is tuned, so
+// difference between the views lives in `params` instead.
+// ---------------------------------------------------------------------------
+
+// How a node's children fan out, as offsets in degrees from the direction that
+// led to their parent.
+//
+// The numbers come from the two reference layouts rather than from taste: three
+// branches off one base sit at about -85/0/+85, and two at about -74/+74. A
+// single child returns [0], so it continues along its parent's direction -- that
+// is what makes a three-deep chain read as one spoke leaving the base instead of
+// three unrelated nodes.
+function childFanAngles(childCount) {
+    if (childCount <= 1) return [0.0];
+    if (childCount === 2) return [-74.0, 74.0];
+    if (childCount === 3) return [-85.0, 0.0, 85.0];
+
+    // No reference for this case, and nothing in the tree currently reaches it
+    // (the widest node has three children). Spread evenly rather than guess
+    // unevenly: if a category ever does fan four ways, this is the shape to
+    // argue about, and it should start from "evenly spaced", not from a number
+    // someone picked.
+    var out = [];
+    for (var i = 0; i < childCount; ++i)
+        out.push(-90.0 + (180.0 * i) / (childCount - 1));
+    return out;
+}
+
+// Lay out a nested tree literal ({ id, children }) into coordinates.
+//
+// opts.step      distance between depth levels, in the view's own units
+// opts.flatten   per-level pull of each spoke toward its parent's axis, so a
+//                chain arcs outward instead of running along one ray
+//
+// Returns { <id>: { x, y, depth, spoke } } with the root at (0, 0).
+//
+// Breadth-first from the root, and each node carries the axis it was placed on
+// so its own children continue outward from there rather than re-fanning around
+// a fixed global axis. That is the whole difference between a tree that reads as
+// a tree and one that reads as nodes scattered near each other.
+function layoutTree(nodes, opts) {
+    opts = opts || {};
+    var step = (typeof opts.step === "number") ? opts.step : 140.0;
+    var flatten = (typeof opts.flatten === "number") ? opts.flatten : 0.15;
+
+    var out = {};
+    if (!nodes || nodes.length === 0) return out;
+
+    // A node already placed is left alone, so a second parent cannot drag it to a
+    // new position. The topology is authored as a tree, but this keeps a
+    // mistake in the file from silently relocating a subtree.
+    var queue = [{ node: nodes[0], depth: 0, axis: 0.0, spoke: -1 }];
+    out[nodes[0].id] = { x: 0.0, y: 0.0, depth: 0, spoke: -1, parent: null };
+
+    while (queue.length > 0) {
+        var cur = queue.shift();
+        var kids = cur.node.children || [];
+        if (kids.length === 0) continue;
+
+        var fan = childFanAngles(kids.length);
+        for (var k = 0; k < kids.length; ++k) {
+            var child = kids[k];
+            if (!child || out[child.id]) continue;
+
+            var depth = cur.depth + 1;
+            var axis = cur.axis + fan[k];
+            var dir = axis * Math.pow(1.0 - flatten, depth - 1);
+            var rad = dir * Math.PI / 180.0;
+            var radius = step * depth;
+
+            out[child.id] = {
+                x: radius * Math.cos(rad),
+                y: radius * Math.sin(rad),
+                depth: depth,
+                spoke: (depth === 1) ? k : cur.spoke,
+                // Recorded rather than re-derived by the renderer. Both views
+                // need a parent-to-child pair to draw one edge, and re-walking
+                // the tree in each of them is how they came to disagree.
+                parent: cur.node.id
+            };
+            queue.push({ node: child, depth: depth, axis: axis, spoke: (depth === 1) ? k : cur.spoke });
+        }
+    }
+
+    // Nodes the children lists never reached. They cannot be laid out from a
+    // parent that does not exist, but leaving them out would make them vanish
+    // instead of failing visibly, so park them on a shallow arc off the root.
+    var orphans = [];
+    for (var i = 0; i < nodes.length; ++i)
+        if (nodes[i] && !out[nodes[i].id]) orphans.push(nodes[i]);
+
+    for (var m = 0; m < orphans.length; ++m) {
+        var od = orphans.length === 1 ? 0.0 : -90.0 + (180.0 * m) / (orphans.length - 1);
+        var orad = od * Math.PI / 180.0;
+        out[orphans[m].id] = {
+            x: step * Math.cos(orad), y: step * Math.sin(orad), depth: 1, spoke: 100 + m,
+            parent: null
+        };
+    }
+
+    return out;
+}
+
+// Rotate a laid-out point so the tree's +x axis points along `angleDeg`, then
+// translate it to `origin`.
+//
+// This is the whole of the difference between the two renderings: the expanded
+// branch draws the layout directly, the wheel's preview draws it through this.
+// Same angles, same fan, same parent-to-child pairs -- only the scale, the
+// anchor and the rotation differ, which is why the two cannot drift apart.
+function projectPoint(p, angleDeg, scale, origin) {
+    var rad = angleDeg * Math.PI / 180.0;
+    var cos = Math.cos(rad) * scale;
+    var sin = Math.sin(rad) * scale;
+    return {
+        x: origin.x + p.x * cos - p.y * sin,
+        y: origin.y + p.x * sin + p.y * cos
+    };
+}
