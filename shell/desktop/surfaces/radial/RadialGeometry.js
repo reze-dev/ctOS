@@ -315,10 +315,20 @@ function layoutTree(nodes, opts) {
 
     var rootAngle = (typeof opts.rootAngle === "number") ? opts.rootAngle : 90.0;
 
-    // Total fan per depth, index = depth - 1, clamped at the last entry. 170 at
-    // the root reproduces the reference's up/right/down first level; every level
-    // below is narrower so a deep fork cannot swing round behind its parent.
-    var fans = (opts.fans && opts.fans.length > 0) ? opts.fans : [170.0, 120.0];
+    // Total fan per depth, index = depth - 1, clamped at the last entry.
+    //
+    // 150 at the root, 100 below. This was 170/120, which is what the reference
+    // first level measures, and it was too wide to stay clear of the wheel: a
+    // branch that had already rotated once put its own children at up to -145,
+    // which is left of the root. security's recon node landed 67px that way --
+    // toward a ring whose outer radius is 180 -- and on a deeper tree the worst
+    // case reached 204px, which is inside the ring itself.
+    //
+    // 150/100 puts security's furthest node exactly at the root's own x and pulls
+    // the 40-node worst case back to 156px, clear of the rim. Going narrower
+    // still starts to cost the reference's up/right/down first level, which is
+    // the one thing currently matching it exactly.
+    var fans = (opts.fans && opts.fans.length > 0) ? opts.fans : [150.0, 100.0];
 
     var baseDistance = (typeof opts.distance === "number") ? opts.distance : 140.0;
     var nodeRadius = (typeof opts.nodeRadius === "number") ? opts.nodeRadius : 24.0;
