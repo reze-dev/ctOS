@@ -38,7 +38,24 @@ Singleton {
     // picker is the thing that writes this key rather than anything that reads
     // it at startup.
     readonly property string defaultTheme: "ctos-pine"
-    readonly property string defaultWallpaper: ""
+
+    // A filename, not a path, and not an id.
+    //
+    // The wallpaper switcher scans a user-settable directory, so the selection
+    // has to be meaningful in whichever directory is current. Storing a bare
+    // filename and resolving it against wallpaperDir is what lets the shipped
+    // set and the user's own images be the same kind of thing.
+    //
+    // A real value, not "". Empty would read as "unset", leaving the browser
+    // with nothing highlighted and making the first selection indistinguishable
+    // from no selection.
+    readonly property string defaultWallpaper: "wallpaper-v1.png"
+
+    // Where the switcher looks. Defaults to where wallpaper.nix installs the
+    // shipped pair, so a fresh install has something to show before the user has
+    // configured anything.
+    readonly property string defaultWallpaperDir:
+        (Quickshell.env("HOME") || "") + "/.local/share/ctos/wallpapers"
     readonly property bool defaultWidgetCpuHexGridVisible: true
     readonly property bool defaultWidgetNetworkFlowVisible: true
     readonly property bool defaultWidgetRamBlockBarVisible: true
@@ -82,7 +99,8 @@ Singleton {
         return target;
     }
     property string theme: "ctos-pine"
-    property string wallpaper: ""
+    property string wallpaper: "wallpaper-v1.png"
+    property string wallpaperDir: (Quickshell.env("HOME") || "") + "/.local/share/ctos/wallpapers"
 
     signal settingsLoadFailed(int error)
     signal settingsSaved
@@ -167,11 +185,18 @@ Singleton {
                 theme = defaultTheme;
             }
 
-            // wallpaper: string
-            if (typeof data.wallpaper === "string") {
+            // wallpaper: string -- a filename, resolved against wallpaperDir
+            if (typeof data.wallpaper === "string" && data.wallpaper.length > 0) {
                 wallpaper = data.wallpaper;
             } else {
                 wallpaper = defaultWallpaper;
+            }
+
+            // wallpaperDir: string -- the directory the switcher scans
+            if (typeof data.wallpaperDir === "string" && data.wallpaperDir.length > 0) {
+                wallpaperDir = data.wallpaperDir;
+            } else {
+                wallpaperDir = defaultWallpaperDir;
             }
 
             // compositor: string
@@ -334,6 +359,7 @@ Singleton {
         data.barHeight = root.barHeight;
         data.theme = root.theme;
         data.wallpaper = root.wallpaper;
+        data.wallpaperDir = root.wallpaperDir;
         data.compositor = root.compositor;
 
         data.widgetCpuHexGridVisible = root.widgetCpuHexGridVisible;

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import "../../core"
+import "../../services"
 import "../components"
 import "../widgets"
 
@@ -37,8 +38,14 @@ Item {
     readonly property bool showsStatusPill:
         currentNode
         && currentNode.controlType !== "picker"
+        && currentNode.controlType !== "browser"
         && currentNode.controlType !== "readonly"
         && !root.isLocked
+
+    // The one control that is a list rather than a row, and the only one that
+    // needs the panel's remaining height. See the control box below.
+    readonly property bool currentIsBrowser:
+        currentNode && currentNode.controlType === "browser"
 
     width: parent ? Math.min(440, Math.max(340, parent.width * 0.3)) : 440
     anchors.top: parent ? parent.top : undefined
@@ -251,7 +258,14 @@ Item {
         // Interactive Settings Control Box
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 90
+
+            // 90 for the four single-row controls, which is what this has always
+            // been sized for. The browser is a list, so it takes the rest of the
+            // panel instead -- and only it does, because filling the height
+            // unconditionally would leave every other control's row floating in
+            // the middle of a very tall empty box.
+            Layout.preferredHeight: root.currentIsBrowser ? 0 : 90
+            Layout.fillHeight: root.currentIsBrowser
             visible: root.currentNode !== null
 
             // 1. Toggle Control
@@ -624,7 +638,276 @@ Item {
                 }
             }
 
-            // 5. Readonly Value Readout
+            // 5. Browser Control
+            //
+            // Directory plus a grid of what is in it. Not a picker: a picker
+            // offers a closed set the panel already knows about, and this is an
+            // open one the user points at. It also has to stay legible when the
+            // directory is empty, when it does not exist, and while a scan is in
+            // flight, which a row of chips has no room to say.
+            Item {
+                id: browserControl
+                anchors.fill: parent
+                visible: root.currentNode && root.currentNode.controlType === "browser" && !root.isLocked
+
+                // Held on the service so it survives the node being unselected,
+                // and so a half-typed path is not thrown away by a click
+                // elsewhere in the tree.
+                property string dirDraft: ""
+
+                function adoptDirectory() {
+                    if (browserControl.dirDraft !== WallpaperService.directory) {
+                        WallpaperService.setDirectory(browserControl.dirDraft);
+                    }
+                }
+
+                // Adopting on activation rather than on every keystroke: a scan
+                // per character would fork a process per character, and a
+                // half-typed path is not a directory anyway.
+                onVisibleChanged: {
+                    if (visible) {
+                        browserControl.dirDraft = WallpaperService.directory;
+                    }
+                }
+                Component.onCompleted: {
+                    browserControl.dirDraft = WallpaperService.directory;
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: Theme.spacingSmall
+
+                    // --- directory row ---
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.spacingSmall
+
+                        Text {
+                            text: "DIRECTORY"
+                            font.family: Theme.fontFamilyMonospace
+                            font.pixelSize: Theme.fontSizeCaption
+                            color: Theme.textMuted
+                        }
+
+                        // Core TextInput with a sibling background, not a Controls
+                        // TextField. The desktop tree does not take a
+                        // QtQuick.Controls dependency: the Wi-Fi prompt in
+                        // CommandCenter hit exactly this and had to be rewritten,
+                        // because `background:` is a Controls feature and a core
+                        // TextInput does not have it. Placeholder text is a
+                        // Controls feature too, hence the sibling Text.
+                        Item {
+                            id: dirField
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 28
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: Theme.radiusSmall
+                                color: Theme.gray800
+                                border.color: dirField.activeFocus ? Theme.acidGreen : Theme.gray600
+                                border.width: 1
+                            }
+
+                            Text {
+                                anchors.fill: parent
+                                anchors.leftMargin: Theme.spacingSmall
+                                anchors.rightMargin: Theme.spacingSmall
+                                verticalAlignment: Text.AlignVCenter
+                                visible: dirInput.text.length === 0
+                                text: "~/.local/share/ctos/wallpapers"
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeCaption
+                                color: Theme.textMuted
+                                elide: Text.ElideMiddle
+                            }
+
+                            TextInput {
+                                id: dirInput
+                                anchors.fill: parent
+                                anchors.leftMargin: Theme.spacingSmall
+                                anchors.rightMargin: Theme.spacingSmall
+                                verticalAlignment: TextInput.AlignVCenter
+                                clip: true
+
+                                text: browserControl.dirDraft
+                                color: Theme.textPrimary
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeCaption
+                                selectByMouse: true
+                                selectionColor: Theme.acidGreen
+                                selectedTextColor: Theme.textInverse
+
+                                onTextEdited: browserControl.dirDraft = text
+                                onAccepted: browserControl.adoptDirectory()
+
+                                Keys.onEscapePressed: {
+                                    // Abandon the edit rather than committing a
+                                    // path the user did not mean to type.
+                                    browserControl.dirDraft = WallpaperService.directory;
+                                    text = browserControl.dirDraft;
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            id: applyDirButton
+                            Layout.preferredWidth: scanLabel.implicitWidth + Theme.spacingLarge
+                            Layout.preferredHeight: 28
+                            radius: Theme.radiusSmall
+                            color: applyDirMouse.pressed ? Theme.acidGreen : Theme.gray800
+                            border.color: Theme.acidGreen
+                            border.width: 1
+
+                            Text {
+                                id: scanLabel
+                                anchors.centerIn: parent
+                                text: WallpaperService.scanning ? "SCAN" : "SET"
+                                font.family: Theme.fontFamilyMonospace
+                                font.pixelSize: Theme.fontSizeCaption
+                                font.weight: Theme.fontWeightBold
+                                color: applyDirMouse.pressed ? Theme.textInverse : Theme.acidGreen
+                            }
+
+                            MouseArea {
+                                id: applyDirMouse
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                enabled: !WallpaperService.scanning
+                                onClicked: browserControl.adoptDirectory()
+                            }
+                        }
+                    }
+
+                    // --- status line ---
+                    Text {
+                        Layout.fillWidth: true
+                        text: {
+                            if (WallpaperService.scanning) return "SCANNING " + WallpaperService.directory + " ...";
+                            if (!WallpaperService.scanned) return "";
+                            if (WallpaperService.lastError !== "") return WallpaperService.lastError;
+                            if (WallpaperService.count === 0) return "NO IMAGES IN " + WallpaperService.directory;
+                            return WallpaperService.count + (WallpaperService.count === 1 ? " IMAGE" : " IMAGES")
+                                + (WallpaperService.count >= WallpaperService.maxWallpapers ? " (CAPPED)" : "")
+                                + "  //  " + WallpaperService.currentName;
+                        }
+                        font.family: Theme.fontFamilyMonospace
+                        font.pixelSize: Theme.fontSizeMicro
+                        color: WallpaperService.lastError !== "" ? Theme.destructive : Theme.textMuted
+                        elide: Text.ElideMiddle
+                        Layout.maximumHeight: 14
+                    }
+
+                    // --- the grid ---
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: Theme.radiusSmall
+                        color: Theme.gray900
+                        border.color: Theme.gray700
+                        border.width: 1
+
+                        // Two per row. With the control box now taking the panel's
+                        // remaining height there is room for tiles big enough to
+                        // recognise a wallpaper, and one-per-row wasted most of
+                        // it on scrolling.
+                        //
+                        // cellWidth and cellHeight are derived from `width`
+                        // directly. Routing them through intermediate readonly
+                        // properties on the GridView broke the column count --
+                        // the view laid the delegates out one per row instead of
+                        // two, which is a silent layout fault rather than a
+                        // visible error.
+                        //
+                        // The height is floor(halfWidth * 9/16) plus a 16px label
+                        // band, so the thumbnails keep their aspect and the
+                        // filename stays legible underneath.
+                        GridView {
+                            id: wallpaperGrid
+                            anchors.fill: parent
+                            anchors.margins: Theme.spacingSmall
+                            clip: true
+                            model: WallpaperService.wallpapers
+                            boundsBehavior: Flickable.StopAtBounds
+
+                            cellWidth: Math.floor(width / 2)
+                            cellHeight: Math.floor(Math.floor(width / 2) * 9 / 16) + 20
+
+                            delegate: Rectangle {
+                                id: wallpaperTile
+                                required property var modelData
+
+                                readonly property bool isCurrent:
+                                    modelData.name === WallpaperService.currentName
+                                readonly property int labelHeight: 16
+
+                                width: GridView.view.cellWidth - Theme.spacingSmall
+                                height: GridView.view.cellHeight - Theme.spacingSmall
+                                radius: Theme.radiusSmall
+                                color: mouse.containsMouse ? Theme.gray800 : Theme.surface
+                                border.color: isCurrent ? Theme.acidGreen : Theme.gray700
+                                border.width: isCurrent ? 2 : 1
+
+                                // sourceSize is what keeps this affordable: the
+                                // shipped images are 6000-7500px wide and tens of
+                                // megabytes, and a grid that decoded them at full
+                                // size would exhaust memory long before it filled.
+                                Image {
+                                    id: thumb
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.margins: 2
+                                    height: parent.height - wallpaperTile.labelHeight - 4
+                                    source: "file://" + modelData.path
+                                    sourceSize.width: 300
+                                    sourceSize.height: 170
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    cache: false
+                                    clip: true
+                                }
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    anchors.margins: 3
+                                    text: modelData.name
+                                    font.family: Theme.fontFamilyMonospace
+                                    font.pixelSize: Theme.fontSizeMicro
+                                    color: Theme.textSecondary
+                                    elide: Text.ElideMiddle
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                MouseArea {
+                                    id: mouse
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        if (root.currentNode && typeof root.currentNode.execute === "function") {
+                                            root.currentNode.execute(modelData.name);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: WallpaperService.scanned && WallpaperService.count === 0 && !WallpaperService.scanning
+                            text: "EMPTY"
+                            font.family: Theme.fontFamilyMonospace
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.textDisabled
+                        }
+                    }
+                }
+            }
+
+            // 6. Readonly Value Readout
             Item {
                 anchors.fill: parent
                 visible: root.currentNode && (root.currentNode.controlType === "readonly" || root.isLocked)

@@ -81,11 +81,41 @@ window, the "one surface" requirement cannot be met regardless of layout work.
 entirely outside CI. A4 will invalidate a portion of it; E7 should follow so the
 remainder is actually exercised.
 
+## Phase R — Radial settings skill tree
+
+Brought in scope when the radial gained the palette switch and became the place
+the shell's own settings live. Previously listed under "Out of scope" as a
+retained prototype; it is now held to the same rules as the notch and the CCC.
+
+Reference images are in the repository root: `base-settings-tree.png`,
+`base-settings-tree-with-highlight.png`, `2-branch-tree-expanded.png`,
+`3-branch-tree-expanded.png` and `WatchDogs1 Skill tree background..png`.
+
+| # | Item | Status |
+| --- | --- | --- |
+| R1 | Derive lock state from `requires`; stop printing "PREREQUISITE LOCKED" while enforcing nothing | todo |
+| R2 | Resolve the 4 stub nodes and the 5 invented lock reasons | todo |
+| R3 | Honour `Settings.reducedMotion` in every animating surface (live violation, `interaction-spec.md`) | todo |
+| R4 | Fix `RadialSettings.qml` `leftAnchorX: -70` — the wheel hangs off the left edge when expanded | todo |
+| R5 | Delete the never-emitted `RadialSegment.clicked()` / `hovered()` signals | todo |
+| R6 | `net-core` reports a raw interface name instead of a connection state | todo |
+| R7 | Glyphs on preview nodes — currently hidden, so the base-state trees are blank dots. Black unless highlighted; larger when the tree is expanded | todo |
+| R8 | Blip in both states: red when the setting is off, green when on. Needs a per-node on/off notion first | todo |
+| R9 | Resolve the `readonly` nodes — either make them functional or delete them. They have no on/off state, which R8 depends on | todo |
+| R10 | More nodes and branches per section, so the trees match the reference density | todo |
+| R11 | Animated 3D-city skill-tree background (`WatchDogs1` reference). Not implemented | todo |
+
+R7–R10 came from reading the reference images against the running shell. The arc
+maths the references describe is already implemented and was verified against
+them: `focusedWidth` is 90°, exactly 1/4 of the circumference, the focused arc is
+anchored at the top and neighbours are pushed out sequentially, and the remaining
+7 share the other 3/4. The gap unit is degrees rather than the 2px the reference
+implies, which was reviewed and accepted.
+
 ## Out of scope
 
 Retained unchanged, not part of the target design:
 
-- Radial settings skill tree (`desktop/surfaces/radial/`)
 - Floating desktop telemetry widgets (`desktop/surfaces/widgets/`)
 
 Their removal is a separate decision.

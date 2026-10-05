@@ -160,9 +160,9 @@ Item {
         {
             id: "appearance",
             name: "APPEARANCE",
-            subtitle: "VISUAL PIPELINE // MOTION",
+            subtitle: "VISUAL PIPELINE // BACKDROP",
             icon: "palette",
-            description: "Compositor styling engine, reduced motion dampening, and panel geometry dimensions.",
+            description: "Compositor styling engine, palette, reduced motion dampening, panel geometry, and desktop backdrop.",
             nodes: [
                 {
                     id: "app-engine",
@@ -174,7 +174,7 @@ Item {
                     lockReason: "",
                     requires: [],
                     pos: { x: 76, y: 33 },
-                    edges: ["app-motion", "app-bar-height"],
+                    edges: ["app-motion", "app-bar-height", "app-wallpaper"],
                     controlType: "readonly",
                     value: function() { return 1; },
                     valueText: function() { return Settings.theme.toUpperCase(); },
@@ -198,6 +198,41 @@ Item {
                         Settings.reducedMotion = !Settings.reducedMotion;
                         Settings.save();
                         root.revision++;
+                    }
+                },
+                {
+                    id: "app-wallpaper",
+                    title: "WALLPAPER",
+                    subtitle: "APP.05 // BACKDROP",
+                    icon: "layers",
+                    description: WallpaperService.available
+                        ? "Desktop backdrop. Fades over one second."
+                        : "Desktop backdrop. The awww daemon is not answering, so switching is unavailable.",
+                    locked: !WallpaperService.available,
+                    lockReason: "The awww wallpaper daemon is not running.",
+                    requires: [],
+                    pos: { x: 387, y: 130 },
+                    edges: [],
+                    controlType: "browser",
+                    value: function() { return Settings.wallpaper; },
+                    valueText: function() { return Settings.wallpaper; },
+                    execute: function(name) {
+                        if (typeof name !== "string" || name.length === 0) return;
+
+                        // Persist regardless of whether the apply succeeded. The
+                        // selection is what the user asked for; if the daemon is
+                        // briefly down the service retries on its own, and
+                        // refusing to record the choice would make the browser
+                        // snap back under them.
+                        Settings.wallpaper = name;
+                        Settings.save();
+                        root.revision++;
+
+                        if (!WallpaperService.apply(name)) {
+                            console.warn("[RadialSettingsModel] wallpaper not applied: " + name);
+                        } else {
+                            console.log("[RadialSettingsModel] WALLPAPER_SET: " + name);
+                        }
                     }
                 },
                 {

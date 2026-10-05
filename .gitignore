@@ -2,3 +2,8 @@ result/
 *.pyc
 .direnv/
 *report.json
+
+# Wallpapers kept locally but not shipped. The shipped set is the two entries in
+# modules/features/desktop/wallpaper.nix and WallpaperService.wallpapers; adding
+# an image here means adding it to both, not just dropping it in this directory.
+shell/extras/wallpapers/waifu-*
