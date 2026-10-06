@@ -70,7 +70,7 @@
   # its full environment to /tmp/ctos-desktop-session.log before exec'ing
   # start-hyprland, and cage runs with -D -d, so a login attempt leaves enough
   # to see what the session actually got. Turn this off once Hyprland is up.
-  ctos.debug.enable = true;
+  ctos.debug.enable = false;
 
   networking.hostName = "Makima";
   system.stateVersion = "26.11";
