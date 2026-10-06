@@ -13,9 +13,10 @@ let
     {
       config = {
         home.packages = with pkgs; [
-          nautilus
+          thunar
           yaru-theme
           gsettings-desktop-schemas
+          superfile
         ];
 
         xdg.configFile."gtk-3.0/settings.ini".text = ''
@@ -37,7 +38,7 @@ let
         '';
 
         xdg.mimeApps.defaultApplications = {
-          "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+          "inode/directory" = [ "Thunar.desktop" ];
         };
 
         home.sessionVariables = {

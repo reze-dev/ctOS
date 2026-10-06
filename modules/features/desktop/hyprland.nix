@@ -34,7 +34,7 @@ let
           })
 
           local terminal = "kitty"
-          local fileManager = "kitty -e yazi"
+          local fileManager = "kitty -e superfile"
           local menu = "fuzzel"
           local mainMod = "SUPER"
 

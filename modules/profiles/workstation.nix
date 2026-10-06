@@ -15,7 +15,6 @@ let
     "starship"
     "tmux"
     "virtualization"
-    "yazi"
     "zoxide"
     "zsh"
   ];

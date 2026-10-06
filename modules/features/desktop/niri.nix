@@ -180,7 +180,7 @@ let
               "Mod+Return".action = actions.spawn "kitty";
               "Mod+Shift+Return".action = actions.spawn "ghostty";
               "Mod+D".action = actions.spawn "fuzzel";
-              "Mod+E".action = actions.spawn "kitty" "-e" "yazi";
+              "Mod+E".action = actions.spawn "kitty" "-e" "superfile";
               "Mod+B".action = actions.spawn "zen";
               "Mod+Shift+Slash".action = actions.show-hotkey-overlay;
 
