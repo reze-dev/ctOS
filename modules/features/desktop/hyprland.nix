@@ -92,7 +92,7 @@ let
             -- hence a Hyprland session with no shell, no awww and no
             -- wallpaper.
             hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start nixos-fake-graphical-session.target")
-            hl.exec_cmd("systemctl --user start hyprpolkitagent")
+            hl.exec_cmd("${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1")
           end)
 
           hl.config({

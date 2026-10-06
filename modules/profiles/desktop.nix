@@ -16,6 +16,7 @@ let
     "kitty"
     "niri"
     "power"
+    "polkit"
     "udiskie"
     "toolkit"
     "wallpaper"
