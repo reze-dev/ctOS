@@ -92,7 +92,7 @@ Reference images are in the repository root: `base-settings-tree.png`,
 `3-branch-tree-expanded.png` and `WatchDogs1 Skill tree background..png`.
 
 | # | Item | Status |
-| --- | --- | --- |
+|---|---|---|
 | R1 | Stop printing "PREREQUISITE LOCKED" while enforcing nothing | done — see below |
 | R2 | Resolve the stub nodes and the invented lock reasons | done — 5 removed, 3 replaced |
 | R3 | Honour `Settings.reducedMotion` in every animating surface | done — 35 durations, 3 timers, 1 infinite loop |
@@ -112,10 +112,45 @@ anchored at the top and neighbours are pushed out sequentially, and the remainin
 7 share the other 3/4. The gap unit is degrees rather than the 2px the reference
 implies, which was reviewed and accepted.
 
-## Out of scope
+## Phase W — Wallpaper Authority
 
-Retained unchanged, not part of the target design:
+| # | Item | Status |
+|---|---|---|
+| W1 | Wallpaper unit reads recorded choice from settings.json | done |
+| W2 | Wallpaper fallback deferred until Settings settled | done |
+| W3 | Stale scan guard self-describing | done |
+| W4 | Preview trunk length matches reference proportion | done |
+| W5 | Wallpaper grid shows 5 rows (was 2) | done |
+| W6 | Wallpaper grid scroll indicator | done |
+| W6 | Wallpaper rescans on browser open | done |
+| W7 | Stale scan guard self-describing output | done |
+| W8 | Remove v1 boot flash | done |
+| W9 | Remove `defaultWallpaper` dead code | done |
 
-- Floating desktop telemetry widgets (`desktop/surfaces/widgets/`)
+## Phase N — Notch Refinements
+
+| # | Item | Status |
+|---|---|---|
+| N1 | Conditional wifi/ethernet glyph | done |
+| N2 | Volume glyph size parity with wifi | done |
+| N2 | Battery glyph size parity with wifi | done |
+| N3 | Ethernet glyph added (Material Symbols U+E328) | done |
+
+## Phase P — Popup Retirement
+
+| # | Item | Status |
+|---|---|---|
+| P1 | Delete NetworkPopup.qml + BluetoothPopup.qml | done |
+| P2 | Rewire notch handlers to CCC submenus | done |
+| P3 | Rewire IPC handlers to CCC submenus | done |
+| P4 | Remove popup properties and handlers from shell.qml | done |
+| P5 | Verify zero ReferenceErrors on boot | done |
+
+## Phase M — Mic Volume Fix
+
+| # | Item | Status |
+|---|---|---|
+| M1 | Fix slider contract (minVal/maxVal/step) | done |
+| M2 | Add missing revision++ for repaint | done |
 
 Their removal is a separate decision.

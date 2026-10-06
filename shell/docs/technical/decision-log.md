@@ -30,6 +30,23 @@
 
 - New desktop modules use `desktop/` and do not import `greeter/`.
 - Services expose availability, status, reactive values, and named actions; surfaces do not execute backend shell commands directly.
-- Generated Home Manager settings are the desktop runtime’s configuration boundary. Do not write machine-specific settings to `/etc/ctos` for the desktop shell.
+- Generated Home Manager settings are the desktop runtime's configuration boundary. Do not write machine-specific settings to `/etc/ctos` for the desktop shell.
 - Every new optional integration has a visible unavailable state and a startup diagnostic.
 - Any change to these decisions updates this log and the affected design document in the same commit.
+
+## Bug fix decisions
+
+| ID | Decision | Rationale | Consequence |
+|---|---|---|---|
+| BF-001 | Radial local frame uses `(cos, sin)` so `dir 0` = +x (outward). | `(sin, -cos)` made trees grow sideways across their segment. | Every tree now grows along its own segment axis. |
+| BF-002 | Fork angle is local to the generation; descendants return to the axis. | Inherited fork created ever-widening dendrites. | Trees read as parallel columns. |
+| BF-003 | Preview trunk `r1Point` = 0.35 × ring radius (242 at 180). | 300 left a 99px drawn trunk vs reference 41px. | Trunk now matches reference proportion. |
+| BF-004 | Mic volume slider uses `minVal`/`maxVal`/`step` contract; added `revision++`. | Node used wrong property names; slider inherited defaults 0/100/1. | Slider now tracks gain 0–1 correctly and repaints. |
+| BF-005 | Wallpaper authority: shell applies recorded choice; unit reads settings.json. | Unit hardcoded v1; shell only applied on fallback. | Desktop now shows recorded choice on boot; unit falls back to v1. |
+| BF-006 | Wallpaper fallback deferred until Settings settled. | Premature scan saw default, overwrote user's choice with first image. | Recorded choice no longer destroyed by race. |
+| BF-007 | Scan output self-describes its directory; guard compares against that. | `_scannedDir` overwritten by next rescan; stale results passed old guard. | Stale results discarded regardless of arrival order. |
+| BF-008 | Network/Bluetooth popups retired; notch and IPC rewired to CCC. | Popups were live and reachable from notch; deleting without rewire broke indicators. | Notch indicators open CCC cards; IPC calls still work. |
+| BF-009 | Conditional network glyph: wifi on WiFi, ethernet on wired. | Notch always showed wifi glyph even on ethernet. | Notch now shows correct transport glyph and detail text. |
+| BF-010 | Volume/battery glyph sizes matched to wifi scale. | Volume 0.85, battery 0.73 vs wifi 0.90 made them read small. | Visual parity across all three indicator glyphs. |
+| BF-011 | DevShell `CTOS_INPUT` escaping fixed. | `${CTOS_INPUT: -0}` was Nix interpolation, not shell parameter expansion. | `CTOS_INPUT=1` now reaches `WLR_LIBINPUT_NO_DEVICES`. |
+| BF-012 | `defaultWallpaper` dead code removed. | Defined but never referenced; install was longhand. | Removed dead code. |
