@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.ctos.features.gtk;
@@ -12,39 +17,30 @@ let
     }:
     {
       config = {
-        home.packages = with pkgs; [
-          thunar
-          yaru-theme
-          gsettings-desktop-schemas
-          superfile
+        gtk = {
+          enable = true;
+
+          theme = {
+            name = cfg.theme;
+            package = pkgs.yaru-theme;
+          };
+
+          iconTheme = {
+            name = "Yaru";
+            package = pkgs.yaru-theme;
+          };
+        };
+
+        dconf.settings = {
+          "org/gnome/desktop/interface" = {
+            gtk-theme = cfg.theme;
+            icon-theme = "Yaru";
+          };
+        };
+
+        home.packages = [
+          pkgs.nautilus
         ];
-
-        xdg.configFile."gtk-3.0/settings.ini".text = ''
-          [Settings]
-          gtk-theme-name = ${cfg.theme}
-          gtk-icon-theme-name = ${cfg.theme}
-          gtk-font-name = "Maple Mono 11"
-          gtk-cursor-theme-name = "Bibata-Modern-Classic"
-          gtk-cursor-theme-size = 20
-        '';
-
-        xdg.configFile."gtk-4.0/settings.ini".text = ''
-          [Settings]
-          gtk-theme-name = ${cfg.theme}
-          gtk-icon-theme-name = ${cfg.theme}
-          gtk-font-name = "Maple Mono 11"
-          gtk-cursor-theme-name = "Bibata-Modern-Classic"
-          gtk-cursor-theme-size = 20
-        '';
-
-        xdg.mimeApps.defaultApplications = {
-          "inode/directory" = [ "Thunar.desktop" ];
-        };
-
-        home.sessionVariables = {
-          GTK_THEME = cfg.theme;
-          ICON_THEME = cfg.theme;
-        };
       };
     };
 in

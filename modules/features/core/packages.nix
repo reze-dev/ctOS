@@ -24,6 +24,7 @@ in
       ydotool
       fastfetch
       ripgrep
+      superfile
       tmux
       unzip
       wget
