@@ -10,6 +10,7 @@ let
     "display"
     "firefox"
     "ghostty"
+    "gtk"
     "hyprland"
     "hyprlock"
     "kitty"

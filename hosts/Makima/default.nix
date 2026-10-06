@@ -42,7 +42,7 @@
 
   # ctOS profiles
   ctos.profiles = {
-    desktop.enable = true;
+    # desktop.enable = true;
     workstation.enable = true;
   };
 
@@ -53,6 +53,7 @@
     fish.enable = true;
     emacs.enable = true;
     nvf.enable = true;
+    gtk.enable = true;
   };
 
   # NVIDIA GPU
