@@ -690,8 +690,8 @@ RowLayout {
                     Layout.preferredHeight: 15
                     // 0.78 brings the wifi's ink to the volume's, measured at
                     // 1.27x, and stops it overrunning the slot.
-                    opticalScale: 0.90
-                    glyph: "wifi"
+                    opticalScale: NetworkService.isWifi ? 0.90 : 0.85
+                    glyph: NetworkService.isWifi ? "wifi" : "ethernet"
                     color: Theme.textSecondary
                 }
 
@@ -700,7 +700,7 @@ RowLayout {
                     visible: root.showDetail
                     text: NetworkService.signalStrength > 0
                         ? Math.round(NetworkService.signalStrength * 100) + "%"
-                        : ""
+                        : (NetworkService.isEthernet ? "LAN" : "")
                     color: Theme.statusGreen
                     font.family: Theme.fontFamilyMonoNumeric
                     font.pixelSize: Theme.fontSizeMicro
@@ -721,7 +721,7 @@ RowLayout {
                     // effect at all, and GlyphIcon sizes its font from height.
                     Layout.preferredWidth: 15
                     Layout.preferredHeight: 15
-                    opticalScale: 0.85
+                    opticalScale: 0.90
                     glyph: "speaker"
                     color: Theme.textSecondary
                 }
@@ -750,7 +750,7 @@ RowLayout {
                     // effect at all, and GlyphIcon sizes its font from height.
                     Layout.preferredWidth: 15
                     Layout.preferredHeight: 15
-                    opticalScale: 0.73
+                    opticalScale: 0.85
                     glyph: "battery"
                     color: PowerService.isCharging ? Theme.statusGreen : Theme.textSecondary
                 }

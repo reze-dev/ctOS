@@ -73,6 +73,7 @@ Item {
         case "lock": return "\uE897";        // lock
         case "logout": return "\uE879";      // exit_to_app
         case "reboot": return "\uE863";      // autorenew
+        case "ethernet": return "\uE328";    // router (wired connection)
         // battery is battery_std (U+E1A5) rather than battery_full (U+E1A4). The
         // filled face is solid inside its outline, so at 16-20px it reads as a
         // featureless block, and it asserts "full" at every charge level -- a
