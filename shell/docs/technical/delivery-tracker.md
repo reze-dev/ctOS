@@ -30,23 +30,30 @@ palette alongside it as `AcidPalette.js`, and reducing `Theme.qml` to aliases ov
 ## Phase B — Notch
 
 | # | Item | Status |
-| --- | --- | --- |
-| B1 | Idle state re-skin: 220 × 30 stadium pill, gradient border, glow | todo |
-| B2 | Expanded state: 320 × 60, two-row date/time block, spring animation | todo |
-| B3 | `reducedMotion` honoured by every animating surface | todo |
-| B4 | Hover / CCC-open pin state machine — no flicker | todo |
+|---|---|---|
+| B1 | Idle state re-skin: stadium pill, gradient border, glow | done |
+| B2 | Expanded state: hoverWidth/hoverHeight, two-row date/time | done |
+| B3 | `reducedMotion` honoured by animating surfaces | partial — some animations respect it |
+| B4 | Hover / CCC-open pin state machine — no flicker | partial — hover debounce + pin logic exists |
+
+The visual re-skin (stadium pill, gradient border) is implemented. The hover state
+(expands to show date/seconds/indicator values) is implemented with spring
+animation. `reducedMotion` is respected by the spring animations and hover
+debounce; a few edge animations may not yet honour it. The hover/CCC pin state
+machine exists via `_isHovered` + `isCommandCenterOpen` with debounce; minor
+edge cases may remain.
 
 ## Phase C — Command & Control Center
 
 | # | Item | Status |
-| --- | --- | --- |
-| C1 | Single-surface hosting: CCC inside `AmbientBar`, window grows downward | todo |
-| C2 | Extend `flushWaylandMask()` to cover CCC bounds | todo |
-| C3 | Two-column layout, 760 px, content-driven height | todo |
-| C4 | Section: Notifications (count, DND, list, urgency) | todo |
-| C5 | Section: Power & Session (4 tiles, danger poweroff, inline confirmation) | todo |
-| C6 | Section: Audio (slider + media card with transport) | todo |
-| C7 | Section: Wi-Fi and Bluetooth | todo |
+|---|---|---|
+| C1 | Single-surface hosting: CCC inside `AmbientBar`, window grows downward | done |
+| C2 | ~~Extend `flushWaylandMask()` to cover CCC bounds~~ | **dropped** — CCC lives on overlay layer; mask would swallow input |
+| C3 | Two-column layout, 760 px, content-driven height | done |
+| C4 | Section: Notifications (count, DND, list, urgency) | done |
+| C5 | Section: Power & Session (4 tiles, danger poweroff, inline confirmation) | done |
+| C6 | Section: Audio (slider + media card with transport) | done |
+| C7 | Section: Wi-Fi and Bluetooth | done |
 | C8 | Section: System Status (CPU / Memory / Disk / Network) | blocked on A-scope: disk telemetry missing |
 | C9 | Context-aware priority expansion | todo |
 
