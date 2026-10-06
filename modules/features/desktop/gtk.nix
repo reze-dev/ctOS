@@ -3,8 +3,6 @@
 let
   cfg = config.ctos.features.gtk;
 
-  _ = builtins.trace "GTK MODULE LOADED" (builtins.add 1 1);
-
   hmGtkModule =
     {
       config,
@@ -38,8 +36,8 @@ let
           gtk-cursor-theme-size = 20
         '';
 
-        xdg.mimeApps.user = {
-          "inode/directory" = "org.gnome.Nautilus.desktop";
+        xdg.mimeApps.defaultApplications = {
+          "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
         };
 
         home.sessionVariables = {
@@ -61,10 +59,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # nixpkgs.overlays = [ (self: super: {
-    #   libadwaita = super.libadwaita.override { enableThemes = true; };
-    # }) ];
-
     home-manager.sharedModules = [ hmGtkModule ];
   };
 }
