@@ -33,7 +33,7 @@ let
           };
           defaultApplications = {
             # File manager / Directories
-            "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+            "inode/directory" = [ "org.kde.dolphin.desktop" ];
 
             # Web / URLs
             "text/html" = [ "zen-beta.desktop" ];
@@ -42,46 +42,51 @@ let
             "x-scheme-handler/about" = [ "zen-beta.desktop" ];
             "x-scheme-handler/unknown" = [ "zen-beta.desktop" ];
 
-            # Images (qView primary, GNOME Loupe, Nautilus fallback)
+            # Images (qView primary)
             "image/png" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.gwenview.desktop"
+              "org.kde.dolphin.desktop"
             ];
             "image/jpeg" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.gwenview.desktop"
+              "org.kde.dolphin.desktop"
             ];
             "image/webp" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.gwenview.desktop"
+              "org.kde.dolphin.desktop"
             ];
             "image/gif" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.gwenview.desktop"
+              "org.kde.dolphin.desktop"
             ];
             "image/svg+xml" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
+              "org.kde.gwenview.desktop"
               "zen-beta.desktop"
             ];
             "image/bmp" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.gwenview.desktop"
             ];
             "image/tiff" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.gwenview.desktop"
             ];
             "image/avif" = [
               "com.interversehq.qView.desktop"
               "org.gnome.Loupe.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.gwenview.desktop"
             ];
 
             # Video & Audio (MPV)
@@ -96,37 +101,37 @@ let
             "audio/wav" = [ "mpv.desktop" ];
             "audio/ogg" = [ "mpv.desktop" ];
 
-            # PDF & Documents (Evince primary, Zathura terminal fallback, Zen)
+            # PDF & Documents (Okular primary, Zathura terminal fallback, Zen)
             "application/pdf" = [
-              "org.gnome.Evince.desktop"
+              "org.kde.okular.desktop"
               "org.pwmt.zathura.desktop"
               "zen-beta.desktop"
             ];
             "application/epub+zip" = [
-              "org.gnome.Evince.desktop"
+              "org.kde.okular.desktop"
               "org.pwmt.zathura.desktop"
             ];
             "application/postscript" = [
-              "org.gnome.Evince.desktop"
+              "org.kde.okular.desktop"
               "org.pwmt.zathura.desktop"
             ];
 
-            # Archives (GNOME Archive Manager / Nautilus)
+            # Archives (Ark / Dolphin)
             "application/zip" = [
-              "org.gnome.FileRoller.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.ark.desktop"
+              "org.kde.dolphin.desktop"
             ];
             "application/x-tar" = [
-              "org.gnome.FileRoller.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.ark.desktop"
+              "org.kde.dolphin.desktop"
             ];
             "application/x-7z-compressed" = [
-              "org.gnome.FileRoller.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.ark.desktop"
+              "org.kde.dolphin.desktop"
             ];
             "application/x-compressed-tar" = [
-              "org.gnome.FileRoller.desktop"
-              "org.gnome.Nautilus.desktop"
+              "org.kde.ark.desktop"
+              "org.kde.dolphin.desktop"
             ];
 
             # Plain Text, Markdown & Code (Emacs / Neovim)
@@ -194,27 +199,31 @@ in
     xdg.portal = {
       enable = true;
       extraPortals = with pkgs; [
+        kdePackages.xdg-desktop-portal-kde
         xdg-desktop-portal-gtk
       ];
       config = {
         common = {
           default = [
+            "kde"
             "gtk"
           ];
-          "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+          "org.freedesktop.impl.portal.FileChooser" = [ "kde" ];
         };
         niri = {
           default = [
+            "kde"
             "gtk"
           ];
-          "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+          "org.freedesktop.impl.portal.FileChooser" = [ "kde" ];
         };
         hyprland = {
           default = [
             "hyprland"
+            "kde"
             "gtk"
           ];
-          "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+          "org.freedesktop.impl.portal.FileChooser" = [ "kde" ];
         };
       };
     };
