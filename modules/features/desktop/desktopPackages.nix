@@ -23,10 +23,7 @@ in
       hyprcursor
       hypridle
       hyprlock
-      hyprpolkitagent
-      kdePackages.dolphin
-      kdePackages.dolphin-plugins
-      kdePackages.okular
+      polkit_gnome
       libnotify
       mpv
       obsidian
