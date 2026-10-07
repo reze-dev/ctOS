@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Wayland
 import "../core"
 import "../services"
 import "./components"
@@ -13,8 +14,64 @@ PanelWindow {
     signal toggleNetwork
 
     color: "transparent"
-    focusable: true
+    
+    property bool toggleMask: false
+
+    Component {
+        id: maskComponent
+        Region {
+            Region {
+                x: leftSections.x
+                y: leftSections.y
+                width: leftSections.width
+                height: leftSections.height
+            }
+            Region {
+                x: centerSection.x
+                y: centerSection.y
+                width: centerSection.width
+                height: centerSection.height
+            }
+            Region {
+                x: rightSections.x
+                y: rightSections.y
+                width: rightSections.width
+                height: rightSections.height
+            }
+        }
+    }
+
+    property var maskA: maskComponent.createObject(root)
+    property var maskB: maskComponent.createObject(root)
+
+    mask: toggleMask ? maskA : maskB
+
+    function flushWaylandMask() {
+        toggleMask = !toggleMask;
+    }
+
+    Connections {
+        target: leftSections
+        function onWidthChanged() { root.flushWaylandMask(); }
+        function onXChanged() { root.flushWaylandMask(); }
+    }
+    Connections {
+        target: centerSection
+        function onWidthChanged() { root.flushWaylandMask(); }
+        function onHeightChanged() { root.flushWaylandMask(); }
+        function onXChanged() { root.flushWaylandMask(); }
+    }
+    Connections {
+        target: rightSections
+        function onWidthChanged() { root.flushWaylandMask(); }
+        function onXChanged() { root.flushWaylandMask(); }
+    }
+    WlrLayershell.namespace: "ctos-bar"
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     implicitHeight: Theme.barHeight
+
+    exclusionMode: ExclusionMode.Normal
+    exclusiveZone: Theme.barHeight
 
     anchors {
         left: true
@@ -35,7 +92,8 @@ PanelWindow {
 
         anchors.left: parent.left
         anchors.leftMargin: Theme.barPaddingHorizontal
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.topMargin: (Theme.barHeight - height) / 2
         spacing: Theme.spacingMedium
 
         // Section 1: Blume Logo
@@ -146,7 +204,8 @@ PanelWindow {
         id: centerSection
 
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.topMargin: (Theme.barHeight - (Theme.barHeight - 6)) / 2
     }
 
     // =========================================================================
@@ -158,7 +217,8 @@ PanelWindow {
 
         anchors.right: parent.right
         anchors.rightMargin: Theme.barPaddingHorizontal
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.topMargin: (Theme.barHeight - height) / 2
         spacing: Theme.spacingMedium
 
         // Section 4: Network

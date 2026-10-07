@@ -64,6 +64,23 @@ Singleton {
         {
             category: "Actions",
             isApp: false,
+            id: "action-toggle-radial-settings",
+            name: "Radial Settings",
+            title: "Radial Settings",
+            description: "Open Watch Dogs inspired radial settings and skill tree matrix",
+            desc: "Open Watch Dogs inspired radial settings and skill tree matrix",
+            icon: "preferences-system",
+            enabled: true,
+            destructive: false,
+            disabledNote: "",
+            keywords: ["settings", "radial", "skill", "tree", "config", "options", "preferences", "matrix"],
+            execute: function () {
+                OverlayController.toggleRadialSettings();
+            }
+        },
+        {
+            category: "Actions",
+            isApp: false,
             id: "action-toggle-cpu-hex",
             name: "Toggle CPU Hex-Grid",
             title: "Toggle CPU Hex-Grid",

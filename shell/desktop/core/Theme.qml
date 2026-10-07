@@ -11,11 +11,18 @@ Singleton {
     readonly property color accent: root.acidGreen
     readonly property color accentGreen: root.acidGreen
     readonly property color accentRed: root.warningRed
+    readonly property color pastelBlue: Qt.rgba(119/255, 181/255, 254/255, 1.0)
+    readonly property color pastelOrange: Qt.rgba(255/255, 150/255, 79/255, 1.0)
 
     // SECTION Accent Primitives
 
     readonly property color acidGreen: "#1BFD9C"
     readonly property color active: root.acidGreen
+
+    // SECTION Experimental / New Colors
+    
+    // Proposing placeholder values for the "two new colors". 
+    // These can be updated once the exact hex codes are provided.
 
     // SECTION Surface & Background Tokens
 

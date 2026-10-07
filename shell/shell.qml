@@ -130,6 +130,14 @@ Scope {
         function toggleNetwork(): void {
             root.toggleNetwork(null);
         }
+
+        function toggleRadialSettings(): void {
+            OverlayController.toggleRadialSettings();
+        }
+
+        function openRadialSettings(): void {
+            OverlayController.openRadialSettings();
+        }
     }
 
     function resolveTargetScreen(): var {
@@ -423,6 +431,8 @@ Scope {
         }
     }
 
+
+
     Variants {
         id: barVariants
 
@@ -564,12 +574,6 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "ctos-overlay"
 
-        Shortcut {
-            enabled: OverlayController.isOverlayActive
-            sequence: "Escape"
-
-            onActivated: OverlayController.close()
-        }
 
         Rectangle {
             id: scrimVisual
@@ -613,15 +617,17 @@ Scope {
                 source: "desktop/surfaces/SystemRail.qml"
             }
 
-            Loader {
-                id: eventLogLoader
+            // EventLog moved to DynamicIsland
 
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.top: parent.top
+
+            Loader {
+                id: radialSettingsLoader
+
+                anchors.fill: parent
                 asynchronous: false
-                source: "desktop/surfaces/EventLog.qml"
-                visible: OverlayController.activeSurface === OverlayController.Surface.EventLog
+                active: true
+                visible: OverlayController.activeSurface === OverlayController.Surface.RadialSettings
+                source: "desktop/surfaces/radial/RadialSettings.qml"
             }
         }
     }
@@ -653,6 +659,34 @@ Scope {
             id: toastStack
             width: 340
             anchors.horizontalCenter: parent.horizontalCenter
+        }
+    }
+    PanelWindow {
+        id: eventLogPopupHost
+
+        screen: overlayHost.screen
+        color: "transparent"
+        visible: OverlayController.activeSurface === OverlayController.Surface.EventLog && overlayHost.screen !== null
+        exclusionMode: ExclusionMode.Ignore
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        WlrLayershell.namespace: "ctos-eventlog-popup"
+
+        anchors {
+            top: true
+        }
+        margins {
+            top: 3
+        }
+
+        implicitWidth: 360
+        implicitHeight: 508
+
+        EventLog {
+            id: eventLogPopup
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
         }
     }
 

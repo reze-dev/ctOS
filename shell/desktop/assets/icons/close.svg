@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M200,56L56,200M200,200L56,56"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 960" width="24" height="24" fill="white">
+  <g transform="translate(0, 960)">
+    <path d="M256-213.85 213.85-256l224-224-224-224L256-746.15l224 224 224-224L746.15-704l-224 224 224 224L704-213.85l-224-224-224 224Z" fill="white" />
+  </g>
 </svg>

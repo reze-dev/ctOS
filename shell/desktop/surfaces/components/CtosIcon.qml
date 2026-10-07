@@ -60,7 +60,8 @@ Item {
             "volume", "volume-mute", "volume-slash",
             "microphone", "microphone-slash",
             "lock", "reboot", "power", "logout",
-            "brightness", "gear", "warning", "close", "check"
+            "brightness", "gear", "warning", "close", "check",
+            "keyboard", "mouse", "shield", "palette", "terminal", "memory", "cpu", "layers", "storage", "dark-mode", "tune", "policy", "bolt", "timer", "verified-user", "visibility-off", "vpn-key"
         ];
         if (direct.indexOf(norm) !== -1) {
             if (norm === "volume-slash") return "volume-mute";
@@ -114,7 +115,7 @@ Item {
         return "";
     }
 
-    // TIER 1: Phosphor System SVGs (Dynamic Recoloring)
+    // TIER 1: Phosphor / Material System SVGs (Dynamic Recoloring)
     Item {
         id: tier1Container
         anchors.fill: parent
@@ -136,7 +137,7 @@ Item {
             source: systemSvg
             colorization: 1.0
             colorizationColor: root.effectiveColor
-            visible: root.isSystemIcon && (systemSvg.status !== Image.Error && systemSvg.status !== Image.Null)
+            visible: root.isSystemIcon && (systemSvg.status !== Image.Error && systemSvg.status !== Image.Null) && root.effectiveColor !== "transparent"
         }
     }
 
@@ -176,7 +177,7 @@ Item {
             source: fallbackRawImage
             colorization: 1.0
             colorizationColor: root.effectiveColor
-            visible: root.isShaderFallback
+            visible: root.isShaderFallback && root.effectiveColor !== "transparent"
         }
     }
 }

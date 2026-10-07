@@ -20,13 +20,13 @@ test_case "T8.04.2" "ShellWiring: IpcHandler contains toggleEventLog method rout
 assert_grep "function\s+toggleEventLog\s*\(\)\s*:\s*void" "${SHELL_QML}" "IpcHandler must declare toggleEventLog(): void"
 assert_grep "OverlayController\.toggleEventLog\(\)" "${SHELL_QML}" "toggleEventLog must invoke OverlayController.toggleEventLog()"
 
-test_case "T8.04.3" "ShellWiring: eventLogLoader has source desktop/surfaces/EventLog.qml"
-assert_grep "id:\s*eventLogLoader" "${SHELL_QML}" "Loader with id eventLogLoader must exist"
-assert_grep 'source:\s*"desktop/surfaces/EventLog\.qml"' "${SHELL_QML}" "eventLogLoader source must be desktop/surfaces/EventLog.qml"
+test_case "T8.04.3" "ShellWiring: eventLogPopupHost PanelWindow declared with target screen"
+assert_grep "id:\s*eventLogPopupHost" "${SHELL_QML}" "PanelWindow eventLogPopupHost must exist"
+assert_grep "screen:\s*overlayHost\.screen" "${SHELL_QML}" "eventLogPopupHost must target overlayHost screen"
 
-test_case "T8.04.4" "ShellWiring: eventLogLoader visibility bound to OverlayController.Surface.EventLog"
-assert_grep "visible:\s*OverlayController\.activeSurface\s*===\s*OverlayController\.Surface\.EventLog" "${SHELL_QML}" "eventLogLoader visible condition must check Surface.EventLog"
-assert_grep "asynchronous:\s*false" "${SHELL_QML}" "eventLogLoader must be synchronous (asynchronous: false)"
+test_case "T8.04.4" "ShellWiring: eventLogPopupHost visibility bound to OverlayController.Surface.EventLog"
+assert_grep "visible:\s*OverlayController\.activeSurface\s*===\s*OverlayController\.Surface\.EventLog" "${SHELL_QML}" "eventLogPopupHost visible must check activeSurface"
+assert_grep "EventLog\s*\{" "${SHELL_QML}" "eventLogPopupHost must instantiate EventLog"
 
 test_case "T8.04.5" "ShellWiring: notificationToastHost PanelWindow declared with target screen"
 assert_grep "id:\s*notificationToastHost" "${SHELL_QML}" "PanelWindow notificationToastHost must exist"
