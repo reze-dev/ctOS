@@ -26,7 +26,7 @@ import subprocess
 import random
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-SYSTEM_RAIL_PATH = os.path.join(PROJECT_ROOT, "shell/desktop/surfaces/SystemRail.qml")
+SYSTEM_RAIL_PATH = os.path.join(PROJECT_ROOT, "shell/desktop/surfaces/CommandCenter.qml")
 
 total_tests = 0
 passed_tests = 0
@@ -48,7 +48,7 @@ def check(test_id: str, description: str, condition: bool, details: str = ""):
 # ==============================================================================
 def test_ast_and_lexical():
     print("\n--- Phase 1: AST & Static Invariant Auditing ---")
-    assert os.path.exists(SYSTEM_RAIL_PATH), f"SystemRail.qml not found at {SYSTEM_RAIL_PATH}"
+    assert os.path.exists(SYSTEM_RAIL_PATH), f"CommandCenter.qml not found at {SYSTEM_RAIL_PATH}"
     
     with open(SYSTEM_RAIL_PATH, "r", encoding="utf-8") as f:
         content = f.read()
@@ -78,7 +78,7 @@ def test_ast_and_lexical():
     # 4. Extract all Process nodes
     process_pattern = re.compile(r'Process\s*\{([^}]+)\}', re.DOTALL)
     process_matches = list(process_pattern.finditer(content))
-    check("AST.PROCESS.COUNT", "Exactly 4 Process nodes declared in SystemRail.qml", len(process_matches) == 4, f"found {len(process_matches)}")
+    check("AST.PROCESS.COUNT", "Exactly 4 Process nodes declared in CommandCenter.qml", len(process_matches) == 4, f"found {len(process_matches)}")
 
     process_dict = {}
     allowlisted_binaries = {"loginctl", "hyprctl", "systemctl"}
@@ -136,8 +136,8 @@ def test_ast_and_lexical():
 # ==============================================================================
 # Phase 2: State Machine & Rapid Keypress Simulation
 # ==============================================================================
-class SystemRailStateMachine:
-    """Accurate state machine replicating SystemRail.qml logic."""
+class CommandCenterStateMachine:
+    """Accurate state machine replicating CommandCenter.qml logic."""
     def __init__(self):
         self.currentView = "main"
         self.selectedSsid = ""
@@ -202,7 +202,7 @@ def test_rapid_keypress_and_state_machine():
     # Scenario 1: Burst of Escape keys in confirmation mode
     actions = ["logout", "reboot", "poweroff"]
     for action in actions:
-        sm = SystemRailStateMachine()
+        sm = CommandCenterStateMachine()
         sm.triggerConfirmation(action)
         check(f"STATE.CONFIRM.{action.upper()}.TRIGGER", f"Trigger {action} confirmation sets isConfirming", sm.isConfirming and sm.confirmationAction == action)
         
@@ -213,7 +213,7 @@ def test_rapid_keypress_and_state_machine():
         check(f"STATE.CONFIRM.{action.upper()}.BURST_ESC.OVERLAY_CLOSED", f"Burst Escape safely requests overlay close", sm.overlayClosedCount >= 1)
 
     # Scenario 2: Rapid Re-entrancy & State Switching
-    sm2 = SystemRailStateMachine()
+    sm2 = CommandCenterStateMachine()
     sm2.triggerConfirmation("logout")
     sm2.handleEscape() # Escape 1 cancels logout
     sm2.triggerConfirmation("reboot")
@@ -223,13 +223,13 @@ def test_rapid_keypress_and_state_machine():
     check("STATE.REENTRANCY.POWEROFF_ONLY", "Only poweroff executed after rapid state transitions", sm2.executions["poweroff"] == 1 and sm2.executions["logout"] == 0 and sm2.executions["reboot"] == 0, f"executions: {sm2.executions}")
 
     # Scenario 3: Illegal / Injected confirmationAction
-    sm3 = SystemRailStateMachine()
+    sm3 = CommandCenterStateMachine()
     sm3.triggerConfirmation("rm -rf /; loginctl kill-user")
     sm3.executeConfirmation()
     check("STATE.SECURITY.ILLEGAL_ACTION_IGNORED", "Illegal injected action does not match any Process and executes nothing", sum(sm3.executions.values()) == 0, f"executions: {sm3.executions}")
 
     # Scenario 4: Tiered Escape Trapping in WiFi View
-    sm4 = SystemRailStateMachine()
+    sm4 = CommandCenterStateMachine()
     sm4.currentView = "wifi"
     sm4.selectedSsid = "HackerNet"
     sm4.confirmingForgetSsid = "HackerNet"
@@ -252,7 +252,7 @@ def test_rapid_keypress_and_state_machine():
     check("STATE.TIERED_ESC.STEP4_CLOSE", "Escape 4 closes overlay from main view", sm4.overlayClosedCount == prev_close + 1)
 
     # Scenario 5: High-Priority Escape during Confirmation in Wifi View
-    sm5 = SystemRailStateMachine()
+    sm5 = CommandCenterStateMachine()
     sm5.currentView = "wifi"
     sm5.selectedSsid = "TargetNet"
     sm5.triggerConfirmation("logout")
@@ -260,7 +260,7 @@ def test_rapid_keypress_and_state_machine():
     check("STATE.ESC_PRIORITY.CONFIRM_OVER_WIFI", "Escape cancels confirmation before resetting wifi sub-states", not sm5.isConfirming and sm5.selectedSsid == "TargetNet" and sm5.currentView == "wifi")
 
     # Scenario 6: Monte Carlo Random Transition Fuzzing (5,000 iterations)
-    sm_fuzz = SystemRailStateMachine()
+    sm_fuzz = CommandCenterStateMachine()
     events = [
         "trigger_logout", "trigger_reboot", "trigger_poweroff", "trigger_bogus",
         "escape", "burst_escape_10", "cancel_click", "confirm_click", "lock_click"

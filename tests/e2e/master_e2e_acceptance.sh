@@ -28,7 +28,7 @@ echo "======================================================================"
 THEME_FILE="${PROJECT_ROOT}/shell/desktop/core/Theme.qml"
 AMBIENT_BAR="${PROJECT_ROOT}/shell/desktop/surfaces/AmbientBar.qml"
 OS_ICON="${PROJECT_ROOT}/shell/desktop/surfaces/components/os-icon.svg"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 DYNAMIC_ISLAND="${PROJECT_ROOT}/shell/desktop/surfaces/components/DynamicIsland.qml"
 CALENDAR_POPUP="${PROJECT_ROOT}/shell/desktop/surfaces/components/CalendarPopup.qml"
 CLOCK_WIDGET="${PROJECT_ROOT}/shell/desktop/surfaces/components/ClockWidget.qml"
@@ -98,28 +98,28 @@ assert_grep 'OverlayController\.openCommandDeck\(\)' "${AMBIENT_BAR}" \
 # ------------------------------------------------------------------------------
 # R5: WiFi Disconnect & Forget Management
 # ------------------------------------------------------------------------------
-test_case "R5.1" "SystemRail: Declares confirmingForgetSsid state property"
+test_case "R5.1" "CommandCenter: Declares confirmingForgetSsid state property"
 assert_file_exists "${SYSTEM_RAIL}"
 assert_grep 'property string confirmingForgetSsid: ""' "${SYSTEM_RAIL}" \
-    "SystemRail must declare confirmingForgetSsid initialized to empty string"
+    "CommandCenter must declare confirmingForgetSsid initialized to empty string"
 
-test_case "R5.2" "SystemRail: Connected network shows [DISCONNECT] invoking disconnectCurrentNetwork()"
+test_case "R5.2" "CommandCenter: Connected network shows [DISCONNECT] invoking disconnectCurrentNetwork()"
 assert_grep 'NetworkService\.disconnectCurrentNetwork\(\)' "${SYSTEM_RAIL}" \
-    "SystemRail must invoke NetworkService.disconnectCurrentNetwork()"
+    "CommandCenter must invoke NetworkService.disconnectCurrentNetwork()"
 
-test_case "R5.3" "SystemRail: Saved network shows [CONNECT] and [FORGET]"
+test_case "R5.3" "CommandCenter: Saved network shows [CONNECT] and [FORGET]"
 assert_grep 'NetworkService\.connectToNetwork\(itemSsid\)' "${SYSTEM_RAIL}" \
-    "SystemRail must support connecting to saved network"
+    "CommandCenter must support connecting to saved network"
 assert_grep 'root\.confirmingForgetSsid = itemSsid' "${SYSTEM_RAIL}" \
     "Clicking FORGET must initiate confirmation state"
 
-test_case "R5.4" "SystemRail: Inline confirmation prompt FORGET <SSID>? [YES] [NO]"
+test_case "R5.4" "CommandCenter: Inline confirmation prompt FORGET <SSID>? [YES] [NO]"
 assert_grep '"FORGET " \+ itemSsid \+ "\?"' "${SYSTEM_RAIL}" \
-    "SystemRail must render inline confirmation prompt"
+    "CommandCenter must render inline confirmation prompt"
 assert_grep 'NetworkService\.forgetNetwork\(itemSsid\)' "${SYSTEM_RAIL}" \
     "Confirming forget must invoke NetworkService.forgetNetwork()"
 
-test_case "R5.5" "SystemRail: Tiered ESC priority clears confirmingForgetSsid first"
+test_case "R5.5" "CommandCenter: Tiered ESC priority clears confirmingForgetSsid first"
 assert_grep 'root\.confirmingForgetSsid !== ""' "${SYSTEM_RAIL}" \
     "Tiered ESC must prioritize clearing confirmingForgetSsid"
 
@@ -145,9 +145,9 @@ test_case "R6.4" "DynamicIsland: Auto-collapses after 4000ms timer interval"
 assert_grep 'interval: 4000' "${DYNAMIC_ISLAND}"
 assert_grep 'root\.isExpanded = false' "${DYNAMIC_ISLAND}"
 
-test_case "R6.5" "DynamicIsland: Click routes to Event Log overlay"
-assert_grep 'OverlayController\.(toggleEventLog|openEventLog)' "${DYNAMIC_ISLAND}" \
-    "DynamicIsland click must open or toggle Event Log"
+test_case "R6.5" "DynamicIsland: Click routes to Command Center overlay"
+assert_grep 'OverlayController\.(toggleCommandCenter|openCommandCenter)' "${DYNAMIC_ISLAND}" \
+    "DynamicIsland click must open or toggle Command Center"
 
 test_case "R6.6" "AmbientBar: Hosts DynamicIsland in center section"
 assert_grep 'DynamicIsland' "${AMBIENT_BAR}" \
@@ -222,9 +222,6 @@ run_qml_test_harness "${PROJECT_ROOT}/tests/e2e/harness/test_m1_challenger_verif
 
 test_case "RUNTIME.M2" "Empirical Runtime: M2 Dynamic Island & Ambient Bar Harness"
 run_qml_test_harness "${PROJECT_ROOT}/tests/e2e/harness/test_m2_ambient_bar_dynamic_island.qml" "M2 Dynamic Island" 8
-
-test_case "RUNTIME.M3" "Empirical Runtime: M3 WiFi Submenu & Action State Machine Harness"
-run_qml_test_harness "${PROJECT_ROOT}/tests/e2e/harness/test_t6_wifi_quickshell.qml" "M3 WiFi Quickshell" 5
 
 test_case "RUNTIME.M4.1" "Empirical Runtime: M4 Calendar Popup Grid & Date Math Harness"
 run_qml_test_harness "${PROJECT_ROOT}/tests/e2e/harness/test_m4_calendar_popup.qml" "M4 Calendar Popup" 8

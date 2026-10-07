@@ -31,7 +31,7 @@ Scope {
         Loader {
             id: railLoader
             anchors.fill: parent
-            source: "file:///home/reze/Projects/ctOS/shell/desktop/surfaces/SystemRail.qml"
+            source: "file:///home/reze/Projects/ctOS/shell/desktop/surfaces/CommandCenter.qml"
         }
     }
 
@@ -89,16 +89,16 @@ Scope {
             }
 
             // -------------------------------------------------------------
-            // Phase 2: SystemRail View & Tier 1/2 UI State Coherence
+            // Phase 2: CommandCenter View & Tier 1/2 UI State Coherence
             // -------------------------------------------------------------
             const rail = railLoader.item;
-            assertCondition("ADV.UI.RAIL.LOAD", "SystemRail loaded cleanly",
+            assertCondition("ADV.UI.RAIL.LOAD", "CommandCenter loaded cleanly",
                 rail !== null && rail !== undefined,
                 "railLoader.status=" + railLoader.status);
 
             if (rail) {
                 rail.navigateToWifi();
-                assertCondition("ADV.UI.RAIL.NAV", "SystemRail navigated to wifi view",
+                assertCondition("ADV.UI.RAIL.NAV", "CommandCenter navigated to wifi view",
                     rail.currentView === "wifi",
                     "currentView=" + rail.currentView);
             }

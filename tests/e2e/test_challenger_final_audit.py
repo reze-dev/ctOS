@@ -339,10 +339,10 @@ def verify_criterion_3(qs_bin: str, qmllint_bin: str, mock_dir: str):
     record("AC3.RUN.EXIT_0", "test_r3_wifi_popup_quickshell.qml exited 0", proc_qs.returncode == 0, f"code={proc_qs.returncode}")
     record("AC3.RUN.PASS_INDICATOR", "Harness output contains PASS: R3 WIFI POPUP", "PASS: R3 WIFI POPUP" in proc_qs.stdout)
 
-    # 3.3 Verify SystemRail.qml Invariance
-    proc_git = subprocess.run(["git", "diff", "HEAD~3", "--", str(SURFACES_DIR / "SystemRail.qml")],
+    # 3.3 Verify CommandCenter.qml Invariance
+    proc_git = subprocess.run(["git", "diff", "HEAD~3", "--", str(SURFACES_DIR / "CommandCenter.qml")],
                               cwd=str(PROJECT_ROOT), capture_output=True, text=True)
-    record("AC3.SYSTEMRAIL.UNTOUCHED", "SystemRail.qml is 100% untouched in git history", proc_git.stdout.strip() == "")
+    record("AC3.SYSTEMRAIL.UNTOUCHED", "CommandCenter.qml is 100% untouched in git history", proc_git.stdout.strip() == "")
 
     # 3.4 Verify qmllint on all touched files
     if qmllint_bin:

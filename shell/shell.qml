@@ -25,13 +25,20 @@ Scope {
     property bool networkVisible: false
     property var networkScreen: null
 
+    signal calendarDismissRequested
+
+    property bool _calendarDismissing: false
+
     function toggleCalendar(targetScreen): void {
+        if (root._calendarDismissing) {
+            return;
+        }
+
         const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
 
         if (root.calendarVisible) {
             if (targetScreen === null || targetScreen === undefined || root.calendarScreen === resolved) {
-                root.calendarVisible = false;
-                root.calendarScreen = null;
+                root.closeCalendar();
             } else {
                 root.calendarScreen = resolved;
             }
@@ -44,8 +51,11 @@ Scope {
     }
 
     function closeCalendar(): void {
+        root._calendarDismissing = true;
         root.calendarVisible = false;
         root.calendarScreen = null;
+        root.calendarDismissRequested();
+        root._calendarDismissing = false;
     }
 
     function toggleBluetooth(targetScreen): void {
@@ -107,17 +117,15 @@ Scope {
             OverlayController.toggleCommandDeck();
         }
 
-        function toggleSystemRail(): void {
-            OverlayController.toggle(OverlayController.Surface.SystemRail);
+        function toggleCommandCenter(): void {
+            OverlayController.toggleCommandCenter();
         }
 
         function closeOverlay(): void {
             OverlayController.close();
         }
 
-        function toggleEventLog(): void {
-            OverlayController.toggleEventLog();
-        }
+        
 
         function toggleCalendar(): void {
             root.toggleCalendar(null);
@@ -440,6 +448,7 @@ Scope {
 
         delegate: Component {
             AmbientBar {
+                id: ambientBar
                 required property var modelData
 
                 screen: modelData
@@ -447,6 +456,20 @@ Scope {
                 onToggleCalendar: root.toggleCalendar(modelData)
                 onToggleBluetooth: root.toggleBluetooth(modelData)
                 onToggleNetwork: root.toggleNetwork(modelData)
+
+                Connections {
+                    target: root
+
+                    function onCalendarDismissRequested(): void {
+                        ambientBar.closeCalendar();
+                    }
+
+                    function onCalendarVisibleChanged(): void {
+                        if (!root.calendarVisible) {
+                            ambientBar.closeCalendar();
+                        }
+                    }
+                }
             }
         }
     }
@@ -605,18 +628,6 @@ Scope {
                 source: "desktop/surfaces/CommandDeck.qml"
             }
 
-            Loader {
-                id: systemRailLoader
-
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.top: parent.top
-                asynchronous: false
-                active: true
-                visible: OverlayController.activeSurface === OverlayController.Surface.SystemRail
-                source: "desktop/surfaces/SystemRail.qml"
-            }
-
             // EventLog moved to DynamicIsland
 
 
@@ -661,17 +672,18 @@ Scope {
             anchors.horizontalCenter: parent.horizontalCenter
         }
     }
+
     PanelWindow {
-        id: eventLogPopupHost
+        id: commandCenterPopupHost
 
         screen: overlayHost.screen
         color: "transparent"
-        visible: OverlayController.activeSurface === OverlayController.Surface.EventLog && overlayHost.screen !== null
+        visible: OverlayController.activeSurface === OverlayController.Surface.CommandCenter && overlayHost.screen !== null
         exclusionMode: ExclusionMode.Ignore
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        WlrLayershell.namespace: "ctos-eventlog-popup"
+        WlrLayershell.namespace: "ctos-commandcenter-popup"
 
         anchors {
             top: true
@@ -680,11 +692,11 @@ Scope {
             top: 3
         }
 
-        implicitWidth: 360
-        implicitHeight: 508
+        implicitWidth: commandCenterPopup.implicitWidth
+        implicitHeight: commandCenterPopup.implicitHeight
 
-        EventLog {
-            id: eventLogPopup
+        CommandCenter {
+            id: commandCenterPopup
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
         }

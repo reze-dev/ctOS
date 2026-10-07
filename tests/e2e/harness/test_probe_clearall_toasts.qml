@@ -35,7 +35,7 @@ Scope {
             console.log("  _toastTimers keys:  " + JSON.stringify(Object.keys(NotificationService._toastTimers)));
             console.log("  _notificationObjects keys: " + JSON.stringify(Object.keys(NotificationService._notificationObjects)));
 
-            // User clicks [CLEAR ALL] in EventLog
+            // User clicks [CLEAR ALL] in CommandCenter
             console.log("ACTION: NotificationService.clearAll()");
             NotificationService.clearAll();
 

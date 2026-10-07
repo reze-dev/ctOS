@@ -19,7 +19,7 @@ Scope {
         width: 360
         height: 800
 
-        EventLog {
+        CommandCenter {
             id: eventLogSurface
             anchors.fill: parent
         }
@@ -31,7 +31,7 @@ Scope {
         repeat: false
 
         onTriggered: {
-            console.log("=== BEGIN ADVERSARIAL STRESS SUITE FOR EventLog Surface ===");
+            console.log("=== BEGIN ADVERSARIAL STRESS SUITE FOR CommandCenter Surface ===");
             NotificationService.clearAll();
 
             // -------------------------------------------------------------
@@ -136,7 +136,7 @@ Scope {
 
             // Final Evaluation
             if (failures.length === 0) {
-                console.log("=== PASS: T8 EventLog Surface Adversarial Suite ===");
+                console.log("=== PASS: T8 CommandCenter Surface Adversarial Suite ===");
             } else {
                 console.error("=== FAIL: " + failures.length + " ADVERSARIAL CHECKS FAILED ===");
                 for (let f = 0; f < failures.length; ++f) {

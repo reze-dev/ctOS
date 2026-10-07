@@ -32,13 +32,13 @@ else
 fi
 
 test_case "T1.30.4" "Command Deck Routing: OverlayController provides rail opening with action or rail toggle"
-check_qml_method "${OVERLAY_CTRL}" "openSystemRail" || assert_grep "openSystemRail" "${OVERLAY_CTRL}" "openSystemRail required"
+check_qml_method "${OVERLAY_CTRL}" "openCommandCenter" || assert_grep "openCommandCenter" "${OVERLAY_CTRL}" "openCommandCenter required"
 
 test_case "T1.30.5" "Command Deck Routing: Destructive action execution routes to System Rail"
-if grep -q -E "(openSystemRail|SystemRail)" <(grep -A 15 "action-reboot" "${ACTION_REG}"); then
-    assert_grep -E "(openSystemRail|SystemRail)" <(grep -A 15 "action-reboot" "${ACTION_REG}") "action-reboot must route to SystemRail"
+if grep -q -E "(openCommandCenter|CommandCenter)" <(grep -A 15 "action-reboot" "${ACTION_REG}"); then
+    assert_grep -E "(openCommandCenter|CommandCenter)" <(grep -A 15 "action-reboot" "${ACTION_REG}") "action-reboot must route to CommandCenter"
 else
-    test_skip "Pending M3: ActionRegistry destructive routing to SystemRail pending M3"
+    test_skip "Pending M3: ActionRegistry destructive routing to CommandCenter pending M3"
 fi
 
 report_summary

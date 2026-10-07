@@ -97,7 +97,7 @@ popup_path = os.path.join(COMPONENTS_DIR, "BluetoothPopup.qml")
 qmldir_path = os.path.join(COMPONENTS_DIR, "qmldir")
 bar_path = os.path.join(DESKTOP_DIR, "surfaces", "AmbientBar.qml")
 shell_path = os.path.join(SHELL_DIR, "shell.qml")
-rail_path = os.path.join(DESKTOP_DIR, "surfaces", "SystemRail.qml")
+rail_path = os.path.join(DESKTOP_DIR, "surfaces", "CommandCenter.qml")
 
 check("BT.M4.FILE.01", "BluetoothPopup.qml exists in components/", os.path.isfile(popup_path), popup_path)
 check("BT.M4.FILE.02", "components/qmldir exists", os.path.isfile(qmldir_path), qmldir_path)
@@ -340,21 +340,21 @@ check("BT.M4.SHELL.POPUP_MOUNT", "bluetoothPopupHost mounts BluetoothPopup and w
 with open(rail_path, "r", encoding="utf-8") as f:
     rail_content = f.read()
 
-check("BT.M4.RAIL.PROCESSES", "SystemRail declares lockProcess, logoutProcess, rebootProcess, poweroffProcess",
+check("BT.M4.RAIL.PROCESSES", "CommandCenter declares lockProcess, logoutProcess, rebootProcess, poweroffProcess",
       "id: lockProcess" in rail_content and
       "id: logoutProcess" in rail_content and
       "id: rebootProcess" in rail_content and
       "id: poweroffProcess" in rail_content,
       "all 4 declarative Process nodes declared")
 
-check("BT.M4.RAIL.CMDS", "SystemRail session processes use allowlisted discrete command arrays",
+check("BT.M4.RAIL.CMDS", "CommandCenter session processes use allowlisted discrete command arrays",
       bool(re.search(r'id:\s*lockProcess[\s\S]*?command:\s*\[\s*"loginctl",\s*"lock-session"\s*\]', rail_content)) and
       bool(re.search(r'id:\s*logoutProcess[\s\S]*?command:\s*\[\s*"hyprctl",\s*"dispatch",\s*"exit"\s*\]', rail_content)) and
       bool(re.search(r'id:\s*rebootProcess[\s\S]*?command:\s*\[\s*"systemctl",\s*"reboot"\s*\]', rail_content)) and
       bool(re.search(r'id:\s*poweroffProcess[\s\S]*?command:\s*\[\s*"systemctl",\s*"poweroff"\s*\]', rail_content)),
       "discrete arrays without shell wrappers verified")
 
-check("BT.M4.RAIL.SAFETY", "SystemRail processes initialize with running: false and zero running: true",
+check("BT.M4.RAIL.SAFETY", "CommandCenter processes initialize with running: false and zero running: true",
       rail_content.count("running: false") >= 4 and
       rail_content.count("running: true") == 0,
       f"running:false count={rail_content.count('running: false')}, running:true count={rail_content.count('running: true')}")
@@ -379,7 +379,7 @@ check("BT.M4.STATIC.FORMAT", "check-format reports zero violations across shell/
 
 qmllint_res = subprocess.run(["qmllint", "-I", "shell/desktop", popup_path, bar_path, shell_path, rail_path],
                              capture_output=True, text=True, cwd=PROJECT_ROOT)
-check("BT.M4.STATIC.QMLLINT", "qmllint succeeds on BluetoothPopup, AmbientBar, shell.qml, and SystemRail",
+check("BT.M4.STATIC.QMLLINT", "qmllint succeeds on BluetoothPopup, AmbientBar, shell.qml, and CommandCenter",
       qmllint_res.returncode == 0, "syntax verification clean")
 
 print("=" * 80)

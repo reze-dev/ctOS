@@ -12,7 +12,7 @@ BLUETOOTH_POPUP="${PROJECT_ROOT}/shell/desktop/surfaces/components/BluetoothPopu
 COMPONENTS_QMLDIR="${PROJECT_ROOT}/shell/desktop/surfaces/components/qmldir"
 AMBIENT_BAR="${PROJECT_ROOT}/shell/desktop/surfaces/AmbientBar.qml"
 SHELL_QML="${PROJECT_ROOT}/shell/shell.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 
 POPUP_RUNTIME_HARNESS="${HARNESS_DIR}/test_m4_bluetooth_popup_runtime.qml"
 SHELL_WIRING_HARNESS="${HARNESS_DIR}/test_m4_bluetooth_shell_wiring.qml"
@@ -118,12 +118,12 @@ assert_grep "onCloseRequested:\s*root\.closeBluetooth\(\)" "${SHELL_QML}" "Bluet
 # ------------------------------------------------------------------------------
 # 5. System Rail Session Actions Verification
 # ------------------------------------------------------------------------------
-test_case "T1.M4.BT.22" "SystemRail: declarative Process session nodes"
-assert_grep "id:\s*lockProcess" "${SYSTEM_RAIL}" "lockProcess must be declared in SystemRail"
-assert_grep "id:\s*logoutProcess" "${SYSTEM_RAIL}" "logoutProcess must be declared in SystemRail"
-assert_grep "id:\s*rebootProcess" "${SYSTEM_RAIL}" "rebootProcess must be declared in SystemRail"
-assert_grep "id:\s*poweroffProcess" "${SYSTEM_RAIL}" "poweroffProcess must be declared in SystemRail"
-assert_not_grep "running:\s*true" "${SYSTEM_RAIL}" "SystemRail must not contain static running: true"
+test_case "T1.M4.BT.22" "CommandCenter: declarative Process session nodes"
+assert_grep "id:\s*lockProcess" "${SYSTEM_RAIL}" "lockProcess must be declared in CommandCenter"
+assert_grep "id:\s*logoutProcess" "${SYSTEM_RAIL}" "logoutProcess must be declared in CommandCenter"
+assert_grep "id:\s*rebootProcess" "${SYSTEM_RAIL}" "rebootProcess must be declared in CommandCenter"
+assert_grep "id:\s*poweroffProcess" "${SYSTEM_RAIL}" "poweroffProcess must be declared in CommandCenter"
+assert_not_grep "running:\s*true" "${SYSTEM_RAIL}" "CommandCenter must not contain static running: true"
 
 # ------------------------------------------------------------------------------
 # 6. Format & Isolation Compliance

@@ -64,7 +64,7 @@ if grep -q "root\.toggleCalendar()" "${CLOCK_WIDGET}"; then
 else
     assert_grep "root\.toggleCalendar()" "${AMBIENT_BAR}" "AmbientBar clockMouseArea must trigger root.toggleCalendar()"
 fi
-assert_not_grep "OverlayController\.toggleEventLog\(\)" "${CLOCK_WIDGET}" "ClockWidget must no longer call toggleEventLog()"
+assert_not_grep "OverlayController\.toggleCommandCenter\(\)" "${CLOCK_WIDGET}" "ClockWidget must no longer call toggleCommandCenter()"
 
 test_case "T1.M4.11" "AmbientBar: declares toggleCalendar signal"
 check_qml_signal "${AMBIENT_BAR}" "toggleCalendar"

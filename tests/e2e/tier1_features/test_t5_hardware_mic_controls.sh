@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 AUDIO_SVC="${PROJECT_ROOT}/shell/desktop/services/AudioService.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 
 test_case "T1.23.1" "Hardware Microphone: AudioService tracks Pipewire.defaultAudioSource"
 if grep -q "defaultAudioSource" "${AUDIO_SVC}"; then

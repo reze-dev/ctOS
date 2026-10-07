@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 NET_SVC="${PROJECT_ROOT}/shell/desktop/services/NetworkService.qml"
 SHELL_QML="${PROJECT_ROOT}/shell/shell.qml"
 
@@ -35,7 +35,7 @@ if grep -qE '(availableNetworks|wifiSubmenu)' "${SYSTEM_RAIL}"; then
     assert_grep -E 'elide:\s*Text\.ElideRight' "${SYSTEM_RAIL}" \
         "SSID delegate text must enforce Text.ElideRight to prevent overflow"
     assert_grep -E '(width:\s*360|implicitWidth:\s*360)' "${SYSTEM_RAIL}" \
-        "SystemRail width must remain strictly 360px invariant"
+        "CommandCenter width must remain strictly 360px invariant"
 else
     test_skip "Pending M2: Long SSID elision boundary pending M2"
 fi
@@ -54,7 +54,7 @@ fi
 test_case "T2.30.5" "Wi-Fi Submenu Boundary: Escape key hierarchy unwinds submenu state before panel dismissal"
 if grep -qE '(currentView|currentSubmenu)' "${SYSTEM_RAIL}"; then
     assert_grep -E 'Keys\.onEscapePressed' "${SYSTEM_RAIL}" \
-        "SystemRail must handle Keys.onEscapePressed"
+        "CommandCenter must handle Keys.onEscapePressed"
     assert_grep -E '(currentView\s*=\s*"main"|currentSubmenu\s*=\s*""|currentView\s*=\s*""|passwordPrompt|selectedSsid\s*=\s*"")' "${SYSTEM_RAIL}" \
         "Escape in submenu must unwind submenu/prompt state before closing panel"
 else
@@ -64,7 +64,7 @@ fi
 test_case "T2.30.6" "Wi-Fi Submenu Boundary: Panel dismissal resets submenu state and clears password buffer"
 if grep -qE '(currentView|currentSubmenu)' "${SYSTEM_RAIL}"; then
     assert_grep -E 'onOverlayClosed' "${SYSTEM_RAIL}" \
-        "SystemRail must hook onOverlayClosed"
+        "CommandCenter must hook onOverlayClosed"
     assert_grep -E '(currentSubmenu\s*=\s*""|currentView\s*=\s*"main"|currentView\s*=\s*""|password\s*=\s*""|text\s*=\s*"")' "${SYSTEM_RAIL}" \
         "onOverlayClosed must reset view state and clear secrets"
 else

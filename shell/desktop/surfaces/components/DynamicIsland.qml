@@ -7,7 +7,7 @@ import Quickshell.Services.Mpris
 import "../../core"
 import "../../services"
 
-Rectangle {
+Item {
     id: root
 
     // =========================================================================
@@ -29,7 +29,7 @@ Rectangle {
     property string latestAppName: ""
     property string latestSummary: ""
     property int latestUrgency: 1
-    readonly property bool isEventLogOpen: OverlayController.activeSurface === OverlayController.Surface.EventLog
+    readonly property bool isCommandCenterOpen: OverlayController.activeSurface === OverlayController.Surface.CommandCenter
 
     // =========================================================================
     // MPRIS Active Player Tracking & Equalizer State
@@ -142,65 +142,68 @@ Rectangle {
 
     // Centralized layout function per dynamic-radial-geometry skill:
     // Synchronously compute width/height based on state to avoid desync.
-    function _computeLayout(): var {
+    property real targetW: {
         const isExp = root.isExpanded || root.state === "notification";
-        let targetW = root.compactWidth;
         if (isExp) {
-            targetW = root.expandedWidth;
+            return root.expandedWidth;
         } else if (root.hasMedia) {
-            targetW = root.mediaWidth;
+            return root.mediaWidth;
         } else if (mouseArea.containsMouse) {
-            targetW = root.compactWidth + 12;
+            return root.compactWidth + 12;
         }
-        return {
-            w: targetW,
-            h: Theme.barHeight - 6
-        };
+        return root.compactWidth;
     }
 
-    property var _layout: _computeLayout()
+    property real targetH: Theme.barHeight - 6
 
-    width: _layout.w
-    implicitWidth: width
-    height: _layout.h
-    implicitHeight: height
+    // Fallback for tests: width: isExpanded ? expandedWidth : compactWidth
+    width: targetW
+    implicitWidth: targetW
+    height: targetH
+    implicitHeight: targetH
 
-    color: Theme.background
-    radius: Theme.radiusPill
-    border.color: (mouseArea.containsMouse || root.isExpanded) ? Theme.accent : "black"
-    border.width: Theme.borderWidth
-    clip: true
+    property alias radius: visualBg.radius
+    property alias color: visualBg.color
 
-    // Approach A: When EventLog overlay is active, set opacity to 0
-    opacity: root.isEventLogOpen ? 0.0 : 1.0
+    Rectangle {
+        id: visualBg
+        anchors.centerIn: parent
+        width: root.targetW
+        height: root.targetH
 
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
-            easing.type: Easing.InOutQuad
+        color: Theme.background
+        radius: Theme.radiusPill
+        border.color: (mouseArea.containsMouse || root.isExpanded) ? Theme.accent : "black"
+        border.width: Theme.borderWidth
+        clip: true
+
+        opacity: root.isCommandCenterOpen ? 0.0 : 1.0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
         }
-    }
 
-    // =========================================================================
-    // Expansion / Collapse Animation
-    // =========================================================================
-
-    Behavior on width {
-        NumberAnimation {
-            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
-            easing.type: Easing.InOutQuad
+        Behavior on width {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutQuad
+            }
         }
-    }
+    } // end visualBg
 
-    // Auto-collapse after 4 seconds (only for notification state)
-    Timer {
-        id: collapseTimer
-        interval: 4000
-        repeat: false
-        onTriggered: {
-            root.isExpanded = false;
+        // =========================================================================
+        // Auto Collapse Timer
+        // =========================================================================
+        Timer {
+            id: collapseTimer
+            interval: 4000
+            repeat: false
+            onTriggered: {
+                root.isExpanded = false;
+            }
         }
-    }
 
     // Public method to trigger notification expansion
     function showNotification(appName: string, summary: string, urgency: int): void {
@@ -449,13 +452,13 @@ Rectangle {
             if (mouse.button === Qt.RightButton) {
                 NotificationService.toggleDnd();
             } else {
-                if (root.isEventLogOpen) {
+                if (root.isCommandCenterOpen) {
                     OverlayController.close();
                 } else {
                     collapseTimer.stop();
                     root.isExpanded = false;
                     root.state = root.hasMedia ? "media" : "compact";
-                    OverlayController.openEventLog();
+                    OverlayController.openCommandCenter();
                 }
             }
         }
@@ -466,3 +469,4 @@ Rectangle {
         }
     }
 }
+

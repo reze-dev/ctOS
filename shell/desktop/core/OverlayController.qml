@@ -11,7 +11,7 @@ Singleton {
         None,
         CommandDeck,
         SystemRail,
-        EventLog,
+        CommandCenter,
         RadialSettings
     }
 
@@ -20,7 +20,7 @@ Singleton {
         None,
         CommandDeck,
         SystemRail,
-        EventLog,
+        CommandCenter,
         RadialSettings
     }
 
@@ -34,12 +34,12 @@ Singleton {
     property int activeSurface: OverlayController.Surface.None
     readonly property bool isOverlayActive: activeSurface !== OverlayController.Surface.None
     readonly property int surfaceCommandDeck: 1
-    readonly property int surfaceEventLog: 3
+    readonly property int surfaceSystemRail: 2
+    readonly property int surfaceCommandCenter: 3
     readonly property int surfaceRadialSettings: 4
 
     // Explicit constants for zero-ambiguity access
     readonly property int surfaceNone: 0
-    readonly property int surfaceSystemRail: 2
 
     property string pendingSessionAction: ""
     property string pendingRailView: ""
@@ -127,26 +127,25 @@ Singleton {
     function openCommandDeck(): void {
         _setSurface(OverlayController.Surface.CommandDeck);
     }
-    function openEventLog(): void {
-        _setSurface(OverlayController.Surface.EventLog);
+    
+    function openCommandCenter(): void {
+        _setSurface(OverlayController.Surface.CommandCenter);
     }
     function openRadialSettings(): void {
         _setSurface(OverlayController.Surface.RadialSettings);
     }
-    function openSystemRail(): void {
-        _setSurface(OverlayController.Surface.SystemRail);
-    }
+    
     function openSystemRailWithAction(action: string): void {
         pendingSessionAction = action;
-        openSystemRail();
+        openCommandCenter();
     }
     function openWifiSubmenu(): void {
         pendingRailView = "wifi";
-        openSystemRail();
+        openCommandCenter();
     }
     function openSystemRailWithSubmenu(submenu: string): void {
         pendingRailView = submenu;
-        openSystemRail();
+        openCommandCenter();
     }
 
     // Keyboard Focus Management Contract:
@@ -176,15 +175,14 @@ Singleton {
     function toggleCommandDeck(): void {
         toggle(OverlayController.Surface.CommandDeck);
     }
-    function toggleEventLog(): void {
-        toggle(OverlayController.Surface.EventLog);
+    
+    function toggleCommandCenter(): void {
+        toggle(OverlayController.Surface.CommandCenter);
     }
     function toggleRadialSettings(): void {
         toggle(OverlayController.Surface.RadialSettings);
     }
-    function toggleSystemRail(): void {
-        toggle(OverlayController.Surface.SystemRail);
-    }
+    
     function unregisterFocusTarget(surface: int): void {
         delete _focusTargets[surface];
     }

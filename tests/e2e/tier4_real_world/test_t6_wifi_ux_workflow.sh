@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Tier 4 - Scenario 13: Full Wi-Fi UX Workflow (Discovery, Routing & Connection)
-# Exercised: AmbientBar NetworkWidget -> OverlayController -> SystemRail Submenu
+# Exercised: AmbientBar NetworkWidget -> OverlayController -> CommandCenter Submenu
 #            -> SSID Discovery -> Password Prompt -> Safe Connect -> Disable Radio
 #            -> Escape Back & Dismissal
 # ==============================================================================
@@ -13,7 +13,7 @@ source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 NET_WIDGET="${PROJECT_ROOT}/shell/desktop/surfaces/components/NetworkWidget.qml"
 OVERLAY_CTRL="${PROJECT_ROOT}/shell/desktop/core/OverlayController.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 NET_SVC="${PROJECT_ROOT}/shell/desktop/services/NetworkService.qml"
 SHELL_QML="${PROJECT_ROOT}/shell/shell.qml"
 
@@ -24,18 +24,18 @@ assert_file_exists "${SYSTEM_RAIL}"
 assert_file_exists "${NET_SVC}"
 assert_file_exists "${SHELL_QML}"
 
-if grep -qE '(availableNetworks)' "${NET_SVC}" && grep -qE '(currentView|currentSubmenu)' "${SYSTEM_RAIL}" && grep -qE 'OverlayController\.(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}"; then
+if grep -qE '(availableNetworks)' "${NET_SVC}" && grep -qE '(currentView|currentSubmenu)' "${SYSTEM_RAIL}" && grep -qE 'OverlayController\.(openWifiSubmenu|openCommandCenterWithSubmenu)' "${NET_WIDGET}"; then
     # Step 1: Ambient Bar NetworkWidget integration
-    assert_grep -E 'OverlayController\.(openWifiSubmenu|openSystemRailWithSubmenu)' "${NET_WIDGET}" \
+    assert_grep -E 'OverlayController\.(openWifiSubmenu|openCommandCenterWithSubmenu)' "${NET_WIDGET}" \
         "Step 1: NetworkWidget must route to Wi-Fi Submenu"
 
     # Step 2: OverlayController deep-linking API
-    assert_grep -E 'function\s+(openWifiSubmenu|openSystemRailWithSubmenu)' "${OVERLAY_CTRL}" \
+    assert_grep -E 'function\s+(openWifiSubmenu|openCommandCenterWithSubmenu)' "${OVERLAY_CTRL}" \
         "Step 2: OverlayController must declare deep-linking method"
 
     # Step 3: System Rail view state machine
     assert_grep -E '(currentView\s*=\s*"wifi"|currentSubmenu\s*=\s*"wifi")' "${SYSTEM_RAIL}" \
-        "Step 3: SystemRail must transition to wifi submenu view"
+        "Step 3: CommandCenter must transition to wifi submenu view"
 
     # Step 4: Discovered SSIDs list
     assert_grep -E 'NetworkService\.availableNetworks' "${SYSTEM_RAIL}" \
@@ -69,7 +69,7 @@ if grep -qE '(availableNetworks)' "${NET_SVC}" && grep -qE '(currentView|current
 
     # Step 10: Engineering compliance audit
     assert_not_grep -i "greeter" "${NET_SVC}" "Step 10: Zero greeter in NetworkService"
-    assert_not_grep -i "greeter" "${SYSTEM_RAIL}" "Step 10: Zero greeter in SystemRail"
+    assert_not_grep -i "greeter" "${SYSTEM_RAIL}" "Step 10: Zero greeter in CommandCenter"
     check_no_polling_loops "${NET_SVC}"
     check_no_polling_loops "${SYSTEM_RAIL}"
 else

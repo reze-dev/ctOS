@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Tier 3 - Pairwise 19: Microphone Mute + Mic Volume Wheel Interaction
-# Interaction: AudioService (F9) + SystemRail Mic Slider (F9)
+# Interaction: AudioService (F9) + CommandCenter Mic Slider (F9)
 # ==============================================================================
 set -u
 set +e

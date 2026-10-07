@@ -203,10 +203,10 @@ Scope {
                 railText.text === "=",
                 "text=" + railText.text);
 
-            OverlayController.toggleSystemRail();
-            assertCondition("CHAL.M2.BAR.28", "Rail button triggers toggleSystemRail() (surface 2)",
-                OverlayController.activeSurface === OverlayController.Surface.SystemRail,
-                "activeSurface=" + OverlayController.activeSurface + " (SystemRail=2)");
+            OverlayController.toggleCommandCenter();
+            assertCondition("CHAL.M2.BAR.28", "Rail button triggers toggleCommandCenter() (surface 2)",
+                OverlayController.activeSurface === OverlayController.Surface.CommandCenter,
+                "activeSurface=" + OverlayController.activeSurface + " (CommandCenter=2)");
 
             OverlayController.close();
             } catch (err) {

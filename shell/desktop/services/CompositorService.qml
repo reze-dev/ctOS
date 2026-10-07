@@ -43,23 +43,16 @@ Singleton {
         return root._localFocusedWorkspaceId;
     }
 
-    // Reactive list of workspace objects: [{ id: int, name: string, active: bool, focused: bool, urgent: bool }]
-    // When _adapter is unavailable or when running under Niri, provides a deterministic list of 5 workspaces (ids 1..5)
-    readonly property list<var> workspaces: {
+    // Reactive list of workspace objects or IDs
+    // When _adapter is unavailable or when running under Niri, provides a deterministic stable list of 5 workspaces (ids 1..5)
+    readonly property var workspaces: {
         if (root._adapter && root._adapter.available && !root.isNiri) {
             const list = root._adapter.workspaces;
             if (list && list.length > 0) {
                 return list;
             }
         }
-        const focusedId = root.focusedWorkspaceId > 0 ? root.focusedWorkspaceId : 1;
-        return [
-            { id: 1, name: "1", active: (focusedId === 1), focused: (focusedId === 1), urgent: false },
-            { id: 2, name: "2", active: (focusedId === 2), focused: (focusedId === 2), urgent: false },
-            { id: 3, name: "3", active: (focusedId === 3), focused: (focusedId === 3), urgent: false },
-            { id: 4, name: "4", active: (focusedId === 4), focused: (focusedId === 4), urgent: false },
-            { id: 5, name: "5", active: (focusedId === 5), focused: (focusedId === 5), urgent: false }
-        ];
+        return [1, 2, 3, 4, 5];
     }
 
     // Address handle of the currently focused window ("" when none focused)
@@ -105,6 +98,7 @@ Singleton {
                 root._adapter.switchToWorkspace(id);
             }
         } else if (root.isNiri) {
+            niriFocusProcess.running = false;
             niriFocusProcess.command = ["niri", "msg", "action", "focus-workspace", String(id)];
             niriFocusProcess.running = true;
             root._localFocusedWorkspaceId = id;

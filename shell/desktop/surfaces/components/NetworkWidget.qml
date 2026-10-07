@@ -27,7 +27,7 @@ Item {
         return "NET";
     }
 
-    implicitHeight: layout.implicitHeight
+    implicitHeight: 36
     implicitWidth: layout.implicitWidth
 
     function openWifiSubmenu(): void {

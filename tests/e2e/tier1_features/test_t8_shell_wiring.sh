@@ -16,17 +16,17 @@ ADVERSARIAL_HARNESS="${HARNESS_DIR}/test_t8_shell_wiring_adversarial.qml"
 test_case "T8.04.1" "ShellWiring: shell/shell.qml exists"
 assert_file_exists "${SHELL_QML}" "shell/shell.qml must exist"
 
-test_case "T8.04.2" "ShellWiring: IpcHandler contains toggleEventLog method routing to OverlayController"
-assert_grep "function\s+toggleEventLog\s*\(\)\s*:\s*void" "${SHELL_QML}" "IpcHandler must declare toggleEventLog(): void"
-assert_grep "OverlayController\.toggleEventLog\(\)" "${SHELL_QML}" "toggleEventLog must invoke OverlayController.toggleEventLog()"
+test_case "T8.04.2" "ShellWiring: IpcHandler contains toggleCommandCenter method routing to OverlayController"
+assert_grep "function\s+toggleCommandCenter\s*\(\)\s*:\s*void" "${SHELL_QML}" "IpcHandler must declare toggleCommandCenter(): void"
+assert_grep "OverlayController\.toggleCommandCenter\(\)" "${SHELL_QML}" "toggleCommandCenter must invoke OverlayController.toggleCommandCenter()"
 
 test_case "T8.04.3" "ShellWiring: eventLogPopupHost PanelWindow declared with target screen"
 assert_grep "id:\s*eventLogPopupHost" "${SHELL_QML}" "PanelWindow eventLogPopupHost must exist"
 assert_grep "screen:\s*overlayHost\.screen" "${SHELL_QML}" "eventLogPopupHost must target overlayHost screen"
 
-test_case "T8.04.4" "ShellWiring: eventLogPopupHost visibility bound to OverlayController.Surface.EventLog"
-assert_grep "visible:\s*OverlayController\.activeSurface\s*===\s*OverlayController\.Surface\.EventLog" "${SHELL_QML}" "eventLogPopupHost visible must check activeSurface"
-assert_grep "EventLog\s*\{" "${SHELL_QML}" "eventLogPopupHost must instantiate EventLog"
+test_case "T8.04.4" "ShellWiring: eventLogPopupHost visibility bound to OverlayController.Surface.CommandCenter"
+assert_grep "visible:\s*OverlayController\.activeSurface\s*===\s*OverlayController\.Surface\.CommandCenter" "${SHELL_QML}" "eventLogPopupHost visible must check activeSurface"
+assert_grep "CommandCenter\s*\{" "${SHELL_QML}" "eventLogPopupHost must instantiate CommandCenter"
 
 test_case "T8.04.5" "ShellWiring: notificationToastHost PanelWindow declared with target screen"
 assert_grep "id:\s*notificationToastHost" "${SHELL_QML}" "PanelWindow notificationToastHost must exist"

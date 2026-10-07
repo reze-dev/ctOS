@@ -69,6 +69,7 @@ Item {
         }
 
         var aliases = {
+            "globe": "wifi",
             "system-lock-screen": "lock",
             "preferences-system": "gear",
             "preferences-desktop-notification-bell": "warning",

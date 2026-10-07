@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 ACTION_REG="${PROJECT_ROOT}/shell/desktop/core/ActionRegistry.qml"
 THEME_FILE="${PROJECT_ROOT}/shell/desktop/core/Theme.qml"
 
@@ -26,7 +26,7 @@ if [[ -f "${SYSTEM_RAIL}" ]]; then
     # Discrete array reboot command
     assert_grep -E '\[\s*"systemctl"\s*,\s*"reboot"\s*\]' "${SYSTEM_RAIL}" "Reboot must use discrete ['systemctl', 'reboot']"
 else
-    test_skip "Pending M2/M3: SystemRail confirmation view pending implementation"
+    test_skip "Pending M2/M3: CommandCenter confirmation view pending implementation"
 fi
 
 report_summary

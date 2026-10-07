@@ -7,13 +7,13 @@ import desktop.surfaces
 Scope {
     id: root
 
-    // Container for EventLog surface under test
+    // Container for CommandCenter surface under test
     Item {
         id: container
         width: 360
         height: 800
 
-        EventLog {
+        CommandCenter {
             id: eventLogSurface
             anchors.fill: parent
         }
@@ -29,12 +29,12 @@ Scope {
             try {
                 // 1. Root Component Verification
                 if (!eventLogSurface) {
-                    console.error("ASSERTION_FAILED: EventLog surface component failed to instantiate");
+                    console.error("ASSERTION_FAILED: CommandCenter surface component failed to instantiate");
                     Qt.quit();
                     return;
                 }
                 if (eventLogSurface.width !== 360 || eventLogSurface.implicitWidth !== 360) {
-                    console.error("ASSERTION_FAILED: EventLog root width must be 360");
+                    console.error("ASSERTION_FAILED: CommandCenter root width must be 360");
                     Qt.quit();
                     return;
                 }
@@ -109,9 +109,9 @@ Scope {
                 }
 
                 // 6. Verify Escape Key / Dismissal Contract
-                OverlayController.openEventLog();
-                if (OverlayController.activeSurface !== OverlayController.Surface.EventLog) {
-                    console.error("ASSERTION_FAILED: OverlayController.activeSurface should be EventLog");
+                OverlayController.openCommandCenter();
+                if (OverlayController.activeSurface !== OverlayController.Surface.CommandCenter) {
+                    console.error("ASSERTION_FAILED: OverlayController.activeSurface should be CommandCenter");
                     Qt.quit();
                     return;
                 }
@@ -132,7 +132,7 @@ Scope {
                     return;
                 }
 
-                console.log("=== PASS: T8 EventLog Surface Runtime Suite ===");
+                console.log("=== PASS: T8 CommandCenter Surface Runtime Suite ===");
             } catch (err) {
                 console.error("ASSERTION_FAILED: Unexpected error: " + err);
             }

@@ -13,7 +13,7 @@ DESKTOP_DIR="${PROJECT_ROOT}/shell/desktop"
 OVERLAY_CTRL="${DESKTOP_DIR}/core/OverlayController.qml"
 COMPOSITOR_SVC="${DESKTOP_DIR}/services/CompositorService.qml"
 
-test_case "T3.13" "Pairwise: Switching from CommandDeck to SystemRail transitions focus without stale title"
+test_case "T3.13" "Pairwise: Switching from CommandDeck to CommandCenter transitions focus without stale title"
 if [[ -f "${OVERLAY_CTRL}" && -f "${COMPOSITOR_SVC}" ]]; then
     assert_file_exists "${OVERLAY_CTRL}"
     assert_file_exists "${COMPOSITOR_SVC}"

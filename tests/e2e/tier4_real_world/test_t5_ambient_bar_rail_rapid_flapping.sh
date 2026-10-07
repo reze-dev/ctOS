@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Tier 4 - Scenario 12: AmbientBar '=' Toggle Rapid Flapping
-# Exercised: railBtn, OverlayController.toggleSystemRail(), Scrim Backdrop
+# Exercised: railBtn, OverlayController.toggleCommandCenter(), Scrim Backdrop
 # ==============================================================================
 set -u
 set +e
@@ -18,11 +18,11 @@ assert_file_exists "${AMBIENT_BAR}"
 assert_file_exists "${OVERLAY_CTRL}"
 assert_file_exists "${SHELL_QML}"
 
-# Verify railBtn is wired to toggleSystemRail()
-assert_grep "OverlayController\.toggleSystemRail" "${AMBIENT_BAR}" "railBtn must call toggleSystemRail()"
+# Verify railBtn is wired to toggleCommandCenter()
+assert_grep "OverlayController\.toggleCommandCenter" "${AMBIENT_BAR}" "railBtn must call toggleCommandCenter()"
 
 # Verify toggle method implements idempotent state transitions
-assert_grep -E "function toggleSystemRail\(\)" "${OVERLAY_CTRL}" "toggleSystemRail function required"
+assert_grep -E "function toggleCommandCenter\(\)" "${OVERLAY_CTRL}" "toggleCommandCenter function required"
 assert_grep -E "close\(\)" "${OVERLAY_CTRL}" "close() required"
 
 # Scrim backdrop click handling

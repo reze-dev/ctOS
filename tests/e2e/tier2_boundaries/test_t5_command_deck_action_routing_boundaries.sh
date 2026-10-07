@@ -21,7 +21,7 @@ test_case "T2.30.2" "Deck Routing Boundary: Selecting an action closes CommandDe
 assert_grep "OverlayController\.close\(\)" "${COMMAND_DECK}" "CommandDeck must close when an action is executed"
 
 test_case "T2.30.3" "Deck Routing Boundary: Destructive session actions are not directly executed from Deck"
-# In ActionRegistry, destructive actions must route to SystemRail, not call systemctl reboot directly
+# In ActionRegistry, destructive actions must route to CommandCenter, not call systemctl reboot directly
 reboot_action=$(grep -A 12 '"action-reboot"' "${ACTION_REG}")
 assert_not_match 'systemctl' "${reboot_action}" "CommandDeck ActionRegistry must not execute reboot directly"
 

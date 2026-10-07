@@ -34,7 +34,7 @@ Singleton {
 
     // SECTION Dimensions & Layout Constants
 
-    readonly property int barHeight: 40
+    readonly property int barHeight: 36
     readonly property int barPaddingHorizontal: 8
     readonly property int barPaddingVertical: 0
     readonly property color border: root.gray200

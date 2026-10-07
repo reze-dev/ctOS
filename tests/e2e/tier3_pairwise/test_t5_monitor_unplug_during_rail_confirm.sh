@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Tier 3 - Pairwise 22: Monitor Unplug during System Rail Confirmation
-# Interaction: shell.qml screen handler (F7) + SystemRail Confirmation (F13)
+# Interaction: shell.qml screen handler (F7) + CommandCenter Confirmation (F13)
 # ==============================================================================
 set -u
 set +e

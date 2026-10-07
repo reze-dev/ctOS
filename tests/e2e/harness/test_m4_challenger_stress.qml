@@ -281,7 +281,7 @@ FloatingWindow {
                 break;
 
             case 2:
-                console.log("--- PHASE 3: Overlay Preemption (CommandDeck, SystemRail, EventLog) ---");
+                console.log("--- PHASE 3: Overlay Preemption (CommandDeck, CommandCenter, CommandCenter) ---");
 
                 // Test 3.1: CommandDeck Preemption
                 toggleCalendar(mockScreen1);
@@ -294,24 +294,24 @@ FloatingWindow {
                     "calendarVisible=" + calendarVisible + ", activeSurface=" + OverlayController.activeSurface);
                 OverlayController.close();
 
-                // Test 3.2: SystemRail Preemption
+                // Test 3.2: CommandCenter Preemption
                 toggleCalendar(mockScreen2);
-                assertCondition("CHAL.M4.OVR.03", "Calendar opened prior to SystemRail preemption",
+                assertCondition("CHAL.M4.OVR.03", "Calendar opened prior to CommandCenter preemption",
                     calendarVisible === true, "visible=" + calendarVisible);
 
-                OverlayController.openSystemRail();
-                assertCondition("CHAL.M4.OVR.04", "Opening SystemRail immediately dismisses calendar",
+                OverlayController.openCommandCenter();
+                assertCondition("CHAL.M4.OVR.04", "Opening CommandCenter immediately dismisses calendar",
                     calendarVisible === false && calendarScreen === null,
                     "calendarVisible=" + calendarVisible + ", activeSurface=" + OverlayController.activeSurface);
                 OverlayController.close();
 
-                // Test 3.3: EventLog Preemption
+                // Test 3.3: CommandCenter Preemption
                 toggleCalendar(mockScreen1);
-                assertCondition("CHAL.M4.OVR.05", "Calendar opened prior to EventLog preemption",
+                assertCondition("CHAL.M4.OVR.05", "Calendar opened prior to CommandCenter preemption",
                     calendarVisible === true, "visible=" + calendarVisible);
 
-                OverlayController.openEventLog();
-                assertCondition("CHAL.M4.OVR.06", "Opening EventLog immediately dismisses calendar",
+                OverlayController.openCommandCenter();
+                assertCondition("CHAL.M4.OVR.06", "Opening CommandCenter immediately dismisses calendar",
                     calendarVisible === false && calendarScreen === null,
                     "calendarVisible=" + calendarVisible + ", activeSurface=" + OverlayController.activeSurface);
                 OverlayController.close();
@@ -324,7 +324,7 @@ FloatingWindow {
                     "calendarVisible=" + calendarVisible);
                 OverlayController.close();
 
-                // Test 3.5: SystemRail Submenu (WiFi) Preemption
+                // Test 3.5: CommandCenter Submenu (WiFi) Preemption
                 toggleCalendar(mockScreen1);
                 OverlayController.openWifiSubmenu();
                 assertCondition("CHAL.M4.OVR.08", "openWifiSubmenu() dismisses calendar",

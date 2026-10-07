@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 AUDIO_SVC="${PROJECT_ROOT}/shell/desktop/services/AudioService.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 
 test_case "T1.22.1" "Hardware Volume: AudioService exposes reactive volume and muted properties"
 assert_file_exists "${AUDIO_SVC}"
@@ -28,11 +28,11 @@ check_qml_method "${AUDIO_SVC}" "stepVolume" || assert_grep "stepVolume" "${AUDI
 test_case "T1.22.4" "Hardware Volume: AudioService.toggleMute toggles mute state"
 check_qml_method "${AUDIO_SVC}" "toggleMute" || assert_grep "toggleMute" "${AUDIO_SVC}" "toggleMute method required"
 
-test_case "T1.22.5" "Hardware Volume: SystemRail or AudioService binds volume slider to PipeWire sink"
+test_case "T1.22.5" "Hardware Volume: CommandCenter or AudioService binds volume slider to PipeWire sink"
 if [[ -f "${SYSTEM_RAIL}" ]]; then
-    assert_grep -E "(AudioService\.volume|AudioService\.setVolume)" "${SYSTEM_RAIL}" "SystemRail must bind to AudioService volume"
+    assert_grep -E "(AudioService\.volume|AudioService\.setVolume)" "${SYSTEM_RAIL}" "CommandCenter must bind to AudioService volume"
 else
-    test_skip "Pending M2: SystemRail slider binding pending SystemRail.qml"
+    test_skip "Pending M2: CommandCenter slider binding pending CommandCenter.qml"
 fi
 
 report_summary

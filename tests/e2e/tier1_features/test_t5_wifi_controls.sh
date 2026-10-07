@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 NET_SVC="${PROJECT_ROOT}/shell/desktop/services/NetworkService.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 
 test_case "T1.24.1" "Wi-Fi Controls: NetworkService exposes available, isConnected, and networkName"
 assert_file_exists "${NET_SVC}"

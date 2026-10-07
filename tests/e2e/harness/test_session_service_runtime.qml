@@ -54,7 +54,7 @@ Scope {
             id: railLoader
             anchors.fill: parent
             active: false
-            source: "file://" + (Quickshell.env("PROJECT_ROOT") || "/home/reze/Projects/ctOS") + "/shell/desktop/surfaces/SystemRail.qml"
+            source: "file://" + (Quickshell.env("PROJECT_ROOT") || "/home/reze/Projects/ctOS") + "/shell/desktop/surfaces/CommandCenter.qml"
         }
     }
 
@@ -174,7 +174,7 @@ Scope {
                     break;
 
                 // =============================================================
-                // STEP 3: UI Destruction Survival - SystemRail Logout Flow
+                // STEP 3: UI Destruction Survival - CommandCenter Logout Flow
                 // =============================================================
                 case 3:
                     console.log("=== STEP 3: UI Destruction Survival - Logout Flow ===");
@@ -186,20 +186,20 @@ Scope {
                 case 4:
                     root.waitTicks++;
                     if (railLoader.item !== null) {
-                        assertCondition("M4.RUNTIME.19", "SystemRail mounted within Loader",
+                        assertCondition("M4.RUNTIME.19", "CommandCenter mounted within Loader",
                             railLoader.item !== null, "item=" + railLoader.item);
 
                         root.triggeredActions = [];
                         root.finishedActions = [];
 
-                        // Configure confirmation action on SystemRail and execute
+                        // Configure confirmation action on CommandCenter and execute
                         railLoader.item.confirmationAction = "logout";
                         railLoader.item.executeConfirmation();
 
-                        // IMMEDIATELY unmount and destroy SystemRail while action is in-flight!
+                        // IMMEDIATELY unmount and destroy CommandCenter while action is in-flight!
                         railLoader.active = false;
 
-                        assertCondition("M4.RUNTIME.20", "SystemRail item destroyed immediately upon active=false",
+                        assertCondition("M4.RUNTIME.20", "CommandCenter item destroyed immediately upon active=false",
                             railLoader.item === null, "item=" + railLoader.item);
 
                         assertCondition("M4.RUNTIME.21", "SessionService remains alive and intact following UI destruction",
@@ -213,7 +213,7 @@ Scope {
                         root.step = 5;
                         root.waitTicks = 0;
                     } else if (root.waitTicks > 10) {
-                        assertCondition("M4.RUNTIME.19", "SystemRail mounted within Loader", false, "timeout loading");
+                        assertCondition("M4.RUNTIME.19", "CommandCenter mounted within Loader", false, "timeout loading");
                         root.step = 5;
                     }
                     break;
@@ -235,7 +235,7 @@ Scope {
                     break;
 
                 // =============================================================
-                // STEP 6: UI Destruction Survival - SystemRail Reboot Flow
+                // STEP 6: UI Destruction Survival - CommandCenter Reboot Flow
                 // =============================================================
                 case 6:
                     console.log("=== STEP 6: UI Destruction Survival - Reboot Flow ===");
@@ -256,7 +256,7 @@ Scope {
                         // Immediate destruction
                         railLoader.active = false;
 
-                        assertCondition("M4.RUNTIME.26", "SystemRail destroyed immediately during reboot trigger",
+                        assertCondition("M4.RUNTIME.26", "CommandCenter destroyed immediately during reboot trigger",
                             railLoader.item === null, "item=" + railLoader.item);
 
                         assertCondition("M4.RUNTIME.27", "sessionActionTriggered('reboot') dispatched",
@@ -266,7 +266,7 @@ Scope {
                         root.step = 8;
                         root.waitTicks = 0;
                     } else if (root.waitTicks > 10) {
-                        assertCondition("M4.RUNTIME.26", "SystemRail mounted for reboot", false, "timeout");
+                        assertCondition("M4.RUNTIME.26", "CommandCenter mounted for reboot", false, "timeout");
                         root.step = 8;
                     }
                     break;
@@ -286,7 +286,7 @@ Scope {
                     break;
 
                 // =============================================================
-                // STEP 9: UI Destruction Survival - SystemRail Poweroff Flow
+                // STEP 9: UI Destruction Survival - CommandCenter Poweroff Flow
                 // =============================================================
                 case 9:
                     console.log("=== STEP 9: UI Destruction Survival - Poweroff Flow ===");
@@ -307,7 +307,7 @@ Scope {
                         // Immediate destruction
                         railLoader.active = false;
 
-                        assertCondition("M4.RUNTIME.30", "SystemRail destroyed immediately during poweroff trigger",
+                        assertCondition("M4.RUNTIME.30", "CommandCenter destroyed immediately during poweroff trigger",
                             railLoader.item === null, "item=" + railLoader.item);
 
                         assertCondition("M4.RUNTIME.31", "sessionActionTriggered('poweroff') dispatched",
@@ -317,7 +317,7 @@ Scope {
                         root.step = 11;
                         root.waitTicks = 0;
                     } else if (root.waitTicks > 10) {
-                        assertCondition("M4.RUNTIME.30", "SystemRail mounted for poweroff", false, "timeout");
+                        assertCondition("M4.RUNTIME.30", "CommandCenter mounted for poweroff", false, "timeout");
                         root.step = 11;
                     }
                     break;

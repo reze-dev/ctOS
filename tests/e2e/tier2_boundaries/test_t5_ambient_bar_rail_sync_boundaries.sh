@@ -13,15 +13,15 @@ OVERLAY_CTRL="${PROJECT_ROOT}/shell/desktop/core/OverlayController.qml"
 
 test_case "T2.25.1" "AmbientBar Sync Boundary: Rapid '=' toggle maintains single active surface invariant"
 assert_file_exists "${OVERLAY_CTRL}"
-assert_grep -E "toggleSystemRail\(\)" "${OVERLAY_CTRL}" "toggleSystemRail must exist"
-assert_grep -E "toggle\(\s*(OverlayController\.)?Surface\.SystemRail\)" "${OVERLAY_CTRL}" "toggleSystemRail must toggle SystemRail surface"
+assert_grep -E "toggleCommandCenter\(\)" "${OVERLAY_CTRL}" "toggleCommandCenter must exist"
+assert_grep -E "toggle\(\s*(OverlayController\.)?Surface\.CommandCenter\)" "${OVERLAY_CTRL}" "toggleCommandCenter must toggle CommandCenter surface"
 assert_grep -E "activeSurface\s*===\s*surface" "${OVERLAY_CTRL}" "Toggle must compare activeSurface against target surface"
 
-test_case "T2.25.2" "AmbientBar Sync Boundary: Calling toggleSystemRail when Rail is open closes it cleanly"
+test_case "T2.25.2" "AmbientBar Sync Boundary: Calling toggleCommandCenter when Rail is open closes it cleanly"
 assert_grep -E "close\(\)" "${OVERLAY_CTRL}" "toggle method must call close() if already open"
 
-test_case "T2.25.3" "AmbientBar Sync Boundary: Calling toggleSystemRail when another surface is open switches safely"
-assert_grep -E "openSystemRail\(\)" "${OVERLAY_CTRL}" "Toggle method must open SystemRail if another surface is active"
+test_case "T2.25.3" "AmbientBar Sync Boundary: Calling toggleCommandCenter when another surface is open switches safely"
+assert_grep -E "openCommandCenter\(\)" "${OVERLAY_CTRL}" "Toggle method must open CommandCenter if another surface is active"
 
 test_case "T2.25.4" "AmbientBar Sync Boundary: Rail button border color binds directly to active state"
 assert_file_exists "${AMBIENT_BAR}"

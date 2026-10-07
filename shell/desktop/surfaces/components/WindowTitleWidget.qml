@@ -22,7 +22,7 @@ Item {
     }
 
     clip: true
-    implicitHeight: layout.implicitHeight
+    implicitHeight: 36
     implicitWidth: Math.min(layout.implicitWidth, 400)
 
     RowLayout {

@@ -274,25 +274,25 @@ FloatingWindow {
                     mouseArea !== null && mouseArea.enabled === true,
                     "mouseArea=" + mouseArea);
 
-                // Test 9.1: Left Click when collapsed toggles EventLog
+                // Test 9.1: Left Click when collapsed toggles CommandCenter
                 assertCondition("CHAL.M2.DI.22", "Overlay initially None",
                     OverlayController.activeSurface === OverlayController.Surface.None,
                     "activeSurface=" + OverlayController.activeSurface);
 
                 tc.mouseClick(testIsland, testIsland.width / 2, testIsland.height / 2, Qt.LeftButton);
 
-                assertCondition("CHAL.M2.DI.23", "Left click when compact opened EventLog overlay (surface 3)",
-                    OverlayController.activeSurface === OverlayController.Surface.EventLog,
-                    "activeSurface=" + OverlayController.activeSurface + " (EventLog=3)");
+                assertCondition("CHAL.M2.DI.23", "Left click when compact opened CommandCenter overlay (surface 3)",
+                    OverlayController.activeSurface === OverlayController.Surface.CommandCenter,
+                    "activeSurface=" + OverlayController.activeSurface + " (CommandCenter=3)");
 
                 // Test 9.2: Left Click when already open closes/toggles
                 tc.mouseClick(testIsland, testIsland.width / 2, testIsland.height / 2, Qt.LeftButton);
 
-                assertCondition("CHAL.M2.DI.24", "Second left click toggled EventLog off (surface None)",
+                assertCondition("CHAL.M2.DI.24", "Second left click toggled CommandCenter off (surface None)",
                     OverlayController.activeSurface === OverlayController.Surface.None,
                     "activeSurface=" + OverlayController.activeSurface);
 
-                // Test 9.3: Left Click during expanded state opens EventLog and collapses island
+                // Test 9.3: Left Click during expanded state opens CommandCenter and collapses island
                 testIsland.showNotification("UrgentAlert", "System Error", 2);
                 assertCondition("CHAL.M2.DI.25", "DynamicIsland expanded prior to click",
                     testIsland.isExpanded === true,
@@ -300,8 +300,8 @@ FloatingWindow {
 
                 tc.mouseClick(testIsland, testIsland.width / 2, testIsland.height / 2, Qt.LeftButton);
 
-                assertCondition("CHAL.M2.DI.26", "Click while expanded opened EventLog (surface 3)",
-                    OverlayController.activeSurface === OverlayController.Surface.EventLog,
+                assertCondition("CHAL.M2.DI.26", "Click while expanded opened CommandCenter (surface 3)",
+                    OverlayController.activeSurface === OverlayController.Surface.CommandCenter,
                     "activeSurface=" + OverlayController.activeSurface);
 
                 assertCondition("CHAL.M2.DI.27", "Click while expanded immediately collapses island",

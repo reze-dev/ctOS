@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
 NET_SVC="${PROJECT_ROOT}/shell/desktop/services/NetworkService.qml"
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 DESKTOP_DIR="${PROJECT_ROOT}/shell/desktop"
 
 test_case "T1.31.1" "NetworkService Expansion: Exposes reactive availableNetworks model"
@@ -65,7 +65,7 @@ test_case "T1.31.6" "Engineering Compliance: Zero greeter imports and zero polli
 assert_file_exists "${NET_SVC}"
 assert_file_exists "${SYSTEM_RAIL}"
 assert_not_grep -i "greeter" "${NET_SVC}" "NetworkService must have zero greeter imports"
-assert_not_grep -i "greeter" "${SYSTEM_RAIL}" "SystemRail must have zero greeter imports"
+assert_not_grep -i "greeter" "${SYSTEM_RAIL}" "CommandCenter must have zero greeter imports"
 check_no_polling_loops "${NET_SVC}"
 check_no_polling_loops "${SYSTEM_RAIL}"
 

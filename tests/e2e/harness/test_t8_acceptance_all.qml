@@ -48,15 +48,15 @@ FloatingWindow {
             }
         }
 
-        // Simulated EventLog Surface Host
+        // Simulated CommandCenter Surface Host
         Item {
-            id: simulatedEventLogHost
+            id: simulatedCommandCenterHost
             width: 360
             height: parent.height
             anchors.right: parent.right
-            visible: OverlayController.activeSurface === OverlayController.Surface.EventLog
+            visible: OverlayController.activeSurface === OverlayController.Surface.CommandCenter
 
-            EventLog {
+            CommandCenter {
                 id: eventLogSurface
                 anchors.fill: parent
             }
@@ -210,9 +210,9 @@ FloatingWindow {
             // AC6: Opening Event Log shows scrollable history with urgency cards
             // -----------------------------------------------------------------
             try {
-                OverlayController.openEventLog();
-                const ac6SurfaceActive = (OverlayController.activeSurface === OverlayController.Surface.EventLog);
-                const ac6HostVisible = simulatedEventLogHost.visible;
+                OverlayController.openCommandCenter();
+                const ac6SurfaceActive = (OverlayController.activeSurface === OverlayController.Surface.CommandCenter);
+                const ac6HostVisible = simulatedCommandCenterHost.visible;
 
                 const ac6Passed = ac6SurfaceActive && ac6HostVisible && (NotificationService.history.count > 0);
                 recordResult("AC6", "Event Log scrollable history with urgency cards", ac6Passed,
@@ -298,14 +298,14 @@ FloatingWindow {
             // AC10: ESC closes the Event Log overlay
             // -----------------------------------------------------------------
             try {
-                OverlayController.openEventLog();
+                OverlayController.openCommandCenter();
                 const openState = OverlayController.activeSurface;
 
-                // Simulate ESC key handler in EventLog
+                // Simulate ESC key handler in CommandCenter
                 eventLogSurface.Keys.escapePressed({ accepted: false });
                 const closedState = OverlayController.activeSurface;
 
-                const ac10Passed = (openState === OverlayController.Surface.EventLog) && (closedState === OverlayController.Surface.None);
+                const ac10Passed = (openState === OverlayController.Surface.CommandCenter) && (closedState === OverlayController.Surface.None);
                 recordResult("AC10", "ESC closes Event Log overlay", ac10Passed,
                     "openSurface=" + openState + ", closedSurface=" + closedState);
             } catch (e10) {
@@ -364,27 +364,27 @@ FloatingWindow {
             }
 
             // -----------------------------------------------------------------
-            // AC13: ctos-shell-msg toggleEventLog works via IPC
+            // AC13: ctos-shell-msg toggleCommandCenter works via IPC
             // -----------------------------------------------------------------
             try {
                 OverlayController.close();
                 const surfaceBefore = OverlayController.activeSurface;
 
-                // Simulate IPC method toggleEventLog
-                OverlayController.toggleEventLog();
+                // Simulate IPC method toggleCommandCenter
+                OverlayController.toggleCommandCenter();
                 const surfaceAfterToggle1 = OverlayController.activeSurface;
 
-                OverlayController.toggleEventLog();
+                OverlayController.toggleCommandCenter();
                 const surfaceAfterToggle2 = OverlayController.activeSurface;
 
                 const ac13Passed = (surfaceBefore === OverlayController.Surface.None) &&
-                    (surfaceAfterToggle1 === OverlayController.Surface.EventLog) &&
+                    (surfaceAfterToggle1 === OverlayController.Surface.CommandCenter) &&
                     (surfaceAfterToggle2 === OverlayController.Surface.None);
 
-                recordResult("AC13", "ctos-shell-msg toggleEventLog works via IPC", ac13Passed,
+                recordResult("AC13", "ctos-shell-msg toggleCommandCenter works via IPC", ac13Passed,
                     "before=" + surfaceBefore + ", toggle1=" + surfaceAfterToggle1 + ", toggle2=" + surfaceAfterToggle2);
             } catch (e13) {
-                recordResult("AC13", "ctos-shell-msg toggleEventLog works via IPC", false, "Exception: " + e13);
+                recordResult("AC13", "ctos-shell-msg toggleCommandCenter works via IPC", false, "Exception: " + e13);
             }
 
             // -----------------------------------------------------------------

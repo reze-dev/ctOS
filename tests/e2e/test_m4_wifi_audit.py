@@ -6,7 +6,7 @@ Requirement R6: Fix WiFi Disconnection & Slow Response.
 Audits:
 1. File Existence & Module Declarations:
    - shell/desktop/services/NetworkService.qml exists
-   - shell/desktop/surfaces/SystemRail.qml exists
+   - shell/desktop/surfaces/CommandCenter.qml exists
    - shell/desktop/services/qmldir declares singleton NetworkService
 2. NetworkService.qml Contract & Invariants:
    - pragma Singleton and pragma ComponentBehavior: Bound
@@ -38,7 +38,7 @@ Audits:
    - Zero `sh -c` or `bash -c` invocations
    - Zero `while true` loops
    - Discrete command execution via Quickshell.execDetached
-6. SystemRail.qml 3-Tier "CONNECTING..." Feedback (Requirement R6):
+6. CommandCenter.qml 3-Tier "CONNECTING..." Feedback (Requirement R6):
    - Tier 1: Subheader text in wifi submenu dynamically displays "CONNECTING..." when isConnecting is true
    - Tier 2: Dedicated active connection banner visible when isConnecting is true
    - Tier 3: Delegate inline badge "[CONNECTING...]" displayed when itemIsConnecting
@@ -83,12 +83,12 @@ print("=" * 70)
 # 1. File Existence & Module Declarations
 # ==============================================================================
 service_path = os.path.join(SHELL_DIR, "services", "NetworkService.qml")
-rail_path = os.path.join(SHELL_DIR, "surfaces", "SystemRail.qml")
+rail_path = os.path.join(SHELL_DIR, "surfaces", "CommandCenter.qml")
 services_qmldir = os.path.join(SHELL_DIR, "services", "qmldir")
 
 check("WF.FILE.01", "NetworkService.qml exists",
       os.path.isfile(service_path), f"path={service_path}")
-check("WF.FILE.02", "SystemRail.qml exists",
+check("WF.FILE.02", "CommandCenter.qml exists",
       os.path.isfile(rail_path), f"path={rail_path}")
 
 with open(services_qmldir, "r", encoding="utf-8") as f:
@@ -202,45 +202,45 @@ check("WF.SRV.NO_WHILE", "NetworkService contains zero while-true loops",
       not bool(re.search(r'while\s+true\s*;', service_content)), "no while loops")
 
 # ==============================================================================
-# 6. SystemRail 3-Tier "CONNECTING..." UI Feedback (Requirement R6)
+# 6. CommandCenter 3-Tier "CONNECTING..." UI Feedback (Requirement R6)
 # ==============================================================================
 # Tier 1: Subheader text in wifi submenu
-check("WF.RAIL.TIER1.SUBHEADER", "SystemRail wifi submenu subheader displays 'CONNECTING...' on isConnecting",
+check("WF.RAIL.TIER1.SUBHEADER", "CommandCenter wifi submenu subheader displays 'CONNECTING...' on isConnecting",
       bool(re.search(r'NetworkService\.isConnecting[\s\S]*?CONNECTING\.\.\.', rail_content)),
       "subheader reflects isConnecting")
 
 # Tier 2: Dedicated active connection banner
-check("WF.RAIL.TIER2.BANNER", "SystemRail has dedicated connection banner visible on isConnecting",
+check("WF.RAIL.TIER2.BANNER", "CommandCenter has dedicated connection banner visible on isConnecting",
       bool(re.search(r'visible\s*:\s*NetworkService\.isConnecting', rail_content)),
       "connection banner visibility bound to isConnecting")
 
-check("WF.RAIL.TIER2.TEXT", "SystemRail connection banner displays CONNECTING TO <SSID>",
+check("WF.RAIL.TIER2.TEXT", "CommandCenter connection banner displays CONNECTING TO <SSID>",
       bool(re.search(r'text\s*:\s*["\']CONNECTING TO\s*["\']\s*\+', rail_content)),
       "banner displays target SSID")
 
-check("WF.RAIL.TIER2.FONT", "SystemRail connection banner uses Theme.fontFamilyMonospace",
+check("WF.RAIL.TIER2.FONT", "CommandCenter connection banner uses Theme.fontFamilyMonospace",
       bool(re.search(r'CONNECTING TO[\s\S]*?Theme\.fontFamilyMonospace', rail_content)),
       "monospace font used in connection banner")
 
 # Tier 3: Delegate inline badge "[CONNECTING...]"
-check("WF.RAIL.TIER3.BADGE", "SystemRail network delegate contains [CONNECTING...] badge",
+check("WF.RAIL.TIER3.BADGE", "CommandCenter network delegate contains [CONNECTING...] badge",
       bool(re.search(r'\[CONNECTING\.\.\.\]', rail_content)),
       "inline [CONNECTING...] badge present")
 
-check("WF.RAIL.TIER3.BIND", "SystemRail delegate inline badge bound to active connecting SSID",
+check("WF.RAIL.TIER3.BIND", "CommandCenter delegate inline badge bound to active connecting SSID",
       bool(re.search(r'connectingSsid\s*===\s*itemSsid|itemIsConnecting', rail_content)),
       "badge bound to connection target")
 
-check("WF.RAIL.TIER3.FONT", "SystemRail inline badge uses Theme.fontFamilyMonospace",
+check("WF.RAIL.TIER3.FONT", "CommandCenter inline badge uses Theme.fontFamilyMonospace",
       bool(re.search(r'\[CONNECTING\.\.\.\][\s\S]*?Theme\.fontFamilyMonospace|itemIsConnecting[\s\S]*?Theme\.fontFamilyMonospace', rail_content)),
       "monospace font used on inline badge")
 
-check("WF.RAIL.TIER3.COLOR", "SystemRail inline badge uses Theme.accent color",
+check("WF.RAIL.TIER3.COLOR", "CommandCenter inline badge uses Theme.accent color",
       bool(re.search(r'itemIsConnecting[\s\S]*?Theme\.accent|\[CONNECTING\.\.\.\][\s\S]*?Theme\.accent', rail_content)),
       "accent color used on inline badge")
 
 # Error Feedback Banner
-check("WF.RAIL.ERR.BANNER", "SystemRail displays lastError feedback banner",
+check("WF.RAIL.ERR.BANNER", "CommandCenter displays lastError feedback banner",
       bool(re.search(r'NetworkService\.lastError\s*!==\s*["\']["\']', rail_content)),
       "lastError feedback banner present")
 
@@ -269,7 +269,7 @@ check("WF.STATIC.ZERO_POLL_SH", "test_zero_polling_boundaries.sh passes cleanly"
 
 qmllint_res = subprocess.run(["qmllint", service_path, rail_path],
                              capture_output=True, text=True, cwd=PROJECT_ROOT)
-check("WF.STATIC.QMLLINT", "qmllint succeeds on NetworkService.qml and SystemRail.qml",
+check("WF.STATIC.QMLLINT", "qmllint succeeds on NetworkService.qml and CommandCenter.qml",
       qmllint_res.returncode == 0, "syntax verification clean")
 
 print("=" * 70)

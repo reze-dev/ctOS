@@ -32,12 +32,12 @@ else
     assert_file_exists "${OVERLAY_CTRL}"
 fi
 
-test_case "T1.03.4" "OverlayController: Exposes openSystemRail() and openEventLog() operations"
+test_case "T1.03.4" "OverlayController: Exposes openCommandCenter() and openCommandCenter() operations"
 if [[ -f "${OVERLAY_CTRL}" ]]; then
-    check_qml_method "${OVERLAY_CTRL}" "openSystemRail" || \
-    assert_grep "openSystemRail" "${OVERLAY_CTRL}" "openSystemRail method must be declared"
-    check_qml_method "${OVERLAY_CTRL}" "openEventLog" || \
-    assert_grep "openEventLog" "${OVERLAY_CTRL}" "openEventLog method must be declared"
+    check_qml_method "${OVERLAY_CTRL}" "openCommandCenter" || \
+    assert_grep "openCommandCenter" "${OVERLAY_CTRL}" "openCommandCenter method must be declared"
+    check_qml_method "${OVERLAY_CTRL}" "openCommandCenter" || \
+    assert_grep "openCommandCenter" "${OVERLAY_CTRL}" "openCommandCenter method must be declared"
 else
     assert_file_exists "${OVERLAY_CTRL}"
 fi

@@ -8,15 +8,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 SHELL_QML="${PROJECT_ROOT}/shell/shell.qml"
 
 test_case "T2.21.1" "System Rail Geometry: Fixed 360px width invariant across different display resolutions"
 if [[ -f "${SYSTEM_RAIL}" ]]; then
     assert_grep -E '(width:\s*360|implicitWidth:\s*360)' "${SYSTEM_RAIL}" \
-        "SystemRail must preserve fixed 360px width invariant"
+        "CommandCenter must preserve fixed 360px width invariant"
 else
-    test_skip "Pending M2: SystemRail geometry invariant pending M2"
+    test_skip "Pending M2: CommandCenter geometry invariant pending M2"
 fi
 
 test_case "T2.21.2" "System Rail Geometry: Right edge anchor in shell.qml"

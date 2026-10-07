@@ -17,7 +17,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SESSION_SVC_PATH = PROJECT_ROOT / "shell/desktop/services/SessionService.qml"
 COMPOSITOR_SVC_PATH = PROJECT_ROOT / "shell/desktop/services/CompositorService.qml"
-SYSTEM_RAIL_PATH = PROJECT_ROOT / "shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL_PATH = PROJECT_ROOT / "shell/desktop/surfaces/CommandCenter.qml"
 ACTION_REG_PATH = PROJECT_ROOT / "shell/desktop/core/ActionRegistry.qml"
 WORKSPACES_WIDGET_PATH = PROJECT_ROOT / "shell/desktop/surfaces/components/WorkspacesWidget.qml"
 INSPECTOR_PATH = PROJECT_ROOT / "tests/e2e/harness/qml_inspector.py"
@@ -274,7 +274,7 @@ Scope {
 
     Loader {
         id: railLoader
-        source: "file://" + (Quickshell.env("PROJECT_ROOT") || "/home/reze/Projects/ctOS") + "/shell/desktop/surfaces/SystemRail.qml"
+        source: "file://" + (Quickshell.env("PROJECT_ROOT") || "/home/reze/Projects/ctOS") + "/shell/desktop/surfaces/CommandCenter.qml"
         active: false
     }
 
@@ -286,13 +286,13 @@ Scope {
         onTriggered: {
             switch (root.currentTest) {
             case 0:
-                // Mount SystemRail
+                // Mount CommandCenter
                 railLoader.active = true;
                 root.currentTest = 1;
                 break;
             case 1:
                 if (railLoader.item) {
-                    // Trigger reboot and immediately destroy SystemRail in the very next statement!
+                    // Trigger reboot and immediately destroy CommandCenter in the very next statement!
                     railLoader.item.confirmationAction = "reboot";
                     railLoader.item.executeConfirmation();
                     railLoader.active = false;
@@ -310,7 +310,7 @@ Scope {
                 }
                 break;
             case 3:
-                // Mount SystemRail for poweroff
+                // Mount CommandCenter for poweroff
                 railLoader.active = true;
                 root.currentTest = 4;
                 break;
@@ -331,7 +331,7 @@ Scope {
                 }
                 break;
             case 6:
-                // Mount SystemRail for logout
+                // Mount CommandCenter for logout
                 railLoader.active = true;
                 root.currentTest = 7;
                 break;
@@ -352,7 +352,7 @@ Scope {
                 }
                 break;
             case 9:
-                // Direct lock through SystemRail with immediate close
+                // Direct lock through CommandCenter with immediate close
                 railLoader.active = true;
                 root.currentTest = 10;
                 break;

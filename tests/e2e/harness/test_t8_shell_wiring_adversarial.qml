@@ -32,7 +32,7 @@ Scope {
         width: 360
         height: 800
 
-        EventLog {
+        CommandCenter {
             id: eventLogSurface
             anchors.fill: parent
         }
@@ -49,14 +49,14 @@ Scope {
             OverlayController.close();
 
             // -------------------------------------------------------------
-            // TEST 1: Rapid Toggle Stress (50 toggleEventLog cycles)
+            // TEST 1: Rapid Toggle Stress (50 toggleCommandCenter cycles)
             // -------------------------------------------------------------
             try {
-                console.log("-> Running Test 1: Rapid 50 toggleEventLog cycles...");
+                console.log("-> Running Test 1: Rapid 50 toggleCommandCenter cycles...");
                 for (let i = 0; i < 50; ++i) {
-                    OverlayController.toggleEventLog();
+                    OverlayController.toggleCommandCenter();
                     const expectedState = (i % 2 === 0)
-                        ? OverlayController.Surface.EventLog
+                        ? OverlayController.Surface.CommandCenter
                         : OverlayController.Surface.None;
                     if (OverlayController.activeSurface !== expectedState) {
                         recordFailure("Toggle_State_Cycle_" + i,
@@ -80,22 +80,22 @@ Scope {
                     recordFailure("Switch_CommandDeck", "Expected CommandDeck");
                 }
 
-                // Switch directly to EventLog
-                OverlayController.toggleEventLog();
-                if (OverlayController.activeSurface !== OverlayController.Surface.EventLog) {
-                    recordFailure("Switch_Direct_EventLog", "Expected EventLog active, got " + OverlayController.activeSurface);
+                // Switch directly to CommandCenter
+                OverlayController.toggleCommandCenter();
+                if (OverlayController.activeSurface !== OverlayController.Surface.CommandCenter) {
+                    recordFailure("Switch_Direct_CommandCenter", "Expected CommandCenter active, got " + OverlayController.activeSurface);
                 }
 
-                // Switch directly to SystemRail
-                OverlayController.toggleSystemRail();
-                if (OverlayController.activeSurface !== OverlayController.Surface.SystemRail) {
-                    recordFailure("Switch_Direct_SystemRail", "Expected SystemRail active, got " + OverlayController.activeSurface);
+                // Switch directly to CommandCenter
+                OverlayController.toggleCommandCenter();
+                if (OverlayController.activeSurface !== OverlayController.Surface.CommandCenter) {
+                    recordFailure("Switch_Direct_CommandCenter", "Expected CommandCenter active, got " + OverlayController.activeSurface);
                 }
 
-                // Switch back to EventLog
-                OverlayController.toggleEventLog();
-                if (OverlayController.activeSurface !== OverlayController.Surface.EventLog) {
-                    recordFailure("Switch_Back_EventLog", "Expected EventLog active, got " + OverlayController.activeSurface);
+                // Switch back to CommandCenter
+                OverlayController.toggleCommandCenter();
+                if (OverlayController.activeSurface !== OverlayController.Surface.CommandCenter) {
+                    recordFailure("Switch_Back_CommandCenter", "Expected CommandCenter active, got " + OverlayController.activeSurface);
                 }
 
                 // Close
@@ -108,11 +108,11 @@ Scope {
             }
 
             // -------------------------------------------------------------
-            // TEST 3: Concurrent Notification Flood during EventLog Overlay Open
+            // TEST 3: Concurrent Notification Flood during CommandCenter Overlay Open
             // -------------------------------------------------------------
             try {
-                console.log("-> Running Test 3: Concurrent Notification Flood while EventLog open...");
-                OverlayController.openEventLog();
+                console.log("-> Running Test 3: Concurrent Notification Flood while CommandCenter open...");
+                OverlayController.openCommandCenter();
                 for (let n = 1; n <= 30; ++n) {
                     NotificationService._handleNotification({
                         id: 9000 + n,

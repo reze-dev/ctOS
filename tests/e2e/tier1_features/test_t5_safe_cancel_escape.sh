@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../harness/mock_environment.sh"
 source "${SCRIPT_DIR}/../harness/qml_runner.sh"
 
-SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/SystemRail.qml"
+SYSTEM_RAIL="${PROJECT_ROOT}/shell/desktop/surfaces/CommandCenter.qml"
 SHELL_QML="${PROJECT_ROOT}/shell/shell.qml"
 
 test_case "T1.28.1" "Safe Cancel: Clicking Cancel in confirmation returns to normal view"
@@ -22,7 +22,7 @@ fi
 
 test_case "T1.28.2" "Safe Cancel: Escape key in confirmation mode cancels confirmation"
 if [[ -f "${SYSTEM_RAIL}" ]]; then
-    assert_grep -E '(Escape|onEscapePressed)' "${SYSTEM_RAIL}" "SystemRail must trap Escape to abort confirmation"
+    assert_grep -E '(Escape|onEscapePressed)' "${SYSTEM_RAIL}" "CommandCenter must trap Escape to abort confirmation"
 else
     test_skip "Pending M3: Escape cancellation handler pending M3"
 fi
