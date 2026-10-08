@@ -55,13 +55,17 @@ let
   # Two mappings to keep flat, because attrset keys cannot collide silently --
   # a name appearing under two groups would just drop one of them.
   nameToGroup = lib.listToAttrs (
-    lib.concatMap (group: map (name: { name = name; value = group; }) groups.${group }) (
-      lib.attrNames groups
-    )
+    lib.concatMap (
+      group:
+      map (name: {
+        name = name;
+        value = group;
+      }) groups.${group}
+    ) (lib.attrNames groups)
   );
-  duplicates = lib.filter (name: lib.length (lib.filter (g: g == nameToGroup.${name}) (
-    lib.attrNames groups
-  )) > 1) (lib.attrNames nameToGroup);
+  duplicates = lib.filter (
+    name: lib.length (lib.filter (g: g == nameToGroup.${name}) (lib.attrNames groups)) > 1
+  ) (lib.attrNames nameToGroup);
 in
 {
   options.ctos.features.toolkit.enable = lib.mkEnableOption "ctOS security and diagnostic toolkit";
