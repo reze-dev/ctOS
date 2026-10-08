@@ -57,14 +57,17 @@ FocusScope {
         property: "opacity"
         from: 1.0
         to: 0.0
-        duration: 130
+        duration: Settings.reducedMotion ? 0 : 130
         easing.type: Easing.OutCubic
     }
 
     // Expand Choreography: Wheel translates left first, branch deploys once wheel nears left edge
     Timer {
         id: expandTimer
-        interval: 180
+        // Zero under reducedMotion: these three stagger the wheel
+        // rotation and the branch origin, so snapping them is what makes the
+        // expansion instant rather than merely fast.
+        interval: Settings.reducedMotion ? 0 : 180
         repeat: false
         onTriggered: {
             if (root.isExpanded) {
@@ -76,7 +79,7 @@ FocusScope {
     // Collapse Choreography: Branch retracts first (140ms), then wheel returns to center
     Timer {
         id: collapseTimerWheelReturn
-        interval: 140
+        interval: Settings.reducedMotion ? 0 : 140
         repeat: false
         onTriggered: {
             if (!root.isExpanded) {
@@ -89,7 +92,7 @@ FocusScope {
     // Preview trees blossom back in as the wheel approaches screen center
     Timer {
         id: collapseTimerPreviewRestore
-        interval: 320
+        interval: Settings.reducedMotion ? 0 : 320
         repeat: false
         onTriggered: {
             if (!root.isExpanded) {
@@ -135,12 +138,18 @@ FocusScope {
     // Background Scrim & Tactical Grid
     // =========================================================================
 
-    Rectangle {
-        id: scrimBackdrop
-        anchors.fill: parent
-        color: Qt.rgba(13/255, 58/255, 143/255, 1.0)
-        opacity: 0.95
-    }
+Rectangle {
+            id: scrimBackdrop
+            anchors.fill: parent
+            // Its own slot, not palBase. The radial covers the whole screen while
+            // it is open and reads as a separate place, so it takes a
+            // palette-specific floor -- bronze under pine, deep teal under acid --
+            // rather than sharing the desktop's page background. The grid below
+            // and the ContextPanel both sit on top of this and read from the same
+            // token, so the whole surface tints together.
+            color: Theme.palRadialBackdrop
+            opacity: 0.95
+        }
 
     // Cybernetic Grid Background
     Canvas {
@@ -153,7 +162,10 @@ FocusScope {
             ctx.clearRect(0, 0, width, height);
 
             var step = 48;
-            ctx.fillStyle = Qt.rgba(0, 0, 0, 0.15);
+            // Tinted from the backdrop, not from bg. Both are dark and the
+            // checkerboard is only 15% alpha, so using bg here would leave a
+            // faintly blue-grey checker on top of a bronze or teal floor.
+            ctx.fillStyle = Theme.withAlpha(Theme.palRadialBackdrop, 0.55);
             for (var y = 0; y < height; y += step) {
                 for (var x = 0; x < width; x += step) {
                     if (((x / step) + (y / step)) % 2 === 0) {
@@ -283,6 +295,16 @@ FocusScope {
         isExpanded: root.branchExpanded
         wheelCenterX: wheelMenu.wheelCenterX
         wheelCenterY: wheelMenu.wheelCenterY
+        // SkillTree kept its own outerRadius of 210 while the wheel's ring is
+        // 180, so everything anchored to the rim started 30px outside it.
+        outerRadius: wheelMenu.outerRadius
+        // Where the expanded branch's base node sits: 350px right of the wheel's
+        // left anchor, which is where it was before the geometry work.
+        //
+        // I moved this to leftAnchorX + outerRadius + 11 while chasing the base
+        // wheel's short trunks, on the theory that the expanded tree should hug
+        // the ring too. It should not -- the expanded view has the whole canvas
+        // to itself, so its branch starts further out and runs longer.
         branchOriginX: wheelMenu.leftAnchorX + 350
         branchOriginY: root.height / 2
         z: 5
@@ -299,6 +321,17 @@ FocusScope {
         model: settingsModel
         focusedIndex: root.focusedCategoryIndex
         isExpanded: root.wheelExpanded
+
+        // Negative on purpose. outerRadius is 180, so a centre at -70 leaves
+        // 110px of a 360px diameter on screen -- about a third of the circle,
+        // showing only the arc the branch grows out of.
+        //
+        // This was previously "fixed" to Math.max(220, width * 0.12) on the
+        // theory that the wheel hanging off the left edge was a bug. It is not:
+        // the expanded reference shows exactly that, one third of the arc, with
+        // the branch tree reading as if it grew out of the hub. Centring the
+        // whole wheel instead puts a large empty circle between the arc and the
+        // base node, so the tree stops looking attached to anything.
         leftAnchorX: -70
         z: 10
 
@@ -310,11 +343,12 @@ FocusScope {
             }
         }
 
-        onCategoryHovered: function(idx) {
-            if (!root.isExpanded) {
-                root.focusedCategoryIndex = idx;
-            }
-        }
+        // onCategoryHovered is gone with the signal. It was connected here but
+        // never raised: RadialSegment declared hovered() and had no MouseArea to
+        // emit it from, so hovering a segment did nothing through this path.
+        // Hovering the wheel to change category is surfaceMouseArea's
+        // onPositionChanged -> handleMouseMove, which is what has always actually
+        // driven it.
 
         onCollapseRequested: {
             root.isExpanded = false;
@@ -408,9 +442,22 @@ FocusScope {
                 if (distFromCenter < wheelMenu.innerRadius) {
                     // Clicked center hub -> expand
                     root.isExpanded = true;
-                } else if (distFromCenter > 280) {
-                    // Clicked far background -> dismiss
-                    OverlayController.close();
+                } else if (distFromCenter > wheelMenu.outerRadius + 100) {
+                    // Outside the wheel entirely: ignore the click.
+                    //
+                    // This used to be `> 280` -> OverlayController.close(), so any
+                    // click more than 280px from the wheel centre dismissed the
+                    // whole surface. The wheel's outerRadius is only 180, which
+                    // meant the dead zone swallowed most of a 1920px screen: a
+                    // stray click on the wallpaper, the notch, or empty space
+                    // tore down a menu the user had just opened. Nothing inside
+                    // the wheel needs the dismiss -- the hub collapses, segments
+                    // select, and Esc closes -- so the wide zone was pure loss.
+                    //
+                    // Distances past the rim are ignored rather than snapped to
+                    // the nearest segment, because angle-only selection would
+                    // make a click at the far corner of the screen jump the
+                    // selection to whatever happened to be nearest.
                 } else {
                     // Clicked on a segment
                     var angle = RadialGeometry.angleFromCenter(wheelMenu.wheelCenterX, wheelMenu.wheelCenterY, mouse.x, mouse.y);

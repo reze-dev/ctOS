@@ -259,3 +259,301 @@ function getSegmentTargetLayout(index, focusedIndex, categoryCount, gapAngle, fo
     };
 }
 
+
+// ---------------------------------------------------------------------------
+// Tree layout
+//
+// Takes declared relationships and parameters, and produces coordinates. It
+// never sees a tree that has positions baked in: RadialTopology.qml holds only
+// who is connected to whom, and this decides where they land in one view while
+// layoutPreviewTree below decides where they land in the other. Same
+// relationships, two projections, so the views cannot disagree about a
+// category's shape -- only about how it is drawn.
+//
+// Polar convention, and it is worth stating because it is easy to get backwards:
+//   x = parentX + sin(angle) * distance
+//   y = parentY - cos(angle) * distance
+// Angle 0 points UP, +90 points right. The expanded branch grows rightward from
+// a wheel anchored off the left edge, so rootAngle defaults to 90 -- at 0 the
+// tree grows up out of the ring.
+//
+// Angles accumulate down a branch rather than being measured from the root, so
+// a child placed at -85 puts its own children around -85. Without that, every
+// generation tries to orbit the original root and the tree becomes a disc of
+// unrelated spokes instead of branches.
+// ---------------------------------------------------------------------------
+
+// Offsets for childCount children spread evenly across a total fan of `total`
+// degrees, centred on zero.
+//
+// One child gets no spread at all: a single child is a link in a chain, and
+// giving it an offset is what turns a three-deep chain into three stray nodes.
+function fanOffsets(childCount, total) {
+    if (childCount <= 1) return [0.0];
+    var half = total / 2.0;
+    var out = [];
+    for (var i = 0; i < childCount; ++i)
+        out.push(-half + (total * i) / (childCount - 1));
+    return out;
+}
+
+// The narrowest total fan that still leaves `minSeparation` between siblings.
+//
+// A fixed fan collapses as children are added: at 120 degrees, six children sit
+// 30 degrees apart, which is 72px apart at a 140px distance -- closer than the
+// nodes are wide. So the fan has to grow with the child count, which is what
+// this returns, and it is the reason nodeRadius is worth passing in at all.
+function minimumFan(childCount, distance, minSeparation) {
+    if (childCount <= 1 || distance <= 0.0) return 0.0;
+    var ratio = Math.min(1.0, minSeparation / (2.0 * distance));
+    var step = 2.0 * Math.asin(ratio) * 180.0 / Math.PI;
+    return step * (childCount - 1);
+}
+
+function layoutTree(nodes, opts) {
+    opts = opts || {};
+
+    var rootAngle = (typeof opts.rootAngle === "number") ? opts.rootAngle : 90.0;
+
+    // Total fan per depth, index = depth - 1, clamped at the last entry.
+    //
+    // 150 at the root, 100 below. This was 170/120, which is what the reference
+    // first level measures, and it was too wide to stay clear of the wheel: a
+    // branch that had already rotated once put its own children at up to -145,
+    // which is left of the root. security's recon node landed 67px that way --
+    // toward a ring whose outer radius is 180 -- and on a deeper tree the worst
+    // case reached 204px, which is inside the ring itself.
+    //
+    // 150/100 puts security's furthest node exactly at the root's own x and pulls
+    // the 40-node worst case back to 156px, clear of the rim. Going narrower
+    // still starts to cost the reference's up/right/down first level, which is
+    // the one thing currently matching it exactly.
+    var fans = (opts.fans && opts.fans.length > 0) ? opts.fans : [150.0, 100.0];
+
+    var baseDistance = (typeof opts.distance === "number") ? opts.distance : 140.0;
+    var nodeRadius = (typeof opts.nodeRadius === "number") ? opts.nodeRadius : 24.0;
+    var gap = (typeof opts.gap === "number") ? opts.gap : 10.0;
+
+    // Distance holds for the first two levels, then shortens. A tree that keeps
+    // marching at full stride spreads very wide by depth 4; security already
+    // reaches x = -344 at depth 3.
+    var shrinkFromDepth = (typeof opts.shrinkFromDepth === "number") ? opts.shrinkFromDepth : 2;
+    var shrinkPerLevel = (typeof opts.shrinkPerLevel === "number") ? opts.shrinkPerLevel : 0.8;
+
+    // Measure a fork from the direction its own branch arrived on (the default),
+    // or from rootAngle. The second reads as a fork hanging off the side of a
+    // chain, which shoots back across the tree; the first reads as a tree.
+    var recentreDeepForks = opts.recentreDeepForks === true;
+
+    function fanAt(depth) {
+        return fans[Math.min(depth - 1, fans.length - 1)];
+    }
+
+    function distanceAt(depth) {
+        if (depth <= shrinkFromDepth) return baseDistance;
+        return baseDistance * Math.pow(shrinkPerLevel, depth - shrinkFromDepth);
+    }
+
+    var out = {};
+    if (!nodes || nodes.length === 0) return out;
+
+    out[nodes[0].id] = {
+        x: 0.0, y: 0.0, depth: 0, angle: rootAngle, parent: null, spoke: -1
+    };
+
+    var queue = [{ node: nodes[0], angle: rootAngle, depth: 0 }];
+
+    while (queue.length > 0) {
+        var cur = queue.shift();
+        var kids = cur.node.children || [];
+        if (kids.length === 0) continue;
+
+        var depth = cur.depth + 1;
+        var distance = distanceAt(depth);
+
+        // Widen the fan if this many children would otherwise sit inside each
+        // other at this distance.
+        var total = Math.max(
+            fanAt(depth),
+            minimumFan(kids.length, distance, 2.0 * nodeRadius + gap)
+        );
+        var offsets = fanOffsets(kids.length, total);
+
+        var origin = out[cur.node.id];
+        var from = (recentreDeepForks && cur.depth > 0) ? rootAngle : cur.angle;
+
+        for (var i = 0; i < kids.length; ++i) {
+            var kid = kids[i];
+            // Already placed means it was reached by another branch; leave it
+            // where it is rather than letting a second parent drag it.
+            if (!kid || out[kid.id]) continue;
+
+            var angle = from + offsets[i];
+            var rad = angle * Math.PI / 180.0;
+            out[kid.id] = {
+                x: origin.x + Math.sin(rad) * distance,
+                y: origin.y - Math.cos(rad) * distance,
+                depth: depth,
+                angle: angle,
+                parent: cur.node.id,
+                spoke: i
+            };
+            queue.push({ node: kid, angle: angle, depth: depth });
+        }
+    }
+
+    // Nodes the relationships never reach. They cannot be placed relative to a
+    // parent that does not exist, but leaving them out would make them vanish
+    // instead of failing visibly, so park them on a shallow arc off the root.
+    var orphans = [];
+    for (var n = 0; n < nodes.length; ++n)
+        if (nodes[n] && !out[nodes[n].id]) orphans.push(nodes[n]);
+
+    for (var o = 0; o < orphans.length; ++o) {
+        var spread = orphans.length === 1 ? 0.0 : -45.0 + (90.0 * o) / (orphans.length - 1);
+        var orad = (rootAngle + spread) * Math.PI / 180.0;
+        out[orphans[o].id] = {
+            x: Math.sin(orad) * baseDistance,
+            y: -Math.cos(orad) * baseDistance,
+            depth: 1,
+            angle: rootAngle + spread,
+            parent: nodes[0].id,
+            spoke: 90 + o
+        };
+    }
+
+    return out;
+}
+
+// Rotate a laid-out point so the tree's +x axis points along `angleDeg`, then
+// translate it to `origin`.
+//
+// This is the whole of the difference between the two renderings: the expanded
+// branch draws the layout directly, the wheel's preview draws it through this.
+// Same angles, same fan, same parent-to-child pairs -- only the scale, the
+// anchor and the rotation differ, which is why the two cannot drift apart.
+function projectPoint(p, angleDeg, scale, origin) {
+    var rad = angleDeg * Math.PI / 180.0;
+    var cos = Math.cos(rad) * scale;
+    var sin = Math.sin(rad) * scale;
+    return {
+        x: origin.x + p.x * cos - p.y * sin,
+        y: origin.y + p.x * sin + p.y * cos
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Wheel preview tree layout
+//
+// Deliberately not layoutTree() above. The wheel packs eight of these into a
+// ring, so a tree here is compact and symmetric about its own segment axis,
+// where the expanded branch is read one node at a time and fans to fill space.
+//
+// The rule, in the tree's own space where +x is "outward along the segment":
+//
+//           o
+//          / \
+//         o   o
+//         |   |
+//         o   o
+//         |   |
+//         o   o
+//
+// A fork straddles the axis by +/- forkDeg, and then a node's descendants carry
+// on straight down that same axis. The fork angle is local to the generation
+// that forked: it decides where a node is placed and nothing else. A child's own
+// children are placed from the axis again, so the two arms below the first fork
+// stay parallel columns rather than curving away from each other.
+//
+// Inheriting the fork instead -- each node's children measuring from the angle
+// that node itself left on -- produces
+//
+//           o
+//          / \
+//         o   o
+//        / \ / \
+//       o   o o   o
+//
+// which is a dendrite that spreads ever wider. It is the more obvious reading
+// of "branch", and it is wrong here: the wheel packs eight of these into a
+// ring, and a spreading tree at depth 3 reaches past its neighbours' segments.
+// The wheel wants columns, not a fan.
+//
+// Direction convention: dir 0 is +x, so the step is (cos, sin) and a tree grows
+// rightward in its own space. That is a 90 degree clockwise turn from the (sin,
+// -cos) frame, where 0 would mean up, and it has to be +x because
+// projectPoint() rotates by the segment angle and so maps local +x onto the
+// outward radial direction (cos a, sin a). Under the old (sin, -cos) frame a
+// segment's own axis mapped to (sin a, -cos a), which coincides with the
+// outward ray only at a = 180 -- so every tree grew sideways across its
+// segment instead of away from the wheel.
+function layoutPreviewTree(nodes, opts) {
+    opts = opts || {};
+    var step = (typeof opts.step === "number") ? opts.step : 56.0;
+    var forkDeg = (typeof opts.forkDeg === "number") ? opts.forkDeg : 45.0;
+
+    // The direction a single child follows, i.e. the tree's own outward axis.
+    // Every fork is centred on it, and every node's children are placed from it,
+    // so it is the one angle that survives a fork.
+    var axisDir = (typeof opts.axisDir === "number") ? opts.axisDir : 0.0;
+
+    var out = {};
+    if (!nodes || nodes.length === 0) return out;
+    out[nodes[0].id] = {
+        x: 0.0, y: 0.0, depth: 0, dir: axisDir, spoke: -1, parent: null
+    };
+
+    var queue = [{ node: nodes[0], depth: 0, dir: axisDir }];
+
+    while (queue.length > 0) {
+        var cur = queue.shift();
+        var kids = cur.node.children || [];
+        if (kids.length === 0) continue;
+
+        var depth = cur.depth + 1;
+        var distance = step;
+
+        // One child gets no offset at all: it is a link in a column, and it
+        // continues along the axis.
+        var offsets = fanOffsets(kids.length, forkDeg * 2.0);
+
+        for (var i = 0; i < kids.length; ++i) {
+            var kid = kids[i];
+            if (!kid || out[kid.id]) continue;
+
+            // Placement uses the forked angle, but the direction handed to this
+            // node's own children is the axis. That is the whole of the rule:
+            // the fork offsets where a node sits, not where its subtree grows.
+            var dir = cur.dir + offsets[i];
+            var rad = dir * Math.PI / 180.0;
+            out[kid.id] = {
+                x: out[cur.node.id].x + Math.cos(rad) * distance,
+                y: out[cur.node.id].y + Math.sin(rad) * distance,
+                depth: depth,
+                dir: axisDir,
+                spoke: offsets[i] === 0.0 ? -1 : i,
+                parent: cur.node.id
+            };
+            queue.push({ node: kid, depth: depth, dir: axisDir });
+        }
+    }
+
+    // Nodes the relationships never reach cannot be placed against a parent that
+    // does not exist, but dropping them would make them vanish instead of failing
+    // visibly. Park them on the parent's ray.
+    var orphans = [];
+    for (var n = 0; n < nodes.length; ++n)
+        if (nodes[n] && !out[nodes[n].id]) orphans.push(nodes[n]);
+
+    for (var o = 0; o < orphans.length; ++o) {
+        var orad = (out[nodes[0].id].dir) * Math.PI / 180.0;
+        out[orphans[o].id] = {
+            x: out[nodes[0].id].x + Math.cos(orad) * step,
+            y: out[nodes[0].id].y + Math.sin(orad) * step,
+            depth: 1, dir: out[nodes[0].id].dir, spoke: 90 + o, parent: nodes[0].id
+        };
+    }
+
+    return out;
+}
+

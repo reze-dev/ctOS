@@ -31,6 +31,16 @@ Singleton {
     readonly property bool isEthernet: connectionType === "ethernet"
     readonly property bool isWifi: connectionType === "wifi"
 
+    // Wireless-scoped state, computed independently of the wired-first priority
+    // above. connectionType answers "which transport is serving traffic right
+    // now", which is the right question for a generic status indicator but the
+    // wrong one for a card titled "Wi-Fi" whose body lists wireless networks:
+    // with enp2s0 up, connectionType resolves to "ethernet" and a Wi-Fi card
+    // reading it would announce "Ethernet" above a list of Wi-Fi networks.
+    // Callers that care about the radio specifically must use these instead.
+    property bool wifiConnected: false
+    property string wifiNetworkName: ""
+
     // Active network identifier (SSID or interface ID); explicit "--N/A--" when offline
     property string networkName: "--N/A--"
 
@@ -80,7 +90,67 @@ Singleton {
     // Reactive State Evaluation
     // =========================================================================
 
+    // Wireless-only evaluation. Scans for an associated Wi-Fi interface and its
+    // active network, deliberately ignoring wired devices, so the answer stays
+    // correct on a machine that is also plugged in. Kept separate from
+    // _evaluateNetworkState rather than folded into it so the wired-first
+    // transport ladder below is not perturbed.
+    function _evaluateWifiState(): void {
+        if (!root.available || !Networking.devices) {
+            _applyWifiState(false, "");
+            return;
+        }
+
+        const devices = Networking.devices.values;
+        if (!devices || devices.length === 0) {
+            _applyWifiState(false, "");
+            return;
+        }
+
+        for (let i = 0; i < devices.length; i++) {
+            const dev = devices[i];
+            if (!dev || dev.type !== DeviceType.Wifi || !dev.connected) {
+                continue;
+            }
+
+            let activeSsid = "";
+            if (dev.networks && dev.networks.values) {
+                for (let j = 0; j < dev.networks.values.length; j++) {
+                    const net = dev.networks.values[j];
+                    if (net && net.connected) {
+                        activeSsid = net.name;
+                        break;
+                    }
+                }
+            }
+            if (!activeSsid && dev.name) {
+                activeSsid = dev.name;
+            }
+
+            _applyWifiState(true, activeSsid);
+            return;
+        }
+
+        _applyWifiState(false, "");
+    }
+
+    function _applyWifiState(connected: bool, ssid: string): void {
+        // sanitizeName maps empty input to "--N/A--", which would then be
+        // rendered as a literal network name. An associated interface with no
+        // resolvable SSID stays empty here so the card can fall back to a
+        // generic "Connected" rather than displaying the placeholder.
+        const clean = connected && ssid !== "" ? root.sanitizeName(ssid) : "";
+        if (root.wifiConnected !== connected || root.wifiNetworkName !== clean) {
+            root.wifiConnected = connected;
+            root.wifiNetworkName = clean;
+        }
+    }
+
     function _evaluateNetworkState(): void {
+        // Refresh the wireless-scoped view first so it is never stale by the
+        // time the transport ladder below returns.
+        _evaluateWifiState();
+
         if (!root.available || !Networking.devices) {
             _applyDisconnectedState();
             return;
@@ -238,8 +308,100 @@ Singleton {
         command: ["nmcli", "dev", "wifi", "rescan"]
         running: false
 
-        onExited: function(exitCode) {
+        stdout: StdioCollector { id: rescanOut; waitForEnd: true }
+        stderr: StdioCollector { id: rescanErr; waitForEnd: true }
+
+        onExited: function (exitCode) {
             root.isScanning = false;
+            if (exitCode !== 0) {
+                const msg = (rescanErr.text || "").trim();
+                root.lastError = msg.length > 0 ? msg : ("Network scan failed (nmcli exit " + exitCode + ")");
+                console.warn("[NetworkService] rescan failed:", root.lastError);
+            }
+            root._evaluateNetworkState();
+            root._scheduleRebuild();
+        }
+    }
+
+    // Joining a network NetworkManager has not seen yet.
+    //
+    // Quickshell's native API can only carry a PSK for a Network object it
+    // already knows about, so a first-time join has to go through nmcli. The
+    // secret is delivered on stdin via `nmcli --ask`, which prompts for the
+    // missing psk, rather than being placed in argv where any process could
+    // read it from /proc/<pid>/cmdline for the lifetime of the call.
+    //
+    // stderr is captured so a failed join is observable; the previous
+    // execDetached form discarded it and left `isConnecting` set forever.
+    Process {
+        id: joinProcess
+
+        property string pendingSecret: ""
+        property string pendingSsid: ""
+
+        command: ["nmcli", "--ask", "--colors", "no", "device", "wifi", "connect", root._joinTargetSsid]
+        stdinEnabled: true
+        running: false
+
+        stdout: StdioCollector { id: joinOut; waitForEnd: true }
+        stderr: StdioCollector { id: joinErr; waitForEnd: true }
+
+        onStarted: {
+            if (pendingSecret.length > 0) {
+                write(pendingSecret + "\n");
+            }
+        }
+
+        onExited: function (exitCode) {
+            if (exitCode !== 0) {
+                connectionTimeoutTimer.stop();
+                root.connectingSsid = "";
+                const err = (joinErr.text || "").trim();
+                root.lastError = err.length > 0
+                    ? err
+                    : ("Failed to connect to " + pendingSsid + " (nmcli exit " + exitCode + ")");
+                console.warn("[NetworkService] join failed:", root.lastError);
+            } else {
+                const out = (joinOut.text || "").trim();
+                if (out) {
+                    console.log("[NetworkService]", out);
+                }
+            }
+            pendingSecret = "";
+            pendingSsid = "";
+            root._evaluateNetworkState();
+            root._scheduleRebuild();
+        }
+    }
+
+    property string _joinTargetSsid: ""
+
+    function _joinViaNmcli(ssid: string, secret: string): void {
+        if (joinProcess.running) {
+            root.lastError = "A connection attempt is already in progress";
+            return;
+        }
+        root._joinTargetSsid = ssid;
+        joinProcess.pendingSsid = ssid;
+        joinProcess.pendingSecret = secret;
+        joinProcess.running = true;
+    }
+
+    Process {
+        id: deleteProcess
+        property string pendingSsid: ""
+
+        command: ["nmcli", "--colors", "no", "connection", "delete", deleteProcess.pendingSsid]
+        running: false
+
+        stderr: StdioCollector { id: deleteErr; waitForEnd: true }
+        onExited: function (exitCode) {
+            if (exitCode !== 0) {
+                const err = (deleteErr.text || "").trim();
+                console.warn("[NetworkService] forget failed for", pendingSsid, ":",
+                    err.length > 0 ? err : ("nmcli exit " + exitCode));
+            }
+            pendingSsid = "";
             root._evaluateNetworkState();
             root._scheduleRebuild();
         }
@@ -410,11 +572,13 @@ Singleton {
                 }
             }
         } else {
-            // Fallback via discrete allowlisted argument array
+            // First-time join: NetworkManager has no Network object for this
+            // SSID yet, so the native API cannot carry the PSK. Fall back to
+            // nmcli with the secret on stdin.
             if (hasKey) {
-                Quickshell.execDetached(["nmcli", "dev", "wifi", "connect", ssid, "password", secret]);
+                root._joinViaNmcli(ssid, secret);
             } else {
-                Quickshell.execDetached(["nmcli", "dev", "wifi", "connect", ssid]);
+                root._joinViaNmcli(ssid, "");
             }
         }
     }
@@ -451,7 +615,8 @@ Singleton {
                 }
             }
         }
-        Quickshell.execDetached(["nmcli", "connection", "delete", ssid]);
+        deleteProcess.pendingSsid = ssid;
+        deleteProcess.running = true;
     }
 
     // =========================================================================

@@ -1,9 +1,7 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import "../core"
-import "../services"
 import "./components"
 
 PanelWindow {
@@ -25,45 +23,124 @@ PanelWindow {
 
     color: "transparent"
 
-    property bool toggleMask: false
+    // The CCC lives inside this window rather than in its own. Two
+    // layer-shell surfaces cannot read as one: the compositor separates them,
+    // so the notch's border and glow cannot wrap continuously across the join
+    // and there is a visible seam. Sharing the window is what makes the CCC
+    // look like the notch unfolding.
+    //
+    // Every output has its own AmbientBar, so exactly one of them claims the
+    // overlay by matching the screen it was opened on.
+    readonly property bool isCommandCenterHost:
+        Settings.featuresCommandCenter
+        && OverlayController.activeSurface === OverlayController.Surface.CommandCenter
+        && OverlayController.hostScreenName !== ""
+        && root.screen !== null
+        && OverlayController.hostScreenName === root.screen.name
 
-    Component {
-        id: maskComponent
+    // Input region: the pill, plus the CCC while it is open.
+    //
+    // WindowInterface.mask is a single Region, not a list. Multiple rectangles
+    // go in as nested Regions inside it -- assigning a JS array to mask fails
+    // with "Cannot assign QJSValue to PendingRegion*", because array elements
+    // arrive as QJSValue rather than Region pointers.
+    //
+    // Two sub-regions rather than one union rectangle: a single region spanning
+    // the column would make the empty gaps beside the pill and beside the CCC
+    // swallow clicks meant for the desktop.
+    //
+    // Declared inline rather than built with Component.createObject. The
+    // created-object form had no access to commandCenterHost, which is declared
+    // later in the file, and it could not stay bound as the host animated.
+    Region {
+        id: windowRegion
+
+        // Four sub-regions covering everything outside the panel, so a click there
+        // reaches us and can dismiss. While the CCC is open the window covers the
+        // screen, so these have room to exist; while it is closed they are all
+        // zero-sized and only the notch and CCC regions remain.
+        //
+        // Without any region out here the compositor has nothing to deliver an
+        // outside click to, so it goes to whatever is underneath and there is no
+        // way for us to see it.
         Region {
-            Region {
-                x: livingNotch.x
-                y: livingNotch.y
-                width: livingNotch.width
-                height: livingNotch.height
-            }
+            x: 0
+            y: 0
+            width: root.dismissing ? root.dismissLeft : 0
+            height: root.dismissing ? root.height : 0
+        }
+        Region {
+            x: root.dismissRight
+            y: 0
+            width: root.dismissing ? Math.max(0, root.width - root.dismissRight) : 0
+            height: root.dismissing ? root.height : 0
+        }
+        Region {
+            x: root.dismissLeft
+            y: 0
+            width: root.dismissing ? Math.max(0, root.dismissRight - root.dismissLeft) : 0
+            height: root.dismissing ? root.dismissTop : 0
+        }
+        Region {
+            x: root.dismissLeft
+            y: root.dismissBottom
+            width: root.dismissing ? Math.max(0, root.dismissRight - root.dismissLeft) : 0
+            height: root.dismissing ? Math.max(0, root.height - root.dismissBottom) : 0
+        }
+
+        Region {
+            id: notchRegion
+            x: livingNotch.x
+            y: livingNotch.y
+            width: livingNotch.width
+            height: livingNotch.height
+        }
+
+        Region {
+            id: cccRegion
+            x: commandCenterHost.x
+            y: commandCenterHost.y
+            width: commandCenterHost.width
+            height: commandCenterHost.height
         }
     }
 
-    property var maskA: maskComponent.createObject(root)
-    property var maskB: maskComponent.createObject(root)
+    mask: windowRegion
 
-    mask: toggleMask ? maskA : maskB
 
-    function flushWaylandMask() {
-        toggleMask = !toggleMask;
-    }
 
     Connections {
         target: livingNotch
-        function onWidthChanged() { root.flushWaylandMask(); }
-        function onHeightChanged() { root.flushWaylandMask(); }
-        function onXChanged() { root.flushWaylandMask(); }
-        function onYChanged() { root.flushWaylandMask(); }
     }
 
-    Component.onCompleted: {
-        root.flushWaylandMask();
+    // The CCC animating open and closed changes the input region too.
+    Connections {
+        target: commandCenterHost
     }
+
 
     WlrLayershell.namespace: "ctos-bar"
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    implicitHeight: Math.max(Theme.barHeight, livingNotch.currentHeight + 6)
+    // OnDemand only while the CCC is open. This surface otherwise takes no
+    // keyboard input at all, and claiming focus unconditionally would steal
+    // keystrokes from the desktop.
+    WlrLayershell.keyboardFocus: root.isCommandCenterHost
+        ? WlrKeyboardFocus.OnDemand
+        : WlrKeyboardFocus.None
+    // Height of the bar on its own: the notch, its padding, and the CCC when
+    // joined underneath it.
+    readonly property real collapsedHeight:
+        Math.max(Settings.barHeight, livingNotch.currentHeight)
+        + Theme.notchHostPadding
+        + (root.isCommandCenterHost ? commandCenterHost.height : 0)
+
+    // While the CCC is open the surface covers the screen instead, so that the
+    // backdrop region above has somewhere to live and outside clicks are ours to
+    // receive. Anchored to the top with left/right/top set, so this is the full
+    // screen minus the 3px top margin.
+    implicitHeight: root.isCommandCenterHost && root.screen !== null
+        ? root.screen.height
+        : root.collapsedHeight
 
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
@@ -81,6 +158,60 @@ PanelWindow {
     // =========================================================================
     // Active Living Notch Component
     // =========================================================================
+
+    // The notch and the CCC together occupy one axis-aligned box. The dismiss
+    // target is everything outside it, so the catcher never overlaps a control.
+    //
+    // A single full-screen MouseArea with z: -1 was tried first and does not
+    // work: the catcher stayed the topmost item under the cursor even at z: -1,
+    // so every toggle, list row and power button in the panel was swallowed and
+    // the click just closed the panel. z is not a reliable way to put a
+    // screen-sized item behind a subtree here, so the geometry is used instead --
+    // the catcher simply does not cover the panel.
+    readonly property real dismissLeft:
+        Math.max(0, Math.min(livingNotch.x, commandCenterHost.x))
+    readonly property real dismissRight:
+        Math.min(root.width, Math.max(livingNotch.x + livingNotch.width,
+                                      commandCenterHost.x + commandCenterHost.width))
+    readonly property real dismissTop:
+        Math.max(0, Math.min(livingNotch.y, commandCenterHost.y))
+    readonly property real dismissBottom:
+        Math.min(root.height, Math.max(livingNotch.y + livingNotch.height,
+                                       commandCenterHost.y + commandCenterHost.height))
+
+    readonly property bool dismissing: root.isCommandCenterHost
+
+    component DismissArea: MouseArea {
+        visible: root.dismissing
+        onClicked: OverlayController.handleBackdropClick()
+    }
+
+    // Left, right, above and below the panel. Zero-sized while closed, so the
+    // desktop is clickable exactly as before.
+    DismissArea {
+        x: 0
+        y: 0
+        width: root.dismissLeft
+        height: root.height
+    }
+    DismissArea {
+        x: root.dismissRight
+        y: 0
+        width: Math.max(0, root.width - root.dismissRight)
+        height: root.height
+    }
+    DismissArea {
+        x: root.dismissLeft
+        y: 0
+        width: Math.max(0, root.dismissRight - root.dismissLeft)
+        height: root.dismissTop
+    }
+    DismissArea {
+        x: root.dismissLeft
+        y: root.dismissBottom
+        width: Math.max(0, root.dismissRight - root.dismissLeft)
+        height: Math.max(0, root.height - root.dismissBottom)
+    }
 
     LivingNotch {
         id: livingNotch
@@ -101,401 +232,56 @@ PanelWindow {
     }
 
     // =========================================================================
-    // Backwards Compatibility Scaffolding
-    // Preserves legacy element IDs, signal bindings, and structural contracts
-    // for test suite compatibility without visual or Wayland input interference.
+    // Adaptive Command & Control Center
+    //
+    // Hosted here rather than in a PanelWindow of its own. Two layer-shell
+    // surfaces cannot read as one: the compositor separates them, so the
+    // notch's border and glow cannot wrap continuously across the join and
+    // there is a visible seam between them. Sharing this window is what makes
+    // the CCC look like the notch unfolding rather than a panel appearing.
+    //
+    // Every output has its own AmbientBar, so exactly one of them claims the
+    // overlay by matching the screen it was opened on.
     // =========================================================================
 
+    // The panel starts exactly where the notch ends: no tuck, no overlap.
+//
+// It used to overlap by the notch's own radius, on the theory that the two
+// should read as one continuous shape -- the notch unfolding rather than a pill
+// sitting on a panel. Hiding the notch's rounded bottom corners behind the
+// opaque panel did produce one shape, but it read as a panel sliding underneath
+// the pill rather than as a single surface, because the notch's own rounded
+// corners were doing the hiding. Aligning the two edges instead makes the join
+// explicit: the notch's bottom edge is the panel's top edge, and each keeps its
+// own corners.
+//
+// Nothing needs a seam marker here. The divider that used to mark the notch's
+// lower edge only made sense while the panel's top was hidden behind the notch;
+// the panel's own border is the line now.
+
     Item {
-        id: legacyCompatibilityLayer
+        id: commandCenterHost
 
-        visible: false
-        width: 0
-        height: 0
-        enabled: false
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: livingNotch.bottom
+        width: Math.max(Theme.commandCenterMinWidth,
+                         Math.min(Theme.commandCenterWidth, root.width - Theme.spacing2Xl * 4))
+        height: root.isCommandCenterHost ? ccc.implicitHeight : 0
+        visible: root.isCommandCenterHost
+        clip: false
 
-        // Legacy Left Island
-        Rectangle {
-            id: leftIsland
-
-            anchors.left: parent.left
-            anchors.leftMargin: Theme.barPaddingHorizontal
-            anchors.top: parent.top
-            anchors.topMargin: (Theme.barHeight - height) / 2
-            height: Theme.barHeight - 6
-            width: leftSections.width
-            radius: Theme.radiusPill
-            color: "transparent"
-
-            RowLayout {
-                id: leftSections
-                anchors.fill: parent
-                spacing: Theme.spacingMedium
-
-                // Section 1: Blume Logo
-                Rectangle {
-                    id: logoSection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: height
-                    height: Theme.barHeight - 6
-                    width: height
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: logoMouseArea.containsMouse ? Theme.surfaceHover : Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: logoMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-
-                    Image {
-                        id: logoIcon
-
-                        anchors.centerIn: parent
-                        fillMode: Image.PreserveAspectFit
-                        height: 22
-                        source: "components/os-icon.svg"
-                        sourceSize.height: 22
-                        sourceSize.width: 22
-                        width: 22
-                    }
-
-                    MouseArea {
-                        id: logoMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-
-                        onClicked: OverlayController.openCommandDeck()
-                    }
-                }
-
-                // Section 2: Workspaces
-                Rectangle {
-                    id: workspacesSection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: workspacesWidget.implicitWidth + Theme.paddingMedium * 2
-                    height: Theme.barHeight - 6
-                    width: workspacesWidget.implicitWidth + Theme.paddingMedium * 2
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: Theme.borderMuted
-                    border.width: Theme.borderWidth
-
-                    WorkspacesWidget {
-                        id: workspacesWidget
-
-                        anchors.centerIn: parent
-                        monitorName: (root.screen && root.screen.name) ? root.screen.name : ""
-                    }
-                }
-
-                // Section 3: Window Title
-                Rectangle {
-                    id: windowTitleSection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.maximumWidth: 380
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: Math.min(windowTitleWidget.implicitWidth + Theme.paddingMedium * 2, 380)
-                    height: Theme.barHeight - 6
-                    width: Math.min(windowTitleWidget.implicitWidth + Theme.paddingMedium * 2, 380)
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: windowTitleMouseArea.containsMouse ? Theme.surfaceHover : Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: windowTitleMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-
-                    WindowTitleWidget {
-                        id: windowTitleWidget
-
-                        anchors.centerIn: parent
-                        width: parent.width - Theme.paddingMedium * 2
-                    }
-
-                    MouseArea {
-                        id: windowTitleMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                    }
-                }
+        Behavior on height {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationSlow
+                easing.type: Easing.InOutCubic
             }
         }
 
-        // Legacy Center Section: Dynamic Island
-        DynamicIsland {
-            id: centerSection
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: (Theme.barHeight - (Theme.barHeight - 6)) / 2
-        }
-
-        // Legacy Right Island
-        Rectangle {
-            id: rightIsland
-
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.barPaddingHorizontal
-            anchors.top: parent.top
-            anchors.topMargin: (Theme.barHeight - height) / 2
-            height: Theme.barHeight - 6
-            width: rightSections.width
-            radius: Theme.radiusPill
-            color: "transparent"
-
-            RowLayout {
-                id: rightSections
-                anchors.fill: parent
-                spacing: Theme.spacingMedium
-
-                // Section 4: Network
-                Rectangle {
-                    id: networkSection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: networkWidget.implicitWidth + Theme.paddingMedium * 2
-                    height: Theme.barHeight - 6
-                    width: networkWidget.implicitWidth + Theme.paddingMedium * 2
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: networkMouseArea.containsMouse ? Theme.surfaceHover : Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: networkMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-
-                    NetworkWidget {
-                        id: networkWidget
-
-                        anchors.centerIn: parent
-                        isHovered: networkMouseArea.containsMouse
-                    }
-
-                    MouseArea {
-                        id: networkMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-                        onClicked: (mouse) => {
-                            if (mouse && mouse.button === Qt.RightButton) {
-                                NetworkService.toggleWifi();
-                            } else {
-                                root.toggleNetwork();
-                            }
-                        }
-                    }
-                }
-
-                // Section 5: Volume
-                Rectangle {
-                    id: volumeSection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: volumeWidget.implicitWidth + Theme.paddingMedium * 2
-                    height: Theme.barHeight - 6
-                    width: volumeWidget.implicitWidth + Theme.paddingMedium * 2
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: volumeMouseArea.containsMouse ? Theme.surfaceHover : Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: volumeMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-
-                    VolumeWidget {
-                        id: volumeWidget
-
-                        anchors.centerIn: parent
-                        isHovered: volumeMouseArea.containsMouse
-                    }
-
-                    MouseArea {
-                        id: volumeMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-
-                        onClicked: AudioService.toggleMute()
-
-                        onWheel: (wheel) => {
-                            const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                            AudioService.stepVolume(delta);
-                        }
-                    }
-                }
-
-                // Section 6: Battery
-                Rectangle {
-                    id: batterySection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: batteryWidget.implicitWidth + Theme.paddingMedium * 2
-                    height: Theme.barHeight - 6
-                    width: batteryWidget.implicitWidth + Theme.paddingMedium * 2
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: batteryMouseArea.containsMouse ? Theme.surfaceHover : Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: batteryMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-                    visible: batteryWidget.visible
-
-                    BatteryWidget {
-                        id: batteryWidget
-
-                        anchors.centerIn: parent
-                        isHovered: batteryMouseArea.containsMouse
-                    }
-
-                    MouseArea {
-                        id: batteryMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-
-                        onClicked: OverlayController.toggleCommandCenter()
-                    }
-                }
-
-                // Section 7: Bluetooth
-                Rectangle {
-                    id: bluetoothSection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: bluetoothWidget.implicitWidth + Theme.paddingMedium * 2
-                    height: Theme.barHeight - 6
-                    width: bluetoothWidget.implicitWidth + Theme.paddingMedium * 2
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: bluetoothMouseArea.containsMouse ? Theme.surfaceHover : Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: bluetoothMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-                    visible: BluetoothService.available
-
-                    BluetoothWidget {
-                        id: bluetoothWidget
-
-                        anchors.centerIn: parent
-                        isHovered: bluetoothMouseArea.containsMouse
-                    }
-
-                    MouseArea {
-                        id: bluetoothMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-                        onClicked: (mouse) => {
-                            if (mouse && mouse.button === Qt.RightButton) {
-                                BluetoothService.togglePower();
-                            } else {
-                                root.toggleBluetooth();
-                            }
-                        }
-                    }
-                }
-
-                // Section 8: Clock / Calendar Trigger
-                Rectangle {
-                    id: clockSection
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: clockWidget.implicitWidth + Theme.paddingMedium * 2
-                    height: Theme.barHeight - 6
-                    width: clockWidget.implicitWidth + Theme.paddingMedium * 2
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: clockMouseArea.containsMouse ? Theme.surfaceHover : Theme.background
-                    radius: Theme.radiusMedium
-                    border.color: clockMouseArea.containsMouse ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-
-                    ClockWidget {
-                        id: clockWidget
-
-                        anchors.centerIn: parent
-
-                        onToggleCalendar: root.toggleCalendar()
-                    }
-
-                    MouseArea {
-                        id: clockMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-
-                        onClicked: root.toggleCalendar()
-                    }
-                }
-
-                // Section 9: System Rail Toggle Button
-                Rectangle {
-                    id: railSection
-
-                    readonly property bool isRailOpen: OverlayController.activeSurface === OverlayController.Surface.CommandCenter
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredHeight: Theme.barHeight - 6
-                    Layout.preferredWidth: height
-                    height: Theme.barHeight - 6
-                    width: height
-                    implicitHeight: height
-                    implicitWidth: width
-
-                    color: isRailOpen ? Theme.surfaceSelected : (railMouseArea.containsMouse ? Theme.surfaceHover : Theme.background)
-                    radius: Theme.radiusMedium
-                    border.color: (isRailOpen || railMouseArea.containsMouse) ? Theme.accent : Theme.borderMuted
-                    border.width: Theme.borderWidth
-
-                    Text {
-                        anchors.centerIn: parent
-                        color: (railSection.isRailOpen || railMouseArea.containsMouse) ? Theme.accent : Theme.textSecondary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Theme.fontWeightBold
-                        text: "="
-                    }
-
-                    MouseArea {
-                        id: railMouseArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-
-                        onClicked: OverlayController.toggleCommandCenter()
-                    }
-                }
-            }
+        CommandCenter {
+            id: ccc
+            width: parent.width
+            visible: root.isCommandCenterHost
         }
     }
+
 }

@@ -26,14 +26,14 @@ Item {
 
     Behavior on innerRadius {
         NumberAnimation {
-            duration: Theme.durationSlow
+            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
             easing.type: Easing.OutCubic
         }
     }
 
     Behavior on wheelCenterX {
         NumberAnimation {
-            duration: Theme.durationSlow
+            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
             easing.type: Easing.OutCubic
         }
     }
@@ -49,7 +49,7 @@ Item {
         id: wheelRotationBehavior
         NumberAnimation {
             id: wheelRotationAnim
-            duration: Theme.durationSlow
+            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
             easing.type: Easing.OutCubic
             onRunningChanged: {
                 if (!running && !root.isExpanded) {
@@ -70,8 +70,10 @@ Item {
     onBaseTargetAngleChanged: updateRotationTarget()
 
     // Signals
+    // categoryHovered is gone: its only emitter was a handler on a signal that
+    // was never raised. categoryClicked stays because the hub MouseArea below
+    // still raises it directly.
     signal categoryClicked(int index)
-    signal categoryHovered(int index)
     signal collapseRequested()
 
     // Rotating Wheel Container
@@ -107,13 +109,6 @@ Item {
                 isSelected: root.focusedIndex === index && root.isExpanded
                 isDimmed: root.isExpanded && root.focusedIndex !== index
                 isExpanded: root.isExpanded
-
-                onClicked: {
-                    root.categoryClicked(index);
-                }
-                onHovered: {
-                    root.categoryHovered(index);
-                }
             }
         }
     }
@@ -135,7 +130,7 @@ Item {
             border.width: 1
 
             Behavior on border.color {
-                ColorAnimation { duration: Theme.durationFast }
+                ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
             }
 
             MouseArea {
@@ -171,7 +166,7 @@ Item {
             opacity: root.isExpanded ? 0.0 : 1.0
 
             Behavior on opacity {
-                NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
             }
 
             Text {

@@ -50,7 +50,7 @@ Item {
 
         ShapePath {
             strokeWidth: root.isPreview ? 2.0 : 3.0
-            strokeColor: "black"
+            strokeColor: Theme.gray900
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
 
@@ -71,7 +71,7 @@ Item {
         property: "progress"
         from: 0.0
         to: 1.0
-        duration: root.pulseDuration
+        duration: Settings.reducedMotion ? 0 : root.pulseDuration
         easing.type: Easing.InOutQuad
     }
 

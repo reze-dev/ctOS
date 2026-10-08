@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.ctos.features.hyprland;
+  debugEnabled = config.ctos.debug.enable;
 
   hmHyprlandModule =
     {
@@ -33,8 +34,8 @@ let
           })
 
           local terminal = "kitty"
-          local fileManager = "kitty -e yazi"
-          local menu = "ctos-shell-msg toggleCommandDeck"
+          local fileManager = "kitty -e superfile"
+          local menu = "fuzzel"
           local mainMod = "SUPER"
 
           hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
@@ -42,12 +43,70 @@ let
           hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
           hl.env("HYPRCURSOR_SIZE", "20")
 
+          -- Hyprland 0.56 renders through aquamarine, not wlroots.
+          --
+          -- From the aquamarine log of a failing greeter start-up:
+          --   drm: gpu /dev/dri/card1 becomes primary drm
+          --   drm: Starting backend for /dev/dri/card0, with driver nvidia-drm
+          --         with primary /dev/dri/card1
+          --   Couldn't open a GBM device at fd 40
+          --   Cannot create a GBM Allocator: gbm failed to create a device.
+          --   CRIT: Cannot open backend: no allocator available
+          --
+          -- So DRM itself opens fine and card1 (the AMD APU) is already
+          -- primary, but aquamarine still brings the backend up on card0 with
+          -- nvidia-drm, and gbm_create_device() fails on the NVIDIA node
+          -- because the NVIDIA GBM userspace is not on the session's library
+          -- path. The result is no allocator and an abort.
+          --
+          -- AQ_DRM_DEVICES is aquamarine's own override. Restricting it to the
+          -- AMD APU keeps the backend off the NVIDIA card entirely, which is
+          -- what Niri already does successfully on this machine. This is an
+          -- Optimus laptop (GeForce GTX 1650 Ti + Renoir APU) and the internal
+          -- panel is driven by the APU.
+          --
+          -- Note /dev/dri numbering is not what it looks like: card1 is the AMD
+          -- APU (PCI 05:00.0) while renderD128 is *also* the APU and renderD129
+          -- is the NVIDIA card.
+          hl.env("AQ_DRM_DEVICES", "/dev/dri/card1")
+
+          ${lib.optionalString debugEnabled ''
+            -- 0.56 defaults debug.disable_logs to true, so Hyprland prints
+            -- nothing at all unless logs are explicitly re-enabled. Combined
+            -- with the launcher redirecting stderr, a failing start-up used to
+            -- produce a completely empty log.
+            hl.env("HYPRLAND_TRACE", "1")
+            hl.env("AQ_TRACE", "1")
+          ''}
+
           hl.on("hyprland.start", function()
-              hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target")
-              hl.exec_cmd("systemctl --user start hyprpolkitagent")
+            -- nixos-fake-graphical-session.target, the same target niri
+            -- starts.
+            --
+            -- This used to start and stop hyprland-session.target, but the
+            -- nixpkgs Hyprland package installs no systemd user units, so
+            -- that target does not exist and systemctl fails with "Unit
+            -- hyprland-session.target not found". Nothing then pulled in
+            -- graphical-session.target, which is where ctos.service,
+            -- ctos-awww-daemon.service and ctos-wallpaper.service live --
+            -- hence a Hyprland session with no shell, no awww and no
+            -- wallpaper.
+            hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP DISPLAY GTK_USE_PORTAL HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start nixos-fake-graphical-session.target")
+            hl.exec_cmd("${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1")
           end)
 
           hl.config({
+              ${lib.optionalString debugEnabled ''
+                -- enable_stdout_logs is only honoured when disable_logs is false,
+                -- so both are needed to get anything on stdout.
+                debug = {
+                    disable_logs = false,
+                    enable_stdout_logs = true,
+                    disable_time = false,
+                    suppress_errors = false,
+                    error_limit = 20,
+                },
+              ''}
               general = {
                   gaps_in = 3,
                   gaps_out = 5,
@@ -210,7 +269,28 @@ in
 
     programs.hyprland = {
       enable = true;
-      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+
+      # From the system nixpkgs rather than the Hyprland git flake input.
+      #
+      # The flake input carries its own nixpkgs, so Hyprland and aquamarine
+      # were linked against glibc-2.42 while the system's Mesa is built
+      # against glibc-2.44. Hyprland therefore starts with glibc 2.42 mapped,
+      # and when GBM tries to dlopen the driver's dri_gbm.so it pulls in
+      # mesa's libgallium, which requires GLIBC_2.43:
+      #
+      #   MESA-LOADER: failed to open dri:
+      #     .../glibc-2.42-84/lib/libm.so.6: version `GLIBC_2.43' not found
+      #     (required by .../mesa-26.2.3/lib/libgallium-26.2.3.so)
+      #
+      # gbm_create_device() then returns NULL and start-up dies with
+      # "Cannot create a GBM Allocator" / "no allocator available". Niri is
+      # unaffected because it comes from the system nixpkgs and so runs
+      # against glibc 2.44.
+      #
+      # No environment variable can paper over this: glibc resolves its
+      # dlopen search path once at startup, and the GLIBC_2.43 requirement is
+      # absolute. The two closures have to be built against the same glibc.
+      package = pkgs.hyprland;
       xwayland.enable = true;
     };
 

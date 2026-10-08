@@ -23,14 +23,20 @@ Item {
     property real _lastTargetAngle: -90.0 + index * (360.0 / Math.max(1, typeof categoryCount !== "undefined" ? categoryCount : 8))
     property var layoutInfo: RadialGeometry.getSegmentTargetLayout(
         index, 
-        typeof globalFocusedIndex !== "undefined" ? globalFocusedIndex : 0, 
+        _focusedIndex, 
         typeof categoryCount !== "undefined" ? categoryCount : 8, 
         2.0, 
         90.0, 
         _lastTargetAngle
     )
 
-    onLayoutInfoChanged: {
+    // The focused index is what actually moves a segment, so latch the
+    // continuity hint on that. Writing it from onLayoutInfoChanged made
+    // layoutInfo depend on a property its own handler mutated, which is a
+    // binding loop.
+    readonly property int _focusedIndex: typeof globalFocusedIndex !== "undefined" ? globalFocusedIndex : 0
+
+    on_FocusedIndexChanged: {
         if (layoutInfo && layoutInfo.centerAngle !== undefined) {
             _lastTargetAngle = layoutInfo.centerAngle;
         }
@@ -42,16 +48,16 @@ Item {
     property real endAngle: layoutInfo.endAngle
     
     Behavior on currentWidth {
-        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
     }
     Behavior on centerAngle {
-        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
     }
     Behavior on startAngle {
-        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
     }
     Behavior on endAngle {
-        NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
     }
     
     property real wheelRotation: 0.0
@@ -70,9 +76,11 @@ Item {
     readonly property real iconCenterX: root.cx + root.iconRadius * Math.cos(root.iconRad)
     readonly property real iconCenterY: root.cy + root.iconRadius * Math.sin(root.iconRad)
 
-    // Signals
-    signal clicked()
-    signal hovered()
+    // No signals here. It used to declare clicked() and hovered(), and
+    // CircularSettingsMenu connected both, but nothing in this file ever emitted
+    // them -- there is no MouseArea in it. Hit-testing is surfaceMouseArea in
+    // RadialSettings.qml, which covers the whole radial, so the handlers were
+    // dead code that looked live.
 
     // Annular Sector Vector Shape
     Shape {
@@ -84,15 +92,15 @@ Item {
             id: sectorPath
             strokeWidth: 2.0
             strokeColor: root.isFocused ? Theme.gray50 : (root.isSelected ? Theme.acidGreen : "transparent")
-            fillColor: (root.isFocused || root.isSelected) ? Theme.gray50 : "black"
+            fillColor: (root.isFocused || root.isSelected) ? Theme.gray50 : Theme.gray900
             capStyle: ShapePath.FlatCap
             joinStyle: ShapePath.MiterJoin
 
             Behavior on fillColor {
-                ColorAnimation { duration: Theme.durationFast }
+                ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
             }
             Behavior on strokeColor {
-                ColorAnimation { duration: Theme.durationFast }
+                ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
             }
 
             PathSvg {
@@ -118,7 +126,7 @@ Item {
         opacity: root.isExpanded ? 0.0 : 1.0
 
         Behavior on opacity {
-            NumberAnimation { duration: Theme.durationSlow; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationSlow; easing.type: Easing.OutCubic }
         }
 
         // Counter-rotate by wheel rotation so icon stays strictly upright
@@ -129,10 +137,10 @@ Item {
             anchors.centerIn: parent
             size: 22
             name: root.iconName
-            color: (root.isFocused || root.isSelected) ? "black" : Theme.gray300
+            color: (root.isFocused || root.isSelected) ? Theme.gray900 : Theme.gray300
 
             Behavior on color {
-                ColorAnimation { duration: Theme.durationFast }
+                ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
             }
         }
 

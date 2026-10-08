@@ -90,7 +90,7 @@ Item {
     Rectangle {
         id: bgSurface
         anchors.fill: parent
-        color: Qt.rgba(14 / 255, 14 / 255, 14 / 255, 0.85)
+        color: Theme.surfaceScrim
         border.color: Theme.gray700
         border.width: Theme.borderWidth
     }
@@ -119,35 +119,27 @@ Item {
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Theme.fontWeightMedium
-            }
-
-            Item {
+                // The title absorbs the slack and yields when the value needs
+                // the room. Without this the row overflows the 280px widget and
+                // the rate is cut off mid-glyph at the right edge.
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                elide: Text.ElideRight
             }
 
-            // RX Speed Label (Theme.acidGreen)
+            // RX / TX rates. Capped so an unusually large or unit-suffixed
+            // rate cannot push the row past the widget.
             Text {
                 text: "↓ " + root.formatRate(SystemMonitorService.netRxBytesPerSec)
-                color: Theme.acidGreen
+                         + "  ↑ " + root.formatRate(SystemMonitorService.netTxBytesPerSec)
+                color: Theme.statusGreen
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeSmall
                 font.weight: Theme.fontWeightMedium
-            }
-
-            Text {
-                text: " "
-                color: Theme.gray700
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
-            }
-
-            // TX Speed Label (Theme.gray300)
-            Text {
-                text: "↑ " + root.formatRate(SystemMonitorService.netTxBytesPerSec)
-                color: Theme.gray300
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Theme.fontWeightMedium
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
+                Layout.preferredWidth: implicitWidth
+                Layout.maximumWidth: 150
             }
         }
 
@@ -173,7 +165,7 @@ Item {
                 ctx.clearRect(0, 0, w, h);
 
                 if (!SystemMonitorService.available) {
-                    ctx.fillStyle = "#7A7A7A";
+                    ctx.fillStyle = Theme.textDimHex;
                     ctx.font = "12px JetBrainsMono Nerd Font, monospace";
                     ctx.textAlign = "center";
                     ctx.fillText("NETWORK OFFLINE", w / 2, h / 2);
@@ -183,7 +175,7 @@ Item {
                 // -------------------------------------------------------------
                 // 1. Wireframe Grid Lines (Theme.gray700: #202020)
                 // -------------------------------------------------------------
-                ctx.strokeStyle = "#202020";
+                ctx.strokeStyle = Theme.gray700Hex;
                 ctx.lineWidth = 1.0;
 
                 // Horizontal wireframe grid lines (4 equal divisions)
@@ -233,7 +225,7 @@ Item {
                 // -------------------------------------------------------------
                 // 3. Draw TX Line (Theme.gray300: #C3C3C3)
                 // -------------------------------------------------------------
-                ctx.strokeStyle = "#C3C3C3";
+                ctx.strokeStyle = Theme.gray300Hex;
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 for (let i = 0; i < n; ++i) {
@@ -245,10 +237,10 @@ Item {
                 ctx.stroke();
 
                 // -------------------------------------------------------------
-                // 4. Draw RX Area Glow & Line (Theme.acidGreen: #1BFD9C)
+                // 4. Draw RX Area Glow & Line (Theme.statusGreen)
                 // -------------------------------------------------------------
                 // Faint tactical gradient fill under RX curve
-                ctx.fillStyle = "rgba(27, 253, 156, 0.08)";
+                ctx.fillStyle = Theme.withAlpha(Theme.statusGreen, 0.08);
                 ctx.beginPath();
                 ctx.moveTo(startOffset, h - 2);
                 for (let i = 0; i < n; ++i) {
@@ -259,7 +251,7 @@ Item {
                 ctx.fill();
 
                 // Crisp RX Stroke
-                ctx.strokeStyle = "#1BFD9C";
+                ctx.strokeStyle = Theme.statusGreenHex;
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 for (let i = 0; i < n; ++i) {

@@ -221,7 +221,18 @@ Singleton {
         }
         historyModel.insert(0, record);
 
-        if (!root.doNotDisturb && !isDuplicate) {
+        // Suppressed whenever an overlay is already up.
+        //
+        // A toast is the shell telling you about something you have not seen.
+        // With the command centre open, the same notification is sitting in the
+        // list the user is looking at, so the toast is not information -- it is
+        // a second window drawn over the panel that is answering the same
+        // question. Radial settings and the command deck are included for the
+        // same reason: any of them means the user is mid-task.
+        //
+        // The toast is still recorded in history either way, so opening the
+        // panel afterwards still shows it.
+        if (!root.doNotDisturb && !isDuplicate && !OverlayController.isOverlayActive) {
             for (let t = activeToastsModel.count - 1; t >= 0; --t) {
                 const existingToast = activeToastsModel.get(t);
                 if (existingToast && (existingToast.notifId === notifId || existingToast.id === notifId)) {
@@ -315,6 +326,17 @@ Singleton {
     }
 
     // Clears all stored notifications from history
+    // Drops any toasts currently on screen without touching history.
+    //
+    // Called when an overlay opens: a toast raised before the panel was opened
+    // would otherwise sit on top of it for the remainder of its timeout, which
+    // is long enough to be in the way of reading what is underneath.
+    function dismissToasts(): void {
+        while (activeToastsModel.count > 0) {
+            activeToastsModel.remove(0);
+        }
+    }
+
     function clearAll(): void {
         historyModel.clear();
         for (let id in root._notificationObjects) {

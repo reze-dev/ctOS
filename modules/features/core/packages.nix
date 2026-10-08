@@ -19,13 +19,29 @@ in
       eza
       fd
       fzf
+      fuzzel
       jq
+      ydotool
       fastfetch
       ripgrep
+      superfile
       tmux
       unzip
       wget
       zoxide
     ];
+
+    systemd.services.ydotoold = {
+      description = "ydotool daemon";
+
+      wantedBy = [ "multi-user.target" ];
+
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.ydotool}/bin/ydotoold --socket-own=1000:100";
+        Restart = "always";
+        RestartSec = 2;
+      };
+    };
   };
 }

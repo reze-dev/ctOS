@@ -51,7 +51,14 @@ Rectangle {
     SystemClock {
         id: systemClock
 
-        precision: SystemClock.Minute
+        // Plural, no Precision suffix. Qt documents this enum as
+        // SecondPrecision / MinutePrecision / HourPrecision, but on Qt 6.11.2
+        // with Quickshell 0.3.1 those resolve to undefined and the assignment
+        // fails with "Unable to assign [undefined] to SystemClock::Enum".
+        // The names that actually exist here are Seconds and Minutes, verified
+        // by rendering a probe. Do not "correct" this to the documented form --
+        // that silently breaks the clock.
+        precision: SystemClock.Minutes
     }
 
     property int todayYear: systemClock.date.getFullYear()

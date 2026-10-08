@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Services.Mpris
 import "../../adapters/hyprland"
@@ -15,36 +16,79 @@ Item {
     // Public Contract
     // =========================================================================
     property string monitorName: ""
+    // Detail level. Idle is one line: clock, glyphs, no numbers. The design's
+    // expanded state "breathes open with more details" -- a date line, seconds
+    // on the clock, and a percentage under each indicator glyph. Carrying all of
+    // that in the idle bar too is part of why it needed 470px to stop wrapping.
+    readonly property bool showDetail:
+        root.isCommandCenterOpen || root.notchState === "hover"
+
     readonly property bool isCommandCenterOpen: OverlayController.activeSurface === OverlayController.Surface.CommandCenter
     readonly property real currentWidth: root.width
     readonly property real currentHeight: root.height
     readonly property string notchState: root._resolvedState
 
     // Dynamic Island & Test Compatibility Properties
-    property bool isExpanded: root._notificationActive
+    // Test-compatibility alias. Read-only on purpose: it used to be a writable
+    // binding onto _notificationActive while also being assigned alongside it,
+    // which broke the binding and left two bools that had to be kept in sync by
+    // hand. notificationActive is the only writable state.
+    readonly property bool isExpanded: root.notificationActive
     property string state: root.notchState
-    property bool calendarOpen: root._isCalendarOpen
+    // Read-only alias for the same reason as isExpanded above.
+    readonly property bool _isCalendarOpen: root.calendarOpen
 
     // State Tracking Flags
     property bool _isHovered: false
-    property bool _isCalendarOpen: false
-    property bool _notificationActive: false
+    property bool notificationActive: false
+
+    // Whether the inline calendar grid is open.
+    //
+    // This was never declared, and the file both reads and writes it: the
+    // _isCalendarOpen alias, _resolvedState, the Loader's active binding, and
+    // toggleCalendar()/closeCalendar(). QML silently creates a dynamic property
+    // on the first assignment, so it appeared to work, but every read before
+    // that returned undefined -- which is what produced
+    // "Unable to assign [undefined] to bool" here and at the Loader.
+    property bool calendarOpen: false
 
     property string latestAppName: "System"
     property string latestSummary: ""
     property int latestUrgency: 1
 
     // State Dimensions
-    readonly property real compactWidth: 220
-    readonly property real hoverWidth: 380
-    readonly property real expandedWidth: 380
+    // Derived from the content rather than the old fixed 360.
+    //
+    // The clock is centred on the notch, so the pill needs half its width free on
+    // each side of it. Whichever side group is wider sets that half, and the
+    // clock band sits between them:
+    //
+    //   |<- max(left, right) ->|<- clock band ->|<- max(left, right) ->|
+    //
+    // At 360 this left dead space at both ends once the clock moved out of the
+    // flow, which is the whole reason the pill looked over-wide.
+    readonly property real compactWidth: Math.max(
+        Theme.notchWidthCompactMin,
+        Math.max(root.leftContentWidth, root.rightContentWidth) * 2
+            + root.clockBand + Theme.paddingLarge * 2)
+
+    readonly property real leftContentWidth:
+        compactLogo.width + Theme.spacingSmall + workspaceStrip.implicitWidth
+    readonly property real rightContentWidth: indicatorCluster.implicitWidth
+    // Hover adds the date line and the indicator percentages on top of the idle
+    // row, so it needs more room, but not twice as much. The hover content
+    // measures ~411px, so 480 keeps a margin without stretching the pill into
+    // the letterbox the 620px width produced.
+    readonly property real hoverWidth: 480
     readonly property real mediaWidth: 280
     readonly property real notificationWidth: 320
     readonly property real calendarWidth: 360
 
-    readonly property real compactHeight: Theme.barHeight - 6 // 30px
-    readonly property real hoverHeight: 60
-    readonly property real expandedHeight: 60
+    // The notch's own token, not Settings.barHeight: see Theme.notchWidthCompactMin
+    // for why the pill's proportions must not follow a settings slider.
+    readonly property real compactHeight: Theme.notchHeightCompact
+    readonly property real hoverHeight: Theme.notchHeightExpanded
+    readonly property real expandedHeight: Theme.notchHeightExpanded
     readonly property real calendarHeight: 250
 
     // Public Signals
@@ -140,14 +184,21 @@ Item {
     // State Priority & Geometry Computations
     // =========================================================================
     readonly property string _resolvedState: {
-        if ((root._isCalendarOpen || root.calendarOpen) && !root.isCommandCenterOpen) return "calendar";
-        if ((root._notificationActive || root.isExpanded) && !NotificationService.doNotDisturb) return "notification";
+        if (root.calendarOpen && !root.isCommandCenterOpen) return "calendar";
+        if (root.notificationActive && !NotificationService.doNotDisturb) return "notification";
         if (root._isHovered && !root.isCommandCenterOpen) return "hover";
         if (root.hasMedia) return "media";
         return "compact";
     }
 
     readonly property real targetWidth: {
+        // While the command centre is open, this bar is the panel's header,
+        // and the design draws that header as wide as the panel. At the 220px
+        // compact width there is nowhere to put the date, the indicators and
+        // the collapse control.
+        if (root.isCommandCenterOpen)
+            return Theme.commandCenterWidth;
+
         switch (root.notchState) {
         case "calendar": return root.calendarWidth;
         case "hover": return root.hoverWidth;
@@ -169,19 +220,41 @@ Item {
         }
     }
 
-    readonly property real targetRadius: {
-        if (root.notchState === "calendar" || root.notchState === "hover") return Theme.radiusMedium;
-        return Theme.radiusPill;
-    }
+    // A two-line date and clock, plus rows of indicators, need more than the
+    // 30px bar height while the panel is open.
+    readonly property real currentTargetHeight:
+        root.isCommandCenterOpen ? Theme.notchHeightExpanded : root.targetHeight
+
+    // Fully rounded ends at every size, per the target design. The previous
+    // version fell back to an 8px radius for the hover and calendar states,
+    // which drew a rectangle where a stadium was specified.
+    // Corner radius. A stadium at every size, per the design -- except while the
+    // command centre is open, where the header is only as tall as the notch and a
+    // height/2 radius would be 36px of it. Squaring that off lets the panel tuck
+    // up under the header by the same amount and hide those corners, which is
+    // what makes the two read as one surface. A radius that large would instead
+    // cover the bottom half of the header's own content.
+    // Rounded rectangle rather than a stadium.
+    //
+    // radius: height / 2 gives fully rounded ends, which read as a pill. The
+    // design calls for a square with rounded corners, so the resting radius is a
+    // fixed value instead of tracking the height -- at 42px tall a 21px radius is
+    // half the height, which is the pill shape, not this one.
+    //
+    // The command centre's 18 is kept: that is the join radius, where the panel
+    // tucks under the notch and the two rounded corners have to meet.
+    readonly property real targetRadius: root.isCommandCenterOpen
+        ? 18
+        : Theme.radiusLarge
 
     // =========================================================================
     // Geometry & Spring Physics Animation Declarations
     // =========================================================================
     clip: false
     width: targetWidth
-    height: targetHeight
+    height: currentTargetHeight
     implicitWidth: targetWidth
-    implicitHeight: targetHeight
+    implicitHeight: currentTargetHeight
 
     Behavior on width {
         enabled: !Settings.reducedMotion
@@ -203,14 +276,14 @@ Item {
         }
     }
 
-    // Opacity Handoff with CommandCenter
-    opacity: root.isCommandCenterOpen ? 0.0 : 1.0
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Settings.reducedMotion ? 0 : Theme.durationSlow
-            easing.type: Easing.InOutQuad
-        }
-    }
+    // The notch stays visible while the CCC is open.
+    //
+    // It used to fade to zero here, which was correct when the CCC was a
+    // separate PanelWindow that *replaced* the bar. Now the CCC is a child of
+    // this window unfolding downward, and the design keeps the notch header
+    // pinned at the top of it -- that continuity is the whole point. Fading it
+    // out left the CCC floating with nothing attached above it.
+    opacity: 1.0
 
     // =========================================================================
     // Timers & Methods
@@ -220,8 +293,7 @@ Item {
         interval: 4000
         repeat: false
         onTriggered: {
-            root._notificationActive = false;
-            root.isExpanded = false;
+            root.notificationActive = false;
         }
     }
 
@@ -240,16 +312,6 @@ Item {
         }
     }
 
-    onIsExpandedChanged: {
-        if (root.isExpanded && !root._notificationActive) {
-            root._notificationActive = true;
-            collapseTimer.restart();
-        } else if (!root.isExpanded && root._notificationActive) {
-            root._notificationActive = false;
-            collapseTimer.stop();
-        }
-    }
-
     function isInsidePill(mx: real, my: real, w: real, h: real, r: real): bool {
         if (mx < 0 || mx > w || my < 0 || my > h) return false;
         if (mx >= r && mx <= w - r) return true;
@@ -265,8 +327,7 @@ Item {
         root.latestAppName = appName || "System";
         root.latestSummary = summary || "";
         root.latestUrgency = (urgency !== undefined) ? urgency : 1;
-        root._notificationActive = true;
-        root.isExpanded = true;
+        root.notificationActive = true;
         collapseTimer.restart();
     }
 
@@ -275,14 +336,12 @@ Item {
             OverlayController.close();
         }
         root.calendarOpen = !root.calendarOpen;
-        root._isCalendarOpen = root.calendarOpen;
-        root.calendarToggled(root._isCalendarOpen);
+        root.calendarToggled(root.calendarOpen);
     }
 
     function closeCalendar(): void {
-        if (root._isCalendarOpen || root.calendarOpen) {
+        if (root.calendarOpen) {
             root.calendarOpen = false;
-            root._isCalendarOpen = false;
             root.calendarToggled(false);
             root.closeCalendarRequested();
         }
@@ -301,10 +360,9 @@ Item {
         }
 
         function onDoNotDisturbChanged(): void {
-            if (NotificationService.doNotDisturb && root._notificationActive) {
+            if (NotificationService.doNotDisturb && root.notificationActive) {
                 collapseTimer.stop();
-                root._notificationActive = false;
-                root.isExpanded = false;
+                root.notificationActive = false;
             }
         }
     }
@@ -347,21 +405,59 @@ Item {
     // =========================================================================
     SystemClock {
         id: systemClock
+        // Plural form, not Qt's documented "SecondPrecision": the documented
+        // names resolve to undefined on this Qt. See CalendarPopup.qml.
         precision: SystemClock.Seconds
+    }
+
+    // -------------------------------------------------------------------------
+    // Border ring and surface.
+    //
+    // Rectangle.border takes a flat colour, so the three-stop gradient is a
+    // separate rounded rectangle sitting behind the surface, and the surface is
+    // inset by the border width. That yields a uniform ring because the inner
+    // radius is the outer radius minus the inset.
+    // -------------------------------------------------------------------------
+    readonly property color ringStart: root.latestUrgency === 2 && root.notchState === "notification"
+        ? Theme.danger
+        : Theme.accentBlue
+    readonly property color ringMid: Theme.accentViolet
+    readonly property color ringEnd: root.latestUrgency === 2 && root.notchState === "notification"
+        ? Theme.danger
+        : Theme.accentMagenta
+
+    Rectangle {
+        id: borderRing
+
+        anchors.fill: parent
+        radius: root.targetRadius
+        antialiasing: true
+
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.00; color: root.ringStart }
+            GradientStop { position: 0.50; color: root.ringMid }
+            GradientStop { position: 1.00; color: root.ringEnd }
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Settings.reducedMotion ? 0 : Theme.durationNormal
+                easing.type: Easing.InOutQuad
+            }
+        }
     }
 
     Rectangle {
         id: visualBg
+
         anchors.fill: parent
-        color: Theme.background
-        radius: root.targetRadius
-        border.width: Theme.borderWidth
-        border.color: {
-            if (root.notchState === "notification") return root.latestUrgency === 2 ? Theme.warningRed : Theme.accent;
-            if (root.notchState === "hover" || root.notchState === "calendar") return Theme.accent;
-            if (root._isHovered) return Theme.accent;
-            return Theme.borderMuted;
-        }
+        anchors.margins: Theme.borderWidthAccent
+        radius: Math.max(0, root.targetRadius - Theme.borderWidthAccent)
+        antialiasing: true
+
+        // Slightly translucent so the wallpaper reads through, per the design.
+        color: Theme.notchSurface
         clip: true
 
         Behavior on radius {
@@ -375,146 +471,433 @@ Item {
     // =========================================================================
     // View 1: Compact State (Workspaces, Monospace Clock, Net Dot, Status)
     // =========================================================================
-    RowLayout {
-        id: compactView
-        anchors.fill: parent
-        anchors.leftMargin: Theme.paddingLarge
-        anchors.rightMargin: Theme.paddingLarge
-        spacing: Theme.spacingSmall
-        opacity: (root.notchState === "compact") ? 1.0 : 0.0
+RowLayout {
+          id: compactView
+          anchors.fill: parent
+          anchors.leftMargin: Theme.paddingLarge
+          anchors.rightMargin: Theme.paddingLarge
+          spacing: Theme.spacingSmall
+        // Serves both the idle and the hover state.
+        //
+        // There was a second, separate hover view with its own copies of the
+        // system bar and the system tray -- about 300 lines duplicating content
+        // that had already drifted out of sync with the compact view. Hover is
+        // the same row with more detail, which is what showDetail expresses, so
+        // it is the same view.
+        opacity: (root.notchState === "compact" || root.notchState === "hover") ? 1.0 : 0.0
         visible: opacity > 0.0
 
         Behavior on opacity {
             NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
         }
 
-        // Workspace Indicator Dots (5 dots)
+        // App Logo / CommandDeck entry point.
+        // The target design places this first in the idle state; it was only
+        // present in the hover row, so the resting notch had no identity and no
+        // CommandDeck target.
+        Rectangle {
+              id: compactLogo
+              Layout.preferredWidth: 20
+              Layout.preferredHeight: 20
+              radius: Theme.radiusSmall
+              color: compactLogoMouse.containsMouse ? Theme.surfaceHover : "transparent"
+              Layout.alignment: Qt.AlignVCenter
+
+              Item {
+                  id: logoMark
+                  anchors.centerIn: parent
+                  width: 18
+                  height: 18
+
+                  // Rose fill, with the glyph's outline kept as the edge.
+                  //
+                  // hexagon.fill is not usable as a codepoint: Material Symbols
+                  // ships it as the FILL axis of the variable font rather than as
+                  // a separate glyph, and QML's Text cannot set variation axes.
+                  // So the fill is drawn here and the glyph is kept for its edges
+                  // alone.
+                  //
+                  // Orientation is taken from the glyph rather than assumed. Its
+                  // ink measures 22x16 device px inside this 18px slot and is
+                  // widest at the vertical middle, so it is a flat-top hexagon with
+                  // vertices left and right -- not the pointy-top one the old
+                  // hand-drawn mark used. Hence vertices from 0 degrees.
+                  readonly property real fillInset: 2.6
+                  readonly property var fillVerts: _hexVerts(
+                      Math.min(width, height) / 2 - fillInset)
+
+                  function _hexVerts(r: real): var {
+                      const cx = width / 2;
+                      const cy = height / 2;
+                      const out = [];
+                      for (let i = 0; i < 6; ++i) {
+                          const a = (i * 60) * Math.PI / 180;
+                          out.push(cx + r * Math.cos(a));
+                          out.push(cy + r * Math.sin(a));
+                      }
+                      return out;
+                  }
+
+                  Shape {
+                      anchors.fill: parent
+                      preferredRendererType: Shape.GeometryRenderer
+                      antialiasing: true
+
+                      // love, the palette's warm pink, is the identity fill.
+                      // It shares a value with destructive, deliberately and with
+                      // a separate name: destructive means something has failed,
+                      // and borrowing it for the shell's mark would say the mark
+                      // itself was an error.
+                      ShapePath {
+                          fillColor: Theme.love
+                          startX: logoMark.fillVerts[0]
+                          startY: logoMark.fillVerts[1]
+                          PathLine { x: logoMark.fillVerts[2];  y: logoMark.fillVerts[3] }
+                          PathLine { x: logoMark.fillVerts[4];  y: logoMark.fillVerts[5] }
+                          PathLine { x: logoMark.fillVerts[6];  y: logoMark.fillVerts[7] }
+                          PathLine { x: logoMark.fillVerts[8];  y: logoMark.fillVerts[9] }
+                          PathLine { x: logoMark.fillVerts[10]; y: logoMark.fillVerts[11] }
+                      }
+                  }
+
+                  GlyphIcon {
+                      anchors.fill: parent
+                      // Deliberately larger than the clock. Everything else on
+                      // the line is matched to the clock's ink height, but the
+                      // hexagon is the identity mark and reads as an afterthought
+                      // at that size -- it needs to hold its own against the bold
+                      // clock digits rather than match them. 0.94 puts it back
+                      // around its original presence.
+                      //
+                      // The 18px slot stays regardless: it is also the hover
+                      // target, which should not change with the mark's size.
+                      opticalScale: 0.94
+                      glyph: "hexagon"
+                      color: Theme.textPrimary
+                  }
+              }
+
+              MouseArea {
+                  id: compactLogoMouse
+                  anchors.fill: parent
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.openCommandDeckRequested()
+              }
+          }
+
+        // Workspaces as numbered pills.
+      //
+      // The design numbers them and marks the active one with a filled magenta
+      // circle. The previous five-dot row could not say which workspace was
+      // which, and at 6px a dot has no room to carry a number at all.
+      RowLayout {
+          id: workspaceStrip
+          Layout.alignment: Qt.AlignVCenter
+
+          Repeater {
+              model: root.workspaceList
+
+              Item {
+                  id: wsCell
+                  required property var modelData
+
+                  readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
+                  readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
+                  readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
+                  readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
+
+                  Layout.preferredWidth: isFocused ? 18 : wsLabel.implicitWidth + 6
+                  Layout.preferredHeight: 18
+                  Layout.alignment: Qt.AlignVCenter
+
+                  Rectangle {
+                      anchors.fill: parent
+                      radius: height / 2
+                      color: wsCell.isFocused ? Theme.workspaceActive
+                          : (wsCell.isUrgent ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+                      border.width: Theme.borderWidth
+                      border.color: wsCell.isUrgent ? Theme.destructive : "transparent"
+
+                      Behavior on color {
+                          ColorAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
+                      }
+                  }
+
+                  Text {
+                      id: wsLabel
+                      anchors.centerIn: parent
+                      width: parent.width
+                      horizontalAlignment: Text.AlignHCenter
+                      text: wsCell.wsId
+                      color: wsCell.isFocused ? Theme.navyDeep
+                          : (wsCell.isActive ? Theme.textPrimary : Theme.textSecondary)
+                      font.family: Theme.fontFamilySans
+                      font.pixelSize: Theme.fontSizeCaption
+                      font.weight: Theme.fontWeightDemiBold
+                  }
+
+                  MouseArea {
+                      anchors.fill: parent
+                      anchors.margins: -4
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: CompositorService.switchToWorkspace(wsCell.wsId)
+                  }
+              }
+          }
+      }
+
+        // Indicator cluster: glyph over a value, values in the status colour.
+
+      Item { Layout.fillWidth: true }
+      // Everything after this is pinned to the trailing edge.
+        //
+        // Replaces one connected/not-connected dot and an "// IDLE" string. The
+        // dot said whether the link was up; it could not say how good the link
+        // was, and it left the rest of the bar's right-hand side empty.
         RowLayout {
-            spacing: Theme.spacingSmall
+            id: indicatorCluster
+            Layout.maximumWidth: root.sideColumnMax
+            clip: true
             Layout.alignment: Qt.AlignVCenter
+            spacing: Theme.spacingMedium
 
-            Repeater {
-                model: root.workspaceList
+            // Collapse control. Only while the panel is open: an idle notch has
+            // no room for it and nothing to collapse.
+            GlyphIcon {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.preferredWidth: 18
+                Layout.preferredHeight: 18
+                visible: root.isCommandCenterOpen
+                opticalScale: 0.71
+                glyph: "chevron"
+                // Glyph points down; collapsing means going back up.
+                rotation: 180
+                color: Theme.textSecondary
+            }
 
-                Item {
-                    id: wsCell
-                    required property var modelData
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 1
+                visible: NetworkService.isConnected
 
-                    readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
-                    readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                    readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                    readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
+                GlyphIcon {
+                    Layout.alignment: Qt.AlignHCenter
+                    // Layout.preferred*, not width/height. These sit in a
+                    // ColumnLayout, which owns the child's height and discards a
+                    // direct assignment -- an earlier width/height: 14 here had no
+                    // effect at all, and GlyphIcon sizes its font from height.
+                    Layout.preferredWidth: 15
+                    Layout.preferredHeight: 15
+                    // 0.78 brings the wifi's ink to the volume's, measured at
+                    // 1.27x, and stops it overrunning the slot.
+                    opticalScale: NetworkService.isWifi ? 0.90 : 0.85
+                    glyph: NetworkService.isWifi ? "wifi" : "ethernet"
+                    color: Theme.textSecondary
+                }
 
-                    Layout.preferredWidth: isFocused ? 14 : 6
-                    Layout.preferredHeight: 6
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 3
-                        color: wsCell.isUrgent ? Theme.warningRed : (wsCell.isFocused ? Theme.acidGreen : (wsCell.isActive ? Theme.textPrimaryDim : Theme.gray600))
-
-                        Behavior on width {
-                            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -4
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                        onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                        onExited: { hoverDebounceTimer.restart(); }
-                        onClicked: CompositorService.switchToWorkspace(wsCell.wsId)
-                        onWheel: (wheel) => {
-                            const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                            AudioService.stepVolume(delta);
-                        }
-                    }
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: root.showDetail
+                    text: NetworkService.signalStrength > 0
+                        ? Math.round(NetworkService.signalStrength * 100) + "%"
+                        : (NetworkService.isEthernet ? "LAN" : "")
+                    color: Theme.statusGreen
+                    font.family: Theme.fontFamilyMonoNumeric
+                    font.pixelSize: Theme.fontSizeMicro
+                    font.weight: Theme.fontWeightDemiBold
                 }
             }
-        }
 
-        Item { Layout.fillWidth: true }
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 1
+                visible: AudioService.available
 
-        // Monospace Clock (Click opens calendar)
-        Item {
-            Layout.preferredWidth: compactClockText.implicitWidth
-            Layout.preferredHeight: compactClockText.implicitHeight
-            Layout.alignment: Qt.AlignVCenter
+                GlyphIcon {
+                    Layout.alignment: Qt.AlignHCenter
+                    // Layout.preferred*, not width/height. These sit in a
+                    // ColumnLayout, which owns the child's height and discards a
+                    // direct assignment -- an earlier width/height: 14 here had no
+                    // effect at all, and GlyphIcon sizes its font from height.
+                    Layout.preferredWidth: 15
+                    Layout.preferredHeight: 15
+                    opticalScale: 0.90
+                    glyph: "speaker"
+                    color: Theme.textSecondary
+                }
 
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: root.showDetail
+                    text: AudioService.muted ? "M" : Math.round(AudioService.volume * 100) + "%"
+                    color: Theme.statusGreen
+                    font.family: Theme.fontFamilyMonoNumeric
+                    font.pixelSize: Theme.fontSizeMicro
+                    font.weight: Theme.fontWeightDemiBold
+                }
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 1
+                visible: PowerService.isBatteryPresent
+
+                GlyphIcon {
+                    Layout.alignment: Qt.AlignHCenter
+                    // Layout.preferred*, not width/height. These sit in a
+                    // ColumnLayout, which owns the child's height and discards a
+                    // direct assignment -- an earlier width/height: 14 here had no
+                    // effect at all, and GlyphIcon sizes its font from height.
+                    Layout.preferredWidth: 15
+                    Layout.preferredHeight: 15
+                    opticalScale: 0.85
+                    glyph: "battery"
+                    color: PowerService.isCharging ? Theme.statusGreen : Theme.textSecondary
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: root.showDetail
+                    text: Math.round(PowerService.percentage) + "%"
+                    color: Theme.statusGreen
+                    font.family: Theme.fontFamilyMonoNumeric
+                    font.pixelSize: Theme.fontSizeMicro
+                    font.weight: Theme.fontWeightDemiBold
+                }
+            }
+
+            // Status word, which ends the bar. The design shows one in both the
+            // idle and expanded states: IDLE with nothing pending, otherwise
+            // what is pending.
             Text {
-                id: compactClockText
-                anchors.centerIn: parent
-                text: Qt.formatDateTime(systemClock.date, "HH:mm")
-                color: Theme.textPrimary
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeSmall
+                Layout.alignment: Qt.AlignVCenter
+                visible: !NotificationService.doNotDisturb
+                text: NotificationService.unreadCount > 0
+                    ? NotificationService.unreadCount + " NEW"
+                    : (root.hasMedia ? (root.isPlaying ? "PLAYING" : "PAUSED") : "IDLE")
+                color: Theme.textSecondary
+                font.family: Theme.fontFamilySans
+                // Was fontSizeMicro, whose 9px face draws about 8px of ink --
+                // half the clock's height beside it. The status word is the same
+                // tier as the glyphs next to it, so it takes the body size.
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Theme.fontWeightDemiBold
             }
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-                onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                onExited: { hoverDebounceTimer.restart(); }
-                onClicked: root.toggleCalendar()
-                onWheel: (wheel) => {
-                    const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                    AudioService.stepVolume(delta);
-                }
-            }
-        }
-
-        // Network Connected Indicator Dot (visible only when connected)
-        Rectangle {
-            Layout.alignment: Qt.AlignVCenter
-            width: 5
-            height: 5
-            radius: 2.5
-            color: Theme.acidGreen
-            visible: NetworkService.available && NetworkService.isConnected
-        }
-
-        Item { Layout.fillWidth: true }
-
-        // Dynamic Island Status Text
-        RowLayout {
-            Layout.alignment: Qt.AlignVCenter
-            spacing: 4
-
+            // DND is kept: it is state the user set and needs to see at a glance.
             Text {
+                Layout.alignment: Qt.AlignVCenter
                 visible: NotificationService.doNotDisturb
-                text: "[DND]"
+                text: "DND"
                 color: Theme.warningRed
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
+                font.family: Theme.fontFamilySans
+                font.pixelSize: Theme.fontSizeMicro
                 font.weight: Theme.fontWeightBold
-            }
-
-            Text {
-                visible: !NotificationService.doNotDisturb && NotificationService.unreadCount > 0
-                text: NotificationService.unreadCount + " NOTIF"
-                color: Theme.textPrimary
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
-                font.weight: Theme.fontWeightNormal
-            }
-
-            Text {
-                visible: !NotificationService.doNotDisturb && NotificationService.unreadCount === 0
-                text: "// IDLE"
-                color: Theme.textMuted
-                font.family: Theme.fontFamilyMonospace
-                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }
 
+
     // =========================================================================
-    // View 2: Media State (Play/Pause, Title // Artist, Equalizer, Clock)
+  // Centred clock
+  //
+  // Sits on the notch's centre line rather than in the compact row's flow. In
+  // the row it came after the workspace pills, so the clock drifted right as
+  // the pill count grew and the indicator cluster was pushed to the trailing
+  // edge by a single flexible spacer -- the two ends drifted apart and the
+  // middle never lined up with anything.
+  //
+  // centring it in the row would not have fixed that either. With one flexible
+  // spacer on each side of the clock, the clock's centre lands at
+  // (notchWidth + leftContent - rightContent) / 2, so it is only truly centred
+  // when the left and right groups happen to be the same width. The workspace
+  // strip and the indicator cluster are not.
+  //
+  // So the clock is a sibling, anchored to the centre, and compactView is inset
+  // on both sides by half the clock's width. That reserves a band exactly the
+  // width of the clock, which means the row cannot paint into it at any content
+  // width -- the two can never overlap, whatever the pill count does.
+  //
+  // The two dividers move with it. In the row they bracketed the clock to
+  // separate it from the pills; left behind in the flow they would be a rule at
+  // the end of the workspace group with nothing beside it.
+  Row {
+      id: centeredClock
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: Theme.spacingMedium
+      // Mirrors compactView, which is faded rather than hidden.
+      opacity: compactView.opacity
+      visible: compactView.visible && opacity > 0
+
+      Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Theme.borderWidth
+          height: 22
+          visible: root.isCommandCenterOpen
+          color: Theme.border
+      }
+
+      // Date over clock. The design stacks a small date on a large time, which
+      // is also the only arrangement that fits both without shrinking the clock
+      // down to caption size.
+      Item {
+          width: Math.max(clockDate.implicitWidth, clockTime.implicitWidth)
+          height: clockTime.implicitHeight
+                 + (root.showDetail ? clockDate.implicitHeight + 2 : 0)
+
+          Text {
+              id: clockDate
+              anchors.top: parent.top
+              anchors.horizontalCenter: parent.horizontalCenter
+              visible: root.showDetail
+              text: Qt.formatDateTime(systemClock.date, "ddd dd MMM").toUpperCase()
+              color: Theme.textSecondary
+              font.family: Theme.fontFamilySans
+              font.pixelSize: Theme.fontSizeMicro
+              font.weight: Theme.fontWeightDemiBold
+          }
+
+          Text {
+              id: clockTime
+              anchors.bottom: parent.bottom
+              anchors.horizontalCenter: parent.horizontalCenter
+              text: Qt.formatDateTime(systemClock.date,
+                      root.showDetail ? "HH:mm:ss" : "HH:mm")
+              color: Theme.textPrimary
+              font.family: Theme.fontFamilyMonoNumeric
+              font.pixelSize: Theme.fontSizeBody
+              font.weight: Theme.fontWeightDemiBold
+          }
+
+          MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.toggleCalendar()
+          }
+      }
+
+      Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Theme.borderWidth
+          height: 22
+          visible: root.isCommandCenterOpen
+          color: Theme.border
+      }
+  }
+
+  // Band reserved for the centred clock, plus a little breathing room. compactView
+  // is inset by half of this on each side, so the row's usable width is the notch
+  // minus the clock's band.
+  readonly property real clockBand: centeredClock.width + Theme.spacingLarge
+
+  // Half the width each side group may occupy, so neither can reach the centred
+  // clock. Derived from the notch width rather than from compactView, because
+  // reading the row's own width inside its layout would be a binding loop.
+  readonly property real sideColumnMax: Math.max(root.leftContentWidth,
+      root.rightContentWidth)
+
+  // View 2: Media State (Play/Pause, Title // Artist, Equalizer, Clock)
     // =========================================================================
     RowLayout {
         id: mediaView
@@ -538,7 +921,7 @@ Item {
                 id: playPauseText
                 anchors.centerIn: parent
                 text: root.isPlaying ? "▶" : "⏸"
-                color: root.isPlaying ? Theme.acidGreen : Theme.textMuted
+                color: root.isPlaying ? Theme.statusGreen : Theme.textMuted
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Theme.fontWeightBold
@@ -547,17 +930,10 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-                onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                onExited: { hoverDebounceTimer.restart(); }
                 onClicked: {
                     if (root.activePlayer && typeof root.activePlayer.playPause === "function") {
                         root.activePlayer.playPause();
                     }
-                }
-                onWheel: (wheel) => {
-                    const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                    AudioService.stepVolume(delta);
                 }
             }
         }
@@ -589,7 +965,7 @@ Item {
                     Layout.preferredHeight: root.isPlaying
                         ? Math.max(3, Math.round((Math.sin((eqBar.index * 1.1) + root.visualizerPhase) * 0.4 + 0.5) * 14))
                         : 3
-                    color: root.isPlaying ? Theme.acidGreen : Theme.gray600
+                    color: root.isPlaying ? Theme.statusGreen : Theme.gray600
                     radius: 1
                 }
             }
@@ -612,14 +988,7 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-                onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                onExited: { hoverDebounceTimer.restart(); }
                 onClicked: root.toggleCalendar()
-                onWheel: (wheel) => {
-                    const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                    AudioService.stepVolume(delta);
-                }
             }
         }
     }
@@ -681,372 +1050,6 @@ Item {
     }
 
     // =========================================================================
-    // View 4: Hover State (2 Rows: Row 1 System Bar, Row 2 Expanded System Tray)
-    // =========================================================================
-    ColumnLayout {
-        id: hoverView
-        anchors.fill: parent
-        anchors.margins: Theme.paddingSmall
-        spacing: 4
-        opacity: (root.notchState === "hover") ? 1.0 : 0.0
-        visible: opacity > 0.0
-
-        Behavior on opacity {
-            NumberAnimation { duration: Settings.reducedMotion ? 0 : Theme.durationFast }
-        }
-
-        // --- Row 1: Logo/CommandDeck, Workspaces, Full Date + Time ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 24
-            spacing: Theme.spacingMedium
-
-            // Logo & CommandDeck trigger
-            Rectangle {
-                Layout.preferredWidth: 20
-                Layout.preferredHeight: 20
-                radius: Theme.radiusSmall
-                color: logoHoverMouse.containsMouse ? Theme.surfaceHover : "transparent"
-
-                Image {
-                    anchors.centerIn: parent
-                    width: 16
-                    height: 16
-                    source: "os-icon.svg"
-                    sourceSize.width: 16
-                    sourceSize.height: 16
-                }
-
-                MouseArea {
-                    id: logoHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
-                    onClicked: {
-                        OverlayController.openCommandDeck();
-                        root.openCommandDeckRequested();
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
-                }
-            }
-
-            // Workspaces Cells
-            RowLayout {
-                spacing: 3
-                Layout.alignment: Qt.AlignVCenter
-
-                Repeater {
-                    model: root.workspaceList
-
-                    Rectangle {
-                        id: wsHoverCell
-                        required property var modelData
-                        readonly property int wsId: (typeof modelData === "object" && modelData !== null) ? Number(modelData.id) : Number(modelData)
-                        readonly property bool isActive: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.active || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                        readonly property bool isFocused: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.focused || (wsId === CompositorService.focusedWorkspaceId)) : (wsId === CompositorService.focusedWorkspaceId)
-                        readonly property bool isUrgent: (typeof modelData === "object" && modelData !== null) ? Boolean(modelData.urgent) : false
-
-                        Layout.preferredWidth: 18
-                        Layout.preferredHeight: 18
-                        radius: Theme.radiusSmall
-                        color: isFocused ? Theme.surfaceSelected : (wsHoverMouse.containsMouse ? Theme.surfaceHover : "transparent")
-                        border.color: isUrgent ? Theme.accentRed : (isFocused ? Theme.accent : Theme.borderMuted)
-                        border.width: Theme.borderWidth
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: String(wsHoverCell.wsId)
-                            color: wsHoverCell.isUrgent ? Theme.accentRed : (wsHoverCell.isFocused ? Theme.accent : (wsHoverCell.isActive ? Theme.textPrimary : Theme.textMuted))
-                            font.family: Theme.fontFamilyMonospace
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: wsHoverCell.isFocused ? Theme.fontWeightBold : Theme.fontWeightNormal
-                        }
-
-                        MouseArea {
-                            id: wsHoverMouse
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                            onExited: { hoverDebounceTimer.restart(); }
-                            onClicked: CompositorService.switchToWorkspace(wsHoverCell.wsId)
-                            onWheel: (wheel) => {
-                                const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                                AudioService.stepVolume(delta);
-                            }
-                        }
-                    }
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-
-            // Full Date + Time (Click opens calendar)
-            Item {
-                Layout.preferredWidth: dateHoverText.implicitWidth
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                Text {
-                    id: dateHoverText
-                    anchors.centerIn: parent
-                    text: Qt.formatDateTime(systemClock.date, "ddd dd MMM  HH:mm:ss").toUpperCase()
-                    color: dateHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.weight: Theme.fontWeightDemiBold
-                }
-
-                MouseArea {
-                    id: dateHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
-                    onClicked: root.toggleCalendar()
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
-                }
-            }
-        }
-
-        // --- Row 2: Expanded System Tray Indicators ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 24
-            spacing: Theme.spacingMedium
-
-            // Network Info
-            Item {
-                Layout.preferredWidth: netRow.implicitWidth
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: netRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: !NetworkService.isConnected ? "wifi-slash" : (NetworkService.isEthernet ? "network" : "wifi")
-                        color: netHoverMouse.containsMouse ? Theme.accent : (NetworkService.isConnected ? Theme.acidGreen : Theme.destructive)
-                    }
-
-                    Text {
-                        text: NetworkService.isConnected ? (NetworkService.networkName !== "" ? NetworkService.networkName : "NET") : "OFFLINE"
-                        color: netHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: 80
-                    }
-                }
-
-                MouseArea {
-                    id: netHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
-                    onClicked: (mouse) => {
-                        if (mouse.button === Qt.RightButton) {
-                            NetworkService.toggleWifi();
-                        } else {
-                            root.toggleNetworkRequested();
-                        }
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
-                }
-            }
-
-            // Volume Info
-            Item {
-                Layout.preferredWidth: volRow.implicitWidth
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: volRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: AudioService.muted ? "volume-slash" : "volume"
-                        color: volHoverMouse.containsMouse ? Theme.accent : (AudioService.muted ? Theme.destructive : Theme.textSecondary)
-                    }
-
-                    Text {
-                        text: AudioService.muted ? "[MUTED]" : Math.round(AudioService.volume * 100) + "%"
-                        color: volHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
-                }
-
-                MouseArea {
-                    id: volHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
-                    onClicked: AudioService.toggleMute()
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
-                }
-            }
-
-            // Battery Info (Desktop omission: hidden when battery absent)
-            Item {
-                visible: PowerService.available && PowerService.isBatteryPresent
-                Layout.preferredWidth: visible ? batRow.implicitWidth : 0
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: batRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: PowerService.isCharging ? "battery-charging" : (PowerService.percentage <= 20 ? "battery-low" : "battery")
-                        color: PowerService.isCharging ? Theme.acidGreen : (PowerService.percentage <= 20 ? Theme.warningRed : Theme.textSecondary)
-                    }
-
-                    Text {
-                        text: Math.round(PowerService.percentage) + "%"
-                        color: PowerService.percentage <= 20 && !PowerService.isCharging ? Theme.warningRed : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
-                    onClicked: {
-                        OverlayController.toggleCommandCenter();
-                        root.toggleCommandCenterRequested();
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
-                }
-            }
-
-            // Bluetooth Info (Hidden when bluetooth hardware unavailable)
-            Item {
-                visible: BluetoothService.available
-                Layout.preferredWidth: visible ? btRow.implicitWidth : 0
-                Layout.preferredHeight: 20
-                Layout.alignment: Qt.AlignVCenter
-
-                RowLayout {
-                    id: btRow
-                    anchors.fill: parent
-                    spacing: 4
-
-                    CtosIcon {
-                        size: 12
-                        name: BluetoothService.powered ? "bluetooth" : "bluetooth-slash"
-                        color: BluetoothService.isConnected ? Theme.acidGreen : (BluetoothService.powered ? Theme.textPrimary : Theme.textMuted)
-                    }
-
-                    Text {
-                        text: !BluetoothService.powered ? "OFF" : (BluetoothService.isConnected ? (BluetoothService.deviceName || "CONNECTED") : "ON")
-                        color: btHoverMouse.containsMouse ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.fontFamilyMonospace
-                        font.pixelSize: Theme.fontSizeCaption
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: 80
-                    }
-                }
-
-                MouseArea {
-                    id: btHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
-                    onClicked: (mouse) => {
-                        if (mouse.button === Qt.RightButton) {
-                            BluetoothService.togglePower();
-                        } else {
-                            root.toggleBluetoothRequested();
-                        }
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-
-            // Rail Toggle Glyph "="
-            Rectangle {
-                Layout.preferredWidth: 18
-                Layout.preferredHeight: 18
-                radius: Theme.radiusSmall
-                color: railHoverMouse.containsMouse ? Theme.surfaceHover : "transparent"
-                border.color: Theme.borderMuted
-                border.width: Theme.borderWidth
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "="
-                    color: Theme.accent
-                    font.family: Theme.fontFamilyMonospace
-                    font.pixelSize: Theme.fontSizeCaption
-                    font.weight: Theme.fontWeightBold
-                }
-
-                MouseArea {
-                    id: railHoverMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onEntered: { hoverDebounceTimer.stop(); root._isHovered = true; }
-                    onExited: { hoverDebounceTimer.restart(); }
-                    onClicked: {
-                        OverlayController.toggleCommandCenter();
-                        root.toggleCommandCenterRequested();
-                    }
-                    onWheel: (wheel) => {
-                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                        AudioService.stepVolume(delta);
-                    }
-                }
-            }
-        }
-    }
-
-    // =========================================================================
     // View 5: Calendar State (NotchCalendarGrid Morph Container)
     // =========================================================================
     Item {
@@ -1068,7 +1071,7 @@ Item {
         Loader {
             id: calendarLoader
             anchors.fill: parent
-            active: root.notchState === "calendar" || root._isCalendarOpen
+            active: root.notchState === "calendar" || root.calendarOpen
             source: "NotchCalendarGrid.qml"
 
             onLoaded: {
@@ -1089,6 +1092,11 @@ Item {
         id: mouseArea
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
+        // Sole hover authority for the notch. The per-item targets below carry
+        // no hover handling at all: they only route clicks. That is deliberate.
+        // Their onEntered handlers were ungated -- they set _isHovered without
+        // the isInsidePill test applied here -- which is the hover-loop class
+        // this file needed two separate patches for.
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         z: -1
@@ -1131,11 +1139,16 @@ Item {
             } else {
                 if (root.notchState === "notification") {
                     collapseTimer.stop();
-                    root._notificationActive = false;
-                    root.isExpanded = false;
-                } else if (root.notchState === "compact") {
+                    root.notificationActive = false;
+                } else if (root.notchState === "compact" || root.notchState === "hover") {
+                    // "hover" has to be in this list, and it was missing. Hovering
+                    // is what expands the notch, so by release time the state is
+                    // "hover" and a "compact"-only test could never be true -- the
+                    // click was swallowed instead of opening the command centre.
+                    // Reachability is the point: the pointer is over the pill for
+                    // every click, so "compact" only ever held for a notch the
+                    // user was not touching.
                     root.closeCalendar();
-                    OverlayController.toggleCommandCenter();
                     root.toggleCommandCenterRequested();
                 }
             }

@@ -11,8 +11,18 @@ Singleton {
     // Public Interface Contract
     // =========================================================================
 
-    // Backend health indicator (true when procfs files are accessible)
-    property bool available: true
+    // Backend health indicator (true when procfs files are accessible).
+    //
+    // Derived from consecutive read failures rather than assigned directly: the
+    // sampler is gated on this property, so setting it false on the first
+    // failure stopped the timer that would have produced the recovery, and the
+    // shell stayed permanently offline after one transient error.
+    readonly property bool available: _consecutiveFailures < maxConsecutiveFailures
+
+    // Tolerance for transient procfs read errors before reporting offline.
+    readonly property int maxConsecutiveFailures: 3
+    property int _consecutiveFailures: 0
+    property bool _warnedUnavailable: false
 
     // CPU Telemetry: per-thread utilization [0.0, 1.0] and aggregate [0.0, 1.0]
     property list<real> cpuThreadLoads: []
@@ -23,6 +33,27 @@ Singleton {
     property real memTotalBytes: 0.0
     property real swapUsedBytes: 0.0
     property real swapTotalBytes: 0.0
+
+    // Disk capacity for the filesystem holding $HOME, in bytes.
+    //
+    // procfs cannot answer this: /proc/diskstats reports I/O counters, not how
+    // full a filesystem is, and no procfs file carries filesystem capacity. So
+    // this one shells out to df.
+    //
+    // Only the filesystem containing $HOME is reported. Separate partitions
+    // mounted under / are real, but a single ring cannot honestly represent
+    // them, and summing across mount points double-counts on btrfs and on any
+    // system that mounts /home off the root device.
+    property real diskTotalBytes: 0.0
+    property real diskUsedBytes: 0.0
+    readonly property real diskFraction: diskTotalBytes > 0
+        ? Math.min(1.0, diskUsedBytes / diskTotalBytes)
+        : 0.0
+
+    // Disk capacity changes over minutes, not seconds. Sampling it on the 1s
+    // CPU/net cadence would fork a process every second for a number that is
+    // effectively static.
+    readonly property int diskRefreshInterval: 15000
 
     // Network Telemetry: bytes per second rates
     property real netRxBytesPerSec: 0.0
@@ -57,9 +88,37 @@ Singleton {
     Timer {
         id: sampleTimer
         interval: root.refreshInterval
-        running: root.available
+        // Runs regardless of availability: the sampler is what re-probes, so
+        // gating it on the health flag it maintains is circular.
+        running: true
         repeat: true
         onTriggered: root.refresh()
+    }
+
+    Timer {
+        id: diskTimer
+        interval: root.diskRefreshInterval
+        running: true
+        repeat: true
+        onTriggered: {
+            // Still waiting on the previous run: skip rather than pile up forks.
+            if (diskProc.running)
+                return;
+            diskProc.running = true;
+        }
+    }
+
+    Process {
+        id: diskProc
+        // -B1 forces 1-byte blocks so the numbers need no unit guessing.
+        command: ["df", "-B1", "--output=size,used", (Quickshell.env("HOME") || "/")]
+        workingDirectory: "/"
+        running: false
+
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root._parseDiskDf(text)
+        }
     }
 
     // =========================================================================
@@ -70,35 +129,53 @@ Singleton {
         id: statFile
         path: "/proc/stat"
         printErrors: false
-        onLoaded: root._parseCpuStat(statFile.text())
-        onLoadFailed: function (error) {
-            root.available = false;
+        onLoaded: {
+            root._recordSuccess();
+            root._parseCpuStat(statFile.text());
         }
+        onLoadFailed: root._recordFailure()
     }
 
     FileView {
         id: memFile
         path: "/proc/meminfo"
         printErrors: false
-        onLoaded: root._parseMemInfo(memFile.text())
-        onLoadFailed: function (error) {
-            root.available = false;
+        onLoaded: {
+            root._recordSuccess();
+            root._parseMemInfo(memFile.text());
         }
+        onLoadFailed: root._recordFailure()
     }
 
     FileView {
         id: netFile
         path: "/proc/net/dev"
         printErrors: false
-        onLoaded: root._parseNetDev(netFile.text())
-        onLoadFailed: function (error) {
-            root.available = false;
+        onLoaded: {
+            root._recordSuccess();
+            root._parseNetDev(netFile.text());
         }
+        onLoadFailed: root._recordFailure()
     }
 
     // =========================================================================
     // Public Methods
     // =========================================================================
+
+    function _recordFailure(): void {
+        _consecutiveFailures++;
+        if (!root.available && !root._warnedUnavailable) {
+            _warnedUnavailable = true;
+            console.warn("[SystemMonitorService] procfs unreadable after "
+                + root._consecutiveFailures + " consecutive attempts; telemetry offline. "
+                + "Last known values are retained.");
+        }
+    }
+
+    function _recordSuccess(): void {
+        _consecutiveFailures = 0;
+        _warnedUnavailable = false;
+    }
 
     function refresh(): void {
         statFile.reload();
@@ -199,6 +276,36 @@ Singleton {
         root.cpuThreadLoads = threadList;
         root.cpuTelemetryUpdated(newTotal, threadList);
         root.telemetryUpdated();
+    }
+
+    // df --output=size,used emits a column-name header, then one
+    // "<size> <used>" row for the requested path. Read by position from the
+    // last line that parses: df right-aligns the columns in a variable-width
+    // field, so this is more reliable than splitting on whitespace and
+    // indexing, and skipping unparseable rows also skips the header.
+    function _parseDiskDf(rawContent: string): void {
+        if (!rawContent || rawContent.length === 0) {
+            return;
+        }
+
+        const lines = rawContent.split("\n");
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const parts = lines[i].trim().split(/\s+/);
+            if (parts.length < 2) {
+                continue;
+            }
+
+            const total = parseInt(parts[0], 10);
+            const used = parseInt(parts[1], 10);
+            if (isNaN(total) || isNaN(used)) {
+                continue;
+            }
+
+            root.diskTotalBytes = total;
+            root.diskUsedBytes = used;
+            root.telemetryUpdated();
+            return;
+        }
     }
 
     function _parseMemInfo(rawContent: string): void {

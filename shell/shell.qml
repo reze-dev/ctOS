@@ -19,12 +19,6 @@ Scope {
     property bool calendarVisible: false
     property var calendarScreen: null
 
-    property bool bluetoothVisible: false
-    property var bluetoothScreen: null
-
-    property bool networkVisible: false
-    property var networkScreen: null
-
     signal calendarDismissRequested
 
     property bool _calendarDismissing: false
@@ -43,8 +37,6 @@ Scope {
                 root.calendarScreen = resolved;
             }
         } else {
-            root.closeBluetooth();
-            root.closeNetwork();
             root.calendarScreen = resolved;
             root.calendarVisible = true;
         }
@@ -58,56 +50,8 @@ Scope {
         root._calendarDismissing = false;
     }
 
-    function toggleBluetooth(targetScreen): void {
-        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
-
-        if (root.bluetoothVisible) {
-            if (targetScreen === null || targetScreen === undefined || root.bluetoothScreen === resolved) {
-                root.bluetoothVisible = false;
-                root.bluetoothScreen = null;
-            } else {
-                root.bluetoothScreen = resolved;
-            }
-        } else {
-            root.closeCalendar();
-            root.closeNetwork();
-            root.bluetoothScreen = resolved;
-            root.bluetoothVisible = true;
-        }
-    }
-
-    function closeBluetooth(): void {
-        root.bluetoothVisible = false;
-        root.bluetoothScreen = null;
-    }
-
-    function toggleNetwork(targetScreen): void {
-        const resolved = (targetScreen !== null && targetScreen !== undefined) ? targetScreen : root.resolveTargetScreen();
-
-        if (root.networkVisible) {
-            if (targetScreen === null || targetScreen === undefined || root.networkScreen === resolved) {
-                root.networkVisible = false;
-                root.networkScreen = null;
-            } else {
-                root.networkScreen = resolved;
-            }
-        } else {
-            root.closeCalendar();
-            root.closeBluetooth();
-            root.networkScreen = resolved;
-            root.networkVisible = true;
-        }
-    }
-
-    function closeNetwork(): void {
-        root.networkVisible = false;
-        root.networkScreen = null;
-    }
-
     function closeAllPopups(): void {
         root.closeCalendar();
-        root.closeBluetooth();
-        root.closeNetwork();
     }
 
     IpcHandler {
@@ -132,11 +76,11 @@ Scope {
         }
 
         function toggleBluetooth(): void {
-            root.toggleBluetooth(null);
+            OverlayController.openSystemRailWithSubmenu("bluetooth");
         }
 
         function toggleNetwork(): void {
-            root.toggleNetwork(null);
+            OverlayController.openWifiSubmenu();
         }
 
         function toggleRadialSettings(): void {
@@ -199,7 +143,7 @@ Scope {
                     right: Settings.getWidgetAnchor("cpuHexGrid", "right", true)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("cpuHexGrid", "top", Theme.barHeight + Theme.spacingXl)
+                    top: Settings.getWidgetMargin("cpuHexGrid", "top", Settings.barHeight + Theme.spacingXl)
                     bottom: Settings.getWidgetMargin("cpuHexGrid", "bottom", 0)
                     left: Settings.getWidgetMargin("cpuHexGrid", "left", 0)
                     right: Settings.getWidgetMargin("cpuHexGrid", "right", Theme.spacing2Xl)
@@ -243,8 +187,8 @@ Scope {
                     right: Settings.getWidgetAnchor("ramBlockBar", "right", true)
                 }
                 margins {
-                    // Default fallback: top: Settings.widgetCpuHexGridVisible ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl)
-                    top: Settings.hasWidgetMargin("ramBlockBar", "top") ? Settings.getWidgetMargin("ramBlockBar", "top", 0) : (Settings.widgetCpuHexGridVisible ? (Theme.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl))
+                    // Default fallback: top: Settings.widgetCpuHexGridVisible ? (Settings.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl)
+                    top: Settings.hasWidgetMargin("ramBlockBar", "top") ? Settings.getWidgetMargin("ramBlockBar", "top", 0) : (Settings.widgetCpuHexGridVisible ? (Settings.barHeight + Theme.spacingXl + 200 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl))
                     bottom: Settings.getWidgetMargin("ramBlockBar", "bottom", 0)
                     left: Settings.getWidgetMargin("ramBlockBar", "left", 0)
                     right: Settings.getWidgetMargin("ramBlockBar", "right", Theme.spacing2Xl)
@@ -333,7 +277,7 @@ Scope {
                     right: Settings.getWidgetAnchor("targetProfiler", "right", false)
                 }
                 margins {
-                    top: Settings.getWidgetMargin("targetProfiler", "top", Theme.barHeight + Theme.spacingXl)
+                    top: Settings.getWidgetMargin("targetProfiler", "top", Settings.barHeight + Theme.spacingXl)
                     bottom: Settings.getWidgetMargin("targetProfiler", "bottom", 0)
                     left: Settings.getWidgetMargin("targetProfiler", "left", Theme.spacing2Xl)
                     right: Settings.getWidgetMargin("targetProfiler", "right", 0)
@@ -377,8 +321,8 @@ Scope {
                     right: Settings.getWidgetAnchor("networkTracer", "right", false)
                 }
                 margins {
-                    // Default fallback: top: Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl)
-                    top: Settings.hasWidgetMargin("networkTracer", "top") ? Settings.getWidgetMargin("networkTracer", "top", 0) : (Settings.widgetTargetProfilerVisible ? (Theme.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Theme.barHeight + Theme.spacingXl))
+                    // Default fallback: top: Settings.widgetTargetProfilerVisible ? (Settings.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl)
+                    top: Settings.hasWidgetMargin("networkTracer", "top") ? Settings.getWidgetMargin("networkTracer", "top", 0) : (Settings.widgetTargetProfilerVisible ? (Settings.barHeight + Theme.spacingXl + 220 + Theme.spacingXl) : (Settings.barHeight + Theme.spacingXl))
                     bottom: Settings.getWidgetMargin("networkTracer", "bottom", 0)
                     left: Settings.getWidgetMargin("networkTracer", "left", Theme.spacing2Xl)
                     right: Settings.getWidgetMargin("networkTracer", "right", 0)
@@ -422,7 +366,7 @@ Scope {
                     right: Settings.getWidgetAnchor("audioSurveillance", "right", true)
                 }
                 margins {
-                    top: Settings.hasWidgetMargin("audioSurveillance", "top") ? Settings.getWidgetMargin("audioSurveillance", "top", 0) : (Theme.barHeight + Theme.spacingXl + (Settings.widgetCpuHexGridVisible ? 200 + Theme.spacingXl : 0) + (Settings.widgetRamBlockBarVisible ? 110 + Theme.spacingXl : 0))
+                    top: Settings.hasWidgetMargin("audioSurveillance", "top") ? Settings.getWidgetMargin("audioSurveillance", "top", 0) : (Settings.barHeight + Theme.spacingXl + (Settings.widgetCpuHexGridVisible ? 200 + Theme.spacingXl : 0) + (Settings.widgetRamBlockBarVisible ? 110 + Theme.spacingXl : 0))
                     bottom: Settings.getWidgetMargin("audioSurveillance", "bottom", 0)
                     left: Settings.getWidgetMargin("audioSurveillance", "left", 0)
                     right: Settings.getWidgetMargin("audioSurveillance", "right", Theme.spacing2Xl)
@@ -454,8 +398,11 @@ Scope {
                 screen: modelData
 
                 onToggleCalendar: root.toggleCalendar(modelData)
-                onToggleBluetooth: root.toggleBluetooth(modelData)
-                onToggleNetwork: root.toggleNetwork(modelData)
+                // The network and Bluetooth popups are gone. These open the
+                // Command Center on the matching card instead, which is where
+                // those controls live now.
+                onToggleBluetooth: OverlayController.openSystemRailWithSubmenu("bluetooth")
+                onToggleNetwork: OverlayController.openWifiSubmenu()
 
                 Connections {
                     target: root
@@ -520,47 +467,6 @@ Scope {
                 }
             }
 
-            if (root.bluetoothVisible) {
-                const currentBtScreen = root.bluetoothScreen;
-                if (!currentBtScreen) {
-                    root.closeBluetooth();
-                    return;
-                }
-
-                const screenList = Quickshell.screens;
-                let isBtAlive = false;
-                for (let i = 0; i < screenList.length; ++i) {
-                    if (screenList[i] && screenList[i].name === currentBtScreen.name) {
-                        isBtAlive = true;
-                        break;
-                    }
-                }
-
-                if (!isBtAlive) {
-                    root.closeBluetooth();
-                }
-            }
-
-            if (root.networkVisible) {
-                const currentNetScreen = root.networkScreen;
-                if (!currentNetScreen) {
-                    root.closeNetwork();
-                    return;
-                }
-
-                const screenList = Quickshell.screens;
-                let isNetAlive = false;
-                for (let i = 0; i < screenList.length; ++i) {
-                    if (screenList[i] && screenList[i].name === currentNetScreen.name) {
-                        isNetAlive = true;
-                        break;
-                    }
-                }
-
-                if (!isNetAlive) {
-                    root.closeNetwork();
-                }
-            }
         }
     }
 
@@ -569,16 +475,40 @@ Scope {
 
         function onOverlayOpened(activeSurface: int): void {
             root.closeCalendar();
-            root.closeBluetooth();
-            root.closeNetwork();
+            // Anything already toasting would sit on top of the opening overlay.
+            NotificationService.dismissToasts();
             overlayHost.screen = root.resolveTargetScreen();
+            OverlayController.setHostScreen(overlayHost.screen);
 
         }
 
         function onOverlayClosed(previousSurface: int): void {
             overlayHost.screen = null;
+            OverlayController.setHostScreen(null);
         }
     }
+
+    // Where content below the bar starts, as an anchor offset from the top.
+    //
+    // The max, not Settings.barHeight alone: the notch's resting height is a
+    // design token (Theme.notchHeightCompact) and no longer tracks that setting,
+    // so anchoring to the setting alone let a 42px pill overlap the toasts --
+    // by 1px at the barHeight this config happens to have persisted, and by 9px
+    // at the bottom of the radial slider's range.
+    readonly property int barContentTop:
+        Math.max(Settings.barHeight, Theme.notchHeightCompact)
+        + Theme.notchHostPadding + Theme.spacingMedium
+
+    // Surfaces that render *inside* the scrim host and so need it.
+    //
+    // The command centre is not one of them: it is a child of AmbientBar on the
+    // Top layer, which is below this window's Overlay layer. Gating this host on
+    // isOverlayActive therefore raised a full-screen scrim, with a full-screen
+    // MouseArea, directly over the command centre -- dimming it and swallowing
+    // every click aimed at it.
+    readonly property bool scrimHostedSurfaces:
+        OverlayController.activeSurface === OverlayController.Surface.CommandDeck
+        || OverlayController.activeSurface === OverlayController.Surface.RadialSettings
 
     PanelWindow {
         id: overlayHost
@@ -591,11 +521,46 @@ Scope {
         }
 
         color: "transparent"
-        visible: OverlayController.isOverlayActive && overlayHost.screen !== null
+        // Only the intent, deliberately. The `&& screen !== null` this replaced
+        // closed a loop: `screen` is resolved when the window is placed, and
+        // placement waits on `visible`, so each re-evaluation invalidated the
+        // other. Qt reported it as "Binding loop detected for property visible".
+        // The guard was redundant anyway -- an anchored panel is sized by the
+        // screen it is shown on, so there is nothing to draw until then.
+        visible: root.scrimHostedSurfaces
 
-        WlrLayershell.keyboardFocus: OverlayController.isOverlayActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: root.scrimHostedSurfaces ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "ctos-overlay"
+
+        // Input region: the whole surface.
+        //
+        // A PanelWindow with no mask is given an empty pointer input region, so
+        // the compositor delivers it no pointer events at all. Everything
+        // mouse-driven in here was therefore unreachable: the radial's segments
+        // and preview subtrees could not be hovered, ContextPanel's toggle,
+        // slider, action and picker controls could not be clicked, and
+        // scrimBackdrop below never saw the click it exists to handle. Keyboard
+        // navigation worked the whole time, which is what made it read as "the
+        // radial is just awkward" rather than "the radial cannot be pointed at".
+        //
+        // Full screen because that is what the scrim is: modal, anchored on all
+        // four sides, with a dismiss MouseArea filling it. Content that should
+        // swallow a click instead of dismissing has its own MouseArea and is
+        // declared after scrimBackdrop, so it wins.
+        //
+        // AmbientBar sets a matching mask for the same reason; see the comment
+        // on its windowRegion.
+        Region {
+            id: overlayRegion
+
+            x: 0
+            y: 0
+            width: overlayHost.width
+            height: overlayHost.height
+        }
+
+        mask: overlayRegion
 
 
         Rectangle {
@@ -623,12 +588,11 @@ Scope {
 
                 anchors.centerIn: parent
                 asynchronous: false
-                active: true
+                active: Settings.featuresCommandDeck
                 visible: OverlayController.activeSurface === OverlayController.Surface.CommandDeck
                 source: "desktop/surfaces/CommandDeck.qml"
             }
 
-            // EventLog moved to DynamicIsland
 
 
             Loader {
@@ -659,7 +623,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.spacingMedium
+            top: root.barContentTop
             right: Theme.spacingMedium
         }
 
@@ -670,35 +634,6 @@ Scope {
             id: toastStack
             width: 340
             anchors.horizontalCenter: parent.horizontalCenter
-        }
-    }
-
-    PanelWindow {
-        id: commandCenterPopupHost
-
-        screen: overlayHost.screen
-        color: "transparent"
-        visible: OverlayController.activeSurface === OverlayController.Surface.CommandCenter && overlayHost.screen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        WlrLayershell.namespace: "ctos-commandcenter-popup"
-
-        anchors {
-            top: true
-        }
-        margins {
-            top: 3
-        }
-
-        implicitWidth: commandCenterPopup.implicitWidth
-        implicitHeight: commandCenterPopup.implicitHeight
-
-        CommandCenter {
-            id: commandCenterPopup
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
         }
     }
 
@@ -747,7 +682,7 @@ Scope {
             right: true
         }
         margins {
-            top: Settings.barHeight + Theme.spacingMedium
+            top: root.barContentTop
             right: Theme.barPaddingHorizontal
         }
 
@@ -758,124 +693,6 @@ Scope {
             id: calendarPopup
 
             onCloseRequested: root.closeCalendar()
-        }
-    }
-
-    PanelWindow {
-        id: bluetoothBackdropHost
-
-        screen: root.bluetoothScreen
-        color: "transparent"
-        visible: root.bluetoothVisible && root.bluetoothScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        WlrLayershell.namespace: "ctos-bluetooth-backdrop"
-
-        anchors {
-            bottom: true
-            left: true
-            right: true
-            top: true
-        }
-
-        MouseArea {
-            id: bluetoothBackdropMouseArea
-
-            anchors.fill: parent
-
-            onClicked: root.closeBluetooth()
-        }
-    }
-
-    PanelWindow {
-        id: bluetoothPopupHost
-
-        screen: root.bluetoothScreen
-        color: "transparent"
-        visible: root.bluetoothVisible && root.bluetoothScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        WlrLayershell.namespace: "ctos-bluetooth-popup"
-
-        anchors {
-            top: true
-            right: true
-        }
-        margins {
-            top: Settings.barHeight + Theme.spacingMedium
-            right: Theme.barPaddingHorizontal + 60
-        }
-
-        implicitWidth: bluetoothPopup.implicitWidth
-        implicitHeight: bluetoothPopup.implicitHeight
-
-        BluetoothPopup {
-            id: bluetoothPopup
-
-            onCloseRequested: root.closeBluetooth()
-        }
-    }
-
-    PanelWindow {
-        id: networkBackdropHost
-
-        screen: root.networkScreen
-        color: "transparent"
-        visible: root.networkVisible && root.networkScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        WlrLayershell.namespace: "ctos-network-backdrop"
-
-        anchors {
-            bottom: true
-            left: true
-            right: true
-            top: true
-        }
-
-        MouseArea {
-            id: networkBackdropMouseArea
-
-            anchors.fill: parent
-
-            onClicked: root.closeNetwork()
-        }
-    }
-
-    PanelWindow {
-        id: networkPopupHost
-
-        screen: root.networkScreen
-        color: "transparent"
-        visible: root.networkVisible && root.networkScreen !== null
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        WlrLayershell.namespace: "ctos-network-popup"
-
-        anchors {
-            top: true
-            right: true
-        }
-        margins {
-            top: Settings.barHeight + Theme.spacingMedium
-            right: Theme.barPaddingHorizontal + 160
-        }
-
-        implicitWidth: networkPopup.implicitWidth
-        implicitHeight: networkPopup.implicitHeight
-
-        NetworkPopup {
-            id: networkPopup
-
-            onCloseRequested: root.closeNetwork()
         }
     }
 

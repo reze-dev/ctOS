@@ -45,14 +45,14 @@ Item {
     Rectangle {
         id: bgSurface
         anchors.fill: parent
-        color: Qt.rgba(14 / 255, 14 / 255, 14 / 255, 0.85)
+        color: Theme.surfaceScrim
         border.color: root.isCritical ? Theme.destructive : Theme.gray700
         border.width: Theme.borderWidth
     }
 
     // Framing Corner Brackets (Transitions to destructive red when RAM >= 80%)
     CornerBrackets {
-        bracketColor: root.isCritical ? Theme.destructive : Theme.acidGreen
+        bracketColor: root.isCritical ? Theme.destructive : Theme.statusGreen
     }
 
     // =========================================================================
@@ -75,10 +75,9 @@ Item {
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Theme.fontWeightMedium
-            }
-
-            Item {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                elide: Text.ElideRight
             }
 
             // Terse Label: RAM 8.2 / 16.0 GB
@@ -88,6 +87,13 @@ Item {
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeSmall
                 font.weight: Theme.fontWeightMedium
+                // Takes its natural width and is capped. It must NOT also fill:
+                // with both texts filling, the row splits evenly and the value
+                // elides too, which is the same clipping in nicer clothing.
+                Layout.preferredWidth: implicitWidth
+                Layout.maximumWidth: 150
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
             }
         }
 
@@ -110,12 +116,12 @@ Item {
                     // Color transitions to Theme.destructive when usage >= 80%
                     color: {
                         if (!isFilled) return Theme.gray900;
-                        return root.isCritical ? Theme.destructive : Theme.acidGreen;
+                        return root.isCritical ? Theme.destructive : Theme.statusGreen;
                     }
 
                     border.color: {
                         if (!isFilled) return Theme.gray700;
-                        return root.isCritical ? Theme.destructive : Qt.rgba(27 / 255, 253 / 255, 156 / 255, 0.85);
+                        return root.isCritical ? Theme.destructive : Qt.alpha(Theme.statusGreen, 0.85);
                     }
                     border.width: Theme.borderWidth
                 }
@@ -133,10 +139,9 @@ Item {
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption - 1
                 font.weight: Theme.fontWeightMedium
-            }
-
-            Item {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                elide: Text.ElideRight
             }
 
             Text {
@@ -147,6 +152,10 @@ Item {
                 font.family: Theme.fontFamilyMonospace
                 font.pixelSize: Theme.fontSizeCaption - 1
                 font.weight: Theme.fontWeightMedium
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
+                Layout.preferredWidth: implicitWidth
+                Layout.maximumWidth: 170
             }
         }
 

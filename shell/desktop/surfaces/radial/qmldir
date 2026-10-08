@@ -8,3 +8,4 @@ ContextPanel 1.0 ContextPanel.qml
 NavigationController 1.0 NavigationController.qml
 CircularSettingsMenu 1.0 CircularSettingsMenu.qml
 RadialSettings 1.0 RadialSettings.qml
+singleton RadialTopology 1.0 RadialTopology.qml

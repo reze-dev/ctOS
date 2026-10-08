@@ -23,10 +23,6 @@ in
       hyprcursor
       hypridle
       hyprlock
-      hyprpolkitagent
-      kdePackages.dolphin
-      kdePackages.dolphin-plugins
-      kdePackages.okular
       libnotify
       mpv
       obsidian
@@ -37,7 +33,11 @@ in
       slurp
       wl-clipboard
       zathura
+      superfile
       inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.ctos-shell
+
+      # Agent tooling for working on this configuration.
+      opencode
     ];
   };
 }

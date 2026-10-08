@@ -245,7 +245,6 @@ Singleton {
             execute: function () {
                 OverlayController.close();
                 SessionService.lock();
-                // Quickshell.execDetached(["loginctl", "lock-session"]);
             }
         },
         {

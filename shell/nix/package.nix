@@ -17,7 +17,8 @@ stdenvNoCC.mkDerivation {
             # Copy assets
             mkdir -p "$out/share/ctos"
             cp -R . "$out/share/ctos/"
-            rm -rf "$out/share/ctos/.git" "$out/share/ctos/nix"
+            # Docs carry reference imagery (~4 MB) and are not runtime inputs.
+            rm -rf "$out/share/ctos/.git" "$out/share/ctos/nix" "$out/share/ctos/docs"
             
             # Create executable wrapper
             mkdir -p "$out/bin"
